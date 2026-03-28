@@ -376,6 +376,7 @@ bookshops
 
 - [ ] **Contacter Incipit (Leonard)** — Explorer une synergie potentielle avec leur projet
 - [ ] **Contacter le fondateur de Yard** — Il a exprimé une volonté de rendre la lecture plus accessible, intéressant pour un éventuel partenariat ou échange
+- [ ] **Personnaliser la page login (magic link)** — L'écran actuel n'est pas à la hauteur de l'identité Reliure. Customiser la page d'auth Supabase : logo, typo Instrument Serif, couleurs de la palette, message d'accueil éditorial. Vérifier aussi le template de l'email magic link (sujet, contenu, branding).
 
 ---
 

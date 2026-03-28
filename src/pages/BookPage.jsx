@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { B, QUOTES, ACTIVITY } from "../data";
+import { B } from "../data";
 import Img from "../components/Img";
 import Stars from "../components/Stars";
 import Avatar from "../components/Avatar";
@@ -9,28 +9,63 @@ import Label from "../components/Label";
 import HScroll from "../components/HScroll";
 import LikeButton from "../components/LikeButton";
 import InteractiveStars from "../components/InteractiveStars";
+import { useReadingStatus, useUserRating } from "../hooks/useReadingStatus";
+import { useBookReviews } from "../hooks/useReviews";
+import { useBookQuotes } from "../hooks/useQuotes";
+import { useAuth } from "../lib/AuthContext";
+import { supabase } from "../lib/supabase";
+import { logActivity } from "../hooks/useActivity";
 
 export default function BookPage({ book, onBack, onTag, go }) {
+  const bookId = book._supabase?.id || book.id;
+  const { status: dbStatus, loading: statusLoading, setStatus: dbSetStatus, removeStatus: dbRemoveStatus } = useReadingStatus(bookId);
+  const { rating: dbRating, setRating: dbSetRating } = useUserRating(bookId);
+  const { reviews: dbReviews, loading: reviewsLoading, refetch: refetchReviews } = useBookReviews(bookId);
+  const { quotes: dbQuotes, loading: quotesLoading, refetch: refetchQuotes } = useBookQuotes(bookId);
+  const { user } = useAuth();
+
   const [st, setSt] = useState(null);
   const [ur, setUr] = useState(0);
   const [bt, setBt] = useState("critiques");
+  const [showReviewForm, setShowReviewForm] = useState(false);
+  const [reviewText, setReviewText] = useState("");
+  const [reviewSpoiler, setReviewSpoiler] = useState(false);
+  const [reviewSaving, setReviewSaving] = useState(false);
+  const [showQuoteForm, setShowQuoteForm] = useState(false);
+  const [quoteText, setQuoteText] = useState("");
+  const [quoteSaving, setQuoteSaving] = useState(false);
   const [finDate, setFinDate] = useState(null);
   const [noDate, setNoDate] = useState(false);
   const [isReread, setIsReread] = useState(false);
   const [tagInput, setTagInput] = useState("");
   const [tags, setTags] = useState([]);
   const dateRef = useRef(null);
-  const bq = QUOTES.filter(q => q.b.id === book.id);
 
-  const ALREADY_READ = [1, 7]; // 2666 & Ficciones
+  const ALREADY_READ = [1, 7];
   const KNOWN_TAGS = ["en vacances", "recommandé par Margaux", "avion CDG-JFK", "relu", "en VO", "café Oberkampf", "métro"];
   const [tagFocused, setTagFocused] = useState(false);
 
+  // Sync from DB on load
   useEffect(() => {
-    setSt(null); setUr(0); setBt("critiques");
-    setFinDate(null); setNoDate(false); setIsReread(false);
+    if (statusLoading) return;
+    if (dbStatus) {
+      setSt(dbStatus.status === "want_to_read" ? "À lire" : dbStatus.status === "reading" ? "En cours" : dbStatus.status === "read" ? "Lu" : dbStatus.status === "abandoned" ? "Abandonné" : null);
+      if (dbStatus.finished_at) setFinDate(dateToLabel(dbStatus.finished_at));
+      setIsReread(dbStatus.is_reread || false);
+    } else {
+      setSt(null); setFinDate(null); setIsReread(false);
+    }
+  }, [dbStatus, statusLoading]);
+
+  useEffect(() => { setUr(dbRating); }, [dbRating]);
+
+  // Reset local-only state on book change
+  useEffect(() => {
+    setBt("critiques"); setNoDate(false);
     setTagInput(""); setTags([]); setTagFocused(false);
   }, [book.id]);
+
+  const STATUS_MAP = { "En cours": "reading", "Lu": "read", "À lire": "want_to_read", "Abandonné": "abandoned" };
 
   const todayLabel = () => {
     const d = new Date();
@@ -46,13 +81,54 @@ export default function BookPage({ book, onBack, onTag, go }) {
 
   const handleStatus = s => {
     if (st === s) {
+      // Remove status
       setSt(null); setFinDate(null); setNoDate(false); setIsReread(false);
+      dbRemoveStatus();
     } else {
+      // Set new status
       setSt(s);
-      if (s === "Lu") { setFinDate(todayLabel()); setNoDate(false); }
-      else { setFinDate(null); setNoDate(false); }
+      const extras = {};
+      if (s === "Lu") {
+        const now = new Date().toISOString();
+        setFinDate(todayLabel()); setNoDate(false);
+        extras.finished_at = now;
+      } else {
+        setFinDate(null); setNoDate(false);
+      }
       setIsReread(false);
+      dbSetStatus(STATUS_MAP[s], extras);
     }
+  };
+
+  const handleRating = r => {
+    setUr(r);
+    dbSetRating(r);
+  };
+
+  const handlePublishReview = async () => {
+    if (!reviewText.trim() || !user) return;
+    setReviewSaving(true);
+    const { data } = await supabase.from("reviews").upsert(
+      { user_id: user.id, book_id: bookId, body: reviewText.trim(), contains_spoilers: reviewSpoiler, rating: ur || null },
+      { onConflict: "user_id,book_id" }
+    ).select("id").single();
+    if (data) logActivity(user.id, "review", data.id, "review", { book_id: bookId, book_title: book.t, rating: ur });
+    setReviewSaving(false);
+    setShowReviewForm(false);
+    setReviewText("");
+    setReviewSpoiler(false);
+    refetchReviews();
+  };
+
+  const handlePublishQuote = async () => {
+    if (!quoteText.trim() || !user) return;
+    setQuoteSaving(true);
+    const { data } = await supabase.from("quotes").insert({ user_id: user.id, book_id: bookId, body: quoteText.trim() }).select("id").single();
+    if (data) logActivity(user.id, "quote", data.id, "quote", { book_id: bookId, book_title: book.t });
+    setQuoteSaving(false);
+    setShowQuoteForm(false);
+    setQuoteText("");
+    refetchQuotes();
   };
 
   const norm = s => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
@@ -150,7 +226,7 @@ export default function BookPage({ book, onBack, onTag, go }) {
           {/* User rating */}
           <div className="mt-[18px]">
             <div className="text-xs text-[#737373] mb-1.5 font-body">Votre note</div>
-            <InteractiveStars value={ur} onChange={setUr} />
+            <InteractiveStars value={ur} onChange={handleRating} />
           </div>
 
           {/* Personal tags */}
@@ -241,7 +317,7 @@ export default function BookPage({ book, onBack, onTag, go }) {
                   : "font-normal text-[#737373] border-b-2 border-b-transparent"
               }`}
             >
-              {t}{t === "citations" && bq.length > 0 ? ` (${bq.length})` : ""}
+              {t}{t === "citations" && dbQuotes.length > 0 ? ` (${dbQuotes.length})` : ""}
             </button>
           ))}
         </div>
@@ -251,38 +327,139 @@ export default function BookPage({ book, onBack, onTag, go }) {
       <div className="py-4">
         {bt === "critiques" && (
           <div>
-            {ACTIVITY.filter(a => a.ty === "review").slice(0, 3).map(rv => (
-              <div key={rv.id} className="py-4 border-b border-border-light">
-                <div className="flex items-center gap-2.5 mb-2">
-                  <Avatar i={rv.av} s={26} />
-                  <span className="text-[13px] font-semibold font-body">{rv.u}</span>
-                  <Stars r={rv.r} s={11} />
+            {/* Write review */}
+            {!showReviewForm ? (
+              <button
+                onClick={() => setShowReviewForm(true)}
+                className="w-full mb-4 py-2.5 rounded-lg border-[1.5px] border-dashed border-[#ddd] bg-transparent cursor-pointer text-[13px] text-[#767676] font-body transition-colors duration-200 hover:border-[#767676] hover:text-[#1a1a1a]"
+              >
+                + Écrire une critique
+              </button>
+            ) : (
+              <div className="mb-4 p-4 bg-surface rounded-lg">
+                <textarea
+                  value={reviewText}
+                  onChange={e => setReviewText(e.target.value)}
+                  placeholder="Qu'avez-vous pensé de ce livre ?"
+                  className="w-full min-h-[120px] p-3 bg-white border border-[#eee] rounded-lg outline-none text-sm text-[#1a1a1a] font-body leading-[1.7] resize-y placeholder:text-[#767676] focus:border-[#ccc] transition-[border] duration-150"
+                />
+                <label className="flex items-center gap-2 mt-3 cursor-pointer">
+                  <input type="checkbox" checked={reviewSpoiler} onChange={e => setReviewSpoiler(e.target.checked)} className="accent-[#1a1a1a]" />
+                  <span className="text-xs text-[#737373] font-body">Cette critique contient des spoilers</span>
+                </label>
+                <div className="flex gap-2 mt-3">
+                  <button
+                    onClick={handlePublishReview}
+                    disabled={!reviewText.trim() || reviewSaving}
+                    className={`px-4 py-2 rounded-lg text-[13px] font-medium font-body border-none transition-all duration-150 ${
+                      reviewText.trim() && !reviewSaving
+                        ? "bg-[#1a1a1a] text-white cursor-pointer hover:bg-[#333]"
+                        : "bg-avatar-bg text-[#767676] cursor-not-allowed"
+                    }`}
+                  >
+                    {reviewSaving ? "Publication..." : "Publier"}
+                  </button>
+                  <button
+                    onClick={() => { setShowReviewForm(false); setReviewText(""); setReviewSpoiler(false); }}
+                    className="px-4 py-2 text-[13px] text-[#767676] font-body bg-transparent border-none cursor-pointer hover:text-[#1a1a1a] transition-colors duration-150"
+                  >
+                    Annuler
+                  </button>
                 </div>
-                <p className="text-[15px] text-[#333] leading-[1.7] m-0 font-body">{rv.txt}</p>
-                <div className="text-xs text-[#767676] mt-1.5 font-body"><LikeButton count={rv.lk} /></div>
               </div>
-            ))}
+            )}
+
+            {/* Reviews list */}
+            {reviewsLoading ? (
+              <div className="py-6 text-center text-[13px] text-[#767676] font-body">Chargement...</div>
+            ) : dbReviews.length > 0 ? (
+              dbReviews.map(rv => {
+                const name = rv.users?.display_name || rv.users?.username || "?";
+                const initials = name.split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2);
+                return (
+                  <div key={rv.id} className="py-4 border-b border-border-light">
+                    <div className="flex items-center gap-2.5 mb-2">
+                      <Avatar i={initials} s={26} />
+                      <span className="text-[13px] font-semibold font-body">{name}</span>
+                      {rv.rating > 0 && <Stars r={rv.rating} s={11} />}
+                    </div>
+                    {rv.contains_spoilers ? (
+                      <details>
+                        <summary className="text-[11px] text-spoiler cursor-pointer font-medium font-body">Cette critique contient des spoilers</summary>
+                        <p className="text-[15px] text-[#333] leading-[1.7] mt-2 font-body">{rv.body}</p>
+                      </details>
+                    ) : (
+                      <p className="text-[15px] text-[#333] leading-[1.7] m-0 font-body">{rv.body}</p>
+                    )}
+                  </div>
+                );
+              })
+            ) : (
+              <div className="py-6 text-center text-[13px] text-[#767676] font-body">Pas encore de critiques. Soyez le premier !</div>
+            )}
           </div>
         )}
 
         {bt === "citations" && (
           <div>
-            {bq.length > 0 ? bq.map(q => (
-              <div key={q.id} className="py-[18px] border-b border-border-light">
-                <div className="text-[15px] italic text-[#1a1a1a] leading-[1.7] border-l-[3px] border-l-cover-fallback pl-4 font-display">
-                  « {q.txt} »
-                </div>
-                <div className="flex items-center gap-2 mt-2.5">
-                  <span className="text-xs text-[#737373] font-body">{q.u}</span>
-                  <LikeButton count={q.lk} className="ml-auto text-xs text-[#767676] font-body" />
+            {/* Quote form */}
+            {!showQuoteForm ? (
+              <button
+                onClick={() => setShowQuoteForm(true)}
+                className="w-full mb-4 py-2.5 rounded-lg border-[1.5px] border-dashed border-[#ddd] bg-transparent cursor-pointer text-[13px] text-[#767676] font-body transition-colors duration-200 hover:border-[#767676] hover:text-[#1a1a1a]"
+              >
+                + Ajouter une citation
+              </button>
+            ) : (
+              <div className="mb-4 p-4 bg-surface rounded-lg">
+                <textarea
+                  value={quoteText}
+                  onChange={e => setQuoteText(e.target.value)}
+                  placeholder="Copiez un passage du livre..."
+                  className="w-full min-h-[80px] p-3 bg-white border border-[#eee] rounded-lg outline-none text-[15px] text-[#1a1a1a] font-display italic leading-[1.7] resize-y placeholder:text-[#767676] placeholder:not-italic placeholder:font-body focus:border-[#ccc] transition-[border] duration-150"
+                />
+                <div className="flex gap-2 mt-3">
+                  <button
+                    onClick={handlePublishQuote}
+                    disabled={!quoteText.trim() || quoteSaving}
+                    className={`px-4 py-2 rounded-lg text-[13px] font-medium font-body border-none transition-all duration-150 ${
+                      quoteText.trim() && !quoteSaving
+                        ? "bg-[#1a1a1a] text-white cursor-pointer hover:bg-[#333]"
+                        : "bg-avatar-bg text-[#767676] cursor-not-allowed"
+                    }`}
+                  >
+                    {quoteSaving ? "Publication..." : "Publier"}
+                  </button>
+                  <button
+                    onClick={() => { setShowQuoteForm(false); setQuoteText(""); }}
+                    className="px-4 py-2 text-[13px] text-[#767676] font-body bg-transparent border-none cursor-pointer hover:text-[#1a1a1a] transition-colors duration-150"
+                  >
+                    Annuler
+                  </button>
                 </div>
               </div>
-            )) : (
-              <div className="py-8 text-center text-[#767676] text-[13px] font-body">Pas encore de citations.</div>
             )}
-            <button className="w-full mt-3 py-2.5 rounded-md border border-dashed border-[#ddd] bg-transparent cursor-pointer text-[13px] text-[#737373] font-body transition-colors duration-200 hover:border-[#767676] hover:text-[#1a1a1a]">
-              + Ajouter une citation
-            </button>
+
+            {/* Quotes list */}
+            {quotesLoading ? (
+              <div className="py-6 text-center text-[13px] text-[#767676] font-body">Chargement...</div>
+            ) : dbQuotes.length > 0 ? (
+              dbQuotes.map(q => {
+                const name = q.users?.display_name || q.users?.username || "?";
+                return (
+                  <div key={q.id} className="py-[18px] border-b border-border-light">
+                    <div className="text-[15px] italic text-[#1a1a1a] leading-[1.7] border-l-[3px] border-l-cover-fallback pl-4 font-display">
+                      « {q.body} »
+                    </div>
+                    <div className="flex items-center gap-2 mt-2.5">
+                      <span className="text-xs text-[#737373] font-body">{name}</span>
+                    </div>
+                  </div>
+                );
+              })
+            ) : (
+              <div className="py-6 text-center text-[#767676] text-[13px] font-body">Pas encore de citations.</div>
+            )}
           </div>
         )}
 

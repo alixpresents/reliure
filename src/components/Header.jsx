@@ -1,6 +1,10 @@
+import { useState } from "react";
+import { supabase } from "../lib/supabase";
 import Avatar from "./Avatar";
 
-export default function Header({ pg, setPg, onSearch }) {
+export default function Header({ pg, setPg, onSearch, initials = "?" }) {
+  const [menuOpen, setMenuOpen] = useState(false);
+
   const navItems = [
     ["explore", "Explorer"],
     ["citations", "Citations"],
@@ -8,6 +12,11 @@ export default function Header({ pg, setPg, onSearch }) {
     ["challenges", "Défis"],
     ["profile", "Profil"],
   ];
+
+  const handleLogout = async () => {
+    setMenuOpen(false);
+    await supabase.auth.signOut();
+  };
 
   return (
     <header className="sticky top-0 z-100 bg-white/92 backdrop-blur-[12px] border-b border-[#eee]">
@@ -56,7 +65,32 @@ export default function Header({ pg, setPg, onSearch }) {
             <line x1="21" y1="21" x2="16.65" y2="16.65" />
           </svg>
         </div>
-        <Avatar i="AL" s={28} />
+
+        {/* Avatar + dropdown */}
+        <div className="relative">
+          <div
+            role="button"
+            tabIndex={0}
+            onClick={() => setMenuOpen(!menuOpen)}
+            onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setMenuOpen(!menuOpen); } }}
+            className="cursor-pointer"
+          >
+            <Avatar i={initials} s={28} />
+          </div>
+          {menuOpen && (
+            <>
+              <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(false)} />
+              <div className="absolute right-0 top-full mt-2 bg-white border border-[#eee] rounded-lg shadow-[0_4px_16px_rgba(0,0,0,0.08)] z-50 overflow-hidden min-w-[160px]">
+                <button
+                  onClick={handleLogout}
+                  className="w-full px-4 py-3 text-left text-[13px] font-body text-[#737373] bg-transparent border-none cursor-pointer hover:bg-surface hover:text-[#1a1a1a] transition-colors duration-100"
+                >
+                  Se déconnecter
+                </button>
+              </div>
+            </>
+          )}
+        </div>
       </div>
     </header>
   );

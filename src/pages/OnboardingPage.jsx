@@ -2,8 +2,10 @@ import { useState, useEffect, useRef } from "react";
 import { B } from "../data";
 import Img from "../components/Img";
 import InteractiveStars from "../components/InteractiveStars";
-
-const TAKEN = ["alix", "margaux", "theo", "camille", "samir"];
+import { supabase } from "../lib/supabase";
+import { useAuth } from "../lib/AuthContext";
+import { searchBooks } from "../lib/googleBooks";
+import { importBook } from "../lib/importBook";
 
 function CoverBackdrop() {
   const covers = [...B, ...B.slice(0, 4)];
@@ -45,24 +47,38 @@ function PickedBook({ book, rating, onRate, onRemove }) {
   );
 }
 
-function Step1({ username, setUsername, bio, setBio, onNext }) {
-  const [status, setStatus] = useState(null); // null | "available" | "taken"
+function Step1({ username, setUsername, bio, setBio, onNext, error: externalError }) {
+  const [status, setStatus] = useState(null);
+  const [saving, setSaving] = useState(false);
   const timer = useRef(null);
 
   useEffect(() => {
     clearTimeout(timer.current);
     if (username.length < 2) { setStatus(null); return; }
-    timer.current = setTimeout(() => {
-      setStatus(TAKEN.includes(username) ? "taken" : "available");
+    timer.current = setTimeout(async () => {
+      const { data, error } = await supabase
+        .from("users")
+        .select("username")
+        .eq("username", username.toLowerCase())
+        .single();
+      if (error?.code === "PGRST116") setStatus("available");
+      else if (data) setStatus("taken");
+      else setStatus("available");
     }, 300);
     return () => clearTimeout(timer.current);
   }, [username]);
 
-  const valid = username.length >= 2 && status === "available";
+  const valid = username.length >= 2 && status === "available" && !saving;
 
   const borderColor = status === "available" ? "border-[#2E7D32]"
     : status === "taken" ? "border-spoiler"
     : "border-[#eee] focus-within:border-[#1a1a1a]";
+
+  const handleNext = async () => {
+    setSaving(true);
+    await onNext();
+    setSaving(false);
+  };
 
   return (
     <div>
@@ -86,8 +102,8 @@ function Step1({ username, setUsername, bio, setBio, onNext }) {
           />
           {status === "available" && <span className="text-[#2E7D32] text-sm font-medium shrink-0">✓</span>}
         </div>
-        {status === "taken" && (
-          <p className="text-xs text-spoiler mt-1.5 font-body">Ce pseudo est déjà pris</p>
+        {(status === "taken" || externalError) && (
+          <p className="text-xs text-spoiler mt-1.5 font-body">{externalError || "Ce pseudo est déjà pris"}</p>
         )}
       </div>
 
@@ -105,7 +121,7 @@ function Step1({ username, setUsername, bio, setBio, onNext }) {
       </div>
 
       <button
-        onClick={onNext}
+        onClick={handleNext}
         disabled={!valid}
         className={`w-full py-3.5 rounded-lg text-[15px] font-medium font-body border-none transition-all duration-200 ${
           valid
@@ -113,7 +129,7 @@ function Step1({ username, setUsername, bio, setBio, onNext }) {
             : "bg-avatar-bg text-[#767676] cursor-not-allowed"
         }`}
       >
-        Continuer
+        {saving ? "Création..." : "Continuer"}
       </button>
     </div>
   );
@@ -121,14 +137,29 @@ function Step1({ username, setUsername, bio, setBio, onNext }) {
 
 function Step2({ picks, setPicks, onFinish, onSkip }) {
   const [q, setQ] = useState("");
-  const res = q.length > 1
-    ? B.filter(b => !picks.some(p => p.book.id === b.id) && (b.t.toLowerCase().includes(q.toLowerCase()) || b.a.toLowerCase().includes(q.toLowerCase())))
-    : [];
+  const [saving, setSaving] = useState(false);
+  const [results, setResults] = useState([]);
+  const [searching, setSearching] = useState(false);
+  const searchTimer = useRef(null);
 
-  const addBook = book => {
+  useEffect(() => {
+    clearTimeout(searchTimer.current);
+    if (q.length < 2) { setResults([]); setSearching(false); return; }
+    setSearching(true);
+    searchTimer.current = setTimeout(async () => {
+      const res = await searchBooks(q);
+      setResults(res);
+      setSearching(false);
+    }, 400);
+    return () => clearTimeout(searchTimer.current);
+  }, [q]);
+
+  const addBook = gb => {
     if (picks.length < 3) {
+      const book = { id: gb.googleId, t: gb.title, a: gb.authors.join(", "), c: gb.coverUrl, y: gb.publishedDate ? parseInt(gb.publishedDate) : null, p: gb.pageCount, _google: gb };
       setPicks([...picks, { book, rating: 0 }]);
       setQ("");
+      setResults([]);
     }
   };
 
@@ -142,6 +173,12 @@ function Step2({ picks, setPicks, onFinish, onSkip }) {
 
   const hasBooks = picks.length > 0;
 
+  const handleFinish = async () => {
+    setSaving(true);
+    await onFinish();
+    setSaving(false);
+  };
+
   return (
     <div>
       <h1 className="font-display italic text-[28px] sm:text-[32px] font-normal text-center mb-2 leading-tight">
@@ -153,15 +190,15 @@ function Step2({ picks, setPicks, onFinish, onSkip }) {
 
       {picks.length < 3 && (
         <div className="mb-6 relative">
-          <div className="flex items-center gap-2.5 border-b-[1.5px] border-[#eee] focus-within:border-[#1a1a1a] transition-colors duration-200">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#bbb" strokeWidth="2">
+          <div className="bg-surface rounded-lg py-[11px] px-4 flex items-center gap-2.5 border border-[#eee] focus-within:border-[#ccc] transition-[border] duration-150">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#bbb" strokeWidth="2" className="shrink-0">
               <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
             </svg>
             <input
               value={q}
               onChange={e => setQ(e.target.value)}
               placeholder="Chercher un livre..."
-              className="w-full py-3 text-[15px] bg-transparent border-none outline-none text-[#1a1a1a] font-body"
+              className="bg-transparent border-none outline-none text-[#1a1a1a] text-sm w-full font-body placeholder:text-[#767676]"
             />
             {q && (
               <button
@@ -172,18 +209,25 @@ function Step2({ picks, setPicks, onFinish, onSkip }) {
               </button>
             )}
           </div>
-          {res.length > 0 && (
+          {searching && (
+            <div className="absolute left-0 right-0 mt-1 py-3 text-center text-[13px] text-[#767676] font-body">Recherche...</div>
+          )}
+          {!searching && results.length > 0 && (
             <div className="absolute left-0 right-0 border border-[#eee] rounded-lg mt-1 overflow-hidden bg-white z-10 shadow-[0_4px_16px_rgba(0,0,0,0.06)]">
-              {res.slice(0, 5).map(b => (
+              {results.slice(0, 5).map(gb => (
                 <div
-                  key={b.id}
-                  onClick={() => addBook(b)}
+                  key={gb.googleId}
+                  onClick={() => addBook(gb)}
                   className="flex items-center gap-3 px-3 py-2.5 cursor-pointer hover:bg-surface transition-colors duration-100 border-b border-border-light last:border-b-0"
                 >
-                  <Img book={b} w={32} h={48} />
+                  {gb.coverUrl ? (
+                    <img src={gb.coverUrl} alt="" className="w-8 h-12 object-cover rounded-sm shrink-0 bg-cover-fallback" />
+                  ) : (
+                    <div className="w-8 h-12 rounded-sm bg-cover-fallback shrink-0" />
+                  )}
                   <div className="min-w-0">
-                    <div className="text-sm font-medium font-body truncate">{b.t}</div>
-                    <div className="text-xs text-[#737373] font-body">{b.a}, {b.y}</div>
+                    <div className="text-sm font-medium font-body truncate">{gb.title}</div>
+                    <div className="text-xs text-[#737373] font-body">{gb.authors.join(", ")}{gb.publishedDate ? ` · ${gb.publishedDate.slice(0, 4)}` : ""}</div>
                   </div>
                 </div>
               ))}
@@ -213,15 +257,15 @@ function Step2({ picks, setPicks, onFinish, onSkip }) {
       )}
 
       <button
-        onClick={onFinish}
-        disabled={!hasBooks}
+        onClick={handleFinish}
+        disabled={!hasBooks || saving}
         className={`w-full py-3.5 rounded-lg text-[15px] font-medium font-body border-none transition-all duration-200 mt-6 ${
-          hasBooks
+          hasBooks && !saving
             ? "bg-[#1a1a1a] text-white cursor-pointer hover:bg-[#333]"
             : "bg-avatar-bg text-[#767676] cursor-not-allowed"
         }`}
       >
-        Continuer
+        {saving ? "Ajout en cours..." : "Continuer"}
       </button>
 
       <button
@@ -235,11 +279,13 @@ function Step2({ picks, setPicks, onFinish, onSkip }) {
 }
 
 export default function OnboardingPage({ onComplete }) {
+  const { user } = useAuth();
   const [step, setStep] = useState(1);
   const [username, setUsername] = useState("");
   const [bio, setBio] = useState("");
   const [picks, setPicks] = useState([]);
   const [leaving, setLeaving] = useState(false);
+  const [step1Error, setStep1Error] = useState(null);
 
   const transition = (next) => {
     setLeaving(true);
@@ -247,6 +293,58 @@ export default function OnboardingPage({ onComplete }) {
       next();
       setLeaving(false);
     }, 300);
+  };
+
+  const handleStep1 = async () => {
+    setStep1Error(null);
+    const { error } = await supabase.from("users").insert({
+      id: user.id,
+      username: username.toLowerCase(),
+      display_name: username,
+      bio: bio || null,
+    });
+    if (error) {
+      if (error.code === "23505") {
+        setStep1Error("Ce pseudo est déjà pris");
+      } else {
+        setStep1Error(error.message);
+      }
+      return;
+    }
+    transition(() => setStep(2));
+  };
+
+  const handleStep2 = async () => {
+    for (const pick of picks) {
+      const gb = pick.book._google;
+      let book;
+
+      if (gb) {
+        // Google Books result — use importBook
+        book = await importBook(gb);
+      } else {
+        // Fallback for mock data
+        const { data } = await supabase.from("books").select("id").eq("title", pick.book.t).single();
+        if (data) book = data;
+      }
+
+      if (!book?.id) continue;
+
+      await supabase.from("reading_status").insert({
+        user_id: user.id,
+        book_id: book.id,
+        status: "reading",
+      });
+
+      if (pick.rating > 0) {
+        await supabase.from("reviews").insert({
+          user_id: user.id,
+          book_id: book.id,
+          rating: pick.rating,
+        });
+      }
+    }
+    onComplete();
   };
 
   return (
@@ -273,14 +371,15 @@ export default function OnboardingPage({ onComplete }) {
               setUsername={setUsername}
               bio={bio}
               setBio={setBio}
-              onNext={() => transition(() => setStep(2))}
+              onNext={handleStep1}
+              error={step1Error}
             />
           )}
           {step === 2 && (
             <Step2
               picks={picks}
               setPicks={setPicks}
-              onFinish={() => transition(() => onComplete())}
+              onFinish={handleStep2}
               onSkip={() => transition(() => onComplete())}
             />
           )}

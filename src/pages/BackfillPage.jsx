@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { B } from "../data";
 import Img from "../components/Img";
 import Label from "../components/Label";
 import InteractiveStars from "../components/InteractiveStars";
+import { searchBooks } from "../lib/googleBooks";
 
 function BackfillBook({ book, rating, onRate, onRemove, isNew }) {
   return (
@@ -38,14 +39,25 @@ function StatusPill({ label, active, variant, onClick }) {
 
 export default function BackfillPage({ onBack }) {
   const [q, setQ] = useState("");
-  const [picks, setPicks] = useState([]); // { book, rating, status: "lu"|"alire" }
+  const [picks, setPicks] = useState([]);
   const [lastAdded, setLastAdded] = useState(null);
   const [confirming, setConfirming] = useState(false);
   const [confirmMsg, setConfirmMsg] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
+  const [searching, setSearching] = useState(false);
+  const searchTimer = useRef(null);
 
-  const res = q.length > 1
-    ? B.filter(b => b.t.toLowerCase().includes(q.toLowerCase()) || b.a.toLowerCase().includes(q.toLowerCase()))
-    : [];
+  useEffect(() => {
+    clearTimeout(searchTimer.current);
+    if (q.length < 2) { setSearchResults([]); setSearching(false); return; }
+    setSearching(true);
+    searchTimer.current = setTimeout(async () => {
+      const res = await searchBooks(q);
+      setSearchResults(res);
+      setSearching(false);
+    }, 400);
+    return () => clearTimeout(searchTimer.current);
+  }, [q]);
 
   const pickMap = new Map(picks.map(p => [p.book.id, p]));
 
@@ -62,13 +74,15 @@ export default function BackfillPage({ onBack }) {
     }
   };
 
-  const addFromSearch = book => {
+  const addFromSearch = gb => {
+    const book = { id: gb.googleId, t: gb.title, a: gb.authors.join(", "), c: gb.coverUrl, y: gb.publishedDate ? parseInt(gb.publishedDate) : null, p: gb.pageCount, _google: gb };
     if (!pickMap.has(book.id)) {
       setPicks([...picks, { book, rating: 0, status: "lu" }]);
       setLastAdded(book.id);
       setTimeout(() => setLastAdded(null), 300);
     }
     setQ("");
+    setSearchResults([]);
   };
 
   const rateBook = (id, r) => {
@@ -121,26 +135,32 @@ export default function BackfillPage({ onBack }) {
             className="bg-transparent border-none outline-none text-[#1a1a1a] text-sm w-full font-body placeholder:text-[#767676]"
           />
         </div>
-        {res.length > 0 && q.length > 1 && (
+        {searching && (
+          <div className="mt-2 py-3 text-center text-[13px] text-[#767676] font-body">Recherche...</div>
+        )}
+        {!searching && searchResults.length > 0 && (
           <div className="absolute left-0 right-0 mt-1 bg-white border border-[#eee] rounded-lg overflow-hidden z-10 shadow-[0_4px_16px_rgba(0,0,0,0.06)]">
-            {res.slice(0, 6).map(b => {
-              const inPile = pickMap.has(b.id);
-              return (
-                <div
-                  key={b.id}
-                  onClick={() => !inPile && addFromSearch(b)}
-                  className={`flex items-center gap-3 px-3 py-2.5 border-b border-border-light last:border-b-0 transition-colors duration-100 ${inPile ? "opacity-50 cursor-default" : "cursor-pointer hover:bg-surface"}`}
-                >
-                  <Img book={b} w={32} h={48} />
-                  <div className="min-w-0 flex-1">
-                    <div className="text-sm font-medium font-body truncate">{b.t}</div>
-                    <div className="text-xs text-[#737373] font-body">{b.a}, {b.y}</div>
-                  </div>
-                  {inPile && <span className="text-[11px] text-[#767676] font-body">ajouté</span>}
+            {searchResults.slice(0, 6).map(gb => (
+              <div
+                key={gb.googleId}
+                onClick={() => addFromSearch(gb)}
+                className="flex items-center gap-3 px-3 py-2.5 border-b border-border-light last:border-b-0 cursor-pointer hover:bg-surface transition-colors duration-100"
+              >
+                {gb.coverUrl ? (
+                  <img src={gb.coverUrl} alt="" className="w-8 h-12 object-cover rounded-sm shrink-0 bg-cover-fallback" />
+                ) : (
+                  <div className="w-8 h-12 rounded-sm bg-cover-fallback shrink-0" />
+                )}
+                <div className="min-w-0 flex-1">
+                  <div className="text-sm font-medium font-body truncate">{gb.title}</div>
+                  <div className="text-xs text-[#737373] font-body">{gb.authors.join(", ")}{gb.publishedDate ? ` · ${gb.publishedDate.slice(0, 4)}` : ""}</div>
                 </div>
-              );
-            })}
+              </div>
+            ))}
           </div>
+        )}
+        {!searching && q.length >= 2 && searchResults.length === 0 && (
+          <div className="mt-2 py-3 text-center text-[13px] text-[#767676] font-body">Aucun résultat.</div>
         )}
       </div>
 

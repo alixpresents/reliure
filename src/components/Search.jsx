@@ -1,15 +1,54 @@
-import { useState } from "react";
-import { B } from "../data";
-import Img from "./Img";
+import { useState, useEffect, useRef } from "react";
+import { searchBooks } from "../lib/googleBooks";
+import { importBook } from "../lib/importBook";
 
 export default function Search({ open, onClose, go }) {
   const [q, setQ] = useState("");
+  const [results, setResults] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [importing, setImporting] = useState(null);
+  const timer = useRef(null);
+
+  useEffect(() => {
+    clearTimeout(timer.current);
+    if (!q || q.length < 2) { setResults([]); setLoading(false); return; }
+    setLoading(true);
+    timer.current = setTimeout(async () => {
+      const res = await searchBooks(q);
+      setResults(res);
+      setLoading(false);
+    }, 400);
+    return () => clearTimeout(timer.current);
+  }, [q]);
 
   if (!open) return null;
 
-  const res = q.length > 1
-    ? B.filter(b => b.t.toLowerCase().includes(q.toLowerCase()) || b.a.toLowerCase().includes(q.toLowerCase()))
-    : [];
+  const handleSelect = async (gb) => {
+    setImporting(gb.googleId);
+    const book = await importBook(gb);
+    setImporting(null);
+    if (book) {
+      // Normalize to match the format expected by go()
+      const normalized = {
+        id: book.id,
+        t: book.title,
+        a: Array.isArray(book.authors) ? book.authors.join(", ") : (book.authors || ""),
+        c: book.cover_url,
+        y: book.publication_date ? parseInt(book.publication_date) : null,
+        p: book.page_count,
+        r: book.avg_rating || 0,
+        rt: book.rating_count || 0,
+        tags: Array.isArray(book.genres) ? book.genres : [],
+        desc: book.description,
+        awards: [],
+        _supabase: book,
+      };
+      go(normalized);
+      onClose();
+      setQ("");
+      setResults([]);
+    }
+  };
 
   return (
     <div
@@ -31,19 +70,40 @@ export default function Search({ open, onClose, go }) {
             placeholder="Chercher un livre, un auteur..."
             className="bg-transparent border-none outline-none text-[#1a1a1a] text-sm w-full font-body placeholder:text-[#767676]"
           />
+          {q && (
+            <button onClick={() => { setQ(""); setResults([]); }} className="text-[#767676] hover:text-[#1a1a1a] bg-transparent border-none cursor-pointer text-sm shrink-0">×</button>
+          )}
         </div>
+
         <div className="mt-3">
-          {res.map(b => (
+          {loading && (
+            <div className="py-4 text-center text-[13px] text-[#767676] font-body">Recherche...</div>
+          )}
+
+          {!loading && q.length >= 2 && results.length === 0 && (
+            <div className="py-4 text-center text-[13px] text-[#767676] font-body">Aucun résultat pour cette recherche.</div>
+          )}
+
+          {results.map(gb => (
             <div
-              key={b.id}
-              onClick={() => { go(b); onClose(); setQ(""); }}
-              className="flex gap-3 py-2.5 cursor-pointer border-b border-border-light hover:bg-[#fafafa]"
+              key={gb.googleId}
+              onClick={() => importing ? null : handleSelect(gb)}
+              className={`flex gap-3 py-2.5 border-b border-border-light transition-colors duration-100 ${importing === gb.googleId ? "opacity-50" : "cursor-pointer hover:bg-[#fafafa]"}`}
             >
-              <Img book={b} w={36} h={52} />
-              <div className="flex-1">
-                <div className="text-sm font-medium font-body">{b.t}</div>
-                <div className="text-xs text-[#6b6b6b] font-body">{b.a} · {b.y}</div>
+              {gb.coverUrl ? (
+                <img src={gb.coverUrl} alt="" className="w-9 h-[52px] object-cover rounded-sm shrink-0 bg-cover-fallback" />
+              ) : (
+                <div className="w-9 h-[52px] rounded-sm bg-cover-fallback shrink-0" />
+              )}
+              <div className="flex-1 min-w-0">
+                <div className="text-sm font-medium font-body truncate">{gb.title}</div>
+                <div className="text-xs text-[#737373] font-body truncate">
+                  {gb.authors.join(", ")}{gb.publishedDate ? ` · ${gb.publishedDate.slice(0, 4)}` : ""}
+                </div>
               </div>
+              {importing === gb.googleId && (
+                <span className="text-[11px] text-[#767676] font-body self-center shrink-0">Ajout...</span>
+              )}
             </div>
           ))}
         </div>

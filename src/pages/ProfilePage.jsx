@@ -1,16 +1,21 @@
 import { useState, useRef, useEffect } from "react";
-import { B, DIARY, REVIEWS, QUOTES, LISTS } from "../data";
+import { B, DIARY, LISTS } from "../data";
 import Img from "../components/Img";
 import Stars from "../components/Stars";
 import Avatar from "../components/Avatar";
 import Label from "../components/Label";
 import LikeButton from "../components/LikeButton";
 import InteractiveStars from "../components/InteractiveStars";
+import { useReadingList } from "../hooks/useReadingStatus";
+import { useProfileData } from "../hooks/useProfileData";
+import { useMyReviews } from "../hooks/useReviews";
+import { useMyQuotes } from "../hooks/useQuotes";
+import { useFollowCounts } from "../hooks/useFollow";
+import { useAuth } from "../lib/AuthContext";
+import { supabase } from "../lib/supabase";
 
-const INITIAL_PAGES = { 1: 654, 2: 312 };
-
-function ReadingItem({ book, go, onFinish }) {
-  const [currentPage, setCurrentPage] = useState(INITIAL_PAGES[book.id] || Math.floor(book.p * 0.4));
+function ReadingItem({ book, go, onFinish, initialPage = 0, statusId = null }) {
+  const [currentPage, setCurrentPage] = useState(initialPage);
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState("");
   const [finished, setFinished] = useState(false);
@@ -33,7 +38,11 @@ function ReadingItem({ book, go, onFinish }) {
     setEditing(false);
     const n = parseInt(draft, 10);
     if (!isNaN(n) && n >= 0) {
-      setCurrentPage(Math.min(n, book.p));
+      const clamped = Math.min(n, book.p);
+      setCurrentPage(clamped);
+      if (statusId) {
+        supabase.from("reading_status").update({ current_page: clamped }).eq("id", statusId);
+      }
       if (n >= book.p) setFinished(true);
     }
   };
@@ -116,20 +125,66 @@ function EmptyState({ children }) {
 
 export default function ProfilePage({ go, onBackfill, onSearch }) {
   const [tab, setTab] = useState("journal");
-  const [readingBooks, setReadingBooks] = useState(() => B.slice(0, 2));
-  const [emptyMode, setEmptyMode] = useState(false);
   const [libView, setLibView] = useState("grille");
+  const { books: dbReading, refetch: refetchReading } = useReadingList("reading");
+  const profileData = useProfileData();
+  const { reviews: myReviews } = useMyReviews();
+  const { quotes: myQuotes } = useMyQuotes();
+  const { user } = useAuth();
+  const { followers, following: followingCount } = useFollowCounts(user?.id);
 
-  const removeFromReading = id => {
-    setReadingBooks(prev => prev.filter(b => b.id !== id));
+  // Normalize reading books from Supabase
+  const normalizeStatus = rs => ({
+    id: rs.books?.id || rs.book_id,
+    t: rs.books?.title || "?",
+    a: Array.isArray(rs.books?.authors) ? rs.books.authors.join(", ") : (rs.books?.authors || ""),
+    c: rs.books?.cover_url,
+    p: rs.books?.page_count || 0,
+    r: rs.books?.avg_rating || 0,
+    _currentPage: rs.current_page || 0,
+    _statusId: rs.id,
+  });
+
+  const readingBooks = dbReading.map(normalizeStatus);
+
+  const removeFromReading = async id => {
+    const item = readingBooks.find(b => b.id === id);
+    if (item?._statusId) {
+      await supabase.from("reading_status").update({ status: "read", finished_at: new Date().toISOString() }).eq("id", item._statusId);
+    }
+    refetchReading();
+    profileData.refetch();
   };
 
-  const diary = emptyMode ? [] : DIARY;
-  const reviews = emptyMode ? [] : REVIEWS;
-  const quotes = emptyMode ? [] : QUOTES.filter(q => q.u === "Alix");
-  const lists = emptyMode ? [] : LISTS;
-  const reading = emptyMode ? [] : readingBooks;
-  const booksRead = emptyMode ? 2 : 38;
+  // Diary: group read books by month
+  const diaryMonths = (() => {
+    const months = ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre"];
+    const grouped = new Map();
+    (profileData.readBooks || []).forEach(rs => {
+      const d = new Date(rs.finished_at);
+      const key = `${months[d.getMonth()].charAt(0).toUpperCase() + months[d.getMonth()].slice(1)} ${d.getFullYear()}`;
+      if (!grouped.has(key)) grouped.set(key, []);
+      grouped.get(key).push({
+        b: { id: rs.books?.id, t: rs.books?.title, c: rs.books?.cover_url, a: Array.isArray(rs.books?.authors) ? rs.books.authors.join(", ") : "" },
+        d: String(d.getDate()),
+        lk: false,
+      });
+    });
+    return Array.from(grouped.entries());
+  })();
+
+  // Library: all statuses
+  const libraryBooks = (profileData.allStatuses || []).map(rs => ({
+    ...normalizeStatus(rs),
+    _rating: profileData.reviewMap?.get(rs.book_id) || 0,
+  }));
+
+  // Stats
+  const totalBooks = profileData.stats?.total || 0;
+  const booksThisYear = profileData.stats?.thisYear || 0;
+
+  // Lists still mock for now
+  const lists = LISTS;
 
   return (
     <div>
@@ -151,7 +206,7 @@ export default function ProfilePage({ go, onBackfill, onSearch }) {
             <div className="text-xs text-[#767676] font-body">Paris · @alix</div>
           </div>
           <div className="flex gap-5 text-xs text-[#737373] font-body w-full sm:w-auto mt-2 sm:mt-0">
-            {[["142", "livres"], ["38", "cette année"], ["89", "abonnés"], ["64", "abonnements"]].map(([n, l]) => (
+            {[[String(totalBooks), "livres"], [String(booksThisYear), "cette année"], [String(followers), "abonnés"], [String(followingCount), "abonnements"]].map(([n, l]) => (
               <span key={l}><strong className="text-[#1a1a1a] font-semibold">{n}</strong> {l}</span>
             ))}
           </div>
@@ -216,9 +271,9 @@ export default function ProfilePage({ go, onBackfill, onSearch }) {
       {/* En cours */}
       <div className="border-t border-border-light py-6">
         <Label>En cours de lecture</Label>
-        {reading.length > 0 ? (
-          reading.map(b => (
-            <ReadingItem key={b.id} book={b} go={go} onFinish={removeFromReading} />
+        {readingBooks.length > 0 ? (
+          readingBooks.map(b => (
+            <ReadingItem key={b.id} book={b} go={go} onFinish={removeFromReading} initialPage={b._currentPage || 0} statusId={b._statusId} />
           ))
         ) : (
           <EmptyState>
@@ -253,30 +308,24 @@ export default function ProfilePage({ go, onBackfill, onSearch }) {
       {/* Journal/diary */}
       {tab === "journal" && (
         <div className="py-4">
-          {diary.length > 0 ? (
-            ["Mars 2026", "Février 2026", "Janvier 2026"].map(month => {
-              const key = month.startsWith("Mars") ? "Mars" : month.startsWith("Fév") ? "Fév" : "Jan";
-              const entries = diary.filter(e => e.m === key);
-              if (entries.length === 0) return null;
-              return (
-                <div key={month} className="mb-6">
-                  <div className="text-[11px] font-semibold uppercase tracking-[1.5px] text-[#767676] mb-3 pb-2 border-b border-border-light font-body">
-                    {month}
-                  </div>
-                  <div className="flex gap-1.5 flex-wrap">
-                    {entries.map((e, i) => (
-                      <div key={`${key}-${e.b.id}`} role="button" tabIndex={0} className="relative cursor-pointer" onClick={() => go(e.b)} onKeyDown={ev => { if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); go(e.b); } }}>
-                        <Img book={e.b} w={80} h={120} />
-                        <div className="absolute bottom-1 left-1 right-1 flex justify-between items-center">
-                          <span className="text-[8px] bg-black/60 text-white px-1 py-[2px] rounded-sm font-body">{e.d}</span>
-                          {e.lk && <span className="text-[10px] bg-black/60 text-spoiler px-[3px] py-[1px] rounded-sm">♥</span>}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+          {diaryMonths.length > 0 ? (
+            diaryMonths.map(([monthLabel, entries]) => (
+              <div key={monthLabel} className="mb-6">
+                <div className="text-[11px] font-semibold uppercase tracking-[1.5px] text-[#767676] mb-3 pb-2 border-b border-border-light font-body">
+                  {monthLabel}
                 </div>
-              );
-            })
+                <div className="flex gap-1.5 flex-wrap">
+                  {entries.map((e, i) => (
+                    <div key={`${monthLabel}-${e.b.id}-${i}`} role="button" tabIndex={0} className="relative cursor-pointer" onClick={() => go(e.b)} onKeyDown={ev => { if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); go(e.b); } }}>
+                      <Img book={e.b} w={80} h={120} />
+                      <div className="absolute bottom-1 left-1 right-1 flex justify-between items-center">
+                        <span className="text-[8px] bg-black/60 text-white px-1 py-[2px] rounded-sm font-body">{e.d}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))
           ) : (
             <EmptyState>
               <div className="text-sm text-[#737373] font-body">Pas encore de lectures.</div>
@@ -311,13 +360,20 @@ export default function ProfilePage({ go, onBackfill, onSearch }) {
                 </button>
               ))}
             </div>
-            <span className="text-[11px] text-[#767676] font-body">{B.length} livres</span>
+            <span className="text-[11px] text-[#767676] font-body">{libraryBooks.length} livres</span>
           </div>
+
+          {libraryBooks.length === 0 ? (
+            <EmptyState>
+              <div className="text-sm text-[#737373] font-body">Ta bibliothèque est vide.</div>
+              <button onClick={onSearch} className="mt-4 px-5 py-2.5 rounded-[20px] text-[13px] font-medium font-body bg-[#1a1a1a] text-white border-none cursor-pointer hover:bg-[#333] transition-colors duration-150">Chercher un livre</button>
+            </EmptyState>
+          ) : <>
 
           {/* Grille */}
           {libView === "grille" && (
             <div className="grid grid-cols-4 sm:grid-cols-6 gap-2.5">
-              {B.map(b => (
+              {libraryBooks.map(b => (
                 <Img key={b.id} book={b} w={999} h={999} onClick={() => go(b)} className="w-full h-auto aspect-[2/3]" />
               ))}
             </div>
@@ -326,7 +382,7 @@ export default function ProfilePage({ go, onBackfill, onSearch }) {
           {/* Liste */}
           {libView === "liste" && (
             <div>
-              {B.map(b => (
+              {libraryBooks.map(b => (
                 <div
                   key={b.id}
                   role="button"
@@ -341,7 +397,7 @@ export default function ProfilePage({ go, onBackfill, onSearch }) {
                     <div className="text-sm font-medium font-body truncate">{b.t}</div>
                     <div className="text-xs text-[#737373] font-body">{b.a} · {b.y}</div>
                   </div>
-                  <Stars r={b.r} s={11} />
+                  {(b._rating || b.r) > 0 && <Stars r={b._rating || b.r} s={11} />}
                 </div>
               ))}
             </div>
@@ -351,8 +407,8 @@ export default function ProfilePage({ go, onBackfill, onSearch }) {
           {libView === "étagère" && (() => {
             const shelfSize = typeof window !== "undefined" && window.innerWidth < 640 ? 5 : 7;
             const shelves = [];
-            for (let i = 0; i < B.length; i += shelfSize) {
-              shelves.push(B.slice(i, i + shelfSize));
+            for (let i = 0; i < libraryBooks.length; i += shelfSize) {
+              shelves.push(libraryBooks.slice(i, i + shelfSize));
             }
             return (
               <div className="bg-[#faf8f5] rounded-lg p-3 sm:p-4 flex flex-col gap-0">
@@ -387,35 +443,39 @@ export default function ProfilePage({ go, onBackfill, onSearch }) {
               </div>
             );
           })()}
+
+          </>}
         </div>
       )}
 
       {/* Critiques */}
       {tab === "mes critiques" && (
         <div className="py-3">
-          {reviews.length > 0 ? reviews.map((rv, i) => (
-            <div key={i} className="py-5 border-b border-border-light">
-              <div className="flex gap-4">
-                <Img book={rv.b} w={72} h={108} onClick={() => go(rv.b)} />
-                <div className="flex-1">
-                  <div className="text-base font-medium font-body mb-0.5">{rv.b.t}</div>
-                  <div className="text-xs text-[#737373] mb-2 font-body">{rv.b.a}, {rv.b.y}</div>
-                  <Stars r={rv.r} s={12} />
-                  {rv.sp ? (
-                    <details className="mt-2.5">
-                      <summary className="text-[11px] text-spoiler cursor-pointer font-medium font-body">
-                        Cette critique contient des spoilers
-                      </summary>
-                      <p className="text-[15px] text-[#333] leading-[1.7] mt-2.5 font-body">{rv.txt}</p>
-                    </details>
-                  ) : (
-                    <p className="text-[15px] text-[#333] leading-[1.7] mt-2.5 font-body">{rv.txt}</p>
-                  )}
-                  <div className="text-[11px] text-[#767676] mt-2.5 font-body"><LikeButton count={rv.lk} /> · {rv.d} 2026</div>
+          {myReviews.length > 0 ? myReviews.map(rv => {
+            const b = rv.books;
+            if (!b) return null;
+            const bookObj = { id: b.id, t: b.title, a: Array.isArray(b.authors) ? b.authors.join(", ") : "", c: b.cover_url, y: b.publication_date ? parseInt(b.publication_date) : null };
+            return (
+              <div key={rv.id} className="py-5 border-b border-border-light">
+                <div className="flex gap-4">
+                  <Img book={bookObj} w={72} h={108} onClick={() => go(bookObj)} />
+                  <div className="flex-1">
+                    <div className="text-base font-medium font-body mb-0.5">{b.title}</div>
+                    <div className="text-xs text-[#737373] mb-2 font-body">{bookObj.a}{bookObj.y ? `, ${bookObj.y}` : ""}</div>
+                    {rv.rating > 0 && <Stars r={rv.rating} s={12} />}
+                    {rv.contains_spoilers ? (
+                      <details className="mt-2.5">
+                        <summary className="text-[11px] text-spoiler cursor-pointer font-medium font-body">Cette critique contient des spoilers</summary>
+                        <p className="text-[15px] text-[#333] leading-[1.7] mt-2.5 font-body">{rv.body}</p>
+                      </details>
+                    ) : (
+                      <p className="text-[15px] text-[#333] leading-[1.7] mt-2.5 font-body">{rv.body}</p>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
-          )) : (
+            );
+          }) : (
             <EmptyState>
               <div className="text-sm text-[#737373] font-body">Tu n'as pas encore écrit de critique.</div>
               <div className="text-xs text-[#767676] font-body mt-1">Tes critiques apparaîtront ici.</div>
@@ -427,19 +487,24 @@ export default function ProfilePage({ go, onBackfill, onSearch }) {
       {/* Citations */}
       {tab === "mes citations" && (
         <div className="py-3">
-          {quotes.length > 0 ? quotes.map(q => (
-            <div key={q.id} className="py-5 border-b border-border-light">
-              <div className="text-[15px] italic text-[#1a1a1a] leading-[1.7] border-l-[3px] border-l-cover-fallback pl-4 mb-3 font-display">
-                « {q.txt} »
+          {myQuotes.length > 0 ? myQuotes.map(q => {
+            const b = q.books;
+            const bookObj = b ? { id: q.book_id, t: b.title, a: Array.isArray(b.authors) ? b.authors.join(", ") : "", c: b.cover_url } : null;
+            return (
+              <div key={q.id} className="py-5 border-b border-border-light">
+                <div className="text-[15px] italic text-[#1a1a1a] leading-[1.7] border-l-[3px] border-l-cover-fallback pl-4 mb-3 font-display">
+                  « {q.body} »
+                </div>
+                {bookObj && (
+                  <div className="flex items-center gap-2.5">
+                    <Img book={bookObj} w={28} h={40} onClick={() => go(bookObj)} />
+                    <span className="text-[13px] font-medium font-body">{bookObj.t}</span>
+                    <span className="text-xs text-[#767676] font-body">· {bookObj.a}</span>
+                  </div>
+                )}
               </div>
-              <div className="flex items-center gap-2.5">
-                <Img book={q.b} w={28} h={40} onClick={() => go(q.b)} />
-                <span className="text-[13px] font-medium font-body">{q.b.t}</span>
-                <span className="text-xs text-[#767676] font-body">· {q.b.a}</span>
-                <LikeButton count={q.lk} className="ml-auto text-xs text-[#767676] font-body" />
-              </div>
-            </div>
-          )) : (
+            );
+          }) : (
             <EmptyState>
               <div className="text-sm text-[#737373] font-body">Pas encore de citations sauvegardées.</div>
             </EmptyState>
@@ -475,89 +540,81 @@ export default function ProfilePage({ go, onBackfill, onSearch }) {
       )}
 
       {/* Bilan */}
-      {tab === "bilan" && (
+      {tab === "bilan" && (() => {
+        const yr = new Date().getFullYear();
+        const s = profileData.stats || {};
+        const chrono = profileData.chronology || Array(12).fill(0);
+        const top = profileData.topRated || [];
+        return (
         <div className="py-5">
-          {booksRead >= 5 ? (
+          {s.thisYear >= 5 ? (
             <>
               <div className="text-center mb-7">
                 <Label>Bilan de l'année</Label>
-                <div className="text-[40px] font-bold tracking-tight font-body">2026</div>
+                <div className="text-[40px] font-bold tracking-tight font-body">{yr}</div>
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-px bg-[#eee] rounded-lg overflow-hidden mb-7">
                 {[
-                  { l: "Livres lus", v: "38" }, { l: "Pages tournées", v: "12 847" }, { l: "Note moyenne", v: "4.1 ★" },
-                  { l: "Critiques", v: "24" }, { l: "Citations", v: "14" }, { l: "Listes", v: "6" },
-                ].map((s, i) => (
+                  { l: "Livres lus", v: String(s.thisYear) },
+                  { l: "Pages tournées", v: s.pagesThisYear?.toLocaleString("fr-FR") || "0" },
+                  { l: "Note moyenne", v: s.avgRating > 0 ? `${s.avgRating} ★` : "—" },
+                  { l: "Critiques", v: String(s.reviewsCount || 0) },
+                  { l: "Citations", v: "0" },
+                  { l: "Listes", v: "0" },
+                ].map((st, i) => (
                   <div key={i} className="bg-white p-5 text-center">
-                    <div className="text-[22px] font-semibold font-body">{s.v}</div>
-                    <div className="text-[10px] text-[#737373] mt-[3px] uppercase tracking-[0.5px] font-body">{s.l}</div>
+                    <div className="text-[22px] font-semibold font-body">{st.v}</div>
+                    <div className="text-[10px] text-[#737373] mt-[3px] uppercase tracking-[0.5px] font-body">{st.l}</div>
                   </div>
                 ))}
               </div>
               <Label>Chronologie de lecture</Label>
               {(() => {
-                const data = [4, 6, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-                const max = Math.max(...data, 1);
+                const max = Math.max(...chrono, 1);
                 const barH = 100;
                 return (
                   <div className="flex items-end gap-1.5 mt-2 mb-7" style={{ height: barH + 24 }}>
-                    {data.map((v, i) => (
+                    {chrono.map((v, i) => (
                       <div key={i} className="flex-1 flex flex-col items-center gap-1">
                         {v > 0 && <div className="text-[9px] text-[#737373] font-body">{v}</div>}
-                        <div
-                          className={`w-full rounded-[3px] ${v ? "bg-[#1a1a1a]" : "bg-avatar-bg"}`}
-                          style={{ height: v ? (v / max) * barH : 4 }}
-                        />
-                        <span className="text-[9px] text-[#767676] font-body">
-                          {["J", "F", "M", "A", "M", "J", "J", "A", "S", "O", "N", "D"][i]}
-                        </span>
+                        <div className={`w-full rounded-[3px] ${v ? "bg-[#1a1a1a]" : "bg-avatar-bg"}`} style={{ height: v ? (v / max) * barH : 4 }} />
+                        <span className="text-[9px] text-[#767676] font-body">{["J", "F", "M", "A", "M", "J", "J", "A", "S", "O", "N", "D"][i]}</span>
                       </div>
                     ))}
                   </div>
                 );
               })()}
-              <Label>Les mieux notés</Label>
-              <div className="flex gap-2.5">
-                {[B[6], B[0], B[2], B[8], B[4]].map(b => (
-                  <div key={b.id} className="text-center flex-1">
-                    <Img book={b} w={999} h={999} onClick={() => go(b)} className="w-full h-auto aspect-[2/3]" />
-                    <div className="text-[10px] font-medium mt-1.5 overflow-hidden text-ellipsis whitespace-nowrap font-body">{b.t}</div>
+              {top.length > 0 && (
+                <>
+                  <Label>Les mieux notés</Label>
+                  <div className="flex gap-2.5">
+                    {top.map(b => (
+                      <div key={b.id} className="text-center flex-1">
+                        <Img book={b} w={999} h={999} onClick={() => go(b)} className="w-full h-auto aspect-[2/3]" />
+                        <div className="text-[10px] font-medium mt-1.5 overflow-hidden text-ellipsis whitespace-nowrap font-body">{b.t}</div>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
+                </>
+              )}
             </>
           ) : (
             <EmptyState>
               <div className="font-display italic text-[18px] text-[#1a1a1a] mb-5">
-                Encore {5 - booksRead} livre{5 - booksRead > 1 ? "s" : ""} pour débloquer ton bilan 2026
+                Encore {5 - (s.thisYear || 0)} livre{(5 - (s.thisYear || 0)) > 1 ? "s" : ""} pour débloquer ton bilan {yr}
               </div>
               <div className="flex justify-center mb-2">
                 <div className="w-[200px] h-1.5 bg-avatar-bg rounded overflow-hidden">
-                  <div className="h-full bg-[#1a1a1a] rounded transition-all duration-400" style={{ width: `${(booksRead / 5) * 100}%` }} />
+                  <div className="h-full bg-[#1a1a1a] rounded transition-all duration-400" style={{ width: `${((s.thisYear || 0) / 5) * 100}%` }} />
                 </div>
               </div>
-              <div className="text-xs text-[#767676] font-body mb-6">{booksRead}/5</div>
-              {booksRead > 0 && (
-                <div className="flex justify-center gap-2.5">
-                  {B.slice(0, booksRead).map(b => (
-                    <Img key={b.id} book={b} w={52} h={78} onClick={() => go(b)} />
-                  ))}
-                </div>
-              )}
+              <div className="text-xs text-[#767676] font-body mb-6">{s.thisYear || 0}/5</div>
             </EmptyState>
           )}
         </div>
-      )}
+        );
+      })()}
 
-      {/* Dev toggle */}
-      <div className="border-t border-border-light mt-8 pt-4 pb-2 flex justify-center">
-        <button
-          onClick={() => setEmptyMode(!emptyMode)}
-          className="text-[11px] text-[#767676] font-body bg-transparent border border-[#eee] rounded px-3 py-1 cursor-pointer hover:border-[#ccc] transition-colors duration-150"
-        >
-          {emptyMode ? "Mode rempli" : "Mode vide"}
-        </button>
-      </div>
     </div>
   );
 }
