@@ -176,7 +176,7 @@ L'edge function `book_import` interroge les sources par ISBN, fusionne les résu
 - "Évaluations" (pas "Notes" pour le compteur communautaire — "Note" est réservé à la notation personnelle)
 
 ### Navigation
-5 sections principales : Explorer, Citations, Fil, Profil | La Revue (séparée visuellement, serif italic).
+6 sections principales : Explorer, Citations, Fil, Challenges, Profil | La Revue (séparée visuellement, serif italic).
 Onglets profil : Journal (diary), Mes critiques, Mes citations, Mes listes, Bilan.
 
 ## Ce qu'on ne fait PAS au MVP

@@ -4,7 +4,7 @@ import Img from "../components/Img";
 import Tag from "../components/Tag";
 import Label from "../components/Label";
 
-export default function JournalPage({ go }) {
+export default function JournalPage({ go, goArticle }) {
   const [jt, setJt] = useState("textes");
   const feat = JARTICLES[0];
 
@@ -39,12 +39,18 @@ export default function JournalPage({ go }) {
       {jt === "textes" && (
         <div>
           {/* Featured */}
-          <div className="py-8 pb-7 cursor-pointer">
+          <div
+            role="button"
+            tabIndex={0}
+            onClick={() => goArticle(feat)}
+            onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); goArticle(feat); } }}
+            className="py-8 pb-7 cursor-pointer"
+          >
             <div className="flex items-start gap-2 mb-3.5"><Tag>{feat.tag}</Tag></div>
-            <h3 className="text-2xl font-normal mb-2 leading-[1.25] max-w-[580px] font-display italic">{feat.t}</h3>
+            <h3 className="text-xl sm:text-2xl font-normal mb-2 leading-[1.25] max-w-[580px] font-display italic">{feat.t}</h3>
             <p className="text-[15px] text-[#666] mb-4 leading-normal max-w-[580px] font-body">{feat.st}</p>
             <div className="flex flex-col sm:flex-row gap-6">
-              <Img book={feat.cv} w={200} h={300} onClick={() => go(feat.cv)} className="sm:w-[200px] sm:h-[300px] w-full h-auto aspect-[2/3] mx-auto sm:mx-0" />
+              <Img book={feat.cv} w={200} h={300} className="sm:w-[200px] sm:h-[300px] w-full h-auto aspect-[2/3] mx-auto sm:mx-0" />
               <div className="flex-1">
                 <p className="text-[15px] text-[#333] leading-[1.7] mb-5 font-body">{feat.ex}</p>
                 <div className="text-xs text-[#737373] font-body">
@@ -60,7 +66,14 @@ export default function JournalPage({ go }) {
 
           {/* Other articles */}
           {JARTICLES.slice(1).map(a => (
-            <div key={a.id} className="py-7 border-b border-[#f3f3f3] cursor-pointer">
+            <div
+              key={a.id}
+              role="button"
+              tabIndex={0}
+              onClick={() => goArticle(a)}
+              onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); goArticle(a); } }}
+              className="py-7 border-b border-[#f3f3f3] cursor-pointer"
+            >
               <div className="flex gap-5">
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-2.5"><Tag>{a.tag}</Tag></div>
@@ -73,7 +86,7 @@ export default function JournalPage({ go }) {
                     <span className="mx-1.5 text-[#ddd]">·</span>{a.rt}
                   </div>
                 </div>
-                <Img book={a.cv} w={90} h={135} onClick={() => go(a.cv)} />
+                <Img book={a.cv} w={90} h={135} />
               </div>
             </div>
           ))}

@@ -79,7 +79,7 @@ function ReadingItem({ book, go, onFinish }) {
             <span>/{book.p}</span>
           </div>
         ) : (
-          <div className="flex items-center gap-1.5" onClick={startEdit}>
+          <div role="button" tabIndex={0} className="flex items-center gap-1.5" onClick={startEdit} onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); startEdit(); } }} aria-label="Modifier la page">
             <span className="text-[11px] text-[#767676] font-body cursor-pointer">
               p. {currentPage}/{book.p}
             </span>
@@ -101,9 +101,13 @@ function ReadingItem({ book, go, onFinish }) {
             {[1, 2, 3, 4, 5].map(n => (
               <span
                 key={n}
+                role="button"
+                tabIndex={0}
+                aria-label={`${n} étoile${n > 1 ? "s" : ""}`}
                 onMouseEnter={() => setFinHv(n)}
                 onMouseLeave={() => setFinHv(0)}
                 onClick={() => setFinRating(n === finRating ? 0 : n)}
+                onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setFinRating(n === finRating ? 0 : n); } }}
                 className={`cursor-pointer text-xs transition-all duration-150 inline-block ${n <= (finHv || 0) ? "scale-110" : ""}`}
                 style={{ color: n <= (finHv || finRating) ? "#D4883A" : "#ddd" }}
               >
@@ -131,6 +135,7 @@ export default function ProfilePage({ go, onBackfill, onSearch }) {
   const [tab, setTab] = useState("journal");
   const [readingBooks, setReadingBooks] = useState(() => B.slice(0, 2));
   const [emptyMode, setEmptyMode] = useState(false);
+  const [libView, setLibView] = useState("grille");
 
   const removeFromReading = id => {
     setReadingBooks(prev => prev.filter(b => b.id !== id));
@@ -150,7 +155,16 @@ export default function ProfilePage({ go, onBackfill, onSearch }) {
         <div className="flex items-center gap-3.5 mb-3.5 flex-wrap sm:flex-nowrap">
           <Avatar i="AL" s={52} />
           <div className="flex-1">
-            <div className="text-[22px] font-normal font-display italic">Alix</div>
+            <div className="text-[22px] font-normal font-display italic flex items-center gap-1.5">
+              Alix
+              <span className="relative group/verified inline-flex">
+                <svg width="16" height="16" viewBox="0 0 24 24" className="shrink-0 cursor-pointer"><circle cx="12" cy="12" r="10" fill="#1a1a1a" /><path d="M8 12.5l2.5 2.5L16 9.5" fill="none" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2.5 py-1.5 rounded-md bg-[#1a1a1a] text-white text-[11px] font-body whitespace-nowrap opacity-0 scale-95 group-hover/verified:opacity-100 group-hover/verified:scale-100 transition-all duration-150 pointer-events-none">
+                  Compte vérifié
+                  <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-[#1a1a1a]" />
+                </div>
+              </span>
+            </div>
             <div className="text-xs text-[#767676] font-body">Paris · @alix</div>
           </div>
           <div className="flex gap-5 text-xs text-[#737373] font-body w-full sm:w-auto mt-2 sm:mt-0">
@@ -159,14 +173,38 @@ export default function ProfilePage({ go, onBackfill, onSearch }) {
             ))}
           </div>
         </div>
-        <p className="text-[13px] text-[#6b6b6b] leading-relaxed max-w-[480px] m-0 font-body">
+        <p className="text-[13px] text-[#6b6b6b] leading-relaxed max-w-[480px] m-0 mb-3 font-body">
           Lecteur compulsif. Fiction contemporaine, littérature latino-américaine, existentialisme.
         </p>
+        <div className="flex items-center gap-1.5 flex-wrap">
+          {[
+            { label: "Rossignol — Multi-Défis 2026", border: "#e8dfd2", bg: "linear-gradient(135deg, #faf6f0, #f0e8d8)", content: <span className="text-star text-sm">★</span> },
+            { label: "Défi Francophone 2025 — Mésange", border: "#c8d8c8", bg: "linear-gradient(135deg, #f0f5f0, #dce8dc)", content: <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><polygon points="12,2 15,9 22,9 16.5,14 18.5,21 12,17 5.5,21 7.5,14 2,9 9,9" fill="#6a9a5a" /></svg> },
+            { label: "100 livres lus", border: "#d8cce8", bg: "linear-gradient(135deg, #f5f0fa, #e8ddf5)", content: <span className="text-[11px] font-bold text-[#7a5aaa] font-body">100</span> },
+          ].map(b => (
+            <div key={b.label} className="relative group/badge">
+              <div
+                className={`w-8 h-8 rounded-full flex items-center justify-center cursor-pointer border-[1.5px] transition-transform duration-150 hover:scale-110 shrink-0`}
+                style={{ background: b.bg, borderColor: b.border }}
+              >
+                {b.content}
+              </div>
+              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2.5 py-1.5 rounded-md bg-[#1a1a1a] text-white text-[11px] font-body whitespace-nowrap opacity-0 scale-95 group-hover/badge:opacity-100 group-hover/badge:scale-100 transition-all duration-150 pointer-events-none">
+                {b.label}
+                <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-[#1a1a1a]" />
+              </div>
+            </div>
+          ))}
+          <span className="text-[11px] text-[#767676] font-body ml-0.5">3 badges</span>
+        </div>
       </div>
 
       {/* Backfill banner */}
       <div
+        role="button"
+        tabIndex={0}
         onClick={onBackfill}
+        onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onBackfill(); } }}
         className="flex items-center gap-4 p-3 px-4 bg-surface rounded-lg border border-[#eee] cursor-pointer hover:border-[#ddd] transition-colors duration-150 mb-0"
       >
         <div className="flex-1">
@@ -204,7 +242,7 @@ export default function ProfilePage({ go, onBackfill, onSearch }) {
             <div className="text-sm text-[#737373] font-body">Rien en cours.</div>
             <div className="text-xs text-[#767676] font-body mt-1">
               Que lis-tu en ce moment ?{" "}
-              <span onClick={onSearch} className="underline cursor-pointer hover:text-[#1a1a1a] transition-colors duration-150">Chercher</span>
+              <span role="button" tabIndex={0} onClick={onSearch} onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onSearch(); } }} className="underline cursor-pointer hover:text-[#1a1a1a] transition-colors duration-150">Chercher</span>
             </div>
           </EmptyState>
         )}
@@ -213,7 +251,7 @@ export default function ProfilePage({ go, onBackfill, onSearch }) {
       {/* Tabs */}
       <div className="border-t border-border-light">
         <div className="flex">
-          {["journal", "mes critiques", "mes citations", "mes listes", "bilan"].map(t => (
+          {["journal", "bibliothèque", "mes critiques", "mes citations", "mes listes", "bilan"].map(t => (
             <button
               key={t}
               onClick={() => setTab(t)}
@@ -244,7 +282,7 @@ export default function ProfilePage({ go, onBackfill, onSearch }) {
                   </div>
                   <div className="flex gap-1.5 flex-wrap">
                     {entries.map((e, i) => (
-                      <div key={i} className="relative cursor-pointer" onClick={() => go(e.b)}>
+                      <div key={i} role="button" tabIndex={0} className="relative cursor-pointer" onClick={() => go(e.b)} onKeyDown={ev => { if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); go(e.b); } }}>
                         <Img book={e.b} w={80} h={120} />
                         <div className="absolute bottom-1 left-1 right-1 flex justify-between items-center">
                           <span className="text-[8px] bg-black/60 text-white px-1 py-[2px] rounded-sm font-body">{e.d}</span>
@@ -267,6 +305,105 @@ export default function ProfilePage({ go, onBackfill, onSearch }) {
               </button>
             </EmptyState>
           )}
+        </div>
+      )}
+
+      {/* Bibliothèque */}
+      {tab === "bibliothèque" && (
+        <div className="py-4">
+          {/* View toggle */}
+          <div className="flex items-center justify-between mb-4">
+            <div className="inline-flex rounded-lg bg-surface p-[3px]">
+              {[["grille", "Grille"], ["liste", "Liste"], ["étagère", "Étagère"]].map(([k, l]) => (
+                <button
+                  key={k}
+                  onClick={() => setLibView(k)}
+                  className={`px-3 py-1.5 rounded-md text-[11px] font-medium font-body border-none cursor-pointer transition-all duration-150 ${
+                    libView === k
+                      ? "bg-white text-[#1a1a1a] shadow-[0_1px_3px_rgba(0,0,0,0.08)]"
+                      : "bg-transparent text-[#767676]"
+                  }`}
+                >
+                  {l}
+                </button>
+              ))}
+            </div>
+            <span className="text-[11px] text-[#767676] font-body">{B.length} livres</span>
+          </div>
+
+          {/* Grille */}
+          {libView === "grille" && (
+            <div className="grid grid-cols-4 sm:grid-cols-6 gap-2.5">
+              {B.map(b => (
+                <Img key={b.id} book={b} w={999} h={999} onClick={() => go(b)} className="w-full h-auto aspect-[2/3]" />
+              ))}
+            </div>
+          )}
+
+          {/* Liste */}
+          {libView === "liste" && (
+            <div>
+              {B.map(b => (
+                <div
+                  key={b.id}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => go(b)}
+                  onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); go(b); } }}
+                  className="flex items-center gap-3 py-2.5 cursor-pointer hover:bg-[#fafafa] transition-colors duration-100"
+                  style={{ borderBottom: "0.5px solid #f0f0f0" }}
+                >
+                  <Img book={b} w={36} h={54} />
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-medium font-body truncate">{b.t}</div>
+                    <div className="text-xs text-[#737373] font-body">{b.a} · {b.y}</div>
+                  </div>
+                  <Stars r={b.r} s={11} />
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Étagère */}
+          {libView === "étagère" && (() => {
+            const shelfSize = typeof window !== "undefined" && window.innerWidth < 640 ? 5 : 7;
+            const shelves = [];
+            for (let i = 0; i < B.length; i += shelfSize) {
+              shelves.push(B.slice(i, i + shelfSize));
+            }
+            return (
+              <div className="bg-[#faf8f5] rounded-lg p-3 sm:p-4 flex flex-col gap-0">
+                {shelves.map((shelf, si) => (
+                  <div key={si} className="mb-1">
+                    {/* Books */}
+                    <div className="flex items-end gap-1 px-1">
+                      {shelf.map(b => (
+                        <div
+                          key={b.id}
+                          role="button"
+                          tabIndex={0}
+                          onClick={() => go(b)}
+                          onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); go(b); } }}
+                          className="cursor-pointer border-l-2 border-l-[rgba(0,0,0,0.08)] rounded-tl-sm rounded-tr-[3px] overflow-hidden shrink-0 hover:-translate-y-1 transition-transform duration-150"
+                        >
+                          <img
+                            src={b.c}
+                            alt={b.t}
+                            className="w-[56px] h-[84px] sm:w-[72px] sm:h-[108px] object-cover block"
+                            onError={e => { e.target.style.display = "none"; }}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                    {/* Shelf plank */}
+                    <div className="h-2 rounded-b-sm" style={{ background: "linear-gradient(to bottom, #c4a882, #a08462)", boxShadow: "0 2px 4px rgba(0,0,0,0.1)" }} />
+                    {/* Shelf shadow */}
+                    <div className="h-1.5" style={{ background: "linear-gradient(to bottom, rgba(0,0,0,0.06), transparent)" }} />
+                  </div>
+                ))}
+              </div>
+            );
+          })()}
         </div>
       )}
 
@@ -363,7 +500,7 @@ export default function ProfilePage({ go, onBackfill, onSearch }) {
                 <Label>Bilan de l'année</Label>
                 <div className="text-[40px] font-bold tracking-tight font-body">2026</div>
               </div>
-              <div className="grid grid-cols-3 gap-px bg-[#eee] rounded-lg overflow-hidden mb-7">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-px bg-[#eee] rounded-lg overflow-hidden mb-7">
                 {[
                   { l: "Livres lus", v: "38" }, { l: "Pages tournées", v: "12 847" }, { l: "Note moyenne", v: "4.1 ★" },
                   { l: "Critiques", v: "24" }, { l: "Citations", v: "14" }, { l: "Listes", v: "6" },

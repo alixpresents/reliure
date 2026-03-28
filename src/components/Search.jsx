@@ -17,7 +17,7 @@ export default function Search({ open, onClose, go }) {
       onClick={onClose}
     >
       <div
-        className="max-w-[500px] mx-auto pt-20 px-5"
+        className="max-w-[500px] mx-auto pt-12 sm:pt-20 px-5"
         onClick={e => e.stopPropagation()}
       >
         <div className="bg-surface rounded-lg py-[11px] px-4 flex items-center gap-2.5 border border-[#eee] focus-within:border-[#ccc] transition-[border] duration-150">

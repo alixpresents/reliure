@@ -15,7 +15,11 @@ export default function ExplorePage({ go, onTag, onSearch }) {
       {/* Search bar */}
       <div className="py-6 pb-5">
         <div
+          role="button"
+          tabIndex={0}
           onClick={onSearch}
+          onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onSearch(); } }}
+          aria-label="Rechercher"
           className="bg-surface rounded-lg py-[11px] px-4 flex items-center gap-2.5 border border-[#eee] cursor-pointer hover:border-[#ddd] transition-[border] duration-150"
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#bbb" strokeWidth="2">
@@ -27,7 +31,7 @@ export default function ExplorePage({ go, onTag, onSearch }) {
 
       {/* Tags */}
       <div className="mb-6">
-        <Label>Parcourir par tag</Label>
+        <Label>Parcourir par thème</Label>
         <div className="flex flex-wrap gap-1">
           {ptags.map(t => <Tag key={t} onClick={() => onTag(t)}>{t}</Tag>)}
         </div>

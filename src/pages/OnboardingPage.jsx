@@ -42,9 +42,13 @@ function PickedBook({ book, rating, onRate, onRemove }) {
         {[1, 2, 3, 4, 5].map(n => (
           <span
             key={n}
+            role="button"
+            tabIndex={0}
+            aria-label={`${n} étoile${n > 1 ? "s" : ""}`}
             onMouseEnter={() => setHv(n)}
             onMouseLeave={() => setHv(0)}
             onClick={() => onRate(n === rating ? 0 : n)}
+            onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onRate(n === rating ? 0 : n); } }}
             className={`cursor-pointer text-xs transition-all duration-150 inline-block ${n <= (hv || 0) ? "scale-110" : ""}`}
             style={{ color: n <= (hv || rating) ? "#D4883A" : "#ddd" }}
           >
@@ -77,7 +81,7 @@ function Step1({ username, setUsername, bio, setBio, onNext }) {
 
   return (
     <div>
-      <h1 className="font-display italic text-[32px] font-normal text-center mb-2 leading-tight">
+      <h1 className="font-display italic text-[24px] sm:text-[32px] font-normal text-center mb-2 leading-tight">
         Crée ton profil de lecteur
       </h1>
       <p className="text-[15px] text-[#737373] text-center mb-10 font-body">
@@ -121,7 +125,7 @@ function Step1({ username, setUsername, bio, setBio, onNext }) {
         className={`w-full py-3.5 rounded-lg text-[15px] font-medium font-body border-none transition-all duration-200 ${
           valid
             ? "bg-[#1a1a1a] text-white cursor-pointer hover:bg-[#333]"
-            : "bg-avatar-bg text-[#bbb] cursor-not-allowed"
+            : "bg-avatar-bg text-[#767676] cursor-not-allowed"
         }`}
       >
         Continuer
@@ -229,7 +233,7 @@ function Step2({ picks, setPicks, onFinish, onSkip }) {
         className={`w-full py-3.5 rounded-lg text-[15px] font-medium font-body border-none transition-all duration-200 mt-6 ${
           hasBooks
             ? "bg-[#1a1a1a] text-white cursor-pointer hover:bg-[#333]"
-            : "bg-avatar-bg text-[#bbb] cursor-not-allowed"
+            : "bg-avatar-bg text-[#767676] cursor-not-allowed"
         }`}
       >
         Continuer

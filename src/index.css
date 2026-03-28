@@ -19,3 +19,9 @@ img { display: block; }
 ::-webkit-scrollbar { width: 0; height: 0; }
 details > summary { list-style: none; }
 details > summary::-webkit-details-marker { display: none; }
+
+@keyframes pageIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-page-in { animation: pageIn 200ms ease both; }

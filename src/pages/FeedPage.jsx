@@ -21,7 +21,7 @@ export default function FeedPage({ go }) {
             </div>
             <span className="text-xs text-[#767676] font-body">{it.tm}</span>
           </div>
-          <div className="flex gap-3.5 ml-10">
+          <div className="flex gap-3.5 ml-6 sm:ml-10">
             <Img book={it.b} w={80} h={120} onClick={() => go(it.b)} />
             <div className="flex-1">
               <div className="text-[15px] font-medium font-body">{it.b.t}</div>
