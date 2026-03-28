@@ -60,13 +60,13 @@ export default function ExplorePage({ go, onTag, onSearch }) {
       <div className="border-t border-border-light py-6">
         <Heading>Citations populaires</Heading>
         {[...QUOTES].sort((a, b) => b.lk - a.lk).slice(0, 3).map(q => (
-          <div key={q.id} className="py-4 border-b border-[#f5f5f5]">
+          <div key={q.id} className="py-4 border-b border-border-light">
             <div className="text-[15px] italic text-[#1a1a1a] leading-[1.7] border-l-[3px] border-l-cover-fallback pl-3.5 mb-2.5 font-display">
               « {q.txt} »
             </div>
             <div className="flex items-center gap-2">
               <Img book={q.b} w={24} h={34} onClick={() => go(q.b)} />
-              <span className="text-xs text-[#666] font-body">{q.b.t}</span>
+              <span className="text-xs text-[#737373] font-body">{q.b.t}</span>
               <span className="text-[11px] text-[#767676] font-body">· {q.u}</span>
               <LikeButton count={q.lk} className="ml-auto text-[11px] text-[#767676] font-body" />
             </div>
@@ -78,7 +78,7 @@ export default function ExplorePage({ go, onTag, onSearch }) {
       <div className="border-t border-border-light py-6">
         <Heading>Listes populaires</Heading>
         {LISTS.map(l => (
-          <div key={l.id} className="py-5 border-b border-[#f5f5f5] cursor-pointer">
+          <div key={l.id} className="py-5 border-b border-border-light cursor-pointer">
             <div className="flex gap-2 mb-3.5 p-3.5 px-4 bg-surface rounded-lg overflow-x-auto">
               {l.cv.slice(0, 4).map(b => <Img key={b.id} book={b} w={68} h={102} onClick={() => go(b)} />)}
               {l.n > 4 && (
@@ -90,7 +90,7 @@ export default function ExplorePage({ go, onTag, onSearch }) {
             <div className="text-base font-medium font-body">{l.t}</div>
             <div className="flex items-center gap-2 mt-[5px]">
               <Avatar i={l.u.split(" ").map(w => w[0]).join("")} s={20} />
-              <span className="text-xs text-[#666] font-body">{l.u}</span>
+              <span className="text-xs text-[#737373] font-body">{l.u}</span>
               <span className="text-xs text-[#737373] font-body">· {l.n} livres</span>
               <span className="text-xs text-[#767676] font-body">· <LikeButton count={l.lk} /></span>
             </div>

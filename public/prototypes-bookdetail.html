@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reliure — Prototypes Fiche Livre</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@1&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  @font-face { font-family: 'Geist'; src: local('Inter'), local('-apple-system'); }
+  body { font-family: 'Geist', 'Inter', -apple-system, sans-serif; background: #f5f3f0; color: #1a1a1a; }
+
+  /* Tab bar */
+  .tab-bar { position: fixed; top: 0; left: 0; right: 0; z-index: 200; background: rgba(26,26,26,0.96); backdrop-filter: blur(12px); display: flex; align-items: center; padding: 0 24px; height: 56px; gap: 6px; }
+  .tab-bar .logo { color: #fff; font-weight: 800; font-size: 15px; margin-right: 20px; white-space: nowrap; }
+  .tab-bar .logo span { font-size: 8px; background: #D4883A; padding: 2px 5px; border-radius: 3px; vertical-align: middle; margin-left: 4px; }
+  .tab-btn { padding: 8px 16px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.15); background: transparent; color: rgba(255,255,255,0.7); font-size: 12px; font-weight: 500; cursor: pointer; transition: all 0.15s; font-family: inherit; white-space: nowrap; }
+  .tab-btn.active { background: #D4883A; border-color: #D4883A; color: #fff; }
+  .tab-btn:hover:not(.active) { border-color: rgba(255,255,255,0.4); color: #fff; }
+  .tab-desc { color: rgba(255,255,255,0.4); font-size: 11px; margin-left: auto; }
+
+  /* Frame */
+  .frame-wrap { padding: 76px 24px 24px; display: flex; justify-content: center; }
+  .frame { background: #fff; border-radius: 12px; box-shadow: 0 2px 24px rgba(0,0,0,0.06); overflow: hidden; width: 100%; max-width: 900px; }
+  .frame-inner { height: calc(100vh - 100px); overflow-y: auto; }
+
+  /* Shared */
+  .serif { font-family: 'Instrument Serif', Georgia, serif; font-style: italic; }
+  .sans { font-family: 'Geist', 'Inter', -apple-system, sans-serif; }
+  .label { font-size: 10px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #767676; }
+  .pill { padding: 8px 18px; border-radius: 20px; font-size: 13px; cursor: pointer; font-weight: 500; border: 1px solid #ddd; background: transparent; color: #666; transition: all 0.15s; font-family: inherit; }
+  .pill.active { background: #1a1a1a; color: #fff; border-color: #1a1a1a; }
+  .tag { padding: 5px 12px; border-radius: 20px; font-size: 12px; background: #f5f3f0; border: 1px solid #eee; color: #666; cursor: pointer; display: inline-block; }
+  .star { color: #D4883A; }
+  .star-off { color: #ddd; }
+  .cover-fallback { background: #e8e4de; border-radius: 3px; display: flex; align-items: center; justify-content: center; padding: 8px; }
+  .cover-fallback span { font-family: 'Instrument Serif', Georgia, serif; font-style: italic; font-size: 11px; color: #666; text-align: center; }
+
+  /* ── PROTOTYPE A ── */
+  .proto-a .hero { position: relative; overflow: hidden; background: #1a1a1a; }
+  .proto-a .hero-bg { position: absolute; inset: 0; background-size: cover; background-position: center; filter: blur(40px) brightness(0.4) saturate(1.3); transform: scale(1.2); }
+  .proto-a .hero-content { position: relative; max-width: 700px; margin: 0 auto; padding: 44px 24px 0; display: flex; gap: 28px; align-items: flex-end; }
+  .proto-a .hero-cover { flex-shrink: 0; margin-bottom: -36px; z-index: 2; }
+  .proto-a .hero-cover img { width: 170px; height: 255px; object-fit: cover; border-radius: 4px; box-shadow: 0 8px 32px rgba(0,0,0,0.4); }
+  .proto-a .hero-meta { flex: 1; padding-bottom: 20px; color: #fff; }
+  .proto-a .hero-meta h1 { font-size: 30px; font-weight: 400; line-height: 1.15; }
+  .proto-a .content { max-width: 700px; margin: 0 auto; padding: 0 24px; }
+
+  /* ── PROTOTYPE B ── */
+  .proto-b .split { display: grid; grid-template-columns: 260px 1fr; gap: 40px; align-items: start; max-width: 780px; margin: 0 auto; padding: 28px 24px 60px; }
+  .proto-b .left-col { position: sticky; top: 16px; }
+  .proto-b .left-col img { width: 100%; border-radius: 4px; box-shadow: 0 4px 24px rgba(0,0,0,0.1); }
+  .proto-b .right-col h1 { font-size: 40px; font-weight: 400; line-height: 1.1; letter-spacing: -0.5px; }
+  .proto-b .pull-quote { font-size: 19px; line-height: 1.6; max-width: 480px; }
+
+  /* ── PROTOTYPE C ── */
+  .proto-c { max-width: 540px; margin: 0 auto; padding: 24px 20px 60px; text-align: center; }
+  .proto-c .cover-center img { width: 190px; height: 285px; object-fit: cover; border-radius: 6px; box-shadow: 0 6px 28px rgba(0,0,0,0.12); }
+  .proto-c .rating-card { background: #fafaf8; border-radius: 12px; padding: 18px 20px; text-align: left; }
+  .proto-c .actions-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .proto-c .section-toggle { width: 100%; padding: 14px 0; display: flex; align-items: center; justify-content: space-between; background: none; border: none; border-bottom: 1px solid #f0f0f0; cursor: pointer; font-family: inherit; font-size: 13px; font-weight: 600; color: #1a1a1a; }
+  .proto-c .section-content { overflow: hidden; transition: max-height 0.3s; }
+  .proto-c .similar-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+
+  /* Hidden */
+  .hidden { display: none; }
+</style>
+</head>
+<body>
+
+<!-- Tab bar -->
+<div class="tab-bar">
+  <div class="logo">reliure <span>PROTOTYPES</span></div>
+  <button class="tab-btn active" onclick="showProto('a')">A — Cinématographique</button>
+  <button class="tab-btn" onclick="showProto('b')">B — Magazine éditorial</button>
+  <button class="tab-btn" onclick="showProto('c')">C — Minimal centré</button>
+  <span class="tab-desc" id="tab-desc">Hero flou + cover flottante + actions inline</span>
+</div>
+
+<div class="frame-wrap">
+<div class="frame">
+<div class="frame-inner">
+
+<!-- ════════════════════════════════════════ -->
+<!-- PROTOTYPE A — Cinématographique         -->
+<!-- ════════════════════════════════════════ -->
+<div id="proto-a" class="proto-a">
+
+  <!-- Hero -->
+  <div class="hero">
+    <div class="hero-bg" style="background-image: url('https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1266413928i/63032.jpg')"></div>
+    <div class="hero-content">
+      <div class="hero-cover">
+        <img src="https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1266413928i/63032.jpg" alt="2666">
+      </div>
+      <div class="hero-meta">
+        <h1 class="serif">2666</h1>
+        <div style="margin-top:6px;font-size:15px;opacity:0.8">Roberto Bolaño</div>
+        <div style="margin-top:4px;font-size:12px;opacity:0.5">2004 · 898 pages</div>
+        <div style="margin-top:12px;display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:20px;background:rgba(212,136,58,0.15);border:1px solid rgba(212,136,58,0.3);font-size:11px;color:#D4883A">
+          ★ National Book Critics Circle Award 2008
+        </div>
+        <div style="margin-top:16px;display:flex;align-items:baseline;gap:10px">
+          <span style="font-size:34px;font-weight:700;letter-spacing:-1px">4.5</span>
+          <div>
+            <span style="font-size:14px" class="star">★★★★</span><span style="font-size:14px;color:#D4883A;opacity:0.5">★</span>
+            <div style="font-size:11px;opacity:0.5;margin-top:2px">1 247 évaluations</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Content -->
+  <div class="content" style="padding-top:52px">
+
+    <!-- Actions -->
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+      <button class="pill" onclick="this.classList.toggle('active')">En cours</button>
+      <button class="pill" onclick="this.classList.toggle('active')">Lu</button>
+      <button class="pill" onclick="this.classList.toggle('active')">À lire</button>
+      <button class="pill" onclick="this.classList.toggle('active')">Abandonné</button>
+      <div style="width:1px;height:24px;background:#eee;margin:0 8px"></div>
+      <span style="font-size:12px;color:#767676">Ta note</span>
+      <span style="font-size:18px;cursor:pointer" class="star-off" onmouseover="this.style.color='#D4883A'" onmouseout="this.style.color='#ddd'">★★★★★</span>
+    </div>
+
+    <!-- Synopsis -->
+    <div style="margin-top:28px">
+      <p style="font-size:15px;line-height:1.75;color:#333">
+        Cinq parties, cinq mondes reliés par un fil invisible. Des critiques littéraires européens obsédés par un auteur allemand disparu, une jeune femme à Santa Teresa, une ville ravagée par les féminicides...
+        <button style="background:none;border:none;color:#767676;cursor:pointer;font-size:13px;margin-left:4px;padding:0;font-family:inherit">Lire la suite</button>
+      </p>
+    </div>
+
+    <!-- Themes -->
+    <div style="margin-top:18px;display:flex;gap:6px;flex-wrap:wrap">
+      <span class="tag">maximalisme</span><span class="tag">violence</span><span class="tag">désert</span><span class="tag">Mexique</span><span class="tag">postmoderne</span>
+    </div>
+
+    <!-- Où lire -->
+    <div style="margin-top:28px;padding-top:20px;border-top:1px solid #f0f0f0">
+      <div class="label" style="margin-bottom:10px">Où lire</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <span style="padding:6px 14px;border-radius:6px;font-size:12px;background:#fafaf8;border:1px solid #eee;color:#666;cursor:pointer">Fnac</span>
+        <span style="padding:6px 14px;border-radius:6px;font-size:12px;background:#fafaf8;border:1px solid #eee;color:#666;cursor:pointer">Amazon</span>
+        <span style="padding:6px 14px;border-radius:6px;font-size:12px;background:#fafaf8;border:1px solid #eee;color:#666;cursor:pointer">Bibliothèque</span>
+        <span style="padding:6px 14px;border-radius:6px;font-size:12px;background:#fafaf8;border:1px solid #eee;color:#666;cursor:pointer">Kindle</span>
+      </div>
+    </div>
+
+    <!-- Critiques -->
+    <div style="margin-top:28px;border-top:1px solid #f0f0f0;padding-top:4px">
+      <div style="display:flex;border-bottom:2px solid #f0f0f0">
+        <button style="flex:1;padding:14px 0;background:none;border:none;cursor:pointer;font-size:13px;font-weight:600;color:#1a1a1a;border-bottom:2px solid #1a1a1a;font-family:inherit">Critiques</button>
+        <button style="flex:1;padding:14px 0;background:none;border:none;cursor:pointer;font-size:13px;color:#767676;font-family:inherit">Citations (1)</button>
+        <button style="flex:1;padding:14px 0;background:none;border:none;cursor:pointer;font-size:13px;color:#767676;font-family:inherit">Éditions</button>
+      </div>
+
+      <div style="padding:20px 0;border-bottom:1px solid #f5f5f5">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+          <div style="width:28px;height:28px;border-radius:50%;background:#f0ede8;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:#666">ML</div>
+          <span style="font-size:13px;font-weight:600">Margaux L.</span>
+          <span class="star" style="font-size:11px">★★★★★</span>
+          <span style="margin-left:auto;font-size:11px;color:#767676">26 mars</span>
+        </div>
+        <p style="font-size:15px;color:#333;line-height:1.7">Un chef-d'oeuvre absolu. Bolaño construit un labyrinthe dont on ne veut jamais sortir.</p>
+        <div style="margin-top:8px;font-size:12px;color:#767676">♥ 24 &nbsp; Répondre</div>
+      </div>
+
+      <div style="padding:20px 0;border-bottom:1px solid #f5f5f5">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+          <div style="width:28px;height:28px;border-radius:50%;background:#f0ede8;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:#666">TB</div>
+          <span style="font-size:13px;font-weight:600">Théo B.</span>
+          <span class="star" style="font-size:11px">★★★★★</span>
+          <span style="margin-left:auto;font-size:11px;color:#767676">20 mars</span>
+        </div>
+        <p style="font-size:15px;color:#333;line-height:1.7">Le livre qui a changé ma façon de lire. Chaque phrase est un piège tendu au lecteur.</p>
+        <div style="margin-top:8px;font-size:12px;color:#767676">♥ 18 &nbsp; Répondre</div>
+      </div>
+    </div>
+
+    <!-- Also liked -->
+    <div style="margin-top:36px;padding-top:24px;border-top:1px solid #f0f0f0;padding-bottom:40px">
+      <div class="label" style="margin-bottom:14px">Les lecteurs ont aussi aimé</div>
+      <div style="display:flex;gap:16px;overflow-x:auto">
+        <div style="text-align:center;flex-shrink:0"><div class="cover-fallback" style="width:100px;height:150px"><span>Les Détectives sauvages</span></div><div style="font-size:11px;font-weight:500;margin-top:6px">Les Détectives sauvages</div></div>
+        <div style="text-align:center;flex-shrink:0"><div class="cover-fallback" style="width:100px;height:150px"><span>Beloved</span></div><div style="font-size:11px;font-weight:500;margin-top:6px">Beloved</div></div>
+        <div style="text-align:center;flex-shrink:0"><div class="cover-fallback" style="width:100px;height:150px"><span>L'Étranger</span></div><div style="font-size:11px;font-weight:500;margin-top:6px">L'Étranger</div></div>
+        <div style="text-align:center;flex-shrink:0"><div class="cover-fallback" style="width:100px;height:150px"><span>Pedro Páramo</span></div><div style="font-size:11px;font-weight:500;margin-top:6px">Pedro Páramo</div></div>
+        <div style="text-align:center;flex-shrink:0"><div class="cover-fallback" style="width:100px;height:150px"><span>Ficciones</span></div><div style="font-size:11px;font-weight:500;margin-top:6px">Ficciones</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════ -->
+<!-- PROTOTYPE B — Magazine                   -->
+<!-- ════════════════════════════════════════ -->
+<div id="proto-b" class="proto-b hidden">
+  <div class="split">
+    <!-- Left -->
+    <div class="left-col">
+      <img src="https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1266413928i/63032.jpg" alt="2666">
+      <div style="margin-top:20px;display:flex;flex-direction:column;gap:8px">
+        <button class="pill" onclick="this.classList.toggle('active')" style="text-align:center;border-radius:6px;padding:10px 0">En cours</button>
+        <button class="pill" onclick="this.classList.toggle('active')" style="text-align:center;border-radius:6px;padding:10px 0">Lu</button>
+        <button class="pill" onclick="this.classList.toggle('active')" style="text-align:center;border-radius:6px;padding:10px 0">À lire</button>
+        <button style="padding:8px 0;border:none;background:none;cursor:pointer;font-size:12px;color:#767676;font-family:inherit;text-align:center">Abandonné</button>
+      </div>
+      <div style="margin-top:24px;padding-top:16px;border-top:1px solid #f0f0f0">
+        <div class="label" style="margin-bottom:8px">Où lire</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <span style="padding:5px 10px;border-radius:4px;font-size:11px;background:#fafaf8;border:1px solid #eee;color:#666;cursor:pointer">Fnac</span>
+          <span style="padding:5px 10px;border-radius:4px;font-size:11px;background:#fafaf8;border:1px solid #eee;color:#666;cursor:pointer">Amazon</span>
+          <span style="padding:5px 10px;border-radius:4px;font-size:11px;background:#fafaf8;border:1px solid #eee;color:#666;cursor:pointer">Bibliothèque</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right -->
+    <div class="right-col">
+      <div style="font-size:11px;color:#D4883A;font-weight:500;margin-bottom:8px">★ National Book Critics Circle Award 2008</div>
+      <h1 class="serif">2666</h1>
+      <div style="margin-top:10px;font-size:18px;color:#333;font-family:'Instrument Serif',Georgia,serif;font-style:italic">Roberto Bolaño</div>
+      <div style="margin-top:6px;font-size:13px;color:#767676">2004 · 898 pages</div>
+
+      <!-- Rating -->
+      <div style="margin-top:20px;display:flex;align-items:center;gap:16px;padding-bottom:20px;border-bottom:1px solid #f0f0f0">
+        <div style="display:flex;align-items:baseline;gap:8px">
+          <span style="font-size:28px;font-weight:700;letter-spacing:-0.5px">4.5</span>
+          <span style="display:inline-flex;gap:3px">
+            <span style="width:8px;height:8px;border-radius:50%;background:#D4883A;display:inline-block"></span>
+            <span style="width:8px;height:8px;border-radius:50%;background:#D4883A;display:inline-block"></span>
+            <span style="width:8px;height:8px;border-radius:50%;background:#D4883A;display:inline-block"></span>
+            <span style="width:8px;height:8px;border-radius:50%;background:#D4883A;display:inline-block"></span>
+            <span style="width:8px;height:8px;border-radius:50%;background:#D4883A;opacity:0.5;display:inline-block"></span>
+          </span>
+        </div>
+        <span style="font-size:12px;color:#767676">1 247 évaluations</span>
+        <div style="margin-left:auto;display:flex;align-items:center;gap:8px">
+          <span style="font-size:12px;color:#767676">Ta note</span>
+          <span style="font-size:16px;cursor:pointer;color:#ddd">★★★★★</span>
+        </div>
+      </div>
+
+      <!-- Description -->
+      <p style="margin-top:24px;font-size:15px;line-height:1.8;color:#333">
+        Cinq parties, cinq mondes reliés par un fil invisible. Des critiques littéraires européens obsédés par un auteur allemand disparu, une jeune femme à Santa Teresa, une ville ravagée par les féminicides, et la grande spirale de la violence du XXe siècle. Bolaño tisse une fresque où chaque personnage porte le poids de l'histoire.
+      </p>
+
+      <!-- Themes -->
+      <div style="margin-top:20px;display:flex;gap:6px;flex-wrap:wrap">
+        <span class="tag">maximalisme</span><span class="tag">violence</span><span class="tag">désert</span><span class="tag">Mexique</span><span class="tag">postmoderne</span>
+      </div>
+
+      <!-- Pull quote -->
+      <div style="margin:36px 0;padding:24px 0;border-top:1px solid #f0f0f0;border-bottom:1px solid #f0f0f0">
+        <div class="pull-quote serif" style="color:#1a1a1a">
+          « Personne ne fait attention à ces meurtres, mais en eux se cache le secret du monde. »
+        </div>
+        <div style="margin-top:12px;font-size:12px;color:#767676">— cité par Théo B. · ♥ 42</div>
+      </div>
+
+      <!-- Critiques -->
+      <div>
+        <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:16px">
+          <h2 class="serif" style="font-size:22px;font-weight:400">Critiques</h2>
+          <span style="font-size:12px;color:#767676">3 critiques</span>
+        </div>
+
+        <div style="padding:20px 0;border-top:1px solid #f5f5f5">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+            <div style="width:30px;height:30px;border-radius:50%;background:#f0ede8;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:#666">ML</div>
+            <div>
+              <span style="font-size:13px;font-weight:600">Margaux L.</span>
+              <div style="display:flex;align-items:center;gap:6px;margin-top:2px">
+                <span style="display:inline-flex;gap:3px"><span style="width:8px;height:8px;border-radius:50%;background:#D4883A;display:inline-block"></span><span style="width:8px;height:8px;border-radius:50%;background:#D4883A;display:inline-block"></span><span style="width:8px;height:8px;border-radius:50%;background:#D4883A;display:inline-block"></span><span style="width:8px;height:8px;border-radius:50%;background:#D4883A;display:inline-block"></span><span style="width:8px;height:8px;border-radius:50%;background:#D4883A;display:inline-block"></span></span>
+                <span style="font-size:11px;color:#767676">26 mars</span>
+              </div>
+            </div>
+          </div>
+          <p style="font-size:15px;color:#333;line-height:1.75">Un chef-d'oeuvre absolu. Bolaño construit un labyrinthe dont on ne veut jamais sortir. Chaque partie est un roman en soi.</p>
+          <div style="margin-top:10px;font-size:12px;color:#767676">♥ 24 &nbsp; Répondre</div>
+        </div>
+
+        <div style="padding:20px 0;border-top:1px solid #f5f5f5">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+            <div style="width:30px;height:30px;border-radius:50%;background:#f0ede8;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:#666">CD</div>
+            <div>
+              <span style="font-size:13px;font-weight:600">Camille D.</span>
+              <div style="display:flex;align-items:center;gap:6px;margin-top:2px">
+                <span style="display:inline-flex;gap:3px"><span style="width:8px;height:8px;border-radius:50%;background:#D4883A;display:inline-block"></span><span style="width:8px;height:8px;border-radius:50%;background:#D4883A;display:inline-block"></span><span style="width:8px;height:8px;border-radius:50%;background:#D4883A;display:inline-block"></span><span style="width:8px;height:8px;border-radius:50%;background:#D4883A;display:inline-block"></span><span style="width:8px;height:8px;border-radius:50%;background:#e0dcd6;display:inline-block"></span></span>
+                <span style="font-size:11px;color:#767676">15 mars</span>
+              </div>
+            </div>
+          </div>
+          <p style="font-size:15px;color:#333;line-height:1.75">Magistral mais éreintant. La partie des crimes est presque insoutenable. On en sort changé.</p>
+          <div style="margin-top:10px;font-size:12px;color:#767676">♥ 31 &nbsp; Répondre</div>
+        </div>
+
+        <button style="width:100%;padding:12px;border:1px solid #eee;border-radius:8px;background:none;cursor:pointer;font-size:13px;color:#666;font-family:inherit;margin-top:8px">Voir toutes les critiques (3)</button>
+      </div>
+
+      <!-- Also liked -->
+      <div style="margin-top:40px;padding-top:24px;border-top:1px solid #f0f0f0">
+        <div class="label" style="margin-bottom:14px">Les lecteurs ont aussi aimé</div>
+        <div style="display:flex;gap:14px;overflow-x:auto">
+          <div style="text-align:center;flex-shrink:0"><div class="cover-fallback" style="width:88px;height:132px"><span>Beloved</span></div><div style="font-size:11px;font-weight:500;margin-top:6px">Beloved</div></div>
+          <div style="text-align:center;flex-shrink:0"><div class="cover-fallback" style="width:88px;height:132px"><span>L'Étranger</span></div><div style="font-size:11px;font-weight:500;margin-top:6px">L'Étranger</div></div>
+          <div style="text-align:center;flex-shrink:0"><div class="cover-fallback" style="width:88px;height:132px"><span>Pedro Páramo</span></div><div style="font-size:11px;font-weight:500;margin-top:6px">Pedro Páramo</div></div>
+          <div style="text-align:center;flex-shrink:0"><div class="cover-fallback" style="width:88px;height:132px"><span>Ficciones</span></div><div style="font-size:11px;font-weight:500;margin-top:6px">Ficciones</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════ -->
+<!-- PROTOTYPE C — Minimal centré             -->
+<!-- ════════════════════════════════════════ -->
+<div id="proto-c" class="hidden">
+  <div class="proto-c">
+    <div style="text-align:left;margin-bottom:24px"><span style="font-size:13px;color:#767676;cursor:pointer">← Retour</span></div>
+
+    <!-- Cover -->
+    <div class="cover-center"><img src="https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1266413928i/63032.jpg" alt="2666"></div>
+
+    <h1 class="serif" style="margin-top:24px;font-size:32px;font-weight:400;line-height:1.15">2666</h1>
+    <div style="margin-top:6px;font-size:16px;color:#333">Roberto Bolaño</div>
+    <div style="margin-top:4px;font-size:13px;color:#767676">2004 · 898 pages</div>
+    <div style="margin-top:12px;display:inline-flex;align-items:center;gap:5px;padding:5px 14px;border-radius:20px;background:#faf6f0;border:1px solid #e8dfd2;font-size:11px;font-weight:500;color:#8B6914">
+      <span style="color:#D4883A">★</span> National Book Critics Circle Award 2008
+    </div>
+
+    <!-- Rating card -->
+    <div class="rating-card" style="margin-top:24px">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div style="flex:1">
+          <div class="label">Note communautaire</div>
+          <div style="margin-top:8px;display:flex;align-items:center;gap:10px">
+            <div style="flex:1;height:4px;background:#f0ede8;border-radius:2px;overflow:hidden"><div style="width:90%;height:100%;background:#D4883A;border-radius:2px"></div></div>
+            <span style="font-size:13px;font-weight:600">4.5</span>
+          </div>
+          <div style="font-size:11px;color:#767676;margin-top:4px">1 247 évaluations</div>
+        </div>
+        <div style="text-align:center;padding-left:24px;border-left:1px solid #eee">
+          <div style="font-size:11px;color:#767676;margin-bottom:8px">Ta note</div>
+          <span style="font-size:20px;cursor:pointer;color:#ddd">★★★★★</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="actions-grid" style="margin-top:16px">
+      <button class="pill" onclick="this.classList.toggle('active')" style="padding:10px 0;border-radius:8px;font-size:12px">En cours</button>
+      <button class="pill" onclick="this.classList.toggle('active')" style="padding:10px 0;border-radius:8px;font-size:12px">Lu</button>
+      <button class="pill" onclick="this.classList.toggle('active')" style="padding:10px 0;border-radius:8px;font-size:12px">À lire</button>
+      <button class="pill" onclick="this.classList.toggle('active')" style="padding:10px 0;border-radius:8px;font-size:12px">Abandonné</button>
+    </div>
+
+    <!-- Description -->
+    <p style="margin-top:28px;text-align:left;font-size:15px;line-height:1.8;color:#333">
+      Cinq parties, cinq mondes reliés par un fil invisible. Des critiques littéraires européens obsédés par un auteur allemand disparu, une jeune femme à Santa Teresa, une ville ravagée par les féminicides...
+    </p>
+
+    <!-- Themes -->
+    <div style="margin-top:16px;display:flex;gap:6px;flex-wrap:wrap">
+      <span class="tag">maximalisme</span><span class="tag">violence</span><span class="tag">désert</span><span class="tag">Mexique</span><span class="tag">postmoderne</span>
+    </div>
+
+    <!-- Accordions -->
+    <div style="margin-top:28px;text-align:left">
+      <button class="section-toggle" onclick="toggleSection(this)">Critiques (3) <span style="font-size:16px;color:#767676;transition:transform 0.2s">▾</span></button>
+      <div class="section-content" style="max-height:600px">
+        <div style="padding:14px 0;border-bottom:1px solid #f5f5f5">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+            <div style="width:26px;height:26px;border-radius:50%;background:#f0ede8;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:#666">ML</div>
+            <span style="font-size:13px;font-weight:600">Margaux L.</span>
+            <span class="star" style="font-size:12px">★★★★★</span>
+          </div>
+          <p style="font-size:14px;color:#333;line-height:1.7">Un chef-d'oeuvre absolu. Bolaño construit un labyrinthe dont on ne veut jamais sortir.</p>
+          <div style="margin-top:8px;font-size:12px;color:#767676">♥ 24</div>
+        </div>
+        <div style="padding:14px 0;border-bottom:1px solid #f5f5f5">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+            <div style="width:26px;height:26px;border-radius:50%;background:#f0ede8;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:#666">TB</div>
+            <span style="font-size:13px;font-weight:600">Théo B.</span>
+            <span class="star" style="font-size:12px">★★★★★</span>
+          </div>
+          <p style="font-size:14px;color:#333;line-height:1.7">Le livre qui a changé ma façon de lire. Chaque phrase est un piège tendu au lecteur.</p>
+          <div style="margin-top:8px;font-size:12px;color:#767676">♥ 18</div>
+        </div>
+        <div style="padding:14px 0">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+            <div style="width:26px;height:26px;border-radius:50%;background:#f0ede8;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:#666">CD</div>
+            <span style="font-size:13px;font-weight:600">Camille D.</span>
+            <span class="star" style="font-size:12px">★★★★</span><span class="star-off" style="font-size:12px">★</span>
+          </div>
+          <p style="font-size:14px;color:#333;line-height:1.7">Magistral mais éreintant. La partie des crimes est presque insoutenable.</p>
+          <div style="margin-top:8px;font-size:12px;color:#767676">♥ 31</div>
+        </div>
+      </div>
+
+      <button class="section-toggle" onclick="toggleSection(this)">Citations (1) <span style="font-size:16px;color:#767676">▾</span></button>
+      <div class="section-content" style="max-height:0;overflow:hidden">
+        <div style="padding:14px 0">
+          <div class="serif" style="font-size:16px;line-height:1.7;color:#1a1a1a;border-left:3px solid #e8e4de;padding-left:14px">
+            « Personne ne fait attention à ces meurtres, mais en eux se cache le secret du monde. »
+          </div>
+          <div style="margin-top:8px;font-size:12px;color:#767676">Théo B. · ♥ 42</div>
+        </div>
+        <button style="width:100%;padding:10px;border-radius:8px;border:1.5px dashed #ddd;background:transparent;cursor:pointer;font-size:13px;color:#767676;font-family:inherit">+ Ajouter une citation</button>
+      </div>
+
+      <button class="section-toggle" onclick="toggleSection(this)">Éditions <span style="font-size:16px;color:#767676">▾</span></button>
+      <div class="section-content" style="max-height:0;overflow:hidden">
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <div style="flex:1;min-width:100px;padding:12px 14px;background:#fafaf8;border-radius:8px"><div style="font-size:13px;font-weight:600">Poche</div><div style="font-size:11px;color:#767676;margin-top:2px">Folio · 2008</div></div>
+          <div style="flex:1;min-width:100px;padding:12px 14px;background:#fafaf8;border-radius:8px"><div style="font-size:13px;font-weight:600">Relié</div><div style="font-size:11px;color:#767676;margin-top:2px">Gallimard · 2004</div></div>
+          <div style="flex:1;min-width:100px;padding:12px 14px;background:#fafaf8;border-radius:8px"><div style="font-size:13px;font-weight:600">Audio</div><div style="font-size:11px;color:#767676;margin-top:2px">Audible · 2019</div></div>
+        </div>
+      </div>
+
+      <button class="section-toggle" onclick="toggleSection(this)">Où lire <span style="font-size:16px;color:#767676">▾</span></button>
+      <div class="section-content" style="max-height:0;overflow:hidden">
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <span style="padding:8px 16px;border-radius:6px;font-size:12px;background:#fafaf8;border:1px solid #eee;color:#666;cursor:pointer">Fnac</span>
+          <span style="padding:8px 16px;border-radius:6px;font-size:12px;background:#fafaf8;border:1px solid #eee;color:#666;cursor:pointer">Amazon</span>
+          <span style="padding:8px 16px;border-radius:6px;font-size:12px;background:#fafaf8;border:1px solid #eee;color:#666;cursor:pointer">Bibliothèque</span>
+          <span style="padding:8px 16px;border-radius:6px;font-size:12px;background:#fafaf8;border:1px solid #eee;color:#666;cursor:pointer">Kindle</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Also liked -->
+    <div style="margin-top:32px;padding-top:24px;border-top:1px solid #f0f0f0;text-align:left">
+      <div class="label" style="margin-bottom:14px">Les lecteurs ont aussi aimé</div>
+      <div class="similar-grid">
+        <div style="text-align:center"><div class="cover-fallback" style="width:100%;height:140px"><span>Beloved</span></div><div style="font-size:11px;font-weight:500;margin-top:6px">Beloved</div><div style="font-size:10px;color:#767676">Morrison</div></div>
+        <div style="text-align:center"><div class="cover-fallback" style="width:100%;height:140px"><span>L'Étranger</span></div><div style="font-size:11px;font-weight:500;margin-top:6px">L'Étranger</div><div style="font-size:10px;color:#767676">Camus</div></div>
+        <div style="text-align:center"><div class="cover-fallback" style="width:100%;height:140px"><span>Pedro Páramo</span></div><div style="font-size:11px;font-weight:500;margin-top:6px">Pedro Páramo</div><div style="font-size:10px;color:#767676">Rulfo</div></div>
+        <div style="text-align:center"><div class="cover-fallback" style="width:100%;height:140px"><span>Ficciones</span></div><div style="font-size:11px;font-weight:500;margin-top:6px">Ficciones</div><div style="font-size:10px;color:#767676">Borges</div></div>
+        <div style="text-align:center"><div class="cover-fallback" style="width:100%;height:140px"><span>Les Détectives sauvages</span></div><div style="font-size:11px;font-weight:500;margin-top:6px">Les Détectives sauvages</div><div style="font-size:10px;color:#767676">Bolaño</div></div>
+        <div style="text-align:center"><div class="cover-fallback" style="width:100%;height:140px"><span>Molloy</span></div><div style="font-size:11px;font-weight:500;margin-top:6px">Molloy</div><div style="font-size:10px;color:#767676">Beckett</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /frame-inner -->
+</div><!-- /frame -->
+</div><!-- /frame-wrap -->
+
+<script>
+const descs = {
+  a: "Hero flou + cover flottante + actions inline + synopsis",
+  b: "Split cover/contenu + serif 42px + dots rating + pull-quote intégré",
+  c: "Cover centré + rating bar + grille actions + sections accordéon"
+};
+
+function showProto(id) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+  document.getElementById('proto-a').classList.toggle('hidden', id !== 'a');
+  document.getElementById('proto-b').classList.toggle('hidden', id !== 'b');
+  document.getElementById('proto-c').classList.toggle('hidden', id !== 'c');
+  document.getElementById('tab-desc').textContent = descs[id];
+  // Scroll to top
+  document.querySelector('.frame-inner').scrollTop = 0;
+}
+
+function toggleSection(btn) {
+  const content = btn.nextElementSibling;
+  const arrow = btn.querySelector('span');
+  if (content.style.maxHeight === '0px' || content.style.maxHeight === '') {
+    content.style.maxHeight = '600px';
+    arrow.style.transform = 'rotate(180deg)';
+  } else {
+    content.style.maxHeight = '0px';
+    arrow.style.transform = 'rotate(0deg)';
+  }
+}
+</script>
+</body>
+</html>

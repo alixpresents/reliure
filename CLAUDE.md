@@ -134,14 +134,17 @@ L'edge function `book_import` interroge les sources par ISBN, fusionne les résu
 - Carousels horizontaux pour les sections "Populaires" et "Trending"
 
 ### Composants clés
-- **Img** : couverture avec fallback titre si image ne charge pas
-- **S** : étoiles de notation (couleur `#D4883A`)
-- **Av** : avatar initiales (fond `#f0ede8`)
-- **Tag** : pill cliquable avec hover state
-- **Pill** : bouton de statut (En cours / Lu / À lire / Abandonné)
-- **Hd** : heading de section en Instrument Serif italic
-- **Lbl** : label uppercase discret pour les sous-sections
-- **HScroll** : conteneur de scroll horizontal
+- **Img** : couverture avec fallback titre si image ne charge pas, hover lift + shadow quand cliquable
+- **Stars** : étoiles de notation read-only (couleur `#D4883A`)
+- **InteractiveStars** : étoiles cliquables avec hover scale, pop animation, accessibilité (role, tabIndex, aria-label)
+- **Avatar** : avatar initiales circulaire (fond `#f0ede8`)
+- **Tag** : pill cliquable avec hover state pour les thèmes descriptifs
+- **Pill** : bouton de statut (En cours / Lu / À lire / Abandonné) avec active:scale-95
+- **Heading** : heading de section en Instrument Serif italic avec lien optionnel à droite
+- **Label** : label uppercase discret pour les sous-sections (10px, tracking 2px, muted)
+- **HScroll** : conteneur de scroll horizontal sans scrollbar
+- **LikeButton** : coeur toggle avec animation scale, compteur, couleur spoiler quand liked
+- **Search** : overlay de recherche plein écran avec champ + résultats filtrés
 
 ## Conventions
 
@@ -175,14 +178,64 @@ L'edge function `book_import` interroge les sources par ISBN, fusionne les résu
 - "Thèmes" (pas "Tags" pour les tags descriptifs sur les fiches livres — "Tags" sera réservé aux tags personnels de lecture)
 - "Évaluations" (pas "Notes" pour le compteur communautaire — "Note" est réservé à la notation personnelle)
 
+- "Défis" (pas "Challenges" — terme français pour les challenges de lecture)
+
 ### Navigation
-6 sections principales : Explorer, Citations, Fil, Challenges, Profil | La Revue (séparée visuellement, serif italic).
-Onglets profil : Journal (diary), Mes critiques, Mes citations, Mes listes, Bilan.
+6 sections principales : Explorer, Citations, Fil, Défis, Profil | La Revue (séparée visuellement, serif italic).
+Onglets profil : Journal (diary), Bibliothèque, Mes critiques, Mes citations, Mes listes, Bilan.
+
+## Features prototypées (frontend mock)
+
+Les features suivantes sont implémentées visuellement avec des données mock. Le backend Supabase les connectera.
+
+### Onboarding
+- Flow 2 étapes : pseudo (avec vérification de disponibilité simulée) + ajout de livres
+- Fond filigrane avec couvertures en grayscale
+
+### Fiche livre (BookPage)
+- Couverture, métadonnées, note communautaire, étoiles cliquables (InteractiveStars)
+- Pills de statut (En cours / Lu / À lire / Abandonné)
+- Si "Lu" : pills secondaires date (avec date picker natif) + relecture (sur livres déjà lus)
+- Tags personnels avec autocomplétion accent-insensitive (max 5, "Visibles uniquement par toi")
+- Thèmes descriptifs, onglets critiques/citations/éditions, Où lire, Les lecteurs ont aussi aimé
+- Prix littéraires en pills dorées (champ `awards` dans les données)
+- Descriptions ajoutées à tous les livres (champ `desc`)
+
+### Profil
+- Header avec avatar, stats, badge vérifié (tooltip), 3 badges circulaires (tooltips custom)
+- Bandeau backfill "Tu as lu d'autres livres ?"
+- Quatre favoris, En cours de lecture (progression interactive avec édition inline de page, complétion)
+- Onglets : Journal (diary), Bibliothèque (3 modes : grille/liste/étagère), Mes critiques, Mes citations, Mes listes, Bilan
+- Mode étagère avec planches en dégradé brun
+- Bilan annuel avec seuil 5 livres, graphique de chronologie dynamique
+- États vides élégants pour chaque section (toggle dev "Mode vide")
+
+### Backfill
+- Page dédiée pour ajouter des lectures passées en batch
+- Recherche + mode découverte "Les plus lus" avec pills Lu/À lire mutuellement exclusives
+- Pile visuelle avec étoiles et bouton sticky "Ajouter X livres à ma bibliothèque"
+
+### La Revue (éditorial)
+- Page index avec articles featured et liste
+- ArticlePage avec lettrine, sidebar livre lié, section "À lire aussi"
+- Barre de progression de lecture sticky sous le header
+
+### Défis (challenges)
+- Page index avec "Mes challenges" (progression circulaire) et "Découvrir" (bouton Rejoindre)
+- Vue participant : cercle de progression SVG, filtres, timeline avec items complétés/à faire
+- Vue publique : hero centré, stats, paliers, aperçu items, participants récents
+
+### Micro-interactions
+- LikeButton avec animation scale + toggle couleur
+- Étoiles avec hover scale-110, click scale-125 pop
+- Pills avec active:scale-95
+- Couvertures avec hover translateY + shadow
+- Transitions de page fadeIn 200ms
+- Focus-visible outline pour navigation clavier
 
 ## Ce qu'on ne fait PAS au MVP
 
 - Pas de recommandations algorithmiques
-- Pas de gamification (badges, niveaux, streaks)
 - Pas de clubs de lecture
 - Pas d'app mobile native (PWA d'abord)
 - Pas de messagerie privée
@@ -196,12 +249,15 @@ Onglets profil : Journal (diary), Mes critiques, Mes citations, Mes listes, Bila
 
 1. Auth (magic link + OAuth Google via Supabase)
 2. Recherche de livres (Google Books API → import dans notre base)
-3. Fiche livre (couverture, métadonnées, statut, notation, tags)
-4. Profil (quatre favoris, en cours, diary, critiques, citations, listes, bilan)
+3. Fiche livre (couverture, métadonnées, statut, notation, tags personnels, thèmes)
+4. Profil (quatre favoris, en cours, diary, bibliothèque, critiques, citations, listes, bilan)
 5. Critiques et citations (écrire, lire, liker)
 6. Listes (créer, ordonner, partager)
 7. Follow + fil d'activité
-8. Page Explorer (trending, tags, search)
+8. Page Explorer (trending, thèmes, search)
+9. Onboarding + backfill
+10. La Revue (éditorial)
+11. Défis de lecture (challenges)
 9. Pages publiques (profil, listes, critiques — SEO + partage social)
 
 ## Fichiers de référence

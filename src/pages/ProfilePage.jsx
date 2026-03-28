@@ -5,6 +5,7 @@ import Stars from "../components/Stars";
 import Avatar from "../components/Avatar";
 import Label from "../components/Label";
 import LikeButton from "../components/LikeButton";
+import InteractiveStars from "../components/InteractiveStars";
 
 const INITIAL_PAGES = { 1: 654, 2: 312 };
 
@@ -14,7 +15,6 @@ function ReadingItem({ book, go, onFinish }) {
   const [draft, setDraft] = useState("");
   const [finished, setFinished] = useState(false);
   const [removing, setRemoving] = useState(false);
-  const [finHv, setFinHv] = useState(0);
   const [finRating, setFinRating] = useState(0);
   const inputRef = useRef(null);
   const pct = Math.min(100, Math.round((currentPage / book.p) * 100));
@@ -97,24 +97,7 @@ function ReadingItem({ book, go, onFinish }) {
       <div className={`overflow-hidden transition-all duration-300 ${finished && isComplete ? "max-h-[60px] opacity-100 mt-2" : "max-h-0 opacity-0"}`}>
         <div className="flex items-center gap-3 py-2 px-3 bg-surface rounded-lg ml-[58px]">
           <span className="text-[12px] font-medium font-body text-[#1a1a1a]">Tu l'as terminé !</span>
-          <div className="flex gap-[2px]">
-            {[1, 2, 3, 4, 5].map(n => (
-              <span
-                key={n}
-                role="button"
-                tabIndex={0}
-                aria-label={`${n} étoile${n > 1 ? "s" : ""}`}
-                onMouseEnter={() => setFinHv(n)}
-                onMouseLeave={() => setFinHv(0)}
-                onClick={() => setFinRating(n === finRating ? 0 : n)}
-                onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setFinRating(n === finRating ? 0 : n); } }}
-                className={`cursor-pointer text-xs transition-all duration-150 inline-block ${n <= (finHv || 0) ? "scale-110" : ""}`}
-                style={{ color: n <= (finHv || finRating) ? "#D4883A" : "#ddd" }}
-              >
-                ★
-              </span>
-            ))}
-          </div>
+          <InteractiveStars value={finRating} onChange={setFinRating} size="text-xs" />
           <button
             onClick={markRead}
             className="ml-auto text-[11px] font-medium text-white bg-[#1a1a1a] rounded-md px-2.5 py-1 border-none cursor-pointer hover:bg-[#333] transition-colors duration-150 font-body"
@@ -277,12 +260,12 @@ export default function ProfilePage({ go, onBackfill, onSearch }) {
               if (entries.length === 0) return null;
               return (
                 <div key={month} className="mb-6">
-                  <div className="text-[11px] font-semibold uppercase tracking-[1.5px] text-[#767676] mb-3 pb-2 border-b border-[#f5f5f5] font-body">
+                  <div className="text-[11px] font-semibold uppercase tracking-[1.5px] text-[#767676] mb-3 pb-2 border-b border-border-light font-body">
                     {month}
                   </div>
                   <div className="flex gap-1.5 flex-wrap">
                     {entries.map((e, i) => (
-                      <div key={i} role="button" tabIndex={0} className="relative cursor-pointer" onClick={() => go(e.b)} onKeyDown={ev => { if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); go(e.b); } }}>
+                      <div key={`${key}-${e.b.id}`} role="button" tabIndex={0} className="relative cursor-pointer" onClick={() => go(e.b)} onKeyDown={ev => { if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); go(e.b); } }}>
                         <Img book={e.b} w={80} h={120} />
                         <div className="absolute bottom-1 left-1 right-1 flex justify-between items-center">
                           <span className="text-[8px] bg-black/60 text-white px-1 py-[2px] rounded-sm font-body">{e.d}</span>
@@ -411,7 +394,7 @@ export default function ProfilePage({ go, onBackfill, onSearch }) {
       {tab === "mes critiques" && (
         <div className="py-3">
           {reviews.length > 0 ? reviews.map((rv, i) => (
-            <div key={i} className="py-5 border-b border-[#f5f5f5]">
+            <div key={i} className="py-5 border-b border-border-light">
               <div className="flex gap-4">
                 <Img book={rv.b} w={72} h={108} onClick={() => go(rv.b)} />
                 <div className="flex-1">
@@ -445,7 +428,7 @@ export default function ProfilePage({ go, onBackfill, onSearch }) {
       {tab === "mes citations" && (
         <div className="py-3">
           {quotes.length > 0 ? quotes.map(q => (
-            <div key={q.id} className="py-5 border-b border-[#f5f5f5]">
+            <div key={q.id} className="py-5 border-b border-border-light">
               <div className="text-[15px] italic text-[#1a1a1a] leading-[1.7] border-l-[3px] border-l-cover-fallback pl-4 mb-3 font-display">
                 « {q.txt} »
               </div>
@@ -468,7 +451,7 @@ export default function ProfilePage({ go, onBackfill, onSearch }) {
       {tab === "mes listes" && (
         <div className="py-3">
           {lists.length > 0 ? lists.map(l => (
-            <div key={l.id} className="py-5 border-b border-[#f5f5f5]">
+            <div key={l.id} className="py-5 border-b border-border-light">
               <div className="flex gap-2 mb-3.5 p-3 px-3.5 bg-surface rounded-lg overflow-x-auto">
                 {l.cv.slice(0, 4).map(b => <Img key={b.id} book={b} w={60} h={90} onClick={() => go(b)} />)}
                 {l.n > 4 && (

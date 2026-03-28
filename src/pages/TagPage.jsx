@@ -10,7 +10,7 @@ export default function TagPage({ tag, go, onBack }) {
       <button onClick={onBack} className="bg-transparent border-none text-[#737373] cursor-pointer text-[13px] pb-4 font-body">
         ← Retour
       </button>
-      <Label>Tag</Label>
+      <Label>Thème</Label>
       <h2 className="text-[22px] font-normal mb-1 font-display italic">{tag}</h2>
       <p className="text-[13px] text-[#737373] mt-1 mb-5 font-body">{res.length} livres</p>
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">

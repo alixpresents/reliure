@@ -25,3 +25,11 @@ details > summary::-webkit-details-marker { display: none; }
   to { opacity: 1; transform: translateY(0); }
 }
 .animate-page-in { animation: pageIn 200ms ease both; }
+
+[role="button"]:focus-visible,
+button:focus-visible,
+input:focus-visible {
+  outline: 2px solid #1a1a1a;
+  outline-offset: 2px;
+  border-radius: 4px;
+}

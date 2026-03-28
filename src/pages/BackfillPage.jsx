@@ -2,9 +2,9 @@ import { useState } from "react";
 import { B } from "../data";
 import Img from "../components/Img";
 import Label from "../components/Label";
+import InteractiveStars from "../components/InteractiveStars";
 
 function BackfillBook({ book, rating, onRate, onRemove, isNew }) {
-  const [hv, setHv] = useState(0);
   return (
     <div className={`flex flex-col items-center transition-all duration-300 ${isNew ? "animate-[fadeIn_300ms_ease]" : ""}`}>
       <div className="relative">
@@ -18,23 +18,8 @@ function BackfillBook({ book, rating, onRate, onRemove, isNew }) {
       </div>
       <div className="text-[11px] font-medium mt-2 font-body text-center max-w-[60px] truncate">{book.t}</div>
       <div className="text-[10px] text-[#737373] font-body">{book.a.split(" ").pop()}</div>
-      <div className="flex gap-[1px] mt-1">
-        {[1, 2, 3, 4, 5].map(n => (
-          <span
-            key={n}
-            role="button"
-            tabIndex={0}
-            aria-label={`${n} étoile${n > 1 ? "s" : ""}`}
-            onMouseEnter={() => setHv(n)}
-            onMouseLeave={() => setHv(0)}
-            onClick={() => onRate(n === rating ? 0 : n)}
-            onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onRate(n === rating ? 0 : n); } }}
-            className={`cursor-pointer text-[10px] transition-all duration-150 inline-block ${n <= (hv || 0) ? "scale-110" : ""}`}
-            style={{ color: n <= (hv || rating) ? "#D4883A" : "#ddd" }}
-          >
-            ★
-          </span>
-        ))}
+      <div className="mt-1">
+        <InteractiveStars value={rating} onChange={onRate} size="text-[10px]" />
       </div>
     </div>
   );

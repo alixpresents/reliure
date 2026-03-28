@@ -106,7 +106,7 @@ export default function ArticlePage({ article, onBack, go }) {
             tabIndex={0}
             onClick={() => onBack(a)}
             onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onBack(a); } }}
-            className="flex gap-5 py-5 border-b border-[#f3f3f3] cursor-pointer"
+            className="flex gap-5 py-5 border-b border-border-light cursor-pointer"
           >
             <div className="flex-1">
               <div className="mb-2"><Tag>{a.tag}</Tag></div>

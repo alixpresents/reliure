@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { B, QUOTES, ACTIVITY } from "../data";
 import Img from "../components/Img";
 import Stars from "../components/Stars";
@@ -8,12 +8,11 @@ import Pill from "../components/Pill";
 import Label from "../components/Label";
 import HScroll from "../components/HScroll";
 import LikeButton from "../components/LikeButton";
+import InteractiveStars from "../components/InteractiveStars";
 
 export default function BookPage({ book, onBack, onTag, go }) {
   const [st, setSt] = useState(null);
-  const [hv, setHv] = useState(0);
   const [ur, setUr] = useState(0);
-  const [starPop, setStarPop] = useState(0);
   const [bt, setBt] = useState("critiques");
   const [finDate, setFinDate] = useState(null);
   const [noDate, setNoDate] = useState(false);
@@ -26,6 +25,12 @@ export default function BookPage({ book, onBack, onTag, go }) {
   const ALREADY_READ = [1, 7]; // 2666 & Ficciones
   const KNOWN_TAGS = ["en vacances", "recommandé par Margaux", "avion CDG-JFK", "relu", "en VO", "café Oberkampf", "métro"];
   const [tagFocused, setTagFocused] = useState(false);
+
+  useEffect(() => {
+    setSt(null); setUr(0); setBt("critiques");
+    setFinDate(null); setNoDate(false); setIsReread(false);
+    setTagInput(""); setTags([]); setTagFocused(false);
+  }, [book.id]);
 
   const todayLabel = () => {
     const d = new Date();
@@ -82,7 +87,7 @@ export default function BookPage({ book, onBack, onTag, go }) {
         <Img book={book} w={180} h={270} />
         <div className="flex-1 pt-1">
           <h1 className="m-0 text-[26px] font-normal leading-tight font-display italic">{book.t}</h1>
-          <div className="text-[15px] text-[#666] mt-1.5 font-body">{book.a}</div>
+          <div className="text-[15px] text-[#737373] mt-1.5 font-body">{book.a}</div>
           <div className="text-[13px] text-[#767676] mt-1 font-body">{book.y} · {book.p} pages</div>
 
           {/* Rating box */}
@@ -145,20 +150,7 @@ export default function BookPage({ book, onBack, onTag, go }) {
           {/* User rating */}
           <div className="mt-[18px]">
             <div className="text-xs text-[#737373] mb-1.5 font-body">Votre note</div>
-            <div className="flex gap-[3px]">
-              {[1, 2, 3, 4, 5].map(n => (
-                <span
-                  key={n}
-                  onMouseEnter={() => setHv(n)}
-                  onMouseLeave={() => setHv(0)}
-                  onClick={() => { setUr(n === ur ? 0 : n); setStarPop(n); setTimeout(() => setStarPop(0), 200); }}
-                  className={`cursor-pointer text-xl transition-all duration-200 inline-block ${n <= (hv || 0) ? "scale-110" : "scale-100"} ${starPop === n ? "scale-125" : ""}`}
-                  style={{ color: n <= (hv || ur) ? "#D4883A" : "#ddd" }}
-                >
-                  ★
-                </span>
-              ))}
-            </div>
+            <InteractiveStars value={ur} onChange={setUr} />
           </div>
 
           {/* Personal tags */}
@@ -260,7 +252,7 @@ export default function BookPage({ book, onBack, onTag, go }) {
         {bt === "critiques" && (
           <div>
             {ACTIVITY.filter(a => a.ty === "review").slice(0, 3).map(rv => (
-              <div key={rv.id} className="py-4 border-b border-[#f5f5f5]">
+              <div key={rv.id} className="py-4 border-b border-border-light">
                 <div className="flex items-center gap-2.5 mb-2">
                   <Avatar i={rv.av} s={26} />
                   <span className="text-[13px] font-semibold font-body">{rv.u}</span>
@@ -276,7 +268,7 @@ export default function BookPage({ book, onBack, onTag, go }) {
         {bt === "citations" && (
           <div>
             {bq.length > 0 ? bq.map(q => (
-              <div key={q.id} className="py-[18px] border-b border-[#f5f5f5]">
+              <div key={q.id} className="py-[18px] border-b border-border-light">
                 <div className="text-[15px] italic text-[#1a1a1a] leading-[1.7] border-l-[3px] border-l-cover-fallback pl-4 font-display">
                   « {q.txt} »
                 </div>

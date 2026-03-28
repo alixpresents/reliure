@@ -44,7 +44,7 @@ export default function JournalPage({ go, goArticle }) {
             tabIndex={0}
             onClick={() => goArticle(feat)}
             onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); goArticle(feat); } }}
-            className="py-8 pb-7 cursor-pointer"
+            className="py-8 pb-7 cursor-pointer hover:bg-[#fafafa] -mx-4 px-4 sm:-mx-6 sm:px-6 rounded-lg transition-colors duration-150"
           >
             <div className="flex items-start gap-2 mb-3.5"><Tag>{feat.tag}</Tag></div>
             <h3 className="text-xl sm:text-2xl font-normal mb-2 leading-[1.25] max-w-[580px] font-display italic">{feat.t}</h3>
@@ -72,7 +72,7 @@ export default function JournalPage({ go, goArticle }) {
               tabIndex={0}
               onClick={() => goArticle(a)}
               onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); goArticle(a); } }}
-              className="py-7 border-b border-[#f3f3f3] cursor-pointer"
+              className="py-7 border-b border-border-light cursor-pointer hover:bg-[#fafafa] -mx-4 px-4 sm:-mx-6 sm:px-6 transition-colors duration-150"
             >
               <div className="flex gap-5">
                 <div className="flex-1">
@@ -98,7 +98,7 @@ export default function JournalPage({ go, goArticle }) {
         <div>
           <div className="pt-6"><Label>Événements à venir</Label></div>
           {JAGENDA.map(ev => (
-            <div key={ev.id} className="py-5 border-b border-[#f5f5f5] flex gap-4">
+            <div key={ev.id} className="py-5 border-b border-border-light flex gap-4">
               <div className="w-20 shrink-0">
                 <div className="text-[11px] text-[#737373] uppercase tracking-[0.5px] mb-0.5 font-body">{ev.ty}</div>
                 <div className="text-xs font-medium font-body">{ev.d}</div>

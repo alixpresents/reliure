@@ -33,3 +33,11 @@ export const CHALLENGE = {
     { id: 8, code: "ACTION !", title: "Ce roman a été adapté en film, téléfilm ou série TV", responses: 156, mod: "Margaux L.", completed: true, myBook: { title: "L'Étranger", date: "14 mars", rating: 3.5 } },
   ],
 };
+
+export const CHALLENGES_LIST = [
+  { id: 1, title: "Multi-Défis 2026", creator: "Margaux L.", participants: 230, items: 100, icon: "★", enrolled: true, progress: 34, target: 90 },
+  { id: 2, title: "Défi Francophone", creator: "Reliure", participants: 412, items: 50, icon: "◆", enrolled: true, progress: 12, target: 30 },
+  { id: 3, title: "Littérature engagée", creator: "Théo B.", participants: 87, items: 30, icon: "▲", enrolled: false },
+  { id: 4, title: "Tour du monde en 80 livres", creator: "Camille D.", participants: 156, items: 80, icon: "●", enrolled: false },
+  { id: 5, title: "Classiques avant 1950", creator: "Reliure", participants: 203, items: 40, icon: "◇", enrolled: false },
+];

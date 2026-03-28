@@ -5,7 +5,7 @@ export default function Header({ pg, setPg, onSearch }) {
     ["explore", "Explorer"],
     ["citations", "Citations"],
     ["feed", "Fil"],
-    ["challenges", "Challenges"],
+    ["challenges", "Défis"],
     ["profile", "Profil"],
   ];
 
@@ -50,7 +50,7 @@ export default function Header({ pg, setPg, onSearch }) {
             La Revue
           </button>
         </nav>
-        <div role="button" tabIndex={0} onClick={onSearch} onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onSearch(); } }} aria-label="Rechercher" className="cursor-pointer text-[#767676] p-1">
+        <div role="button" tabIndex={0} onClick={onSearch} onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onSearch(); } }} aria-label="Rechercher" className="cursor-pointer text-[#767676] hover:text-[#1a1a1a] transition-colors duration-150 p-1">
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
             <circle cx="11" cy="11" r="8" />
             <line x1="21" y1="21" x2="16.65" y2="16.65" />

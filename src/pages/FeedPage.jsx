@@ -10,7 +10,7 @@ export default function FeedPage({ go }) {
     <div className="pt-5">
       <Heading>Fil d'activité</Heading>
       {ACTIVITY.map(it => (
-        <div key={it.id} className="py-[18px] border-b border-[#f3f3f3]">
+        <div key={it.id} className="py-[18px] border-b border-border-light">
           <div className="flex items-center gap-2.5 mb-3">
             <Avatar i={it.av} s={30} />
             <div className="flex-1 text-[13px] font-body">

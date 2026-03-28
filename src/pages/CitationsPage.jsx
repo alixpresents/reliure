@@ -9,7 +9,7 @@ export default function CitationsPage({ go }) {
       <Heading>Citations</Heading>
       <p className="text-sm text-[#737373] -mt-2 mb-5 font-body">Les plus belles phrases, partagées par la communauté.</p>
       {[...QUOTES].sort((a, b) => b.lk - a.lk).map(q => (
-        <div key={q.id} className="py-[22px] border-b border-[#f3f3f3]">
+        <div key={q.id} className="py-[22px] border-b border-border-light">
           <div className="text-base italic text-[#1a1a1a] leading-[1.75] border-l-[3px] border-l-cover-fallback pl-[18px] mb-3.5 font-display">
             « {q.txt} »
           </div>
