@@ -1,0 +1,21 @@
+@import "tailwindcss";
+
+@theme {
+  --font-body: 'Geist', sans-serif;
+  --font-display: 'Instrument Serif', serif;
+  --color-star: #D4883A;
+  --color-spoiler: #e25555;
+  --color-surface: #fafaf8;
+  --color-cover-fallback: #e8e4de;
+  --color-avatar-bg: #f0ede8;
+  --color-tag-bg: #f5f3f0;
+  --color-border-light: #f0f0f0;
+}
+
+@layer base {
+  * { box-sizing: border-box; margin: 0; }
+}
+img { display: block; }
+::-webkit-scrollbar { width: 0; height: 0; }
+details > summary { list-style: none; }
+details > summary::-webkit-details-marker { display: none; }

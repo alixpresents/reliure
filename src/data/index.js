@@ -1,0 +1,72 @@
+export const FONT_URL = "https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600;700&display=swap";
+
+export const B = [
+  { id:1, t:"2666", a:"Roberto Bolaño", c:"https://covers.openlibrary.org/b/isbn/9780312429218-L.jpg", y:2004, r:4.5, p:898, rt:1247, tags:["maximalism","violence","désert","Mexique","postmoderne"] },
+  { id:2, t:"Les Détectives sauvages", a:"Roberto Bolaño", c:"https://covers.openlibrary.org/b/isbn/9780312427481-L.jpg", y:1998, r:4.5, p:577, rt:892, tags:["poésie","Mexico","road novel","jeunesse"] },
+  { id:3, t:"Beloved", a:"Toni Morrison", c:"https://covers.openlibrary.org/b/isbn/9781400033416-L.jpg", y:1987, r:4.3, p:324, rt:3421, tags:["esclavage","mémoire","fantômes","maternité"] },
+  { id:4, t:"L'Étranger", a:"Albert Camus", c:"https://covers.openlibrary.org/b/isbn/9782070360024-L.jpg", y:1942, r:4.1, p:123, rt:8932, tags:["absurde","Algérie","existentialisme","soleil"] },
+  { id:5, t:"Pedro Páramo", a:"Juan Rulfo", c:"https://covers.openlibrary.org/b/isbn/9780802133908-L.jpg", y:1955, r:4.4, p:124, rt:2103, tags:["réalisme magique","fantômes","Mexique","mort"] },
+  { id:6, t:"Molloy", a:"Samuel Beckett", c:"https://covers.openlibrary.org/b/isbn/9780802144454-L.jpg", y:1951, r:4.0, p:256, rt:567, tags:["absurde","monologue","errance","modernisme"] },
+  { id:7, t:"Ficciones", a:"Jorge Luis Borges", c:"https://covers.openlibrary.org/b/isbn/9780802130303-L.jpg", y:1944, r:4.6, p:174, rt:4210, tags:["labyrinthes","métafiction","philosophie","nouvelles"] },
+  { id:8, t:"La Peste", a:"Albert Camus", c:"https://covers.openlibrary.org/b/isbn/9782070360420-L.jpg", y:1947, r:4.2, p:308, rt:6543, tags:["épidémie","Oran","allégorie","résistance"] },
+  { id:9, t:"Austerlitz", a:"W.G. Sebald", c:"https://covers.openlibrary.org/b/isbn/9780375504839-L.jpg", y:2001, r:4.3, p:298, rt:1876, tags:["mémoire","architecture","Shoah","photographie"] },
+  { id:10, t:"Si par une nuit d'hiver", a:"Italo Calvino", c:"https://covers.openlibrary.org/b/isbn/9780156439619-L.jpg", y:1979, r:4.2, p:260, rt:3102, tags:["métafiction","lecteur","postmoderne","jeu"] },
+  { id:11, t:"Ulysses", a:"James Joyce", c:"https://covers.openlibrary.org/b/isbn/9780199535675-L.jpg", y:1922, r:3.7, p:730, rt:5678, tags:["Dublin","stream of consciousness","modernisme"] },
+  { id:12, t:"Les Choses", a:"Georges Perec", c:"https://covers.openlibrary.org/b/isbn/9782260000068-L.jpg", y:1965, r:3.9, p:160, rt:432, tags:["consommation","Paris","années 60","sociologie"] },
+];
+
+export const DIARY = [
+  { b:B[0], d:"26", m:"Mars", r:4.5, lk:true },{ b:B[4], d:"22", m:"Mars", r:4.0, lk:true },
+  { b:B[8], d:"18", m:"Mars", r:4.5, lk:true },{ b:B[3], d:"14", m:"Mars", r:3.5, lk:false },
+  { b:B[11], d:"10", m:"Mars", r:4.0, lk:true },{ b:B[6], d:"5", m:"Mars", r:5.0, lk:true },
+  { b:B[9], d:"28", m:"Fév", r:4.0, lk:true },{ b:B[2], d:"20", m:"Fév", r:4.5, lk:true },
+  { b:B[1], d:"12", m:"Fév", r:4.5, lk:true },{ b:B[7], d:"5", m:"Fév", r:4.0, lk:false },
+  { b:B[10], d:"25", m:"Jan", r:3.5, lk:false },{ b:B[5], d:"15", m:"Jan", r:4.0, lk:true },
+];
+
+export const REVIEWS = [
+  { b:B[0], r:4.5, txt:"Un chef-d'oeuvre absolu. Bolaño construit un labyrinthe dont on ne veut jamais sortir. Chaque partie est un roman en soi.", sp:false, lk:24, d:"26 mars" },
+  { b:B[6], r:5.0, txt:"Borges invente des mondes dans chaque nouvelle. Vertigineux. Relecture qui ne déçoit jamais.", sp:false, lk:18, d:"5 mars" },
+  { b:B[2], r:4.5, txt:"Morrison écrit avec une intensité rare. Le passage avec la révélation de Beloved est dévastateur, impossible de s'en remettre.", sp:true, lk:31, d:"20 fév" },
+];
+
+export const QUOTES = [
+  { id:1, txt:"Le secret du bonheur en amour, ce n'est pas d'être aveugle mais de savoir fermer les yeux quand il le faut.", b:B[3], u:"Margaux L.", lk:89 },
+  { id:2, txt:"J'ai toujours su que les chemins de la liberté n'étaient pas ceux de la sagesse.", b:B[0], u:"Alix", lk:42 },
+  { id:3, txt:"Aujourd'hui, maman est morte. Ou peut-être hier, je ne sais pas.", b:B[3], u:"Alix", lk:203 },
+  { id:4, txt:"Un livre doit être la hache qui brise la mer gelée en nous.", b:B[6], u:"Théo B.", lk:124 },
+  { id:5, txt:"Les miroirs et la copulation sont abominables car ils multiplient le nombre des hommes.", b:B[6], u:"Samir K.", lk:98 },
+  { id:6, txt:"Il n'y a pas de honte à préférer le bonheur.", b:B[7], u:"Margaux L.", lk:76 },
+];
+
+export const ACTIVITY = [
+  { id:1, u:"Margaux L.", av:"ML", ty:"review", b:B[0], r:5, txt:"Un chef-d'oeuvre absolu. Bolaño construit un labyrinthe dont on ne veut jamais sortir.", tm:"2h", lk:24 },
+  { id:2, u:"Théo B.", av:"TB", ty:"quote", b:B[6], r:0, txt:"Les miroirs et la copulation sont abominables car ils multiplient le nombre des hommes.", tm:"5h", lk:18 },
+  { id:3, u:"Camille D.", av:"CD", ty:"review", b:B[2], r:5, txt:"Morrison écrit avec une intensité rare. Lecture indispensable.", tm:"8h", lk:31 },
+  { id:4, u:"Samir K.", av:"SK", ty:"added", b:B[8], r:0, txt:"", tm:"12h", lk:0 },
+  { id:5, u:"Louise R.", av:"LR", ty:"review", b:B[4], r:4.5, txt:"124 pages de pure magie. Rulfo a capturé quelque chose d'éternel.", tm:"1j", lk:22 },
+];
+
+export const LISTS = [
+  { id:1, t:"Romans latino-américains essentiels", u:"Margaux L.", n:24, lk:89, cv:[B[0],B[4],B[6],B[1]] },
+  { id:2, t:"Existentialisme français", u:"Théo B.", n:18, lk:54, cv:[B[3],B[7],B[11]] },
+  { id:3, t:"Modernisme européen", u:"Camille D.", n:32, lk:112, cv:[B[10],B[5],B[9],B[8]] },
+  { id:4, t:"Moins de 200 pages, impact max", u:"Samir K.", n:15, lk:67, cv:[B[3],B[4],B[11]] },
+];
+
+export const JARTICLES = [
+  { id:1, t:"Lire Bolaño en 2026 : pourquoi 2666 reste indépassable", st:"Vingt ans après, le roman-monde de Bolaño continue de hanter la littérature.", a:"Éloïse Garnier", d:"24 mars 2026", rt:"12 min", cv:B[0], tag:"Essai",
+    ex:"Il y a dans 2666 quelque chose qui résiste à toute tentative de classification. Ce n'est pas un roman, pas vraiment. C'est une expérience de lecture qui modifie durablement notre rapport au texte." },
+  { id:2, t:"« Écrire, c'est refuser la mort deux fois »", st:"Entretien avec Kamel Daoud", a:"Reliure", d:"18 mars 2026", rt:"18 min", cv:B[3], tag:"Entretien",
+    ex:"Kamel Daoud nous reçoit dans son appartement parisien. Les stores sont à moitié baissés. Il parle lentement, choisit ses mots avec une précision chirurgicale." },
+  { id:3, t:"Au-delà du réalisme magique", st:"De Rulfo à Zambra, cartographie d'un continent en mutation.", a:"Pablo Mendes", d:"10 mars 2026", rt:"15 min", cv:B[4], tag:"Essai",
+    ex:"Réduire la littérature latino-américaine au réalisme magique, c'est comme réduire le cinéma français à la Nouvelle Vague." },
+  { id:4, t:"Borges, l'invention perpétuelle", st:"Sur Ficciones et l'idée que toute littérature est une note de bas de page.", a:"Clara Music", d:"22 fév 2026", rt:"10 min", cv:B[6], tag:"Essai",
+    ex:"Borges ne raconte pas des histoires. Il construit des pièges. Chaque nouvelle de Ficciones est une machine logique." },
+];
+
+export const JAGENDA = [
+  { id:1, t:"Rencontre avec Kamel Daoud", pl:"Librairie Compagnie", ci:"Paris 5e", d:"Ven 28 mars", tm:"19h00", ty:"Rencontre" },
+  { id:2, t:"Salon du Livre", pl:"Grand Palais", ci:"Paris", d:"4-7 avril", tm:"", ty:"Salon" },
+  { id:3, t:"Lecture : Alejandro Zambra", pl:"Institut Cervantes", ci:"Paris 7e", d:"Mar 1 avril", tm:"20h00", ty:"Lecture" },
+];
