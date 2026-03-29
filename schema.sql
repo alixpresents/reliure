@@ -183,6 +183,7 @@ create table public.user_favorites (
   user_id uuid references public.users(id) on delete cascade not null,
   book_id uuid references public.books(id) on delete cascade not null,
   position smallint not null check (position >= 1 and position <= 4),
+  note text check (char_length(note) <= 24),
 
   primary key (user_id, position),
   unique (user_id, book_id)

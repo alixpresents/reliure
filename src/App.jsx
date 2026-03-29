@@ -26,9 +26,12 @@ export default function App() {
   const [st, setSt] = useState(null);
   const [prev, setPrev] = useState("explore");
   const [search, setSearch] = useState(false);
+  const [searchCb, setSearchCb] = useState(null); // custom callback for Search, or null = navigate
 
   const scroll0 = () => window.scrollTo(0, 0);
   const go = b => { setPrev(pg); setSb(b); setPg("book"); scroll0(); };
+  const openSearchFor = (cb) => { setSearchCb(() => cb); setSearch(true); };
+  const closeSearch = () => { setSearch(false); setSearchCb(null); };
   const back = () => { setSb(null); setPg(prev); scroll0(); };
   const tag = t => { setPrev(pg); setSt(t); setPg("tag"); scroll0(); };
   const goArticle = a => { setSa(a); setPg("article"); scroll0(); };
@@ -78,11 +81,11 @@ export default function App() {
   return (
     <div className="bg-white min-h-screen text-[#1a1a1a] font-body">
       <link href={FONT_URL} rel="stylesheet" />
-      <Header pg={pg} setPg={p => { setPg(p); setSb(null); scroll0(); }} onSearch={() => setSearch(!search)} initials={initials} />
-      <Search open={search} onClose={() => setSearch(false)} go={go} />
+      <Header pg={pg} setPg={p => { setPg(p); setSb(null); scroll0(); }} onSearch={() => { setSearchCb(null); setSearch(!search); }} initials={initials} />
+      <Search open={search} onClose={closeSearch} go={searchCb || go} />
       <div className="max-w-[760px] mx-auto px-4 sm:px-6 pb-20">
         <div key={`${pg}-${sb?.id || ""}-${sa?.id || ""}`} className="animate-page-in">
-          {pg === "profile" && <ProfilePage go={go} onBackfill={() => { setPrev("profile"); setPg("backfill"); scroll0(); }} onSearch={() => setSearch(true)} />}
+          {pg === "profile" && <ProfilePage go={go} onBackfill={() => { setPrev("profile"); setPg("backfill"); scroll0(); }} onSearch={() => setSearch(true)} onSearchFor={openSearchFor} />}
           {pg === "backfill" && <BackfillPage onBack={() => { setPg("profile"); scroll0(); }} />}
           {pg === "feed" && <FeedPage go={go} />}
           {pg === "explore" && <ExplorePage go={go} onTag={tag} onSearch={() => setSearch(true)} />}

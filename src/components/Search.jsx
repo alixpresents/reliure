@@ -12,7 +12,6 @@ export default function Search({ open, onClose, go }) {
   const timer = useRef(null);
   const inputRef = useRef(null);
 
-  // Animate in/out
   useEffect(() => {
     if (open) {
       requestAnimationFrame(() => setVisible(true));
@@ -22,7 +21,6 @@ export default function Search({ open, onClose, go }) {
     }
   }, [open]);
 
-  // Escape key
   useEffect(() => {
     if (!open) return;
     const handler = e => { if (e.key === "Escape") handleClose(); };
@@ -30,7 +28,6 @@ export default function Search({ open, onClose, go }) {
     return () => window.removeEventListener("keydown", handler);
   }, [open]);
 
-  // Debounced search
   useEffect(() => {
     clearTimeout(timer.current);
     if (!q || q.length < 2) { setResults([]); setLoading(false); return; }
@@ -69,7 +66,7 @@ export default function Search({ open, onClose, go }) {
         awards: [],
         _supabase: book,
       };
-      go(normalized);
+      await go(normalized);
       handleClose();
       setQ("");
       setResults([]);
@@ -78,35 +75,48 @@ export default function Search({ open, onClose, go }) {
 
   return (
     <>
-      {/* Overlay sombre — couvre toute la page */}
+      {/* 1. Overlay sombre */}
       <div
-        className="fixed inset-0 z-200"
+        onClick={handleClose}
         style={{
+          position: "fixed",
+          inset: 0,
+          zIndex: 9998,
           backgroundColor: visible ? "rgba(0,0,0,0.3)" : "rgba(0,0,0,0)",
           transition: "background-color 150ms ease-out",
         }}
-        onClick={handleClose}
       />
 
-      {/* Conteneur de positionnement — fixe sous le header, centré */}
+      {/* 2. Panneau blanc sous le header */}
       <div
-        className="fixed left-0 right-0 z-201 flex justify-center"
-        style={{ top: 52 }}
-        onClick={handleClose}
+        style={{
+          position: "fixed",
+          top: 52,
+          left: 0,
+          right: 0,
+          zIndex: 9999,
+          display: "flex",
+          justifyContent: "center",
+          pointerEvents: "none",
+        }}
       >
-        {/* Panneau blanc */}
         <div
-          className="w-full sm:max-w-[560px] bg-white rounded-b-none sm:rounded-b-[12px] overflow-hidden"
+          onClick={e => e.stopPropagation()}
           style={{
+            width: "100%",
+            maxWidth: 560,
+            backgroundColor: "#fff",
+            borderRadius: "0 0 12px 12px",
             boxShadow: "0 8px 32px rgba(0,0,0,0.12)",
             maxHeight: "60vh",
+            overflow: "hidden",
             opacity: visible ? 1 : 0,
             transform: visible ? "translateY(0)" : "translateY(-8px)",
             transition: "opacity 150ms ease-out, transform 150ms ease-out",
+            pointerEvents: "auto",
           }}
-          onClick={e => e.stopPropagation()}
         >
-          {/* Input */}
+          {/* 3. Input */}
           <div className="flex items-center gap-3 px-5 py-4 border-b border-[#eee]">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#bbb" strokeWidth="2" className="shrink-0">
               <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
@@ -137,7 +147,7 @@ export default function Search({ open, onClose, go }) {
             </button>
           </div>
 
-          {/* Résultats */}
+          {/* 4. Résultats */}
           <div className="overflow-y-auto" style={{ maxHeight: "calc(60vh - 64px)" }}>
             {loading && (
               <div className="py-8 text-center text-[13px] text-[#767676] font-body">Recherche...</div>
@@ -151,7 +161,7 @@ export default function Search({ open, onClose, go }) {
               <div
                 key={gb.googleId}
                 onClick={() => importing ? null : handleSelect(gb)}
-                className={`flex gap-3 py-2.5 px-5 min-h-[44px] items-center transition-colors duration-100 ${importing === gb.googleId ? "opacity-50" : "cursor-pointer hover:bg-surface"}`}
+                className={`flex gap-3 py-2.5 px-5 min-h-[44px] items-center transition-colors duration-100 ${importing === gb.googleId ? "opacity-50" : "cursor-pointer hover:bg-[#fafaf8]"}`}
               >
                 {gb.coverUrl ? (
                   <img src={gb.coverUrl} alt="" className="w-9 h-[52px] object-cover rounded-sm shrink-0 bg-cover-fallback" />

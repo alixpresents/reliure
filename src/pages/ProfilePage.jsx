@@ -12,7 +12,6 @@ import { useMyReviews } from "../hooks/useReviews";
 import { useMyQuotes } from "../hooks/useQuotes";
 import { useFollowCounts } from "../hooks/useFollow";
 import { useFavorites } from "../hooks/useFavorites";
-import Search from "../components/Search";
 import { useAuth } from "../lib/AuthContext";
 import { supabase } from "../lib/supabase";
 
@@ -124,21 +123,242 @@ function ReadingItem({ book, go, onFinish, initialPage = 0, statusId = null }) {
   );
 }
 
+function FavNote({ note, isOwner, onSave }) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(note);
+  const inputRef = useRef(null);
+
+  useEffect(() => { if (editing && inputRef.current) { inputRef.current.focus(); inputRef.current.select(); } }, [editing]);
+
+  const commit = () => {
+    setEditing(false);
+    onSave(draft.trim());
+  };
+
+  if (editing) {
+    return (
+      <div className="flex justify-center -mt-1.5 relative z-1">
+        <div className="inline-flex items-center gap-1 bg-white border border-[#eee] rounded-[10px] px-2.5 py-[2px] shadow-[0_1px_4px_rgba(0,0,0,0.06)]">
+          <input
+            ref={inputRef}
+            value={draft}
+            onChange={e => setDraft(e.target.value.slice(0, 24))}
+            onBlur={commit}
+            onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); commit(); } if (e.key === "Escape") { setEditing(false); setDraft(note); } }}
+            className="bg-transparent border-none outline-none text-[11px] text-[#666] font-body w-[100px] text-center"
+            maxLength={24}
+          />
+          <span className="text-[9px] text-[#999] font-body shrink-0">{draft.length}/24</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (note) {
+    return (
+      <div className="flex justify-center -mt-1.5 relative z-1">
+        <div
+          onClick={isOwner ? (e) => { e.stopPropagation(); setEditing(true); setDraft(note); } : undefined}
+          className={`inline-block bg-white border border-[#eee] rounded-[10px] px-2.5 py-[2px] shadow-[0_1px_4px_rgba(0,0,0,0.06)] whitespace-nowrap ${isOwner ? "cursor-text" : ""}`}
+        >
+          <span className="text-[11px] text-[#666] font-body">{note}</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (isOwner) {
+    return (
+      <div className="flex justify-center -mt-1.5 relative z-1">
+        <div
+          onClick={e => { e.stopPropagation(); setEditing(true); setDraft(""); }}
+          className="inline-block bg-white border border-[#eee] rounded-[10px] px-1.5 py-[1px] shadow-[0_1px_4px_rgba(0,0,0,0.06)] cursor-pointer opacity-0 group-hover/fav:opacity-100 transition-opacity duration-150"
+        >
+          <span className="text-[11px] text-[#ccc]">+</span>
+        </div>
+      </div>
+    );
+  }
+
+  return null;
+}
+
+function FavoritesSection({ favorites, isOwner, go, onAdd, onRemove, onSwap, onUpdateNote }) {
+  const [editing, setEditing] = useState(false);
+  const [dragFrom, setDragFrom] = useState(null);
+  const [dragOver, setDragOver] = useState(null);
+  const longPressTimer = useRef(null);
+
+  const handleDragStart = (e, pos) => {
+    setDragFrom(pos);
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData("text/plain", String(pos));
+  };
+  const handleDragOver = (e, pos) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    if (pos !== dragOver) setDragOver(pos);
+  };
+  const handleDrop = (e, pos) => {
+    e.preventDefault();
+    if (dragFrom !== null && dragFrom !== pos) onSwap(dragFrom, pos);
+    setDragFrom(null);
+    setDragOver(null);
+  };
+  const handleDragEnd = () => { setDragFrom(null); setDragOver(null); };
+
+  // Mobile long press
+  const handleTouchStart = (pos) => {
+    longPressTimer.current = setTimeout(() => setDragFrom(pos), 300);
+  };
+  const handleTouchEnd = (pos) => {
+    clearTimeout(longPressTimer.current);
+    if (dragFrom !== null && dragFrom !== pos) {
+      onSwap(dragFrom, pos);
+      setDragFrom(null);
+      setDragOver(null);
+    }
+  };
+  const handleTouchCancel = () => {
+    clearTimeout(longPressTimer.current);
+    setDragFrom(null);
+    setDragOver(null);
+  };
+
+  return (
+    <div className="border-t border-border-light py-6">
+      <div className="flex items-center justify-between mb-3">
+        <div className="text-[10px] font-semibold uppercase tracking-[2px] text-[#767676] font-body">Quatre favoris</div>
+        {isOwner && (
+          <button
+            onClick={() => { setEditing(!editing); setDragFrom(null); setDragOver(null); }}
+            className={`bg-transparent border-none cursor-pointer text-[12px] font-body transition-colors duration-150 ${editing ? "text-[#1a1a1a] font-medium" : "text-[#999] hover:text-[#1a1a1a]"}`}
+          >
+            {editing ? "Terminé" : "Modifier"}
+          </button>
+        )}
+      </div>
+      <div className="grid grid-cols-4 gap-4">
+        {[1, 2, 3, 4].map(pos => {
+          const fav = favorites.find(f => f.position === pos);
+          const isDragging = dragFrom === pos;
+          const isDropTarget = dragOver === pos && dragFrom !== pos;
+
+          if (fav?.book) {
+            return (
+              <div key={pos} className="group/fav">
+                <div
+                  className="relative"
+                  draggable={editing}
+                  onDragStart={editing ? e => handleDragStart(e, pos) : undefined}
+                  onDragOver={editing ? e => handleDragOver(e, pos) : undefined}
+                  onDrop={editing ? e => handleDrop(e, pos) : undefined}
+                  onDragEnd={editing ? handleDragEnd : undefined}
+                  onDragLeave={editing ? () => setDragOver(null) : undefined}
+                  onTouchStart={editing ? () => handleTouchStart(pos) : undefined}
+                  onTouchEnd={editing ? () => handleTouchEnd(pos) : undefined}
+                  onTouchCancel={editing ? handleTouchCancel : undefined}
+                  style={{
+                    opacity: isDragging ? 0.6 : 1,
+                    boxShadow: isDragging ? "0 8px 24px rgba(0,0,0,0.15)" : "none",
+                    borderRadius: 3,
+                    outline: isDropTarget ? "2px dashed #ddd" : "none",
+                    outlineOffset: isDropTarget ? 2 : 0,
+                    transition: "opacity 150ms, box-shadow 150ms",
+                  }}
+                >
+                  <Img
+                    book={fav.book}
+                    w={999} h={999}
+                    onClick={editing ? undefined : () => go(fav.book)}
+                    className={`w-full h-auto aspect-[2/3] ${editing ? "cursor-grab active:cursor-grabbing" : ""}`}
+                  />
+
+                  {/* Gradient + action buttons (edit mode only) */}
+                  {editing && (
+                    <div className="absolute inset-0 rounded-[3px] overflow-hidden opacity-100 sm:opacity-0 sm:group-hover/fav:opacity-100 transition-opacity duration-150 pointer-events-none">
+                      <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, transparent 50%, rgba(0,0,0,0.5))" }} />
+                      <div className="absolute bottom-2.5 left-0 right-0 flex justify-center gap-2 pointer-events-auto">
+                        <button
+                          onClick={e => { e.stopPropagation(); onAdd(pos); }}
+                          className="w-7 h-7 rounded-full flex items-center justify-center cursor-pointer border-none"
+                          style={{ backgroundColor: "rgba(255,255,255,0.9)" }}
+                          aria-label="Remplacer le favori"
+                        >
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#1a1a1a" strokeWidth="2.5" strokeLinecap="round">
+                            <path d="M17 1l4 4-4 4" /><path d="M3 11V9a4 4 0 0 1 4-4h14" /><path d="M7 23l-4-4 4-4" /><path d="M21 13v2a4 4 0 0 1-4 4H3" />
+                          </svg>
+                        </button>
+                        <button
+                          onClick={e => { e.stopPropagation(); onRemove(pos); }}
+                          className="w-7 h-7 rounded-full flex items-center justify-center cursor-pointer border-none"
+                          style={{ backgroundColor: "rgba(255,255,255,0.9)" }}
+                          aria-label="Supprimer le favori"
+                        >
+                          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#1a1a1a" strokeWidth="2.5">
+                            <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <FavNote note={fav.note} isOwner={editing} onSave={text => onUpdateNote(pos, text)} />
+
+                <div className={`text-xs font-medium font-body ${fav.note ? "mt-1.5" : "mt-2"}`}>{fav.book.t}</div>
+                <div className="text-[11px] text-[#767676] font-body">{fav.book.a.split(" ").pop()}{fav.book.y ? `, ${fav.book.y}` : ""}</div>
+              </div>
+            );
+          }
+
+          if (!editing) return null;
+          return (
+            <div
+              key={pos}
+              onDragOver={editing ? e => handleDragOver(e, pos) : undefined}
+              onDrop={editing ? e => handleDrop(e, pos) : undefined}
+              onTouchEnd={editing ? () => handleTouchEnd(pos) : undefined}
+            >
+              <div
+                role="button"
+                tabIndex={0}
+                onClick={() => { if (!dragFrom) onAdd(pos); }}
+                onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onAdd(pos); } }}
+                className="w-full aspect-[2/3] border-[1.5px] border-dashed border-[#ddd] rounded-[3px] flex items-center justify-center cursor-pointer hover:border-[#bbb] transition-colors duration-150"
+                style={dragFrom !== null && dragFrom !== pos ? { borderColor: "#bbb", borderWidth: 2 } : undefined}
+              >
+                <span className="text-[20px] text-[#ccc]">+</span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      {editing && dragFrom !== null && (
+        <div className="sm:hidden text-center mt-3">
+          <button onClick={() => { setDragFrom(null); setDragOver(null); }} className="text-[12px] text-[#999] font-body bg-transparent border-none cursor-pointer">
+            Annuler le déplacement
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function EmptyState({ children }) {
   return <div className="py-10 text-center">{children}</div>;
 }
 
-export default function ProfilePage({ go, onBackfill, onSearch }) {
+export default function ProfilePage({ go, onBackfill, onSearch, onSearchFor }) {
   const [tab, setTab] = useState("journal");
   const [libView, setLibView] = useState("grille");
-  const [favSlot, setFavSlot] = useState(null); // position being edited (1-4) or null
   const { books: dbReading, refetch: refetchReading } = useReadingList("reading");
   const profileData = useProfileData();
   const { reviews: myReviews } = useMyReviews();
   const { quotes: myQuotes } = useMyQuotes();
   const { user } = useAuth();
   const { followers, following: followingCount } = useFollowCounts(user?.id);
-  const { favorites, setFavorite, refetch: refetchFavorites } = useFavorites();
+  const { favorites, setFavorite, removeFavorite, swapPositions, updateNote } = useFavorites();
 
   // Normalize reading books from Supabase
   const normalizeStatus = rs => ({
@@ -262,47 +482,19 @@ export default function ProfilePage({ go, onBackfill, onSearch }) {
       </div>
 
       {/* Quatre favoris */}
-      <div className="border-t border-border-light py-6">
-        <Label>Quatre favoris</Label>
-        <div className="grid grid-cols-4 gap-4">
-          {[1, 2, 3, 4].map(pos => {
-            const fav = favorites.find(f => f.position === pos);
-            if (fav?.book) {
-              return (
-                <div key={pos} onClick={() => user ? setFavSlot(pos) : go(fav.book)} className={user ? "cursor-pointer" : undefined}>
-                  <Img book={fav.book} w={999} h={999} onClick={user ? undefined : () => go(fav.book)} className="w-full h-auto aspect-[2/3]" />
-                  <div className="text-xs font-medium mt-2 font-body">{fav.book.t}</div>
-                  <div className="text-[11px] text-[#767676] font-body">{fav.book.a.split(" ").pop()}{fav.book.y ? `, ${fav.book.y}` : ""}</div>
-                </div>
-              );
-            }
-            if (!user) return null;
-            return (
-              <div key={pos}>
-                <div
-                  role="button"
-                  tabIndex={0}
-                  onClick={() => setFavSlot(pos)}
-                  onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setFavSlot(pos); } }}
-                  className="w-full aspect-[2/3] border-[1.5px] border-dashed border-[#ddd] rounded-[3px] flex items-center justify-center cursor-pointer hover:border-[#bbb] transition-colors duration-150"
-                >
-                  <span className="text-[20px] text-[#ccc]">+</span>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Search overlay for favorites */}
-      <Search
-        open={favSlot !== null}
-        onClose={() => setFavSlot(null)}
-        go={async (book) => {
-          const bookId = book._supabase?.id || book.id;
-          await setFavorite(favSlot, bookId);
-          setFavSlot(null);
+      <FavoritesSection
+        favorites={favorites}
+        isOwner={!!user}
+        go={go}
+        onAdd={pos => {
+          onSearchFor(async (book) => {
+            const bookId = book._supabase?.id || book.id;
+            await setFavorite(pos, bookId);
+          });
         }}
+        onRemove={removeFavorite}
+        onSwap={swapPositions}
+        onUpdateNote={updateNote}
       />
 
       {/* En cours */}
