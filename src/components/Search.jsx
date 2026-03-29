@@ -162,6 +162,43 @@ export default function Search({ open, onClose, go }) {
     }
   };
 
+  const handleBnFSelect = async (gb) => {
+    const key = `bnf:${gb.isbn13 ?? gb.title}`;
+    if (addedGoogleIds.has(key)) return;
+    setImporting(key);
+
+    // Tenter Google Books par ISBN ou titre+auteur pour un import enrichi
+    const query = gb.isbn13 || `${gb.title} ${gb.authors?.[0] || ""}`.trim();
+    const bookResults = await searchBooks(query);
+
+    if (bookResults.length > 0) {
+      setImporting(null);
+      await handleSelect(bookResults[0]);
+      return;
+    }
+
+    // Fallback : import direct avec les données BnF
+    const book = await importBook({
+      title: gb.title,
+      authors: gb.authors || [],
+      isbn13: gb.isbn13 || null,
+      coverUrl: gb.coverUrl || null,
+      subtitle: gb.subtitle || null,
+      publisher: gb.publisher || null,
+      publishedDate: gb.publishedDate || null,
+      pageCount: gb.pageCount || null,
+      description: gb.description || null,
+    });
+
+    setImporting(null);
+    handleClose();
+    setQ("");
+    setResults([]);
+
+    if (book?.slug) navigate(`/livre/${book.slug}`);
+    else if (book?.id) navigate(`/livre/${book.id}`);
+  };
+
   const handleAIBookClick = async (aiBook) => {
     setLoading(true);
 
@@ -376,12 +413,14 @@ export default function Search({ open, onClose, go }) {
 
                 {/* Classic book results */}
                 {results.map(gb => {
-                  const added = addedGoogleIds.has(gb.googleId);
-                  const isImporting = importing === gb.googleId;
+                  const isBnF = gb._source === "bnf";
+                  const itemKey = gb.googleId ?? `bnf:${gb.isbn13 ?? gb.title}`;
+                  const added = addedGoogleIds.has(itemKey);
+                  const isImporting = importing === itemKey;
                   return (
                     <div
-                      key={gb.googleId}
-                      onClick={() => !isImporting && !added && handleSelect(gb)}
+                      key={itemKey}
+                      onClick={() => !isImporting && !added && (isBnF ? handleBnFSelect(gb) : handleSelect(gb))}
                       className={`flex gap-3 py-2.5 px-5 min-h-[44px] items-center transition-colors duration-100 ${
                         added ? "bg-[#fafaf8]" : isImporting ? "opacity-50" : "cursor-pointer hover:bg-[#fafaf8]"
                       }`}

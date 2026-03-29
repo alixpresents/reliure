@@ -395,6 +395,7 @@ export async function searchBooks(query) {
     const cover = v.imageLinks?.thumbnail?.replace("http://", "https://") || null;
     return {
       googleId: item.id || null,
+      _source: item._source || null,
       title: v.title,
       subtitle: v.subtitle || null,
       authors: v.authors || [],
