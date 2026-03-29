@@ -111,6 +111,14 @@ Stratégie hybride, par priorité :
 
 L'edge function `book_import` interroge les sources par ISBN, fusionne les résultats, et stocke le livre consolidé dans la table `books`. Une fois importé, le livre vit dans notre base.
 
+### Qualité des résultats de recherche (`src/lib/googleBooks.js`)
+
+La fonction `searchBooks` applique un pipeline en 4 étapes après l'appel API :
+1. **Paramètres API** : `maxResults=20`, `orderBy=relevance`, `printType=books`, `langRestrict=fr`
+2. **Filtrage** : exclusion des résultats sans couverture (`imageLinks`), sans ISBN (`industryIdentifiers`), et dont le titre contient des mots-clés parasites (résumé, fiche de lecture, analyse, sparknotes, bac…)
+3. **Scoring** : score basé sur complétude des métadonnées, éditeur francophone connu, langue FR, popularité ; pénalité sur les mauvais titres
+4. **Boost DB** : +3 points pour les livres déjà importés dans notre table `books` (requête Supabase sur les ISBN) ; tri final + troncature à 10 résultats
+
 ## Architecture de données
 
 ### Tables principales

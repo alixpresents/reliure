@@ -162,6 +162,12 @@ export default function Search({ open, onClose, go }) {
 
           {/* Résultats */}
           <div className="overflow-y-auto flex-1">
+            {!loading && results.length > 0 && (
+              <div className="px-5 pt-2.5 pb-1 text-[11px] text-[#767676] font-body">
+                {results.length} résultat{results.length > 1 ? "s" : ""}
+              </div>
+            )}
+
             {loading && (
               <div className="py-8 text-center text-[13px] text-[#767676] font-body">Recherche...</div>
             )}
