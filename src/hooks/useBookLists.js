@@ -30,7 +30,7 @@ export function useBookLists(bookId) {
 
       if (!data) { setLists([]); setLoading(false); return; }
 
-      const processed = data.map(l => {
+      const processed = data.filter(l => l.slug).map(l => {
         const sorted = [...(l.list_items || [])].sort((a, b) => a.position - b.position);
         const previewCovers = sorted
           .filter(i => i.books?.cover_url)

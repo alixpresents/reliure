@@ -1,5 +1,6 @@
 import { supabase } from "./supabase";
 import { getSuggestion } from "./searchSuggestions";
+import { searchBnF } from "./bnfSearch";
 
 const API = "https://www.googleapis.com/books/v1/volumes";
 
@@ -157,7 +158,8 @@ function filterItems(items) {
   return items.filter(it => {
     const v = it.volumeInfo;
     if (!v?.title) return false;
-    if (!v.imageLinks) return false;
+    // BnF items sont autorisés sans couverture (Img gère le fallback)
+    if (!it._source && !v.imageLinks) return false;
     if (!v.industryIdentifiers?.length) return false;
     if (v.pageCount && v.pageCount < 30) return false;
     const norm = stripAccents(`${v.title} ${v.subtitle || ""}`).toLowerCase();
@@ -199,6 +201,9 @@ function scoreBook(item, originalQuery) {
   const authors = authorsList.map(a => stripAccents(a.toLowerCase())).join(" ");
   const pub = (info.publisher || "").toLowerCase();
   const fullText = `${title} ${stripAccents((info.subtitle || "").toLowerCase())}`;
+
+  // ── Source BnF (dépôt légal = livre FR publié confirmé) ──
+  if (item._source === "bnf") score += 3;
 
   // ── Metadata completeness ──
   if (info.industryIdentifiers?.length) score += 3;
@@ -295,6 +300,39 @@ function scoreBook(item, originalQuery) {
 }
 
 // ═══════════════════════════════════════════════
+// Cross-source dedup by ISBN-13
+// ═══════════════════════════════════════════════
+
+function deduplicateByISBN(items) {
+  const seen = new Map();
+  const noISBN = [];
+
+  for (const item of items) {
+    const v = item.volumeInfo;
+    const isbn = v.industryIdentifiers?.find(
+      (id) => id.type === "ISBN_13",
+    )?.identifier;
+
+    if (!isbn) {
+      noISBN.push(item);
+      continue;
+    }
+
+    if (!seen.has(isbn)) {
+      seen.set(isbn, item);
+    } else {
+      // Garder le plus complet (plus de métadonnées renseignées)
+      const existing = seen.get(isbn).volumeInfo;
+      const fields = (vi) =>
+        [vi.imageLinks?.thumbnail, vi.description, vi.pageCount, vi.publisher].filter(Boolean).length;
+      if (fields(v) > fields(existing)) seen.set(isbn, item);
+    }
+  }
+
+  return [...seen.values(), ...noISBN];
+}
+
+// ═══════════════════════════════════════════════
 // Main export
 // ═══════════════════════════════════════════════
 
@@ -311,12 +349,20 @@ export async function searchBooks(query) {
   const analysis = analyzeQuery(effectiveQuery);
   const queries = buildQueries(effectiveQuery, analysis);
 
-  // Parallel fetch → merge → dedup → filter
-  const batches = await Promise.all(queries.map(fetchGB));
-  const merged = dedup(batches.flat());
-  const filtered = filterItems(merged);
+  // Lancer Google Books (multi-requêtes) ET BnF en parallèle
+  const [googleBatches, bnfItems] = await Promise.all([
+    Promise.all(queries.map(fetchGB)),
+    analysis.looksLikeISBN ? Promise.resolve([]) : searchBnF(effectiveQuery, 10),
+  ]);
 
-  // Score (against the original query for relevance)
+  // Google Books : dedup par google id
+  const googleItems = dedup(googleBatches.flat());
+
+  // Fusion cross-source + dedup par ISBN-13
+  const allItems = deduplicateByISBN([...googleItems, ...bnfItems]);
+  const filtered = filterItems(allItems);
+
+  // Score (contre la query originale pour la pertinence)
   let scored = filtered.map(item => ({ item, score: scoreBook(item, effectiveQuery) }));
   scored.sort((a, b) => b.score - a.score);
 
@@ -348,7 +394,7 @@ export async function searchBooks(query) {
     const isbn = v.industryIdentifiers?.find(i => i.type === "ISBN_13");
     const cover = v.imageLinks?.thumbnail?.replace("http://", "https://") || null;
     return {
-      googleId: item.id,
+      googleId: item.id || null,
       title: v.title,
       subtitle: v.subtitle || null,
       authors: v.authors || [],

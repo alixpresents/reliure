@@ -104,12 +104,14 @@ Liste dans `src/constants/reserved-usernames.js`. Vérifiés à l'inscription (f
 
 Stratégie hybride, par priorité :
 1. **Google Books API** — socle principal, gratuit, excellente couverture FR, couvertures incluses
-2. **Open Library API** — complément pour les trous, open source
-3. **BnF (data.bnf.fr / SRU)** — métadonnées de référence française, licence ouverte depuis 2014, API couverture
+2. **BnF SRU** — catalogue légal exhaustif de tous les livres publiés en France ; utilisé en **recherche parallèle** (`src/lib/bnfSearch.js`) ET en import par ISBN (`book_import`)
+3. **Open Library API** — complément pour les trous, open source
 4. **Nudger (Open Data ISBN)** — base ISBN française, licence ODbL, CSV gratuit via data.gouv.fr
 5. **Enrichissement communautaire** — les utilisateurs corrigent/complètent les fiches (comme TMDb pour Letterboxd)
 
 L'edge function `book_import` (`supabase/functions/book_import/index.ts`) interroge 3 sources en parallèle par ISBN (Google Books, Open Library, BnF SRU), fusionne les résultats selon une priorité par champ, génère le slug, et upsert dans `books`. Si l'edge function échoue, `importBook.js` retombe sur un import client-side avec les données Google Books.
+
+**Recherche BnF en parallèle** (`src/lib/bnfSearch.js`) : lancée simultanément avec Google Books dans `searchBooks()` via `Promise.all`. Timeout 3s, retourne `[]` en cas d'erreur (ne bloque jamais). Les résultats BnF sont au format `{ _source: 'bnf', volumeInfo: {...} }`, passent dans le même pipeline de scoring avec un bonus +3 (dépôt légal = livre FR confirmé). Dédoublonnage cross-source par ISBN-13 avant scoring. Couvertures via `couverture.bnf.fr/ark/isbn/{isbn13}` (fallback géré par `Img`).
 
 ### Priorité de fusion par champ (edge function `book_import`)
 - `title` : BnF > Google > Open Library
@@ -122,7 +124,7 @@ L'edge function `book_import` (`supabase/functions/book_import/index.ts`) interr
 - `language` : BnF > Google
 - `genres` : Google > Open Library
 
-### Qualité des résultats de recherche (`src/lib/googleBooks.js` + `src/lib/searchSuggestions.js`)
+### Qualité des résultats de recherche (`src/lib/googleBooks.js` + `src/lib/bnfSearch.js` + `src/lib/searchSuggestions.js`)
 
 La fonction `searchBooks` applique un pipeline en 6 étapes :
 
