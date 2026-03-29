@@ -172,7 +172,7 @@ function FavNote({ note, isOwner, onSave }) {
       <div className="flex justify-center -mt-1.5 relative z-1">
         <div
           onClick={e => { e.stopPropagation(); setEditing(true); setDraft(""); }}
-          className="inline-block bg-white border border-[#eee] rounded-[10px] px-1.5 py-[1px] shadow-[0_1px_4px_rgba(0,0,0,0.06)] cursor-pointer opacity-0 group-hover/fav:opacity-100 transition-opacity duration-150"
+          className="inline-block bg-white border border-[#eee] rounded-[10px] px-1.5 py-[1px] shadow-[0_1px_4px_rgba(0,0,0,0.06)] cursor-pointer opacity-100 sm:opacity-0 sm:group-hover/fav:opacity-100 transition-opacity duration-150"
         >
           <span className="text-[11px] text-[#ccc]">+</span>
         </div>
@@ -187,6 +187,7 @@ function FavoritesSection({ favorites, isOwner, go, onAdd, onRemove, onSwap, onU
   const [editing, setEditing] = useState(false);
   const [dragFrom, setDragFrom] = useState(null);
   const [dragOver, setDragOver] = useState(null);
+  const dragFromRef = useRef(null);
   const longPressTimer = useRef(null);
 
   const handleDragStart = (e, pos) => {
@@ -207,21 +208,24 @@ function FavoritesSection({ favorites, isOwner, go, onAdd, onRemove, onSwap, onU
   };
   const handleDragEnd = () => { setDragFrom(null); setDragOver(null); };
 
-  // Mobile long press
+  const setDrag = (pos) => { dragFromRef.current = pos; setDragFrom(pos); };
+
+  // Mobile: long press to pick, tap another to drop
   const handleTouchStart = (pos) => {
-    longPressTimer.current = setTimeout(() => setDragFrom(pos), 300);
+    if (dragFromRef.current !== null) return;
+    longPressTimer.current = setTimeout(() => setDrag(pos), 300);
   };
   const handleTouchEnd = (pos) => {
     clearTimeout(longPressTimer.current);
-    if (dragFrom !== null && dragFrom !== pos) {
-      onSwap(dragFrom, pos);
-      setDragFrom(null);
+    if (dragFromRef.current !== null && dragFromRef.current !== pos) {
+      onSwap(dragFromRef.current, pos);
+      setDrag(null);
       setDragOver(null);
     }
   };
   const handleTouchCancel = () => {
     clearTimeout(longPressTimer.current);
-    setDragFrom(null);
+    setDrag(null);
     setDragOver(null);
   };
 
