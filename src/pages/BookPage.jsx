@@ -51,6 +51,8 @@ export default function BookPage({ book }) {
   const [st, setSt] = useState(null);
   const [ur, setUr] = useState(0);
   const [bt, setBt] = useState("critiques");
+  const [showCitationTooltip, setShowCitationTooltip] = useState(false);
+  const citationTooltipSeen = useRef(!!localStorage.getItem("reliure_citation_tab_tooltip_seen"));
   const [showReviewForm, setShowReviewForm] = useState(false);
   const [reviewText, setReviewText] = useState("");
   const [reviewSpoiler, setReviewSpoiler] = useState(false);
@@ -438,17 +440,32 @@ export default function BookPage({ book }) {
       <div className="border-t border-border-light">
         <div className="flex">
           {["critiques", "citations", "éditions"].map(t => (
-            <button
-              key={t}
-              onClick={() => setBt(t)}
-              className={`flex-1 py-3 bg-transparent border-none cursor-pointer text-xs capitalize font-body ${
-                bt === t
-                  ? "font-semibold text-[#1a1a1a] border-b-2 border-b-[#1a1a1a]"
-                  : "font-normal text-[#737373] border-b-2 border-b-transparent"
-              }`}
-            >
-              {t}{t === "citations" && dbQuotes.length > 0 ? ` (${dbQuotes.length})` : ""}
-            </button>
+            <div key={t} className="flex-1 relative">
+              <button
+                onClick={() => setBt(t)}
+                onMouseEnter={() => {
+                  if (t === "citations" && !citationTooltipSeen.current) {
+                    citationTooltipSeen.current = true;
+                    localStorage.setItem("reliure_citation_tab_tooltip_seen", "1");
+                    setShowCitationTooltip(true);
+                    setTimeout(() => setShowCitationTooltip(false), 2500);
+                  }
+                }}
+                className={`w-full py-3 bg-transparent border-none cursor-pointer text-xs capitalize font-body ${
+                  bt === t
+                    ? "font-semibold text-[#1a1a1a] border-b-2 border-b-[#1a1a1a]"
+                    : "font-normal text-[#737373] border-b-2 border-b-transparent"
+                }`}
+              >
+                {t}{t === "citations" && dbQuotes.length > 0 ? ` (${dbQuotes.length})` : ""}
+              </button>
+              {t === "citations" && showCitationTooltip && (
+                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 whitespace-nowrap bg-[#1a1a1a] text-white text-[11px] font-body px-2.5 py-1.5 rounded-md pointer-events-none" style={{ zIndex: 50 }}>
+                  Sauvegarde tes phrases préférées
+                  <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-[#1a1a1a]" />
+                </div>
+              )}
+            </div>
           ))}
         </div>
       </div>
@@ -502,6 +519,17 @@ export default function BookPage({ book }) {
                     Annuler
                   </button>
                 </div>
+              </div>
+            )}
+
+            {user && !showReviewForm && (
+              <div className="text-center mb-4 -mt-1">
+                <button
+                  onClick={() => setBt("citations")}
+                  className="text-[12px] text-[#bbb] font-body bg-transparent border-none cursor-pointer hover:text-[#767676] transition-colors duration-150"
+                >
+                  Tu as une phrase marquante ? → Ajouter une citation
+                </button>
               </div>
             )}
 
@@ -611,7 +639,18 @@ export default function BookPage({ book }) {
                 );
               })
             ) : (
-              <div className="py-6 text-center text-[#767676] text-[13px] font-body">Pas encore de citations.</div>
+              <div className="py-8 text-center">
+                <div className="text-[14px] text-[#737373] font-body mb-1">Aucune citation pour ce livre.</div>
+                <div className="text-[13px] text-[#999] font-body mb-4">Tu as une phrase marquante à partager ?</div>
+                {user && !showQuoteForm && (
+                  <button
+                    onClick={() => setShowQuoteForm(true)}
+                    className="px-5 py-2 rounded-full bg-[#1a1a1a] text-white text-[13px] font-medium font-body border-none cursor-pointer hover:bg-[#333] transition-colors duration-150"
+                  >
+                    + Ajouter une citation
+                  </button>
+                )}
+              </div>
             )}
           </div>
         )}
