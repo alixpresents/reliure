@@ -313,6 +313,8 @@ async function fetchDbBooks(query) {
     if (!data?.length) return [];
     return data.map(b => ({
       _source: "db",
+      _dbId: b.id,
+      _dbSlug: b.slug,
       id: `db_${b.id}`,
       volumeInfo: {
         title: b.title,
@@ -487,6 +489,8 @@ export async function searchBooks(query) {
     return {
       googleId: item.id || null,
       _source: item._source || null,
+      dbId: item._dbId || null,
+      slug: item._dbSlug || null,
       title: v.title,
       subtitle: v.subtitle || null,
       authors: v.authors || [],

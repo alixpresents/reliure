@@ -433,14 +433,30 @@ export default function Search({ open, onClose, go }) {
 
                 {/* Classic book results */}
                 {rankedResults.map(gb => {
+                  const isDb = gb._source === "db";
                   const isBnF = gb._source === "bnf";
-                  const itemKey = gb.googleId ?? `bnf:${gb.isbn13 ?? gb.title}`;
+                  const itemKey = gb.googleId ?? (isDb ? `db:${gb.dbId}` : `bnf:${gb.isbn13 ?? gb.title}`);
                   const added = addedGoogleIds.has(itemKey);
                   const isImporting = importing === itemKey;
+
+                  const handleClick = () => {
+                    if (isImporting || added) return;
+                    if (isDb && gb.slug) {
+                      handleClose();
+                      setQ("");
+                      setResults([]);
+                      navigate(`/livre/${gb.slug}`);
+                    } else if (isBnF) {
+                      handleBnFSelect(gb);
+                    } else {
+                      handleSelect(gb);
+                    }
+                  };
+
                   return (
                     <div
                       key={itemKey}
-                      onClick={() => !isImporting && !added && (isBnF ? handleBnFSelect(gb) : handleSelect(gb))}
+                      onClick={handleClick}
                       className={`flex gap-3 py-2.5 px-5 min-h-[44px] items-center transition-colors duration-100 ${
                         added ? "bg-[#fafaf8]" : isImporting ? "opacity-50" : "cursor-pointer hover:bg-[#fafaf8]"
                       }`}
