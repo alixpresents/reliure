@@ -7,6 +7,25 @@ import { supabase } from "../lib/supabase";
 import Avatar from "./Avatar";
 import Skeleton from "./Skeleton";
 
+async function fetchUsers(query, limit = 5) {
+  let req = supabase.from("users").select("id, username, display_name, avatar_url");
+  if (query) {
+    req = req.ilike("username", `%${query}%`);
+  } else {
+    req = req.order("created_at", { ascending: false });
+  }
+  const { data: users } = await req.limit(limit);
+  if (!users?.length) return [];
+
+  const userIds = users.map(u => u.id);
+  const { data: readRows } = await supabase
+    .from("reading_status").select("user_id")
+    .in("user_id", userIds).eq("status", "read");
+  const countMap = {};
+  for (const r of (readRows || [])) countMap[r.user_id] = (countMap[r.user_id] || 0) + 1;
+  return users.map(u => ({ ...u, readCount: countMap[u.id] || 0 }));
+}
+
 export default function Search({ open, onClose, go }) {
   const navigate = useNavigate();
   const [q, setQ] = useState("");
@@ -16,9 +35,13 @@ export default function Search({ open, onClose, go }) {
   const [visible, setVisible] = useState(false);
   const [addedGoogleIds, setAddedGoogleIds] = useState(new Set());
   const [userResults, setUserResults] = useState([]);
+  const [userSuggestionLabel, setUserSuggestionLabel] = useState("Lecteurs");
   const timer = useRef(null);
   const inputRef = useRef(null);
   const multiAddMode = useRef(false);
+
+  const atMode = q.startsWith("@");
+  const atQuery = q.slice(1);
 
   useEffect(() => {
     if (open) {
@@ -40,27 +63,32 @@ export default function Search({ open, onClose, go }) {
 
   useEffect(() => {
     clearTimeout(timer.current);
+
+    if (atMode) {
+      // @ mode: user search only, no books
+      setResults([]);
+      setLoading(true);
+      const delay = atQuery.length === 0 ? 0 : 400;
+      timer.current = setTimeout(async () => {
+        const users = await fetchUsers(atQuery || null, 5);
+        setUserResults(users);
+        setUserSuggestionLabel(atQuery.length === 0 ? "Lecteurs à découvrir" : "Lecteurs");
+        setLoading(false);
+      }, delay);
+      return () => clearTimeout(timer.current);
+    }
+
+    // Normal mode: books + users secondary
     if (!q || q.length < 2) { setResults([]); setUserResults([]); setLoading(false); return; }
     setLoading(true);
     timer.current = setTimeout(async () => {
-      const [bookRes, { data: users }] = await Promise.all([
+      const [bookRes, users] = await Promise.all([
         searchBooks(q),
-        supabase.from("users").select("id, username, display_name, avatar_url")
-          .or(`username.ilike.%${q}%,display_name.ilike.%${q}%`).limit(3),
+        fetchUsers(q, 3),
       ]);
       setResults(bookRes);
-
-      if (users?.length) {
-        const userIds = users.map(u => u.id);
-        const { data: readRows } = await supabase
-          .from("reading_status").select("user_id")
-          .in("user_id", userIds).eq("status", "read");
-        const countMap = {};
-        for (const r of (readRows || [])) countMap[r.user_id] = (countMap[r.user_id] || 0) + 1;
-        setUserResults(users.map(u => ({ ...u, readCount: countMap[u.id] || 0 })));
-      } else {
-        setUserResults([]);
-      }
+      setUserResults(users);
+      setUserSuggestionLabel("Lecteurs");
       setLoading(false);
     }, 400);
     return () => clearTimeout(timer.current);
@@ -71,6 +99,14 @@ export default function Search({ open, onClose, go }) {
   const handleClose = () => {
     resetIOSZoom();
     onClose();
+  };
+
+  const handleSelectUser = (u) => {
+    handleClose();
+    setQ("");
+    setResults([]);
+    setUserResults([]);
+    navigate(`/${u.username}`);
   };
 
   const handleSelect = async (gb) => {
@@ -107,6 +143,9 @@ export default function Search({ open, onClose, go }) {
   };
 
   const addedCount = addedGoogleIds.size;
+  const placeholder = atMode
+    ? "Chercher un lecteur par pseudo..."
+    : "Chercher un livre, un auteur, un lecteur...";
 
   return (
     <>
@@ -160,12 +199,12 @@ export default function Search({ open, onClose, go }) {
               ref={inputRef}
               value={q}
               onChange={e => setQ(e.target.value)}
-              placeholder="Chercher un livre, un auteur, un lecteur..."
+              placeholder={placeholder}
               className="flex-1 min-w-0 text-base bg-transparent border-none outline-none text-[#1a1a1a] font-display italic placeholder:text-[#999] placeholder:font-display placeholder:italic"
             />
             {q && (
               <button
-                onClick={() => { setQ(""); setResults([]); inputRef.current?.focus(); }}
+                onClick={() => { setQ(""); setResults([]); setUserResults([]); inputRef.current?.focus(); }}
                 className="text-[#999] hover:text-[#1a1a1a] bg-transparent border-none cursor-pointer p-2 shrink-0 transition-colors duration-150"
                 aria-label="Effacer"
               >
@@ -184,77 +223,82 @@ export default function Search({ open, onClose, go }) {
 
           {/* Résultats */}
           <div className="overflow-y-auto flex-1">
-            {!loading && results.length > 0 && (
-              <div className="px-5 pt-2.5 pb-1 text-[11px] text-[#767676] font-body">
-                {results.length} résultat{results.length > 1 ? "s" : ""}
-              </div>
-            )}
-
             {loading && (
               <div className="py-8 text-center text-[13px] text-[#767676] font-body">Recherche...</div>
             )}
 
-            {!loading && q.length >= 2 && results.length === 0 && (
-              <div className="py-8 text-center text-[13px] text-[#767676] font-body">Aucun résultat pour cette recherche.</div>
-            )}
-
-            {/* Lecteurs */}
-            {userResults.length > 0 && (
+            {/* @ mode */}
+            {!loading && atMode && (
               <>
-                <div className="px-5 pt-3 pb-1 text-[11px] uppercase tracking-[1.5px] text-[#999] font-body">Lecteurs</div>
-                {userResults.map(u => {
-                  const name = u.display_name || u.username || "?";
-                  const initials = name.split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2);
-                  return (
-                    <div
-                      key={u.id}
-                      onClick={() => { handleClose(); setQ(""); setResults([]); setUserResults([]); navigate(`/${u.username}`); }}
-                      className="flex items-center gap-3 py-2.5 px-5 cursor-pointer hover:bg-[#fafaf8] transition-colors duration-100"
-                    >
-                      <Avatar i={initials} s={32} src={u.avatar_url} />
-                      <div className="flex-1 min-w-0">
-                        <div className="text-[14px] font-medium font-body truncate">{name}</div>
-                        <div className="text-xs text-[#767676] font-body">
-                          @{u.username}{u.readCount > 0 ? ` · ${u.readCount} livre${u.readCount > 1 ? "s" : ""} lu${u.readCount > 1 ? "s" : ""}` : ""}
-                        </div>
-                      </div>
+                {userResults.length > 0 ? (
+                  <>
+                    <div className="px-5 pt-3 pb-1 text-[11px] uppercase tracking-[1.5px] text-[#999] font-body">
+                      {userSuggestionLabel}
                     </div>
-                  );
-                })}
-                {results.length > 0 && <div className="px-5 pt-3 pb-1 text-[11px] uppercase tracking-[1.5px] text-[#999] font-body">Livres</div>}
+                    {userResults.map(u => <UserRow key={u.id} u={u} onSelect={handleSelectUser} />)}
+                  </>
+                ) : (
+                  atQuery.length > 0 && (
+                    <div className="py-8 text-center text-[13px] text-[#767676] font-body">
+                      Aucun lecteur trouvé pour @{atQuery}
+                    </div>
+                  )
+                )}
               </>
             )}
 
-            {results.map(gb => {
-              const added = addedGoogleIds.has(gb.googleId);
-              const isImporting = importing === gb.googleId;
-              return (
-                <div
-                  key={gb.googleId}
-                  onClick={() => !isImporting && !added && handleSelect(gb)}
-                  className={`flex gap-3 py-2.5 px-5 min-h-[44px] items-center transition-colors duration-100 ${
-                    added ? "bg-[#fafaf8]" : isImporting ? "opacity-50" : "cursor-pointer hover:bg-[#fafaf8]"
-                  }`}
-                >
-                  {isImporting ? (
-                    <Skeleton.Cover w={36} h={52} className="rounded-sm" />
-                  ) : gb.coverUrl ? (
-                    <img src={gb.coverUrl} alt="" className="w-9 h-[52px] object-cover rounded-sm shrink-0 bg-cover-fallback" />
-                  ) : (
-                    <div className="w-9 h-[52px] rounded-sm bg-cover-fallback shrink-0" />
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <div className="text-[14px] font-medium font-body truncate">{gb.title}</div>
-                    <div className="text-xs text-[#737373] font-body truncate">
-                      {gb.authors.join(", ")}{gb.publishedDate ? ` · ${gb.publishedDate.slice(0, 4)}` : ""}
+            {/* Normal mode */}
+            {!loading && !atMode && (
+              <>
+                {q.length >= 2 && results.length === 0 && userResults.length === 0 && (
+                  <div className="py-8 text-center text-[13px] text-[#767676] font-body">Aucun résultat pour cette recherche.</div>
+                )}
+
+                {/* Lecteurs en secondaire */}
+                {userResults.length > 0 && (
+                  <>
+                    <div className="px-5 pt-3 pb-1 text-[11px] uppercase tracking-[1.5px] text-[#999] font-body">Lecteurs</div>
+                    {userResults.map(u => <UserRow key={u.id} u={u} onSelect={handleSelectUser} />)}
+                    {results.length > 0 && (
+                      <div className="px-5 pt-3 pb-1 text-[11px] uppercase tracking-[1.5px] text-[#999] font-body">
+                        Livres {results.length > 0 && <span className="normal-case tracking-normal text-[#bbb]">({results.length})</span>}
+                      </div>
+                    )}
+                  </>
+                )}
+
+                {results.map(gb => {
+                  const added = addedGoogleIds.has(gb.googleId);
+                  const isImporting = importing === gb.googleId;
+                  return (
+                    <div
+                      key={gb.googleId}
+                      onClick={() => !isImporting && !added && handleSelect(gb)}
+                      className={`flex gap-3 py-2.5 px-5 min-h-[44px] items-center transition-colors duration-100 ${
+                        added ? "bg-[#fafaf8]" : isImporting ? "opacity-50" : "cursor-pointer hover:bg-[#fafaf8]"
+                      }`}
+                    >
+                      {isImporting ? (
+                        <Skeleton.Cover w={36} h={52} className="rounded-sm" />
+                      ) : gb.coverUrl ? (
+                        <img src={gb.coverUrl} alt="" className="w-9 h-[52px] object-cover rounded-sm shrink-0 bg-cover-fallback" />
+                      ) : (
+                        <div className="w-9 h-[52px] rounded-sm bg-cover-fallback shrink-0" />
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <div className="text-[14px] font-medium font-body truncate">{gb.title}</div>
+                        <div className="text-xs text-[#737373] font-body truncate">
+                          {gb.authors.join(", ")}{gb.publishedDate ? ` · ${gb.publishedDate.slice(0, 4)}` : ""}
+                        </div>
+                      </div>
+                      {added && (
+                        <span className="text-[13px] text-[#1a1a1a] font-medium font-body self-center shrink-0">✓</span>
+                      )}
                     </div>
-                  </div>
-                  {added && (
-                    <span className="text-[13px] text-[#1a1a1a] font-medium font-body self-center shrink-0">✓</span>
-                  )}
-                </div>
-              );
-            })}
+                  );
+                })}
+              </>
+            )}
           </div>
 
           {/* Footer "Terminé" in multi-add mode */}
@@ -274,5 +318,24 @@ export default function Search({ open, onClose, go }) {
         </div>
       </div>
     </>
+  );
+}
+
+function UserRow({ u, onSelect }) {
+  const name = u.display_name || u.username || "?";
+  const initials = name.split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2);
+  return (
+    <div
+      onClick={() => onSelect(u)}
+      className="flex items-center gap-3 py-2.5 px-5 cursor-pointer hover:bg-[#fafaf8] transition-colors duration-100"
+    >
+      <Avatar i={initials} s={32} src={u.avatar_url} />
+      <div className="flex-1 min-w-0">
+        <div className="text-[14px] font-medium font-body truncate">{name}</div>
+        <div className="text-xs text-[#767676] font-body">
+          @{u.username}{u.readCount > 0 ? ` · ${u.readCount} livre${u.readCount > 1 ? "s" : ""} lu${u.readCount > 1 ? "s" : ""}` : ""}
+        </div>
+      </div>
+    </div>
   );
 }
