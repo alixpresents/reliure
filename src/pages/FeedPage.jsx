@@ -5,6 +5,7 @@ import LikeButton from "../components/LikeButton";
 import { useFeed } from "../hooks/useActivity";
 import { useLikes } from "../hooks/useLikes";
 import { supabase } from "../lib/supabase";
+import UserName from "../components/UserName";
 import { formatRelativeTime } from "../lib/formatTime";
 
 function actionLabel(actionType, metadata) {
@@ -67,8 +68,8 @@ export default function FeedPage({ go }) {
         <div className="py-8 text-center text-[13px] text-[#767676] font-body">Chargement...</div>
       ) : items.length > 0 ? (
         items.map(it => {
-          const name = it.users?.display_name || it.users?.username || "?";
-          const initials = name.split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2);
+          const displayName = it.users?.display_name || it.users?.username || "?";
+          const initials = displayName.split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2);
           const meta = it.metadata || {};
           const bookTitle = meta.book_title || "un livre";
           const bookAuthor = meta.book_author;
@@ -83,7 +84,7 @@ export default function FeedPage({ go }) {
                 {/* Text line */}
                 <div className="flex-1 min-w-0">
                   <p className="text-[13px] leading-normal font-body m-0">
-                    <span className="font-medium">{name}</span>
+                    <UserName user={it.users} className="text-[13px]" />
                     {" "}
                     <span className="text-[#737373]">{actionLabel(it.action_type, meta)}</span>
                     {" "}

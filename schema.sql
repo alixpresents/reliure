@@ -208,6 +208,20 @@ create index activity_feed_idx on public.activity (created_at desc);
 
 -- ─── Fonctions utilitaires ───────────────────
 
+-- Livres populaires de la semaine (par nombre de reading_status récents)
+create or replace function popular_books_week(since_date timestamptz)
+returns setof public.books
+language sql stable
+as $$
+  select b.*
+  from public.books b
+  join public.reading_status rs on rs.book_id = b.id
+  where rs.created_at > since_date
+  group by b.id
+  order by count(rs.id) desc
+  limit 7;
+$$;
+
 -- Mise à jour automatique de updated_at
 create or replace function update_updated_at()
 returns trigger as $$

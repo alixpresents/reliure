@@ -17,6 +17,7 @@ import { supabase } from "../lib/supabase";
 import { logActivity } from "../hooks/useActivity";
 import { resetIOSZoom } from "../lib/resetZoom";
 import { useLikes } from "../hooks/useLikes";
+import UserName from "../components/UserName";
 
 export default function BookPage({ book, onBack, onTag, go }) {
   const bookId = book._supabase?.id || book.id;
@@ -420,14 +421,14 @@ export default function BookPage({ book, onBack, onTag, go }) {
               <div className="py-6 text-center text-[13px] text-[#767676] font-body">Chargement...</div>
             ) : dbReviews.length > 0 ? (
               dbReviews.map((rv, i) => {
-                const name = rv.users?.display_name || rv.users?.username || "?";
-                const initials = name.split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2);
+                const displayName = rv.users?.display_name || rv.users?.username || "?";
+                const initials = displayName.split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2);
                 const isOwn = rv.user_id === user?.id;
                 return (
                   <div key={rv.id} ref={isOwn && i === dbReviews.findIndex(r => r.user_id === user?.id) ? newReviewRef : undefined} className="py-4 border-b border-border-light">
                     <div className="flex items-center gap-2.5 mb-2">
                       <Avatar i={initials} s={26} />
-                      <span className="text-[13px] font-semibold font-body">{name}</span>
+                      <UserName user={rv.users} className="text-[13px]" />
                       {rv.rating > 0 && <Stars r={rv.rating} s={11} />}
                     </div>
                     {rv.contains_spoilers ? (
@@ -500,7 +501,6 @@ export default function BookPage({ book, onBack, onTag, go }) {
               <div className="py-6 text-center text-[13px] text-[#767676] font-body">Chargement...</div>
             ) : dbQuotes.length > 0 ? (
               dbQuotes.map((q, i) => {
-                const name = q.users?.display_name || q.users?.username || "?";
                 const isOwn = q.user_id === user?.id;
                 return (
                   <div key={q.id} ref={isOwn && i === dbQuotes.findIndex(qt => qt.user_id === user?.id) ? newQuoteRef : undefined} className="py-[18px] border-b border-border-light">
@@ -508,7 +508,7 @@ export default function BookPage({ book, onBack, onTag, go }) {
                       « {q.body} »
                     </div>
                     <div className="flex items-center gap-2 mt-2.5">
-                      <span className="text-xs text-[#737373] font-body">{name}</span>
+                      <UserName user={q.users} className="text-xs" />
                       <span className="text-[11px] font-body">
                         <LikeButton
                           count={q.likes_count || 0}

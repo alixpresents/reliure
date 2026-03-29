@@ -2,6 +2,7 @@ import { QUOTES } from "../data";
 import Img from "../components/Img";
 import Heading from "../components/Heading";
 import LikeButton from "../components/LikeButton";
+import UserName from "../components/UserName";
 import { useCommunityQuotes } from "../hooks/useQuotes";
 import { useLikes } from "../hooks/useLikes";
 
@@ -22,7 +23,6 @@ export default function CitationsPage({ go }) {
       ) : useDb ? (
         dbQuotes.map(q => {
           const bookObj = q.books ? { id: q.book_id, t: q.books.title, a: Array.isArray(q.books.authors) ? q.books.authors.join(", ") : "", c: q.books.cover_url } : null;
-          const name = q.users?.display_name || q.users?.username || "?";
           return (
             <div key={q.id} className="py-[22px] border-b border-border-light">
               <div className="text-base italic text-[#1a1a1a] leading-[1.75] border-l-[3px] border-l-cover-fallback pl-[18px] mb-3.5 font-display">
@@ -35,7 +35,7 @@ export default function CitationsPage({ go }) {
                   {bookObj && <div className="text-xs text-[#737373] font-body">{bookObj.a}</div>}
                 </div>
                 <div className="text-right">
-                  <div className="text-xs text-[#737373] font-body">{name}</div>
+                  <div className="text-xs font-body"><UserName user={q.users} className="text-xs" /></div>
                   <div className="text-xs text-[#767676] mt-0.5 font-body"><LikeButton count={q.likes_count || 0} liked={likedSet.has(q.id)} initialLiked={initialSet.has(q.id)} onToggle={() => toggle(q.id)} /></div>
                 </div>
               </div>
