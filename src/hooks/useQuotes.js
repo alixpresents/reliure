@@ -52,7 +52,7 @@ export function useCommunityQuotes() {
   const fetch = useCallback(async () => {
     const { data } = await supabase
       .from("quotes")
-      .select("*, users(username, display_name), books(title, authors, cover_url)")
+      .select("*, users(username, display_name), books(title, authors, cover_url, slug)")
       .order("likes_count", { ascending: false })
       .limit(20);
     setQuotes(data ?? []);
@@ -61,5 +61,5 @@ export function useCommunityQuotes() {
 
   useEffect(() => { fetch(); }, [fetch]);
 
-  return { quotes, loading };
+  return { quotes, loading, refetch: fetch };
 }
