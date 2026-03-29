@@ -184,21 +184,27 @@ export default function CSVImport() {
       try {
         let book = null;
 
-        // Cas 1 — ISBN disponible
+        // Enrichir via searchBooks avant d'importer
+        let googleBook = null;
+
         if (row.isbn13 || row.isbn10) {
-          book = await importBook({
-            isbn13: row.isbn13 || row.isbn10,
-            title: row.title,
-            authors: [row.author],
-          });
+          // Cas 1 — ISBN disponible : chercher par ISBN d'abord
+          const byIsbn = await searchBooks(row.isbn13 || row.isbn10);
+          if (byIsbn?.length) {
+            googleBook = byIsbn[0];
+          } else {
+            // Fallback : recherche par titre+auteur
+            const byTitle = await searchBooks(`${row.title} ${row.author}`);
+            if (byTitle?.length) googleBook = byTitle[0];
+          }
+        } else {
+          // Cas 2 — pas d'ISBN : recherche par titre+auteur uniquement
+          const byTitle = await searchBooks(`${row.title} ${row.author}`);
+          if (byTitle?.length) googleBook = byTitle[0];
         }
 
-        // Cas 2 — pas d'ISBN ou ISBN non trouvé
-        if (!book) {
-          const results = await searchBooks(`${row.title} ${row.author}`);
-          if (results?.length) {
-            book = await importBook(results[0]);
-          }
+        if (googleBook) {
+          book = await importBook(googleBook);
         }
 
         if (!book) {
