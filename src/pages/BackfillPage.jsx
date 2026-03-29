@@ -4,6 +4,9 @@ import Img from "../components/Img";
 import Label from "../components/Label";
 import InteractiveStars from "../components/InteractiveStars";
 import { searchBooks } from "../lib/googleBooks";
+import { importBook } from "../lib/importBook";
+import { useAuth } from "../lib/AuthContext";
+import { supabase } from "../lib/supabase";
 
 function BackfillBook({ book, rating, onRate, onRemove, isNew }) {
   return (
@@ -37,7 +40,8 @@ function StatusPill({ label, active, variant, onClick }) {
   return <button onClick={onClick} className={`${base} bg-transparent text-[#767676] border-[#ddd] hover:border-[#999]`}>{label}</button>;
 }
 
-export default function BackfillPage({ onBack }) {
+export default function BackfillPage({ onBack, onRefreshProfile }) {
+  const { user } = useAuth();
   const [q, setQ] = useState("");
   const [picks, setPicks] = useState([]);
   const [lastAdded, setLastAdded] = useState(null);
@@ -93,14 +97,45 @@ export default function BackfillPage({ onBack }) {
     setPicks(picks.filter(p => p.book.id !== id));
   };
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
+    if (!user || picks.length === 0) return;
     const count = picks.length;
     setConfirming(true);
-    setTimeout(() => {
-      setPicks([]);
-      setConfirmMsg(`${count} livre${count > 1 ? "s" : ""} ajouté${count > 1 ? "s" : ""} !`);
-      setTimeout(() => onBack(), 1200);
-    }, 400);
+
+    for (const pick of picks) {
+      try {
+        // Import book to DB (from Google Books or find existing)
+        let bookId = pick.book._supabase?.id;
+        if (!bookId && pick.book._google) {
+          const imported = await importBook(pick.book._google);
+          if (imported) bookId = imported.id;
+        }
+        if (!bookId) continue;
+
+        // Create reading_status
+        const status = pick.status === "alire" ? "want_to_read" : "read";
+        const payload = { user_id: user.id, book_id: bookId, status };
+        if (status === "read") payload.finished_at = new Date().toISOString();
+        const { error: rsError } = await supabase.from("reading_status").insert(payload);
+        if (rsError) console.error("reading_status insert error:", rsError);
+
+        // Create review with rating if provided
+        if (pick.rating > 0) {
+          const { error: rvError } = await supabase.from("reviews").upsert(
+            { user_id: user.id, book_id: bookId, rating: pick.rating },
+            { onConflict: "user_id,book_id" }
+          );
+          if (rvError) console.error("review upsert error:", rvError);
+        }
+      } catch (err) {
+        console.error("backfill error for book:", pick.book.t, err);
+      }
+    }
+
+    setPicks([]);
+    setConfirmMsg(`${count} livre${count > 1 ? "s" : ""} ajouté${count > 1 ? "s" : ""} !`);
+    if (onRefreshProfile) onRefreshProfile();
+    setTimeout(() => onBack(), 1200);
   };
 
   return (

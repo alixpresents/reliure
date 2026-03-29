@@ -27,15 +27,16 @@ export function useReadingStatus(bookId) {
 
   useEffect(() => { fetch(); }, [fetch]);
 
-  const setStatus = async (newStatus, extras = {}) => {
+  const setStatus = async (newStatus, extras = {}, meta = {}) => {
     if (!user || !bookId) return;
 
     const payload = { status: newStatus, ...extras };
+    const activityMeta = { status: newStatus, book_id: bookId, ...meta };
 
     if (status?.id) {
       await supabase.from("reading_status").update(payload).eq("id", status.id);
       setStatusState(prev => ({ ...prev, ...payload }));
-      logActivity(user.id, "reading_status", status.id, "reading_status", { status: newStatus, book_id: bookId, ...extras });
+      logActivity(user.id, "reading_status", status.id, "reading_status", activityMeta);
     } else {
       const { data } = await supabase
         .from("reading_status")
@@ -44,7 +45,7 @@ export function useReadingStatus(bookId) {
         .single();
       if (data) {
         setStatusState(data);
-        logActivity(user.id, "reading_status", data.id, "reading_status", { status: newStatus, book_id: bookId, ...extras });
+        logActivity(user.id, "reading_status", data.id, "reading_status", activityMeta);
       }
     }
   };
@@ -88,16 +89,19 @@ export function useUserRating(bookId) {
     setRatingState(newRating); // optimistic
     if (newRating === 0) {
       // Remove rating — delete review if no body either
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("reviews")
         .update({ rating: null })
         .eq("user_id", user.id)
         .eq("book_id", bookId)
         .select("id, body")
-        .single();
+        .maybeSingle();
+      if (error) console.error("rating removal error:", error);
       if (data && !data.body) {
         await supabase.from("reviews").delete().eq("id", data.id);
       }
+      // Ensure state is 0 even if DB had no row
+      setRatingState(0);
     } else {
       await supabase.from("reviews").upsert(
         { user_id: user.id, book_id: bookId, rating: newRating },

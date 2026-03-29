@@ -89,7 +89,7 @@ export function useProfileData() {
       readBooks: reads,
       reviews: revs,
       reviewMap,
-      stats: { total, thisYear, pagesThisYear, avgRating, reviewsCount: revsThisYear.length },
+      stats: { total, thisYear, pagesThisYear, avgRating, reviewsCount: revsThisYear.length, readNoDate: statuses.filter(s => s.status === "read" && !s.finished_at).length },
       chronology,
       topRated,
     });

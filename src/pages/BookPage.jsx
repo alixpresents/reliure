@@ -108,7 +108,7 @@ export default function BookPage({ book, onBack, onTag, go }) {
         setFinDate(null); setNoDate(false);
       }
       setIsReread(false);
-      dbSetStatus(STATUS_MAP[s], extras);
+      dbSetStatus(STATUS_MAP[s], extras, { book_title: book.t || book.title, book_author: book.a || book.authors, cover_url: book.c || book.cover_url });
     }
   };
 
@@ -121,7 +121,7 @@ export default function BookPage({ book, onBack, onTag, go }) {
       setSt("Lu");
       setFinDate(todayLabel());
       setNoDate(false);
-      dbSetStatus("read", { finished_at: now });
+      dbSetStatus("read", { finished_at: now }, { book_title: book.t || book.title });
     }
     if (isUuid) {
       const { data } = await supabase.from("books").select("avg_rating, rating_count").eq("id", bookId).single();
@@ -136,7 +136,7 @@ export default function BookPage({ book, onBack, onTag, go }) {
       { user_id: user.id, book_id: bookId, body: reviewText.trim(), contains_spoilers: reviewSpoiler, rating: ur || null },
       { onConflict: "user_id,book_id" }
     ).select("id").single();
-    if (data) logActivity(user.id, "review", data.id, "review", { book_id: bookId, book_title: book.t, rating: ur });
+    if (data) logActivity(user.id, "review", data.id, "review", { book_id: bookId, book_title: book.t || book.title, book_author: book.a || book.authors, cover_url: book.c || book.cover_url, rating: ur, review_body: reviewText.trim(), contains_spoilers: reviewSpoiler });
     setReviewSaving(false);
     setShowReviewForm(false);
     setReviewText("");
@@ -148,7 +148,7 @@ export default function BookPage({ book, onBack, onTag, go }) {
     if (!quoteText.trim() || !user) return;
     setQuoteSaving(true);
     const { data } = await supabase.from("quotes").insert({ user_id: user.id, book_id: bookId, body: quoteText.trim() }).select("id").single();
-    if (data) logActivity(user.id, "quote", data.id, "quote", { book_id: bookId, book_title: book.t });
+    if (data) logActivity(user.id, "quote", data.id, "quote", { book_id: bookId, book_title: book.t || book.title, book_author: book.a || book.authors, cover_url: book.c || book.cover_url, quote_body: quoteText.trim() });
     setQuoteSaving(false);
     setShowQuoteForm(false);
     setQuoteText("");

@@ -34,14 +34,17 @@ function ReadingItem({ book, go, onFinish, initialPage = 0, statusId = null }) {
     setEditing(true);
   };
 
-  const commitEdit = () => {
+  const commitEdit = async () => {
     setEditing(false);
     const n = parseInt(draft, 10);
     if (!isNaN(n) && n >= 0) {
       const clamped = Math.min(n, book.p);
       setCurrentPage(clamped);
       if (statusId) {
-        supabase.from("reading_status").update({ current_page: clamped }).eq("id", statusId);
+        const { error } = await supabase.from("reading_status").update({ current_page: clamped }).eq("id", statusId);
+        if (error) console.error("page update error:", error, "statusId:", statusId);
+      } else {
+        console.error("page update skipped: statusId is null for book", book.t);
       }
       if (n >= book.p) setFinished(true);
     }
@@ -608,7 +611,16 @@ export default function ProfilePage({ go, onBackfill, onSearch }) {
                   <div className="h-full bg-[#1a1a1a] rounded transition-all duration-400" style={{ width: `${((s.thisYear || 0) / 5) * 100}%` }} />
                 </div>
               </div>
-              <div className="text-xs text-[#767676] font-body mb-6">{s.thisYear || 0}/5</div>
+              <div className="text-xs text-[#767676] font-body mb-3">{s.thisYear || 0}/5</div>
+              <div className="text-xs text-[#767676] font-body">Seuls les livres marqués Lu avec une date en {yr} comptent.</div>
+              {s.readNoDate > 0 && (
+                <button
+                  onClick={() => setTab("bibliothèque")}
+                  className="mt-1.5 text-xs text-[#1a1a1a] font-medium font-body bg-transparent border-none cursor-pointer underline underline-offset-2 hover:text-[#333] transition-colors duration-150"
+                >
+                  Ajouter des dates à tes lectures →
+                </button>
+              )}
             </EmptyState>
           )}
         </div>
