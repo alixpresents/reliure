@@ -86,11 +86,6 @@ function parseDublinCoreXML(xmlText) {
       if (m) pageCount = parseInt(m[1]);
     }
 
-    // Couverture via le service BnF (peut retourner 404 — Img gère le fallback)
-    const coverUrl = isbn
-      ? `https://couverture.bnf.fr/ark/isbn/${isbn}`
-      : null;
-
     results.push({
       _source: "bnf",
       volumeInfo: {
@@ -103,7 +98,6 @@ function parseDublinCoreXML(xmlText) {
         industryIdentifiers: isbn
           ? [{ type: isbn.length === 13 ? "ISBN_13" : "ISBN_10", identifier: isbn }]
           : undefined,
-        imageLinks: coverUrl ? { thumbnail: coverUrl } : undefined,
       },
     });
   }
