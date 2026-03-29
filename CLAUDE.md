@@ -137,7 +137,7 @@ La fonction `searchBooks` applique un pipeline en 6 étapes :
 
 ### Recherche assistée IA (`supabase/functions/smart-search/index.ts` + `src/hooks/useSmartSearch.js`)
 
-Filet de secours intelligent qui complète le pipeline classique Google Books. Activé automatiquement quand la recherche classique retourne < 3 résultats ou quand la requête ressemble à du langage naturel.
+Filet de secours intelligent qui enrichit le pipeline classique Google Books. Activé systématiquement dès 2 caractères (debounce 600ms). Le coût est amorti par le cache `search_cache` (7 jours).
 
 **Edge function `smart-search`** :
 - Appelle Claude Haiku (`claude-haiku-4-5-20251001`) avec un system prompt spécialisé livres francophones
@@ -158,9 +158,13 @@ Filet de secours intelligent qui complète le pipeline classique Google Books. A
 
 **Intégration dans `Search.jsx`** :
 - Ghost text : overlay invisible aligné sur l'input, accepté par Tab/ArrowRight, rejeté par Escape
+- `displayResults` useMemo : quand l'IA a répondu, filtre les résultats classiques — confirmés (titre + auteur matching) en premier, non-confirmés limités à 2. `aiConfirmedMap` lie chaque résultat classique au livre IA correspondant.
 - Résultats IA affichés sous les résultats classiques avec indicateur ✨, dédoublonnés par titre normalisé
 - Clic sur un résultat IA → recherche Google Books avec le titre canonique → import normal
+- Clic sur un résultat BnF → recherche Google Books par ISBN d'abord, puis titre+auteur, puis import direct BnF si aucun match titre trouvé
+- Clic sur un résultat DB → navigation directe via `slug ?? dbId` sans passer par importBook
 - Indicateur "Recherche approfondie…" pendant le chargement IA
+- Le SYSTEM_PROMPT de `smart-search` retourne l'ISBN de l'édition poche française (Folio, LdP, Points…)
 
 ## Architecture de données
 
@@ -226,7 +230,7 @@ Reliure regroupe les éditions par oeuvre (comme Letterboxd : un film = une fich
 
 ### Composants clés
 - **WipBanner** : bandeau fond #faf6f0 / texte #8B6914 / border #e8dfd2 — affiché en haut des pages "Aperçu" (La Revue, Défis). Pill "Aperçu" également visible dans la nav du Header sur ces deux liens.
-- **Img** : couverture avec fallback titre si image ne charge pas, hover lift + shadow quand cliquable
+- **Img** : couverture avec placeholder titre + auteur (fond `#e8e4de`, Instrument Serif italic `#999`, Geist 10px `#bbb`) quand `coverUrl` est null ou si l'image échoue (`onError`). Hover lift + shadow quand cliquable.
 - **Stars** : étoiles de notation read-only (couleur `#D4883A`)
 - **InteractiveStars** : étoiles cliquables avec hover scale, pop animation, accessibilité (role, tabIndex, aria-label)
 - **Avatar** : avatar initiales circulaire (fond `#f0ede8`)
