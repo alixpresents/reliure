@@ -350,8 +350,16 @@ function normalizeWorkTitle(title) {
 
 function workAuthorKey(authors) {
   if (!authors?.length) return "";
-  const parts = stripAccents(authors[0].toLowerCase()).split(/\s+/);
-  return parts[parts.length - 1];
+  return authors[0]
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\([^)]*\)/g, "")
+    .replace(/[^a-z\s]/g, "")
+    .trim()
+    .split(/\s+/)
+    .sort()
+    .join(" ");
 }
 
 function deduplicateByWork(scoredItems) {

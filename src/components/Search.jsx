@@ -117,14 +117,24 @@ export default function Search({ open, onClose, go }) {
   // Hooks inconditionnels — DOIVENT être avant tout return conditionnel
   const rankedResults = useMemo(() => {
     if (!aiBooks.length || !results.length) return results;
+
+    const normalizeAuthor = (s) =>
+      normalize(s)
+        .replace(/\([^)]*\)/g, "")
+        .replace(/[^a-z\s]/g, "")
+        .trim()
+        .split(/\s+/)
+        .sort()
+        .join(" ");
+
     const boosted = [...results];
     for (const aiBook of aiBooks) {
       const aiTitle = normalize(aiBook.title);
-      const aiAuthor = normalize(aiBook.author || "");
+      const aiAuthor = normalizeAuthor(aiBook.author || "");
       const idx = boosted.findIndex(r => {
         const rTitle = normalize(r.title);
-        const rAuthor = normalize(r.authors?.[0] || "");
-        return rTitle === aiTitle || (aiAuthor && rAuthor.includes(aiAuthor) && rTitle.includes(aiTitle.split(" ")[0]));
+        const rAuthor = normalizeAuthor(r.authors?.[0] || "");
+        return rTitle === aiTitle || (aiAuthor && rAuthor === aiAuthor && rTitle.includes(aiTitle.split(" ")[0]));
       });
       if (idx > 0) {
         const [match] = boosted.splice(idx, 1);
