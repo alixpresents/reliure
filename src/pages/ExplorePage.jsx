@@ -13,6 +13,7 @@ import { useNavigate } from "react-router-dom";
 import { usePopularBooks, usePopularReviews, usePopularQuotes, usePopularLists } from "../hooks/useExplore";
 import { useLikes } from "../hooks/useLikes";
 import Skeleton from "../components/Skeleton";
+import { useAuth } from "../lib/AuthContext";
 
 function normalizeQuoteBook(q) {
   if (!q.books) return null;
@@ -22,6 +23,7 @@ function normalizeQuoteBook(q) {
 export default function ExplorePage({ onSearch }) {
   const { goToBook: go } = useNav();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { books: popular, loading: loadingBooks } = usePopularBooks();
   const { reviews, loading: loadingReviews } = usePopularReviews();
   const { quotes, loading: loadingQuotes } = usePopularQuotes();
@@ -36,6 +38,24 @@ export default function ExplorePage({ onSearch }) {
 
   return (
     <div>
+      {/* Hero — visiteurs non connectés uniquement */}
+      {!user && (
+        <div className="pt-8 pb-6 border-b border-[#f0f0f0] mb-2">
+          <h1 className="font-display italic text-[22px] sm:text-[26px] font-normal text-[#1a1a1a] leading-snug mb-2">
+            La bibliothèque personnelle des lecteurs francophones.
+          </h1>
+          <p className="text-[14px] text-[#767676] font-body mb-5">
+            Garde une trace de tes lectures, découvre celles de tes amis.
+          </p>
+          <Link
+            to="/login"
+            className="inline-block px-5 py-2.5 rounded-full bg-[#1a1a1a] text-white text-[13px] font-medium font-body no-underline hover:bg-[#333] transition-colors duration-150"
+          >
+            Créer mon profil gratuit
+          </Link>
+        </div>
+      )}
+
       {/* Search bar */}
       <div className="py-6 pb-5">
         <div
