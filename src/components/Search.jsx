@@ -198,22 +198,9 @@ export default function Search({ open, onClose, go }) {
     navigate(`/${u.username}`);
   };
 
-  const handleSelect = async (gb, { skipCanonical = false } = {}) => {
+  const handleSelect = async (gb) => {
     if (addedGoogleIds.has(gb.googleId)) return;
     setImporting(gb.googleId);
-
-    // Si confirmé par l'IA avec un ISBN canonique, tenter d'importer la bonne édition
-    if (!skipCanonical) {
-      const key = gb.googleId || gb.isbn13 || gb.title;
-      const matchedAI = aiConfirmedMap.get(key);
-      if (matchedAI?.isbn13) {
-        const canonical = await searchBooks("isbn:" + matchedAI.isbn13);
-        if (canonical.length > 0 && canonical[0].googleId !== gb.googleId) {
-          setImporting(null);
-          return handleSelect(canonical[0], { skipCanonical: true });
-        }
-      }
-    }
 
     const book = await importBook(gb);
     setImporting(null);
