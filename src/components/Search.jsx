@@ -114,6 +114,26 @@ export default function Search({ open, onClose, go }) {
     return () => clearTimeout(timer.current);
   }, [q]);
 
+  // Hooks inconditionnels — DOIVENT être avant tout return conditionnel
+  const rankedResults = useMemo(() => {
+    if (!aiBooks.length || !results.length) return results;
+    const boosted = [...results];
+    for (const aiBook of aiBooks) {
+      const aiTitle = normalize(aiBook.title);
+      const aiAuthor = normalize(aiBook.author || "");
+      const idx = boosted.findIndex(r => {
+        const rTitle = normalize(r.title);
+        const rAuthor = normalize(r.authors?.[0] || "");
+        return rTitle === aiTitle || (aiAuthor && rAuthor.includes(aiAuthor) && rTitle.includes(aiTitle.split(" ")[0]));
+      });
+      if (idx > 0) {
+        const [match] = boosted.splice(idx, 1);
+        boosted.unshift(match);
+      }
+    }
+    return boosted;
+  }, [results, aiBooks]);
+
   if (!open) return null;
 
   const handleClose = () => {
@@ -259,26 +279,6 @@ export default function Search({ open, onClose, go }) {
   const placeholder = atMode
     ? "Chercher un lecteur par pseudo..."
     : "Chercher un livre, un auteur, un lecteur...";
-
-  // Re-rank classique avec le signal IA : quand l'IA répond, remonter les résultats confirmés
-  const rankedResults = useMemo(() => {
-    if (!aiBooks.length || !results.length) return results;
-    const boosted = [...results];
-    for (const aiBook of aiBooks) {
-      const aiTitle = normalize(aiBook.title);
-      const aiAuthor = normalize(aiBook.author || "");
-      const idx = boosted.findIndex(r => {
-        const rTitle = normalize(r.title);
-        const rAuthor = normalize(r.authors?.[0] || "");
-        return rTitle === aiTitle || (aiAuthor && rAuthor.includes(aiAuthor) && rTitle.includes(aiTitle.split(" ")[0]));
-      });
-      if (idx > 0) {
-        const [match] = boosted.splice(idx, 1);
-        boosted.unshift(match);
-      }
-    }
-    return boosted;
-  }, [results, aiBooks]);
 
   // Deduplicated AI books (exclude titles already in classic results)
   const filteredAIBooks = aiBooks.filter(
