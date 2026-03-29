@@ -12,6 +12,21 @@ export function slugify(text) {
 }
 
 /**
+ * Generate a unique slug with counter fallback.
+ * @param {string} base - base slug
+ * @param {function} checkExists - async (slug) => boolean
+ */
+export async function generateUniqueSlug(base, checkExists) {
+  if (!base) return null;
+  if (!(await checkExists(base))) return base;
+  for (let i = 2; i <= 100; i++) {
+    const candidate = `${base}-${i}`;
+    if (!(await checkExists(candidate))) return candidate;
+  }
+  return `${base}-${Date.now()}`;
+}
+
+/**
  * Generate a unique book slug, checking against existing slugs in Supabase.
  * @param {string} title
  * @param {string[]} authors

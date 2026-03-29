@@ -91,6 +91,7 @@ L'app ne doit jamais ressembler à un tableur ou à un webzine. C'est un objet c
 - `/:username/critiques` → onglet critiques
 - `/:username/citations` → onglet citations
 - `/:username/listes` → onglet listes
+- `/:username/listes/:slug` → ListPage (page liste publique)
 - `/:username/bilan` → onglet bilan
 
 ### Slugs livres
@@ -114,11 +115,12 @@ L'edge function `book_import` interroge les sources par ISBN, fusionne les résu
 
 ### Tables principales
 - `users` — id, username, display_name, avatar_url, bio, created_at
-- `books` — id, isbn_13, title, subtitle, authors (jsonb), publisher, publication_date, cover_url, language, genres (jsonb), page_count, avg_rating, rating_count, source
+- `books` — id, isbn_13, title, subtitle, authors (jsonb), publisher, publication_date, cover_url, language, genres (jsonb), page_count, avg_rating, rating_count, source, **slug** (unique, généré à l'import)
 - `reviews` — id, user_id, book_id, rating (smallint), body, contains_spoilers, likes_count, created_at
 - `reading_status` — id, user_id, book_id, status (want_to_read/reading/read/abandoned), started_at, finished_at, current_page, is_reread, created_at
 - `reading_log_tags` — id, reading_status_id, user_id, tag_text, created_at
-- `lists` — id, user_id, title, description, is_public, is_ranked, likes_count, created_at
+- `user_favorites` — id, user_id, book_id, position (1-4, CHECK), note (text, max 24 chars), created_at
+- `lists` — id, user_id, title, description, is_public, is_ranked, likes_count, **slug** (unique par user, généré depuis le titre), created_at
 - `list_items` — id, list_id, book_id, position, note
 - `follows` — id, follower_id, following_id, created_at
 - `activity` — id, user_id, action_type, target_id, target_type, metadata (jsonb), created_at
@@ -136,6 +138,9 @@ L'edge function `book_import` interroge les sources par ISBN, fusionne les résu
 - Feed strategy au MVP : fan-out on read avec cache pg_cron toutes les 5 minutes
 - Row Level Security (RLS) Supabase configurée dès le jour 1
 - Seuil bilan annuel : 5 livres lus dans l'année (logique frontend, pas de table)
+- `books.slug` unique, généré à `src/utils/slugify.js` (titre → titre-auteur → titre-auteur-année → titre-n). Migration `migrations/001_add_book_slugs.sql` à appliquer.
+- `user_favorites` swap : pattern delete+reinsert (pas d'update) pour respecter le CHECK constraint position 1-4
+- `useProfileData` distingue `diaryBooks` (read + finished_at non null, pour le diary/calendrier) et `allReadBooks` (tous les "read", pour stats/bilan/topRated)
 
 ## Design system
 
@@ -165,6 +170,7 @@ L'edge function `book_import` interroge les sources par ISBN, fusionne les résu
 - Carousels horizontaux pour les sections "Populaires" et "Trending"
 
 ### Composants clés
+- **WipBanner** : bandeau fond #faf6f0 / texte #8B6914 / border #e8dfd2 — affiché en haut des pages "Aperçu" (La Revue, Défis). Pill "Aperçu" également visible dans la nav du Header sur ces deux liens.
 - **Img** : couverture avec fallback titre si image ne charge pas, hover lift + shadow quand cliquable
 - **Stars** : étoiles de notation read-only (couleur `#D4883A`)
 - **InteractiveStars** : étoiles cliquables avec hover scale, pop animation, accessibilité (role, tabIndex, aria-label)
@@ -217,46 +223,73 @@ React Router (BrowserRouter). Header avec NavLink. Navigation via `useNav()` con
 Onglets profil : Journal (diary), Bibliothèque, Mes critiques, Mes citations, Mes listes, Bilan.
 Chaque onglet a sa propre URL (`/:username/critiques`, etc.).
 
-## Features prototypées (frontend mock)
+## État d'avancement des features
 
-Les features suivantes sont implémentées visuellement avec des données mock. Le backend Supabase les connectera.
+### Branché sur Supabase (fonctionnel)
 
-### Onboarding
-- Flow 2 étapes : pseudo (avec vérification de disponibilité simulée) + ajout de livres
-- Fond filigrane avec couvertures en grayscale
+#### Auth
+- Magic link + OAuth Google via Supabase Auth
+- Onboarding flow 2 étapes : pseudo + ajout de livres (vérification dispo réelle)
+- ProtectedRoute pour les pages /fil, /parametres, /backfill
 
-### Fiche livre (BookPage)
-- Couverture, métadonnées, note communautaire, étoiles cliquables (InteractiveStars)
-- Pills de statut (En cours / Lu / À lire / Abandonné)
-- Si "Lu" : pills secondaires date (avec date picker natif) + relecture (sur livres déjà lus)
-- Tags personnels avec autocomplétion accent-insensitive (max 5, "Visibles uniquement par toi")
-- Thèmes descriptifs, onglets critiques/citations/éditions, Où lire, Les lecteurs ont aussi aimé
-- Prix littéraires en pills dorées (champ `awards` dans les données)
-- Descriptions ajoutées à tous les livres (champ `desc`)
+#### Fiche livre (BookPage)
+- Couverture, métadonnées, note communautaire (masquée si 0 évaluation)
+- Étoiles cliquables (InteractiveStars) — notation persistée via `useUserRating`
+- Pills de statut (En cours / Lu / À lire / Abandonné) — persistées via `useReadingStatus`
+- Si "Lu" : date picker (date passée uniquement, futur bloqué), relecture toggle, "Ajouter une date" si lu sans date
+- Tags personnels avec autocomplétion accent-insensitive (max 5)
+- Likes sur critiques et citations — persistés via `useLikes`
+- Navigation vers les livres par slug (`/livre/:slug`)
 
-### Profil
-- Header avec avatar, stats, badge vérifié (tooltip), 3 badges circulaires (tooltips custom)
-- Bandeau backfill "Tu as lu d'autres livres ?"
-- Quatre favoris, En cours de lecture (progression interactive avec édition inline de page, complétion)
-- Onglets : Journal (diary), Bibliothèque (3 modes : grille/liste/étagère), Mes critiques, Mes citations, Mes listes, Bilan
-- Mode étagère avec planches en dégradé brun
-- Bilan annuel avec seuil 5 livres, graphique de chronologie dynamique
-- États vides élégants pour chaque section (toggle dev "Mode vide")
+#### Profil
+- Données réelles via `useProfileData` (allStatuses, diaryBooks, allReadBooks, reviews, stats, chronologie, topRated)
+- Quatre favoris : drag & drop + touch mobile, swap via SearchOverlay, mini-note (max 24 chars), suppression — persistés via `useFavorites`
+- En cours de lecture : progression interactive, édition inline de page, complétion
+- Onglet Bibliothèque : 3 modes grille/liste/étagère, ratings réels
+- Onglet Journal : diary (lectures avec date), calendrier visuel
+- Onglet Bilan : stats réelles (total, année, pages, note moy), chronologie, top noté
+- Navigation profil par `/:username/:tab`
 
-### Backfill
+#### Explorer
+- Livres populaires via RPC `popular_books_week` (fallback rating_count)
+- Critiques populaires, citations populaires, listes populaires — données réelles
+- Filtrage par genre (`useBooksByGenre`)
+
+#### Listes
+- Création (titre, description, publique/privée, classement) avec tooltips sur les options
+- URL par slug lisible (`/:username/listes/:slug`), slug unique par user, généré depuis le titre via `slugify()`
+- Ajout multiple de livres via SearchOverlay (mode multi-add : overlay reste ouvert, checkmarks ✓, bouton "Terminé")
+- Réordonnement par drag & drop (positions 1..N)
+- Notes par item (optionnelles)
+- Likes via `useLikes` (polymorphe target_type='list')
+- Page liste publique avec édition inline titre/description
+- Suppression avec confirmation
+- Onglet "Mes listes" branché sur Supabase (tables `lists` + `list_items`)
+- Cards listes cliquables dans ExplorePage (navigation vers la page liste)
+
+#### Fil d'activité
+- Branché sur table `activity`, dédoublonnage, types : reading_status, review, quote, list
+- Affichage cover, relecture badge, notation
+- Type `list` : logged à la création (si publique) et au passage privé→publique, supprimé avec la liste ; card avec titre italic cliquable + mosaïque des 3 premières couvertures
+
+### Frontend (UI complète, données mock ou partiellement branchées)
+
+#### Backfill
 - Page dédiée pour ajouter des lectures passées en batch
 - Recherche + mode découverte "Les plus lus" avec pills Lu/À lire mutuellement exclusives
 - Pile visuelle avec étoiles et bouton sticky "Ajouter X livres à ma bibliothèque"
 
-### La Revue (éditorial)
+#### La Revue (éditorial)
 - Page index avec articles featured et liste
 - ArticlePage avec lettrine, sidebar livre lié, section "À lire aussi"
 - Barre de progression de lecture sticky sous le header
+- Bandeau WIP affiché en haut de page (composant `WipBanner`)
 
-### Défis (challenges)
+#### Défis (challenges)
 - Page index avec "Mes challenges" (progression circulaire) et "Découvrir" (bouton Rejoindre)
 - Vue participant : cercle de progression SVG, filtres, timeline avec items complétés/à faire
 - Vue publique : hero centré, stats, paliers, aperçu items, participants récents
+- Bandeau WIP affiché en haut de page (composant `WipBanner`)
 
 ### Micro-interactions
 - LikeButton avec animation scale + toggle couleur
@@ -265,6 +298,66 @@ Les features suivantes sont implémentées visuellement avec des données mock. 
 - Couvertures avec hover translateY + shadow
 - Transitions de page fadeIn 200ms
 - Focus-visible outline pour navigation clavier
+
+## RLS — Policies de lecture publique
+
+Migration `migrations/003_public_read_policies.sql` à appliquer dans Supabase.
+
+Tables avec `SELECT using (true)` (lecture publique) :
+`users`, `books`, `reading_status`, `user_favorites`, `reviews`, `quotes`, `follows`
+
+Tables avec lecture conditionnelle :
+- `lists` : `is_public = true OR auth.uid() = user_id`
+- `list_items` : visible si la liste parente est visible (EXISTS sur `lists`)
+
+Tables privées (owner only) : `reading_log_tags`
+
+Les opérations d'écriture (INSERT/UPDATE/DELETE) exigent toujours `auth.uid() = user_id`.
+
+## Hooks profil — paramètre `profileUserId`
+
+Les hooks suivants acceptent un `profileUserId` optionnel pour charger les données d'un profil visité (y compris pour les visiteurs non connectés). Si omis, ils utilisent `user.id` (comportement legacy).
+
+- `useProfileData(profileUserId?)` — statuts, diary, stats, bilan
+- `useFavorites(profileUserId?)` — quatre favoris
+- `useMyLists(profileUserId?)` — listes (filtrées sur `is_public` pour les visiteurs)
+- `useMyReviews(profileUserId?)` — critiques
+- `useMyQuotes(profileUserId?)` — citations
+- `useReadingList(statusFilter, profileUserId?)` — en cours de lecture
+
+Dans `ProfilePage`, tous ces hooks reçoivent `viewedProfile?.id`.
+
+## Pages publiques (sans connexion)
+
+Toutes les pages sont accessibles sans compte, sauf `/fil`, `/parametres`, `/backfill`.
+
+- Header visible pour tous : nav réduite (Explorer, Citations, La Revue) + bouton "Se connecter" pour les visiteurs
+- `JoinBanner` : bandeau fixe en bas (48px, fond #1a1a1a) visible uniquement pour les non-connectés, fermable via localStorage (`reliure_join_banner_dismissed`)
+- Fiche livre : pills de statut et étoiles visibles mais protégées — clic → toast "Connecte-toi pour interagir avec ce livre" (auto-dismiss 3,5s)
+- Profil : bouton "Suivre" visible sur tous les profils tiers ; redirige vers `/login` si non connecté, sinon toggle follow/unfollow via `useFollow`
+
+## Logique profil visiteur vs. propriétaire
+
+Variable `isOwnProfile = user?.id === viewedProfile?.id` contrôle l'affichage conditionnel.
+
+**Visible uniquement si `isOwnProfile`**
+- Bandeau backfill ("Tu as lu d'autres livres ?")
+- Bouton "Modifier le profil" (→ `/parametres`)
+- Bouton "+ Nouvelle liste" + CTA dans l'état vide listes
+- Drag & drop sur les quatre favoris (prop `isOwner` de `FavoritesSection`)
+- Édition inline de la progression de lecture + bannière de complétion (`ReadingItem` prop `isOwner`)
+- Tous les CTAs d'action dans les états vides (chercher, ajouter, créer)
+
+**Quatre favoris** : section masquée pour les visiteurs si `favorites.some(f => f.book)` est faux.
+
+**États vides selon contexte**
+| Onglet | isOwnProfile | !isOwnProfile |
+|--------|-------------|----------------|
+| Journal | "Ton journal de lecture est vide. Ajoute ton premier livre." + Chercher | "Aucune lecture enregistrée pour l'instant." |
+| Bibliothèque | "Ta bibliothèque est vide. Commence par ajouter des lectures passées." + Ajouter | "Aucun livre dans la bibliothèque." |
+| Critiques | "Tu n'as pas encore écrit de critique." + Explorer | "Aucune critique pour l'instant." |
+| Citations | "Tu n'as pas encore sauvegardé de citation." | "Aucune citation pour l'instant." |
+| Listes | "Tu n'as pas encore créé de liste." + Nouvelle liste | "Aucune liste publique pour l'instant." |
 
 ## Ce qu'on ne fait PAS au MVP
 
@@ -280,18 +373,19 @@ Les features suivantes sont implémentées visuellement avec des données mock. 
 
 ## Séquence MVP
 
-1. Auth (magic link + OAuth Google via Supabase)
-2. Recherche de livres (Google Books API → import dans notre base)
-3. Fiche livre (couverture, métadonnées, statut, notation, tags personnels, thèmes)
-4. Profil (quatre favoris, en cours, diary, bibliothèque, critiques, citations, listes, bilan)
-5. Critiques et citations (écrire, lire, liker)
-6. Listes (créer, ordonner, partager)
-7. Follow + fil d'activité
-8. Page Explorer (trending, thèmes, search)
-9. Onboarding + backfill
+1. ✅ Auth (magic link + OAuth Google via Supabase)
+2. ✅ Recherche de livres (Google Books API → import dans notre base)
+3. ✅ Fiche livre (couverture, métadonnées, statut, notation, tags personnels, thèmes, section "Dans des listes")
+4. ✅ Profil (quatre favoris, en cours, diary, bibliothèque, critiques, citations, listes, bilan)
+5. ✅ Critiques et citations (écrire, lire, liker)
+6. ✅ Follow + fil d'activité
+7. ✅ Page Explorer (trending, thèmes, search)
+8. ✅ Onboarding + backfill
+9. ✅ Listes (créer, ordonner, partager, tri, notes par livre, section "Dans des listes" sur BookPage)
 10. La Revue (éditorial)
 11. Défis de lecture (challenges)
-9. Pages publiques (profil, listes, critiques — SEO + partage social)
+12. Pages publiques (profil, listes, critiques — SEO + partage social)
+
 
 ## Fichiers de référence
 

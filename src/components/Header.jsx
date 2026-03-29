@@ -3,17 +3,22 @@ import { NavLink, Link, useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 import Avatar from "./Avatar";
 
-export default function Header({ onSearch, initials = "?", username }) {
+export default function Header({ onSearch, initials = "?", username, isLoggedIn = true }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const navigate = useNavigate();
 
-  const navItems = [
-    ["/explorer", "Explorer"],
-    ["/citations", "Citations"],
-    ["/fil", "Fil"],
-    ["/defis", "Défis"],
-    [username ? `/${username}` : "/explorer", "Profil"],
-  ];
+  const navItems = isLoggedIn
+    ? [
+        ["/explorer", "Explorer"],
+        ["/citations", "Citations"],
+        ["/fil", "Fil"],
+        ["/defis", "Défis"],
+        [username ? `/${username}` : "/explorer", "Profil"],
+      ]
+    : [
+        ["/explorer", "Explorer"],
+        ["/citations", "Citations"],
+      ];
 
   const handleLogout = async () => {
     setMenuOpen(false);
@@ -36,24 +41,28 @@ export default function Header({ onSearch, initials = "?", username }) {
               key={to}
               to={to}
               className={({ isActive }) =>
-                `no-underline rounded-md px-2 py-1.5 sm:px-[11px] sm:py-[7px] text-[13px] font-body shrink-0 ${
+                `no-underline rounded-md px-2 py-1.5 sm:px-[11px] sm:py-[7px] text-[13px] font-body shrink-0 flex items-center gap-1 ${
                   isActive ? "text-[#1a1a1a] font-semibold" : "text-[#767676] font-normal"
                 }`
               }
             >
               {label}
+              {label === "Défis" && (
+                <span className="text-[9px] font-medium px-1 py-px rounded border" style={{ background: "#faf6f0", borderColor: "#e8dfd2", color: "#8B6914", lineHeight: "1.4" }}>Aperçu</span>
+              )}
             </NavLink>
           ))}
           <div className="w-px h-5 bg-[#eee] shrink-0 self-center mx-1 sm:mx-0" />
           <NavLink
             to="/la-revue"
             className={({ isActive }) =>
-              `no-underline rounded-md px-2 py-1.5 sm:px-[11px] sm:py-[7px] text-[13px] font-display italic shrink-0 ${
+              `no-underline rounded-md px-2 py-1.5 sm:px-[11px] sm:py-[7px] text-[13px] font-display italic shrink-0 flex items-center gap-1 ${
                 isActive ? "text-[#1a1a1a] font-semibold" : "text-[#767676] font-normal"
               }`
             }
           >
             La Revue
+            <span className="text-[9px] font-body not-italic font-medium px-1 py-px rounded border" style={{ background: "#faf6f0", borderColor: "#e8dfd2", color: "#8B6914", lineHeight: "1.4" }}>Aperçu</span>
           </NavLink>
         </nav>
         <div role="button" tabIndex={0} onClick={onSearch} onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onSearch(); } }} aria-label="Rechercher" className="cursor-pointer text-[#767676] hover:text-[#1a1a1a] transition-colors duration-150 p-1">
@@ -63,31 +72,40 @@ export default function Header({ onSearch, initials = "?", username }) {
           </svg>
         </div>
 
-        {/* Avatar + dropdown */}
-        <div className="relative">
-          <div
-            role="button"
-            tabIndex={0}
-            onClick={() => setMenuOpen(!menuOpen)}
-            onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setMenuOpen(!menuOpen); } }}
-            className="cursor-pointer"
-          >
-            <Avatar i={initials} s={28} />
+        {/* Avatar + dropdown (logged in) / Se connecter (logged out) */}
+        {isLoggedIn ? (
+          <div className="relative">
+            <div
+              role="button"
+              tabIndex={0}
+              onClick={() => setMenuOpen(!menuOpen)}
+              onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setMenuOpen(!menuOpen); } }}
+              className="cursor-pointer"
+            >
+              <Avatar i={initials} s={28} />
+            </div>
+            {menuOpen && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(false)} />
+                <div className="absolute right-0 top-full mt-2 bg-white border border-[#eee] rounded-lg shadow-[0_4px_16px_rgba(0,0,0,0.08)] z-50 overflow-hidden min-w-[160px]">
+                  <button
+                    onClick={handleLogout}
+                    className="w-full px-4 py-3 text-left text-[13px] font-body text-[#737373] bg-transparent border-none cursor-pointer hover:bg-surface hover:text-[#1a1a1a] transition-colors duration-100"
+                  >
+                    Se déconnecter
+                  </button>
+                </div>
+              </>
+            )}
           </div>
-          {menuOpen && (
-            <>
-              <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(false)} />
-              <div className="absolute right-0 top-full mt-2 bg-white border border-[#eee] rounded-lg shadow-[0_4px_16px_rgba(0,0,0,0.08)] z-50 overflow-hidden min-w-[160px]">
-                <button
-                  onClick={handleLogout}
-                  className="w-full px-4 py-3 text-left text-[13px] font-body text-[#737373] bg-transparent border-none cursor-pointer hover:bg-surface hover:text-[#1a1a1a] transition-colors duration-100"
-                >
-                  Se déconnecter
-                </button>
-              </div>
-            </>
-          )}
-        </div>
+        ) : (
+          <Link
+            to="/login"
+            className="text-[13px] font-medium font-body text-[#1a1a1a] no-underline px-3 py-1.5 rounded-full border border-[#eee] hover:border-[#ccc] transition-colors duration-150 shrink-0"
+          >
+            Se connecter
+          </Link>
+        )}
       </div>
     </header>
   );

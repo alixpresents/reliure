@@ -20,6 +20,7 @@ import { useLikes } from "../hooks/useLikes";
 import UserName from "../components/UserName";
 import { useNavigate, Link } from "react-router-dom";
 import { useNav } from "../lib/NavigationContext";
+import { useBookLists } from "../hooks/useBookLists";
 
 export default function BookPage({ book }) {
   const navigate = useNavigate();
@@ -36,6 +37,7 @@ export default function BookPage({ book }) {
 
   // Live book data from Supabase
   const isUuid = typeof bookId === "string" && bookId.includes("-");
+  const { lists: bookLists } = useBookLists(isUuid ? bookId : null);
   const [liveBook, setLiveBook] = useState(null);
   useEffect(() => {
     if (!isUuid) return;
@@ -62,6 +64,8 @@ export default function BookPage({ book }) {
   const [isReread, setIsReread] = useState(false);
   const [tagInput, setTagInput] = useState("");
   const [tags, setTags] = useState([]);
+  const [loginToast, setLoginToast] = useState(false);
+  const loginToastTimer = useRef(null);
   const dateRef = useRef(null);
   const newReviewRef = useRef(null);
   const newQuoteRef = useRef(null);
@@ -95,6 +99,12 @@ export default function BookPage({ book }) {
     setTagInput(""); setTags([]); setTagFocused(false);
   }, [book.id]);
 
+  const showLoginToast = () => {
+    setLoginToast(true);
+    clearTimeout(loginToastTimer.current);
+    loginToastTimer.current = setTimeout(() => setLoginToast(false), 3500);
+  };
+
   const STATUS_MAP = { "En cours": "reading", "Lu": "read", "À lire": "want_to_read", "Abandonné": "abandoned" };
 
   const todayLabel = () => {
@@ -112,6 +122,7 @@ export default function BookPage({ book }) {
   };
 
   const handleStatus = s => {
+    if (!user) { showLoginToast(); return; }
     if (st === s) {
       // Remove status
       setSt(null); setFinDate(null); setNoDate(false); setIsReread(false);
@@ -133,6 +144,7 @@ export default function BookPage({ book }) {
   };
 
   const handleRating = async r => {
+    if (!user) { showLoginToast(); return; }
     setUr(r);
     await dbSetRating(r);
     // Auto-create reading_status "read" if none exists
@@ -206,6 +218,15 @@ export default function BookPage({ book }) {
 
   return (
     <div>
+      {/* Toast connexion requise */}
+      {loginToast && (
+        <div className="fixed bottom-[60px] left-1/2 -translate-x-1/2 z-[9995] bg-[#1a1a1a] text-white text-[13px] font-body py-2.5 px-4 rounded-lg shadow-lg flex items-center gap-3 whitespace-nowrap">
+          <span>Connecte-toi pour interagir avec ce livre</span>
+          <Link to="/login" className="text-white underline shrink-0 font-medium">Se connecter</Link>
+          <button onClick={() => setLoginToast(false)} className="bg-transparent border-none cursor-pointer text-white/60 hover:text-white p-0 ml-1 leading-none">×</button>
+        </div>
+      )}
+
       <button onClick={() => navigate(-1)} className="bg-transparent border-none text-[#737373] cursor-pointer text-[13px] py-4 font-body">
         ← Retour
       </button>
@@ -385,6 +406,33 @@ export default function BookPage({ book }) {
           ))}
         </div>
       </div>
+
+      {/* Dans des listes */}
+      {bookLists.length > 0 && (
+        <div className="border-t border-border-light py-5">
+          <Label>Dans des listes</Label>
+          <HScroll>
+            {bookLists.map(l => (
+              <div
+                key={l.id}
+                className="min-w-[155px] cursor-pointer group"
+                onClick={() => navigate(`/${l.users?.username}/listes/${l.slug}`)}
+              >
+                <div className="flex gap-1 p-2 bg-surface rounded-lg mb-2 group-hover:bg-[#f3f0eb] transition-colors duration-150">
+                  {l.previewCovers.map((url, i) => (
+                    <img key={i} src={url} alt="" className="w-[43px] h-[64px] object-cover rounded-[2px] shrink-0 bg-cover-fallback" />
+                  ))}
+                  {Array.from({ length: Math.max(0, 3 - l.previewCovers.length) }).map((_, i) => (
+                    <div key={`empty-${i}`} className="w-[43px] h-[64px] rounded-[2px] bg-cover-fallback shrink-0" />
+                  ))}
+                </div>
+                <div className="text-[13px] font-medium font-body leading-snug overflow-hidden text-ellipsis whitespace-nowrap max-w-[155px]">{l.title}</div>
+                <div className="text-[11px] text-[#767676] font-body mt-0.5">@{l.users?.username} · {l.bookCount} livre{l.bookCount !== 1 ? "s" : ""}</div>
+              </div>
+            ))}
+          </HScroll>
+        </div>
+      )}
 
       {/* Tabs */}
       <div className="border-t border-border-light">

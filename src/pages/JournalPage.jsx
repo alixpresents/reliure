@@ -4,15 +4,18 @@ import { JARTICLES, JAGENDA } from "../data";
 import Img from "../components/Img";
 import Tag from "../components/Tag";
 import Label from "../components/Label";
+import WipBanner from "../components/WipBanner";
 
 export default function JournalPage() {
-  const goArticle = (a) => navigate(`/la-revue/${a.id}`);
   const navigate = useNavigate();
+  const goArticle = (a) => navigate(`/la-revue/${a.id}`);
   const [jt, setJt] = useState("textes");
   const feat = JARTICLES[0];
 
   return (
-    <div className="pt-5">
+    <div>
+      <div className="-mx-4 sm:-mx-6 mb-5"><WipBanner /></div>
+      <div className="pt-5">
       {/* Header */}
       <div className="py-4 pb-5 border-b border-[#eee]">
         <h2 className="text-[13px] font-semibold uppercase tracking-[3px] text-[#1a1a1a] mb-1 font-body">La Revue</h2>
@@ -123,6 +126,7 @@ export default function JournalPage() {
           <p className="text-[13px] text-[#737373] mb-5 font-body">Les textes précédents de la rédaction.</p>
         </div>
       )}
+    </div>
     </div>
   );
 }

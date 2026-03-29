@@ -22,21 +22,23 @@ export function useBookQuotes(bookId) {
   return { quotes, loading, refetch: fetch };
 }
 
-export function useMyQuotes() {
+export function useMyQuotes(profileUserId) {
   const { user } = useAuth();
+  const targetId = profileUserId || user?.id;
+
   const [quotes, setQuotes] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const fetch = useCallback(async () => {
-    if (!user) { setQuotes([]); setLoading(false); return; }
+    if (!targetId) { setQuotes([]); setLoading(false); return; }
     const { data } = await supabase
       .from("quotes")
-      .select("*, books(title, authors, cover_url)")
-      .eq("user_id", user.id)
+      .select("*, books(title, authors, cover_url, slug)")
+      .eq("user_id", targetId)
       .order("created_at", { ascending: false });
     setQuotes(data ?? []);
     setLoading(false);
-  }, [user]);
+  }, [targetId]);
 
   useEffect(() => { fetch(); }, [fetch]);
 

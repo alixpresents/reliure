@@ -2,17 +2,19 @@ import { useState, useEffect, useCallback } from "react";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../lib/AuthContext";
 
-export function useFavorites() {
+export function useFavorites(profileUserId) {
   const { user } = useAuth();
+  const targetId = profileUserId || user?.id;
+
   const [favorites, setFavorites] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const fetch = useCallback(async () => {
-    if (!user) { setFavorites([]); setLoading(false); return; }
+    if (!targetId) { setFavorites([]); setLoading(false); return; }
     const { data } = await supabase
       .from("user_favorites")
       .select("position, book_id, note, books(*)")
-      .eq("user_id", user.id)
+      .eq("user_id", targetId)
       .order("position");
     setFavorites(
       (data ?? []).map(d => ({
@@ -34,7 +36,7 @@ export function useFavorites() {
       }))
     );
     setLoading(false);
-  }, [user]);
+  }, [targetId]);
 
   useEffect(() => { fetch(); }, [fetch]);
 
@@ -86,14 +88,12 @@ export function useFavorites() {
     }));
 
     if (toFav) {
-      // Delete both, then re-insert with swapped positions (avoids unique constraint)
       await supabase.from("user_favorites").delete().eq("user_id", user.id).in("position", [fromPos, toPos]);
       await supabase.from("user_favorites").insert([
         { user_id: user.id, book_id: fromFav.bookId, position: toPos, note: fromFav.note || null },
         { user_id: user.id, book_id: toFav.bookId, position: fromPos, note: toFav.note || null },
       ]);
     } else {
-      // Move to empty slot
       await supabase.from("user_favorites").update({ position: toPos }).eq("user_id", user.id).eq("book_id", fromFav.bookId);
     }
     await fetch();

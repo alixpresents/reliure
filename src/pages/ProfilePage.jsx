@@ -1,5 +1,4 @@
 import { useState, useRef, useEffect } from "react";
-import { B, DIARY, LISTS } from "../data";
 import Img from "../components/Img";
 import Stars from "../components/Stars";
 import Avatar from "../components/Avatar";
@@ -10,14 +9,17 @@ import { useReadingList } from "../hooks/useReadingStatus";
 import { useProfileData } from "../hooks/useProfileData";
 import { useMyReviews } from "../hooks/useReviews";
 import { useMyQuotes } from "../hooks/useQuotes";
-import { useFollowCounts } from "../hooks/useFollow";
+import { useFollowCounts, useFollow } from "../hooks/useFollow";
 import { useFavorites } from "../hooks/useFavorites";
+import { useMyLists, createList } from "../hooks/useLists";
+import { useLikes } from "../hooks/useLikes";
 import { useAuth } from "../lib/AuthContext";
 import { useNav } from "../lib/NavigationContext";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
+import CreateListModal from "../components/CreateListModal";
 
-function ReadingItem({ book, go, onFinish, initialPage = 0, statusId = null }) {
+function ReadingItem({ book, go, onFinish, initialPage = 0, statusId = null, isOwner = true }) {
   const [currentPage, setCurrentPage] = useState(initialPage);
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState("");
@@ -77,7 +79,9 @@ function ReadingItem({ book, go, onFinish, initialPage = 0, statusId = null }) {
             <div className="h-full bg-[#1a1a1a] rounded-sm transition-all duration-400" style={{ width: `${pct}%` }} />
           </div>
         </div>
-        {editing ? (
+        {!isOwner ? (
+          <span className="text-[11px] text-[#767676] font-body">p. {currentPage}/{book.p}</span>
+        ) : editing ? (
           <div className="flex items-center text-[11px] text-[#767676] font-body">
             <span>p.&nbsp;</span>
             <input
@@ -109,7 +113,7 @@ function ReadingItem({ book, go, onFinish, initialPage = 0, statusId = null }) {
       </div>
 
       {/* Completion banner */}
-      <div className={`overflow-hidden transition-all duration-300 ${finished && isComplete ? "max-h-[60px] opacity-100 mt-2" : "max-h-0 opacity-0"}`}>
+      <div className={`overflow-hidden transition-all duration-300 ${isOwner && finished && isComplete ? "max-h-[60px] opacity-100 mt-2" : "max-h-0 opacity-0"}`}>
         <div className="flex items-center gap-3 py-2 px-3 bg-surface rounded-lg ml-[58px]">
           <span className="text-[12px] font-medium font-body text-[#1a1a1a]">Tu l'as terminé !</span>
           <InteractiveStars value={finRating} onChange={setFinRating} size="text-xs" />
@@ -411,13 +415,21 @@ export default function ProfilePage({ viewedProfile, initialTab }) {
   useEffect(() => { if (initialTab) setTab(initialTab); }, [initialTab]);
   const { goToBook: go, openSearchFor } = useNav();
   const navigate = useNavigate();
-  const { books: dbReading, refetch: refetchReading } = useReadingList("reading");
-  const profileData = useProfileData();
-  const { reviews: myReviews } = useMyReviews();
-  const { quotes: myQuotes } = useMyQuotes();
   const { user } = useAuth();
-  const { followers, following: followingCount } = useFollowCounts(user?.id);
-  const { favorites, setFavorite, removeFavorite, swapPositions, updateNote } = useFavorites();
+  const profile = viewedProfile;
+  const profileId = viewedProfile?.id;
+  const isOwnProfile = user?.id === profileId;
+  const { books: dbReading, refetch: refetchReading } = useReadingList("reading", profileId);
+  const profileData = useProfileData(profileId);
+  const { reviews: myReviews } = useMyReviews(profileId);
+  const { quotes: myQuotes } = useMyQuotes(profileId);
+  const { followers, following: followingCount } = useFollowCounts(profileId);
+  const { following: isFollowing, follow, unfollow } = useFollow(!isOwnProfile ? profileId : null);
+  const { favorites, setFavorite, removeFavorite, swapPositions, updateNote } = useFavorites(profileId);
+  const { lists: myLists, refetch: refetchLists } = useMyLists(profileId);
+  const listIds = myLists.map(l => l.id);
+  const { likedSet: listLikedSet, initialSet: listInitialSet, toggle: toggleListLike } = useLikes(listIds, "list");
+  const [showCreateList, setShowCreateList] = useState(false);
   const onSearch = () => navigate("/explorer");
   const onBackfill = () => navigate("/backfill");
 
@@ -473,8 +485,15 @@ export default function ProfilePage({ viewedProfile, initialTab }) {
   const totalBooks = profileData.stats?.total || 0;
   const booksThisYear = profileData.stats?.thisYear || 0;
 
-  // Lists still mock for now
-  const lists = LISTS;
+  const handleCreateList = async (opts) => {
+    if (!user) return;
+    const created = await createList(user.id, opts);
+    if (created) {
+      refetchLists();
+      const listSlug = created.slug || created.id;
+      navigate(`/${profile?.username || user.user_metadata?.username}/listes/${listSlug}`);
+    }
+  };
 
   return (
     <div>
@@ -500,6 +519,29 @@ export default function ProfilePage({ viewedProfile, initialTab }) {
               <span key={l}><strong className="text-[#1a1a1a] font-semibold">{n}</strong> {l}</span>
             ))}
           </div>
+          {isOwnProfile && (
+            <button
+              onClick={() => navigate("/parametres")}
+              className="shrink-0 px-4 py-1.5 rounded-full text-[13px] font-medium font-body border border-[#eee] text-[#737373] bg-transparent hover:border-[#ccc] hover:text-[#1a1a1a] transition-colors duration-150"
+            >
+              Modifier le profil
+            </button>
+          )}
+          {!isOwnProfile && (
+            <button
+              onClick={() => {
+                if (!user) { navigate("/login"); return; }
+                isFollowing ? unfollow() : follow();
+              }}
+              className={`shrink-0 px-4 py-1.5 rounded-full text-[13px] font-medium font-body border transition-colors duration-150 ${
+                isFollowing
+                  ? "bg-transparent text-[#737373] border-[#eee] hover:border-[#ccc] hover:text-[#1a1a1a]"
+                  : "bg-[#1a1a1a] text-white border-[#1a1a1a] hover:bg-[#333]"
+              }`}
+            >
+              {isFollowing ? "Abonné·e" : "Suivre"}
+            </button>
+          )}
         </div>
         <p className="text-[13px] text-[#6b6b6b] leading-relaxed max-w-[480px] m-0 mb-3 font-body">
           Lecteur compulsif. Fiction contemporaine, littérature latino-américaine, existentialisme.
@@ -527,27 +569,29 @@ export default function ProfilePage({ viewedProfile, initialTab }) {
         </div>
       </div>
 
-      {/* Backfill banner */}
-      <div
-        role="button"
-        tabIndex={0}
-        onClick={onBackfill}
-        onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onBackfill(); } }}
-        className="flex items-center gap-4 p-3 px-4 bg-surface rounded-lg border border-[#eee] cursor-pointer hover:border-[#ddd] transition-colors duration-150 mb-0"
-      >
-        <div className="flex-1">
-          <div className="text-[13px] font-medium font-body">Tu as lu d'autres livres ?</div>
-          <div className="text-xs text-[#737373] font-body">Remplis ta bibliothèque en quelques clics.</div>
+      {/* Backfill banner — own profile only */}
+      {isOwnProfile && (
+        <div
+          role="button"
+          tabIndex={0}
+          onClick={onBackfill}
+          onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onBackfill(); } }}
+          className="flex items-center gap-4 p-3 px-4 bg-surface rounded-lg border border-[#eee] cursor-pointer hover:border-[#ddd] transition-colors duration-150 mb-0"
+        >
+          <div className="flex-1">
+            <div className="text-[13px] font-medium font-body">Tu as lu d'autres livres ?</div>
+            <div className="text-xs text-[#737373] font-body">Remplis ta bibliothèque en quelques clics.</div>
+          </div>
+          <button className="px-3 py-[6px] rounded-[16px] text-xs font-medium font-body bg-white border-[1.5px] border-[#ddd] text-[#1a1a1a] cursor-pointer hover:border-[#bbb] transition-colors duration-150">
+            Ajouter
+          </button>
         </div>
-        <button className="px-3 py-[6px] rounded-[16px] text-xs font-medium font-body bg-white border-[1.5px] border-[#ddd] text-[#1a1a1a] cursor-pointer hover:border-[#bbb] transition-colors duration-150">
-          Ajouter
-        </button>
-      </div>
+      )}
 
-      {/* Quatre favoris */}
-      <FavoritesSection
+      {/* Quatre favoris — masqué pour les visiteurs si aucun favori */}
+      {(isOwnProfile || favorites.some(f => f.book)) && <FavoritesSection
         favorites={favorites}
-        isOwner={!!user}
+        isOwner={isOwnProfile}
         go={go}
         onAdd={pos => {
           onSearchFor(async (book) => {
@@ -558,14 +602,14 @@ export default function ProfilePage({ viewedProfile, initialTab }) {
         onRemove={removeFavorite}
         onSwap={swapPositions}
         onUpdateNote={updateNote}
-      />
+      />}
 
       {/* En cours */}
       <div className="border-t border-border-light py-6">
         <Label>En cours de lecture</Label>
         {readingBooks.length > 0 ? (
           readingBooks.map(b => (
-            <ReadingItem key={b.id} book={b} go={go} onFinish={removeFromReading} initialPage={b._currentPage || 0} statusId={b._statusId} />
+            <ReadingItem key={b.id} book={b} go={go} onFinish={removeFromReading} initialPage={b._currentPage || 0} statusId={b._statusId} isOwner={isOwnProfile} />
           ))
         ) : (
           <EmptyState>
@@ -581,17 +625,24 @@ export default function ProfilePage({ viewedProfile, initialTab }) {
       {/* Tabs */}
       <div className="border-t border-border-light">
         <div className="flex">
-          {["journal", "bibliothèque", "mes critiques", "mes citations", "mes listes", "bilan"].map(t => (
+          {[
+            ["journal", "Journal"],
+            ["bibliothèque", "Bibliothèque"],
+            ["mes critiques", isOwnProfile ? "Mes critiques" : "Ses critiques"],
+            ["mes citations", isOwnProfile ? "Mes citations" : "Ses citations"],
+            ["mes listes", isOwnProfile ? "Mes listes" : "Ses listes"],
+            ["bilan", "Bilan"],
+          ].map(([value, label]) => (
             <button
-              key={t}
-              onClick={() => setTab(t)}
-              className={`flex-1 py-3 bg-transparent border-none cursor-pointer text-xs capitalize font-body ${
-                tab === t
+              key={value}
+              onClick={() => setTab(value)}
+              className={`flex-1 py-3 bg-transparent border-none cursor-pointer text-xs font-body ${
+                tab === value
                   ? "font-semibold text-[#1a1a1a] border-b-2 border-b-[#1a1a1a]"
                   : "font-normal text-[#767676] border-b-2 border-b-transparent"
               }`}
             >
-              {t}
+              {label}
             </button>
           ))}
         </div>
@@ -620,13 +671,15 @@ export default function ProfilePage({ viewedProfile, initialTab }) {
             ))
           ) : (
             <EmptyState>
-              <div className="text-sm text-[#737373] font-body">Pas encore de lectures.</div>
-              <button
-                onClick={onSearch}
-                className="mt-4 px-5 py-2.5 rounded-[20px] text-[13px] font-medium font-body bg-[#1a1a1a] text-white border-none cursor-pointer hover:bg-[#333] transition-colors duration-150"
-              >
-                Chercher un livre
-              </button>
+              {isOwnProfile ? (
+                <>
+                  <div className="text-sm text-[#999] font-body">Ton journal de lecture est vide.</div>
+                  <div className="text-[13px] text-[#bbb] font-body mt-1">Ajoute ton premier livre.</div>
+                  <button onClick={onSearch} className="mt-4 px-5 py-2.5 rounded-[20px] text-[13px] font-medium font-body bg-[#1a1a1a] text-white border-none cursor-pointer hover:bg-[#333] transition-colors duration-150">Chercher un livre</button>
+                </>
+              ) : (
+                <div className="text-sm text-[#999] font-body">Aucune lecture enregistrée pour l'instant.</div>
+              )}
             </EmptyState>
           )}
         </div>
@@ -657,8 +710,15 @@ export default function ProfilePage({ viewedProfile, initialTab }) {
 
           {libraryBooks.length === 0 ? (
             <EmptyState>
-              <div className="text-sm text-[#737373] font-body">Ta bibliothèque est vide.</div>
-              <button onClick={onSearch} className="mt-4 px-5 py-2.5 rounded-[20px] text-[13px] font-medium font-body bg-[#1a1a1a] text-white border-none cursor-pointer hover:bg-[#333] transition-colors duration-150">Chercher un livre</button>
+              {isOwnProfile ? (
+                <>
+                  <div className="text-sm text-[#999] font-body">Ta bibliothèque est vide.</div>
+                  <div className="text-[13px] text-[#bbb] font-body mt-1">Commence par ajouter des lectures passées.</div>
+                  <button onClick={() => navigate("/backfill")} className="mt-4 px-5 py-2.5 rounded-[20px] text-[13px] font-medium font-body bg-[#1a1a1a] text-white border-none cursor-pointer hover:bg-[#333] transition-colors duration-150">Ajouter des livres</button>
+                </>
+              ) : (
+                <div className="text-sm text-[#999] font-body">Aucun livre dans la bibliothèque.</div>
+              )}
             </EmptyState>
           ) : <>
 
@@ -769,8 +829,14 @@ export default function ProfilePage({ viewedProfile, initialTab }) {
             );
           }) : (
             <EmptyState>
-              <div className="text-sm text-[#737373] font-body">Tu n'as pas encore écrit de critique.</div>
-              <div className="text-xs text-[#767676] font-body mt-1">Tes critiques apparaîtront ici.</div>
+              {isOwnProfile ? (
+                <>
+                  <div className="text-sm text-[#999] font-body">Tu n'as pas encore écrit de critique.</div>
+                  <button onClick={() => navigate("/explorer")} className="mt-4 px-5 py-2.5 rounded-[20px] text-[13px] font-medium font-body bg-[#1a1a1a] text-white border-none cursor-pointer hover:bg-[#333] transition-colors duration-150">Explorer des livres</button>
+                </>
+              ) : (
+                <div className="text-sm text-[#999] font-body">Aucune critique pour l'instant.</div>
+              )}
             </EmptyState>
           )}
         </div>
@@ -798,7 +864,9 @@ export default function ProfilePage({ viewedProfile, initialTab }) {
             );
           }) : (
             <EmptyState>
-              <div className="text-sm text-[#737373] font-body">Pas encore de citations sauvegardées.</div>
+              <div className="text-sm text-[#999] font-body">
+                {isOwnProfile ? "Tu n'as pas encore sauvegardé de citation." : "Aucune citation pour l'instant."}
+              </div>
             </EmptyState>
           )}
         </div>
@@ -807,27 +875,72 @@ export default function ProfilePage({ viewedProfile, initialTab }) {
       {/* Listes */}
       {tab === "mes listes" && (
         <div className="py-3">
-          {lists.length > 0 ? lists.map(l => (
-            <div key={l.id} className="py-5 border-b border-border-light">
-              <div className="flex gap-2 mb-3.5 p-3 px-3.5 bg-surface rounded-lg overflow-x-auto">
-                {l.cv.slice(0, 4).map(b => <Img key={b.id} book={b} w={60} h={90} onClick={() => go(b)} />)}
-                {l.n > 4 && (
-                  <div className="w-[60px] h-[90px] rounded-[3px] bg-avatar-bg flex items-center justify-center text-[11px] text-[#737373] shrink-0 font-body">
-                    +{l.n - 4}
-                  </div>
-                )}
-              </div>
-              <div className="text-[15px] font-medium font-body">{l.t}</div>
-              <div className="text-xs text-[#737373] mt-1 font-body">{l.u} · {l.n} livres · <LikeButton count={l.lk} /></div>
-            </div>
-          )) : (
+          {isOwnProfile && (
+            <button
+              onClick={() => setShowCreateList(true)}
+              className="w-full py-3 mb-4 border-[1.5px] border-dashed border-[#ddd] rounded-lg text-[13px] text-[#999] font-body bg-transparent cursor-pointer hover:border-[#bbb] hover:text-[#666] transition-colors duration-150"
+            >
+              + Nouvelle liste
+            </button>
+          )}
+          {myLists.length === 0 && (
             <EmptyState>
-              <div className="text-sm text-[#737373] font-body">Aucune liste pour l'instant.</div>
-              <button className="mt-4 px-5 py-2.5 rounded-[20px] text-[13px] font-medium font-body bg-transparent text-[#666] border-[1.5px] border-[#ddd] cursor-pointer hover:border-[#999] transition-colors duration-150">
-                + Créer une liste
-              </button>
+              <div className="text-sm text-[#999] font-body">
+                {isOwnProfile ? "Tu n'as pas encore créé de liste." : "Aucune liste publique pour l'instant."}
+              </div>
+              {isOwnProfile && (
+                <button onClick={() => setShowCreateList(true)} className="mt-4 px-5 py-2.5 rounded-[20px] text-[13px] font-medium font-body bg-[#1a1a1a] text-white border-none cursor-pointer hover:bg-[#333] transition-colors duration-150">+ Nouvelle liste</button>
+              )}
             </EmptyState>
           )}
+          {myLists.length > 0 && myLists.map(l => {
+            const items = (l.list_items || []).sort((a, b) => a.position - b.position);
+            const covers = items.slice(0, 4).map(i => i.books).filter(Boolean);
+            const totalItems = items.length;
+            return (
+              <div
+                key={l.id}
+                role="button"
+                tabIndex={0}
+                onClick={() => navigate(`/${profile?.username}/listes/${l.slug || l.id}`)}
+                onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); navigate(`/${profile?.username}/listes/${l.slug || l.id}`); } }}
+                className="py-5 border-b border-border-light cursor-pointer hover:bg-[#fafafa] transition-colors duration-100"
+              >
+                {covers.length > 0 && (
+                  <div className="flex gap-2 mb-3.5 p-3 px-3.5 bg-surface rounded-lg overflow-x-auto">
+                    {covers.map(b => {
+                      const bookObj = { id: b.id, t: b.title, c: b.cover_url, slug: b.slug, _supabase: b };
+                      return <Img key={b.id} book={bookObj} w={60} h={90} />;
+                    })}
+                    {totalItems > 4 && (
+                      <div className="w-[60px] h-[90px] rounded-[3px] bg-avatar-bg flex items-center justify-center text-[11px] text-[#737373] shrink-0 font-body">
+                        +{totalItems - 4}
+                      </div>
+                    )}
+                  </div>
+                )}
+                <div className="text-[15px] font-medium font-body">{l.title}</div>
+                <div className="text-xs text-[#737373] mt-1 font-body flex items-center gap-1.5">
+                  <span>{totalItems} livre{totalItems !== 1 ? "s" : ""}</span>
+                  <span>·</span>
+                  <span>{l.is_public ? "Publique" : "Privée"}</span>
+                  <span>·</span>
+                  <LikeButton
+                    count={l.likes_count || 0}
+                    liked={listLikedSet.has(l.id)}
+                    initialLiked={listInitialSet.has(l.id)}
+                    onToggle={() => toggleListLike(l.id)}
+                    className="text-xs"
+                  />
+                </div>
+              </div>
+            );
+          })}
+          <CreateListModal
+            open={showCreateList}
+            onClose={() => setShowCreateList(false)}
+            onCreate={handleCreateList}
+          />
         </div>
       )}
 

@@ -3,6 +3,7 @@ import { CHALLENGE, CHALLENGES_LIST } from "../data/challenges";
 import Avatar from "../components/Avatar";
 import Label from "../components/Label";
 import Stars from "../components/Stars";
+import WipBanner from "../components/WipBanner";
 
 function MiniProgress({ completed, total, size = 40 }) {
   const r = (size - 6) / 2;
@@ -283,12 +284,16 @@ export default function ChallengesPage() {
     window.scrollTo(0, 0);
   };
 
+  const banner = <div className="-mx-4 sm:-mx-6 mb-5"><WipBanner /></div>;
+
   if (selectedId === null) {
-    return <ChallengesIndex onSelect={handleSelect} enrolled={enrolled} onJoin={handleJoin} />;
+    return <><div className="-mx-4 sm:-mx-6"><WipBanner /></div><ChallengesIndex onSelect={handleSelect} enrolled={enrolled} onJoin={handleJoin} /></>;
   }
 
   return (
-    <div className="pt-5">
+    <div>
+      {banner}
+      <div className="pt-5">
       {/* Back */}
       <button onClick={handleBack} className="bg-transparent border-none text-[#737373] cursor-pointer text-[13px] pb-4 font-body">← Défis</button>
 
@@ -308,6 +313,7 @@ export default function ChallengesPage() {
       </div>
 
       {view === "progression" ? <ParticipantView /> : <PublicView />}
+      </div>
     </div>
   );
 }

@@ -119,22 +119,24 @@ export function useUserRating(bookId) {
   return { rating, loading: loading, setRating };
 }
 
-export function useReadingList(statusFilter) {
+export function useReadingList(statusFilter, profileUserId) {
   const { user } = useAuth();
+  const targetId = profileUserId || user?.id;
+
   const [books, setBooks] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const fetch = useCallback(async () => {
-    if (!user) { setBooks([]); setLoading(false); return; }
+    if (!targetId) { setBooks([]); setLoading(false); return; }
     const { data } = await supabase
       .from("reading_status")
       .select("*, books(*)")
-      .eq("user_id", user.id)
+      .eq("user_id", targetId)
       .eq("status", statusFilter)
       .order("created_at", { ascending: false });
     setBooks(data ?? []);
     setLoading(false);
-  }, [user, statusFilter]);
+  }, [targetId, statusFilter]);
 
   useEffect(() => { fetch(); }, [fetch]);
 

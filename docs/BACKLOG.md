@@ -460,4 +460,140 @@ Actuellement : une critique par livre par utilisateur (upsert sur `user_id` + `b
 
 ---
 
+## 6. Qualité des résultats de recherche (ranking & déduplication)
+
+**Statut :** Idée · Priorité haute (impacte l'onboarding et la boucle quotidienne)
+**Portée :** Edge function `book_import` + logique de ranking côté recherche
+
+### Le problème
+
+Google Books API renvoie beaucoup de bruit. Une recherche « Monte Cristo » devrait évidemment remonter *Le Comte de Monte-Cristo* d'Alexandre Dumas en premier résultat. En pratique, l'API mélange l'édition de référence avec des résumés scolaires, des adaptations jeunesse, des versions abrégées, des ebooks sans couverture, des doublons ISBN, et des titres vaguement apparentés.
+
+C'est un problème critique : la recherche est le premier geste de l'utilisateur (onboarding, ajout quotidien). Si le bon livre n'apparaît pas dans les 3 premiers résultats, l'expérience est cassée.
+
+### Stratégie de ranking envisagée
+
+**Étape 1 — Filtrage côté API (immédiat)**
+- Privilégier `langRestrict=fr` pour les recherches en français
+- Filtrer les résultats sans `industryIdentifiers` (ISBN) quand possible
+- Exclure les résultats sans couverture (`imageLinks` absent) ou les reléguer en fin de liste
+
+**Étape 2 — Scoring côté Reliure (MVP)**
+Un score composite calculé à l'import ou à la recherche, basé sur :
+- **Complétude des métadonnées** : titre, auteur, couverture, ISBN, nombre de pages → plus c'est complet, plus le score monte
+- **Nombre de pages** : un résumé scolaire de 32 pages ne devrait pas passer devant l'édition intégrale de 1200 pages
+- **Nombre de ratings/reviews Google Books** : signal de popularité, l'édition de référence en a plus
+- **Langue** : boost FR si l'utilisateur est francophone
+- **Éditeur connu** : Gallimard, Folio, Poche, Flammarion, etc. → boost par rapport à un éditeur inconnu ou auto-édité
+- **Présence dans notre base** : si le livre a déjà été importé et a des reading_status/reviews chez nous, c'est probablement la bonne édition → boost fort
+
+**Étape 3 — Déduplication / regroupement par œuvre (v2)**
+- Regrouper les éditions d'une même œuvre (poche, relié, audio, traductions) sous une fiche unique
+- Identifier l'œuvre par titre normalisé + auteur, ou par liens entre ISBN (quand disponible via BnF/Nudger)
+- Afficher l'édition « principale » en résultat de recherche, avec un lien « Voir les X éditions » sur la fiche livre
+- C'est ce que fait Babelio avec leurs 286K regroupements algorithmiques — on peut s'en inspirer sans avoir besoin de leur volume au départ
+
+### Heuristiques spécifiques
+
+- Si le titre exact match un classique connu (dictionnaire de ~500 œuvres canoniques ?), forcer le résultat en premier
+- Si l'auteur est identifié dans la requête (« Dumas Monte Cristo »), filtrer agressivement les résultats sans cet auteur
+- Les résultats de type « study guide », « SparkNotes », « résumé » devraient être exclus ou relégués (détection par éditeur ou mots-clés dans le sous-titre)
+
+### Ce qu'on ne fait PAS en v1
+
+- Pas de regroupement par œuvre (trop complexe, nécessite une table `works`)
+- Pas de dictionnaire de classiques (commencer par le scoring générique)
+- Pas de correction orthographique / fuzzy search côté Reliure (Google Books le fait déjà)
+
+### Questions ouvertes
+
+- Faut-il cacher les résultats en dessous d'un seuil de score, ou juste les ordonner ?
+- Le scoring doit-il tourner dans l'edge function (à l'import) ou côté client (au moment de la recherche) ?
+- Faut-il un mécanisme de signalement communautaire (« ce n'est pas le bon livre ») pour améliorer le ranking au fil du temps ?
+
+---
+
+## 7. Personnaliser la page login
+
+**Statut :** To Do · Priorité moyenne
+**Portée :** Auth UI Supabase + template email magic link
+
+### Le problème
+
+La page de login par défaut de Supabase est générique et ne reflète pas l'identité Reliure. C'est le premier écran qu'un nouvel utilisateur voit après avoir cliqué « Créer mon profil » — ça doit être à la hauteur.
+
+### Ce qu'il faut faire
+
+- Customiser l'écran d'auth Supabase : logo Reliure, typo Instrument Serif pour le titre, palette de couleurs du design system, message d'accueil éditorial
+- Personnaliser le template de l'email magic link : sujet, contenu, branding Reliure (pas le template Supabase par défaut)
+- S'assurer que le flow est fluide sur mobile (l'email s'ouvre souvent dans un autre navigateur)
+
+---
+
+## Listes — Post-bêta
+
+**Dupliquer une liste**
+Statut : Post-bêta
+Utile mais pas critique au lancement. Permettre de copier une liste existante (la sienne ou celle d'un autre) comme point de départ pour en créer une nouvelle.
+
+**Suivre une liste**
+Statut : Post-bêta
+Nécessite un système de notifications pas encore en place. Recevoir une notification quand le créateur ajoute un livre à une liste qu'on suit.
+
+**Sauvegarder la liste d'un autre**
+Statut : Post-bêta · v2
+Feature sociale avancée. Permettre de "repost" discret d'une liste publique dans son propre profil, sans la copier — juste un raccourci vers l'original.
+
+---
+
+## Recherche globale (Livres / Listes / Utilisateurs)
+
+**Statut :** Post-bêta · v2
+**Portée :** Refonte de la recherche actuelle
+
+### Le concept
+La recherche actuelle est centrée sur les livres uniquement. En v2, étendre la recherche à tous les types de contenu avec un système d'onglets :
+- **Livres** (défaut) — comportement actuel inchangé
+- **Listes** — recherche sur le titre et la description des listes publiques
+- **Utilisateurs** — recherche sur username et display_name
+
+### Pourquoi post-bêta
+Au lancement, les listes sont découvrables via le profil, l'Explorer, le fil d'activité et les fiches livres — suffisant pour le bêta.
+La recherche globale nécessite une UI plus complexe (onglets, types de résultats hétérogènes) et des requêtes Supabase supplémentaires. À implémenter en une seule fois plutôt que par ajouts successifs.
+
+### Implémentation envisagée
+- Onglets dans l'overlay de recherche : Livres (défaut) / Listes / Utilisateurs
+- Requêtes parallèles sur books, lists (is_public = true), users
+- Résultats listes : titre, description tronquée, username créateur, nb livres
+- Résultats utilisateurs : avatar initiales, username, display_name, nb livres lus
+- L'onglet actif est mémorisé pendant la session
+
+---
+
+## Tags sur les listes
+
+**Statut :** Post-bêta
+**Portée :** Feature listes + Explorer
+
+### Le concept
+Permettre d'ajouter des tags libres sur une liste pour faciliter la découverte et le filtrage. Similaire aux thèmes sur les fiches livres, mais appliqués aux listes.
+
+### Fonctionnalités envisagées
+- Ajout de tags sur ListPage (max 5 tags, max 30 chars chacun)
+- Autocomplétion sur les tags existants
+- Tags cliquables → Explorer filtré par tag
+- Dans ExplorePage section listes : pills des tags les plus utilisés en filtre rapide
+- Tags visibles sur les cards listes dans l'Explorer et le fil
+
+### Base de données
+- Nouvelle table `list_tags` : id, list_id (FK lists), tag_text, created_at
+- RLS : lecture publique, écriture réservée au propriétaire
+- Index sur list_id et tag_text
+
+### Ce qu'on ne fait PAS en v1
+- Pas de tags imposés (tout est libre comme les tags personnels de lecture)
+- Pas de page tag dédiée pour les listes (utiliser l'Explorer existant)
+
+---
+
 *Dernière mise à jour : 29 mars 2026*

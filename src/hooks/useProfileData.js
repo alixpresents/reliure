@@ -2,8 +2,11 @@ import { useState, useEffect, useCallback } from "react";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../lib/AuthContext";
 
-export function useProfileData() {
+export function useProfileData(profileUserId) {
   const { user } = useAuth();
+  // Use the provided profileUserId for reading; fall back to logged-in user
+  const targetId = profileUserId || user?.id;
+
   const [data, setData] = useState({
     allStatuses: [],
     diaryBooks: [],
@@ -21,20 +24,20 @@ export function useProfileData() {
   const yearEnd = `${currentYear}-12-31`;
 
   const fetch = useCallback(async () => {
-    if (!user) { setLoading(false); return; }
+    if (!targetId) { setLoading(false); return; }
 
     // All statuses with books (for library view — all statuses)
     const { data: allStatuses } = await supabase
       .from("reading_status")
       .select("*, books(*)")
-      .eq("user_id", user.id)
+      .eq("user_id", targetId)
       .order("created_at", { ascending: false });
 
     // Diary: read books WITH date only (for journal/diary calendar)
     const { data: diaryBooks } = await supabase
       .from("reading_status")
       .select("*, books(*)")
-      .eq("user_id", user.id)
+      .eq("user_id", targetId)
       .eq("status", "read")
       .not("finished_at", "is", null)
       .order("finished_at", { ascending: false });
@@ -43,7 +46,7 @@ export function useProfileData() {
     const { data: allReadBooks } = await supabase
       .from("reading_status")
       .select("*, books(*)")
-      .eq("user_id", user.id)
+      .eq("user_id", targetId)
       .eq("status", "read")
       .order("created_at", { ascending: false });
 
@@ -51,7 +54,7 @@ export function useProfileData() {
     const { data: reviews } = await supabase
       .from("reviews")
       .select("*")
-      .eq("user_id", user.id);
+      .eq("user_id", targetId);
 
     const statuses = allStatuses || [];
     const diary = diaryBooks || [];
@@ -61,7 +64,6 @@ export function useProfileData() {
     // Stats: count ALL read books, not just those with dates
     const total = statuses.length;
     const allReadThisYear = allRead.filter(r => {
-      // Use finished_at if available, otherwise created_at
       const date = r.finished_at || r.created_at;
       return date >= yearStart && date <= yearEnd + "T23:59:59";
     });
@@ -112,7 +114,7 @@ export function useProfileData() {
       topRated,
     });
     setLoading(false);
-  }, [user, yearStart, yearEnd]);
+  }, [targetId, yearStart, yearEnd]);
 
   useEffect(() => { fetch(); }, [fetch]);
 

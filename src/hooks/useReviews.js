@@ -23,22 +23,24 @@ export function useBookReviews(bookId) {
   return { reviews, loading, refetch: fetch };
 }
 
-export function useMyReviews() {
+export function useMyReviews(profileUserId) {
   const { user } = useAuth();
+  const targetId = profileUserId || user?.id;
+
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const fetch = useCallback(async () => {
-    if (!user) { setReviews([]); setLoading(false); return; }
+    if (!targetId) { setReviews([]); setLoading(false); return; }
     const { data } = await supabase
       .from("reviews")
       .select("*, books(*)")
-      .eq("user_id", user.id)
+      .eq("user_id", targetId)
       .not("body", "is", null)
       .order("created_at", { ascending: false });
     setReviews(data ?? []);
     setLoading(false);
-  }, [user]);
+  }, [targetId]);
 
   useEffect(() => { fetch(); }, [fetch]);
 

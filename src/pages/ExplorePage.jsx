@@ -9,6 +9,7 @@ import LikeButton from "../components/LikeButton";
 import Stars from "../components/Stars";
 import UserName from "../components/UserName";
 import { useNav } from "../lib/NavigationContext";
+import { useNavigate } from "react-router-dom";
 import { usePopularBooks, usePopularReviews, usePopularQuotes, usePopularLists } from "../hooks/useExplore";
 import { useLikes } from "../hooks/useLikes";
 
@@ -23,6 +24,7 @@ function normalizeQuoteBook(q) {
 
 export default function ExplorePage({ onSearch }) {
   const { goToBook: go } = useNav();
+  const navigate = useNavigate();
   const { books: popular, loading: loadingBooks } = usePopularBooks();
   const { reviews, loading: loadingReviews } = usePopularReviews();
   const { quotes, loading: loadingQuotes } = usePopularQuotes();
@@ -235,32 +237,47 @@ export default function ExplorePage({ onSearch }) {
       {!loadingLists && lists.length > 0 && (
         <div className="border-t border-border-light py-6">
           <Heading>Listes populaires</Heading>
-          {lists.map(l => (
-            <div key={l.id} className="py-5 border-b border-border-light">
-              <div className="flex gap-2 mb-3.5 p-3.5 px-4 bg-surface rounded-lg overflow-x-auto">
-                {l.previewBooks.map(b => <Img key={b.id} book={b} w={68} h={102} onClick={() => go(b)} />)}
-                {l.bookCount > 4 && (
-                  <div className="w-[68px] h-[102px] rounded-[3px] bg-avatar-bg flex items-center justify-center text-xs text-[#737373] shrink-0 font-body">
-                    +{l.bookCount - 4}
+          {lists.map(l => {
+            const listUrl = `/${l.users?.username}/listes/${l.slug}`;
+            return (
+              <div
+                key={l.id}
+                role="button"
+                tabIndex={0}
+                onClick={() => navigate(listUrl)}
+                onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); navigate(listUrl); } }}
+                className="py-5 border-b border-border-light cursor-pointer hover:bg-[#fafafa] transition-colors duration-100"
+              >
+                <div className="flex gap-2 mb-3.5 p-3.5 px-4 bg-surface rounded-lg overflow-x-auto">
+                  {l.previewBooks.map(b => <Img key={b.id} book={b} w={68} h={102} />)}
+                  {l.bookCount > 4 && (
+                    <div className="w-[68px] h-[102px] rounded-[3px] bg-avatar-bg flex items-center justify-center text-xs text-[#737373] shrink-0 font-body">
+                      +{l.bookCount - 4}
+                    </div>
+                  )}
+                </div>
+                <div className="text-base font-medium font-body">{l.title}</div>
+                {l.description && (
+                  <div className="text-[13px] text-[#666] font-body mt-1 leading-snug">
+                    {l.description.length > 80 ? l.description.slice(0, 80) + "…" : l.description}
                   </div>
                 )}
+                <div className="flex items-center gap-2 mt-[5px]">
+                  <Avatar i={(l.userName || "?").split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2)} s={20} />
+                  <UserName user={l.users} className="text-xs" />
+                  <span className="text-xs text-[#737373] font-body">· {l.bookCount} livres</span>
+                  <span className="text-xs font-body" onClick={e => e.stopPropagation()}>
+                    <LikeButton
+                      count={l.likes_count || 0}
+                      liked={likedLists.has(l.id)}
+                      initialLiked={initLikedLists.has(l.id)}
+                      onToggle={() => toggleListLike(l.id)}
+                    />
+                  </span>
+                </div>
               </div>
-              <div className="text-base font-medium font-body">{l.title}</div>
-              <div className="flex items-center gap-2 mt-[5px]">
-                <Avatar i={(l.userName || "?").split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2)} s={20} />
-                <UserName user={l.users} className="text-xs" />
-                <span className="text-xs text-[#737373] font-body">· {l.bookCount} livres</span>
-                <span className="text-xs font-body">
-                  <LikeButton
-                    count={l.likes_count || 0}
-                    liked={likedLists.has(l.id)}
-                    initialLiked={initLikedLists.has(l.id)}
-                    onToggle={() => toggleListLike(l.id)}
-                  />
-                </span>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>
