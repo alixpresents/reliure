@@ -64,7 +64,7 @@ export default function LoginPage() {
                 onChange={e => setEmail(e.target.value)}
                 placeholder="ton@email.com"
                 autoFocus
-                className="w-full bg-surface rounded-lg py-3 px-4 border border-[#eee] outline-none text-sm text-[#1a1a1a] font-body placeholder:text-[#767676] focus:border-[#ccc] transition-[border] duration-150"
+                className="w-full bg-surface rounded-lg py-3 px-4 border border-[#eee] outline-none text-base md:text-sm text-[#1a1a1a] font-body placeholder:text-[#767676] focus:border-[#ccc] transition-[border] duration-150"
               />
             </div>
 

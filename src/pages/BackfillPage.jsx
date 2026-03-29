@@ -167,7 +167,7 @@ export default function BackfillPage({ onBack, onRefreshProfile }) {
             value={q}
             onChange={e => setQ(e.target.value)}
             placeholder="Chercher un livre, un auteur..."
-            className="bg-transparent border-none outline-none text-[#1a1a1a] text-sm w-full font-body placeholder:text-[#767676]"
+            className="bg-transparent border-none outline-none text-[#1a1a1a] text-base md:text-sm w-full font-body placeholder:text-[#767676]"
           />
         </div>
         {searching && (

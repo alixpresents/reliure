@@ -15,6 +15,7 @@ import { useBookQuotes } from "../hooks/useQuotes";
 import { useAuth } from "../lib/AuthContext";
 import { supabase } from "../lib/supabase";
 import { logActivity } from "../hooks/useActivity";
+import { resetIOSZoom } from "../lib/resetZoom";
 
 export default function BookPage({ book, onBack, onTag, go }) {
   const bookId = book._supabase?.id || book.id;
@@ -141,6 +142,7 @@ export default function BookPage({ book, onBack, onTag, go }) {
     setShowReviewForm(false);
     setReviewText("");
     setReviewSpoiler(false);
+    resetIOSZoom();
     refetchReviews();
   };
 
@@ -152,6 +154,7 @@ export default function BookPage({ book, onBack, onTag, go }) {
     setQuoteSaving(false);
     setShowQuoteForm(false);
     setQuoteText("");
+    resetIOSZoom();
     refetchQuotes();
   };
 
@@ -280,7 +283,7 @@ export default function BookPage({ book, onBack, onTag, go }) {
                   onFocus={() => setTagFocused(true)}
                   onBlur={() => setTimeout(() => setTagFocused(false), 150)}
                   placeholder="en vacances, recommandé par Margaux..."
-                  className="w-full py-2 text-[13px] bg-transparent border-b border-[#eee] outline-none text-[#1a1a1a] font-body focus:border-[#1a1a1a] transition-colors duration-200"
+                  className="w-full py-2 text-base md:text-[13px] bg-transparent border-b border-[#eee] outline-none text-[#1a1a1a] font-body focus:border-[#1a1a1a] transition-colors duration-200"
                 />
                 {tagFocused && tagSuggestions.length > 0 && (
                   <div className="absolute left-0 right-0 mt-1 bg-white border border-[#eee] rounded-lg overflow-hidden z-10 shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
@@ -371,7 +374,7 @@ export default function BookPage({ book, onBack, onTag, go }) {
                   value={reviewText}
                   onChange={e => setReviewText(e.target.value)}
                   placeholder="Qu'avez-vous pensé de ce livre ?"
-                  className="w-full min-h-[120px] p-3 bg-white border border-[#eee] rounded-lg outline-none text-sm text-[#1a1a1a] font-body leading-[1.7] resize-y placeholder:text-[#767676] focus:border-[#ccc] transition-[border] duration-150"
+                  className="w-full min-h-[120px] p-3 bg-white border border-[#eee] rounded-lg outline-none text-base md:text-sm text-[#1a1a1a] font-body leading-[1.7] resize-y placeholder:text-[#767676] focus:border-[#ccc] transition-[border] duration-150"
                 />
                 <label className="flex items-center gap-2 mt-3 cursor-pointer">
                   <input type="checkbox" checked={reviewSpoiler} onChange={e => setReviewSpoiler(e.target.checked)} className="accent-[#1a1a1a]" />
@@ -446,7 +449,7 @@ export default function BookPage({ book, onBack, onTag, go }) {
                   value={quoteText}
                   onChange={e => setQuoteText(e.target.value)}
                   placeholder="Copiez un passage du livre..."
-                  className="w-full min-h-[80px] p-3 bg-white border border-[#eee] rounded-lg outline-none text-[15px] text-[#1a1a1a] font-display italic leading-[1.7] resize-y placeholder:text-[#767676] placeholder:not-italic placeholder:font-body focus:border-[#ccc] transition-[border] duration-150"
+                  className="w-full min-h-[80px] p-3 bg-white border border-[#eee] rounded-lg outline-none text-base md:text-[15px] text-[#1a1a1a] font-display italic leading-[1.7] resize-y placeholder:text-[#767676] placeholder:not-italic placeholder:font-body focus:border-[#ccc] transition-[border] duration-150"
                 />
                 <div className="flex gap-2 mt-3">
                   <button

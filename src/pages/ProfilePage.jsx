@@ -11,6 +11,8 @@ import { useProfileData } from "../hooks/useProfileData";
 import { useMyReviews } from "../hooks/useReviews";
 import { useMyQuotes } from "../hooks/useQuotes";
 import { useFollowCounts } from "../hooks/useFollow";
+import { useFavorites } from "../hooks/useFavorites";
+import Search from "../components/Search";
 import { useAuth } from "../lib/AuthContext";
 import { supabase } from "../lib/supabase";
 
@@ -86,7 +88,7 @@ function ReadingItem({ book, go, onFinish, initialPage = 0, statusId = null }) {
               onChange={e => setDraft(e.target.value)}
               onBlur={commitEdit}
               onKeyDown={handleKey}
-              className="w-10 text-[11px] text-[#1a1a1a] font-body bg-transparent border-b border-[#1a1a1a] outline-none text-center py-0 px-0 appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+              className="w-10 text-base md:text-[11px] text-[#1a1a1a] font-body bg-transparent border-b border-[#1a1a1a] outline-none text-center py-0 px-0 appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
             />
             <span>/{book.p}</span>
           </div>
@@ -129,12 +131,14 @@ function EmptyState({ children }) {
 export default function ProfilePage({ go, onBackfill, onSearch }) {
   const [tab, setTab] = useState("journal");
   const [libView, setLibView] = useState("grille");
+  const [favSlot, setFavSlot] = useState(null); // position being edited (1-4) or null
   const { books: dbReading, refetch: refetchReading } = useReadingList("reading");
   const profileData = useProfileData();
   const { reviews: myReviews } = useMyReviews();
   const { quotes: myQuotes } = useMyQuotes();
   const { user } = useAuth();
   const { followers, following: followingCount } = useFollowCounts(user?.id);
+  const { favorites, setFavorite, refetch: refetchFavorites } = useFavorites();
 
   // Normalize reading books from Supabase
   const normalizeStatus = rs => ({
@@ -261,15 +265,45 @@ export default function ProfilePage({ go, onBackfill, onSearch }) {
       <div className="border-t border-border-light py-6">
         <Label>Quatre favoris</Label>
         <div className="grid grid-cols-4 gap-4">
-          {[B[0], B[6], B[2], B[4]].map(b => (
-            <div key={b.id}>
-              <Img book={b} w={999} h={999} onClick={() => go(b)} className="w-full h-auto aspect-[2/3]" />
-              <div className="text-xs font-medium mt-2 font-body">{b.t}</div>
-              <div className="text-[11px] text-[#767676] font-body">{b.a.split(" ").pop()}, {b.y}</div>
-            </div>
-          ))}
+          {[1, 2, 3, 4].map(pos => {
+            const fav = favorites.find(f => f.position === pos);
+            if (fav?.book) {
+              return (
+                <div key={pos} onClick={() => user ? setFavSlot(pos) : go(fav.book)} className={user ? "cursor-pointer" : undefined}>
+                  <Img book={fav.book} w={999} h={999} onClick={user ? undefined : () => go(fav.book)} className="w-full h-auto aspect-[2/3]" />
+                  <div className="text-xs font-medium mt-2 font-body">{fav.book.t}</div>
+                  <div className="text-[11px] text-[#767676] font-body">{fav.book.a.split(" ").pop()}{fav.book.y ? `, ${fav.book.y}` : ""}</div>
+                </div>
+              );
+            }
+            if (!user) return null;
+            return (
+              <div key={pos}>
+                <div
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => setFavSlot(pos)}
+                  onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setFavSlot(pos); } }}
+                  className="w-full aspect-[2/3] border-[1.5px] border-dashed border-[#ddd] rounded-[3px] flex items-center justify-center cursor-pointer hover:border-[#bbb] transition-colors duration-150"
+                >
+                  <span className="text-[20px] text-[#ccc]">+</span>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
+
+      {/* Search overlay for favorites */}
+      <Search
+        open={favSlot !== null}
+        onClose={() => setFavSlot(null)}
+        go={async (book) => {
+          const bookId = book._supabase?.id || book.id;
+          await setFavorite(favSlot, bookId);
+          setFavSlot(null);
+        }}
+      />
 
       {/* En cours */}
       <div className="border-t border-border-light py-6">

@@ -116,7 +116,7 @@ function Step1({ username, setUsername, bio, setBio, onNext, error: externalErro
           onChange={e => setBio(e.target.value)}
           placeholder="Lecteur compulsif, amateur de poésie..."
           maxLength={120}
-          className="w-full py-3 text-[15px] bg-transparent border-none border-b-[1.5px] border-[#eee] outline-none text-[#1a1a1a] font-body focus:border-[#1a1a1a] transition-colors duration-200"
+          className="w-full py-3 text-base md:text-[15px] bg-transparent border-none border-b-[1.5px] border-[#eee] outline-none text-[#1a1a1a] font-body focus:border-[#1a1a1a] transition-colors duration-200"
         />
       </div>
 
@@ -198,7 +198,7 @@ function Step2({ picks, setPicks, onFinish, onSkip }) {
               value={q}
               onChange={e => setQ(e.target.value)}
               placeholder="Chercher un livre..."
-              className="bg-transparent border-none outline-none text-[#1a1a1a] text-sm w-full font-body placeholder:text-[#767676]"
+              className="bg-transparent border-none outline-none text-[#1a1a1a] text-base md:text-sm w-full font-body placeholder:text-[#767676]"
             />
             {q && (
               <button

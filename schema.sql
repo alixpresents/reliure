@@ -177,6 +177,19 @@ create table public.likes (
 create index likes_target_idx on public.likes (target_id, target_type);
 create index likes_user_idx on public.likes (user_id);
 
+-- ─── User Favorites ─────────────────────────
+-- Quatre favoris affichés sur le profil
+create table public.user_favorites (
+  user_id uuid references public.users(id) on delete cascade not null,
+  book_id uuid references public.books(id) on delete cascade not null,
+  position smallint not null check (position >= 1 and position <= 4),
+
+  primary key (user_id, position),
+  unique (user_id, book_id)
+);
+
+create index user_favorites_user_idx on public.user_favorites (user_id);
+
 -- ─── Activity ────────────────────────────────
 -- Event log polymorphe pour le fil d'activité
 create table public.activity (
@@ -341,6 +354,13 @@ alter table public.likes enable row level security;
 create policy "Likes en lecture publique" on public.likes for select using (true);
 create policy "Liker" on public.likes for insert with check (auth.uid() = user_id);
 create policy "Retirer son like" on public.likes for delete using (auth.uid() = user_id);
+
+-- User Favorites
+alter table public.user_favorites enable row level security;
+create policy "Favoris en lecture publique" on public.user_favorites for select using (true);
+create policy "Ajouter ses propres favoris" on public.user_favorites for insert with check (auth.uid() = user_id);
+create policy "Modifier ses propres favoris" on public.user_favorites for update using (auth.uid() = user_id);
+create policy "Supprimer ses propres favoris" on public.user_favorites for delete using (auth.uid() = user_id);
 
 -- Activity
 alter table public.activity enable row level security;
