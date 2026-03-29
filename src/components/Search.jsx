@@ -262,10 +262,14 @@ export default function Search({ open, onClose, go }) {
         const rNorm = normStr(r.title);
         return rNorm.includes(targetNorm) || targetNorm.includes(rNorm);
       });
-      if (!match) console.warn("[handleBnFSelect] Aucun match titre — fallback sur result[0]:", bookResults[0]?.title);
-      setImporting(null);
-      await handleSelect(match || bookResults[0]);
-      return;
+      if (match) {
+        setImporting(null);
+        await handleSelect(match);
+        return;
+      }
+      // Aucun match titre : importer directement depuis les données BnF
+      console.warn("[handleBnFSelect] Aucun match titre GB — import direct BnF pour:", gb.title);
+    }
     }
 
     // Fallback : import direct avec les données BnF
