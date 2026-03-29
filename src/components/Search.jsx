@@ -172,9 +172,7 @@ export default function Search({ open, onClose, go }) {
         const aiAuthor = normA(ai.author || "");
         const rTitle = normT(r.title);
         const rAuthor = normA(r.authors?.[0] || "");
-        if (rTitle === aiTitle && aiAuthor && rAuthor && rAuthor === aiAuthor) return true;
-        if (rTitle === aiTitle && !rAuthor) return true;
-        return false;
+        return rTitle === aiTitle && aiAuthor && rAuthor && rAuthor === aiAuthor;
       })
     );
 
