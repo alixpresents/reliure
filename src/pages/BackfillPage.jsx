@@ -42,6 +42,120 @@ function StatusPill({ label, active, variant, onClick }) {
   return <button onClick={onClick} className={`${base} bg-transparent text-[#767676] border-[#ddd] hover:border-[#999]`}>{label}</button>;
 }
 
+function RepairSection({ user }) {
+  const [incompleteBooks, setIncompleteBooks] = useState([]);
+  const [repairPhase, setRepairPhase] = useState("idle"); // idle | repairing | done
+  const [repairProgress, setRepairProgress] = useState({ current: 0, total: 0, fixed: 0, failed: 0 });
+  const abortRepair = useRef(false);
+
+  useEffect(() => {
+    if (!user) return;
+    supabase
+      .from("books")
+      .select("id, title, authors, isbn_13")
+      .is("cover_url", null)
+      .then(async ({ data: allNullCovers }) => {
+        if (!allNullCovers?.length) return;
+        const ids = allNullCovers.map(b => b.id);
+        const { data: linked } = await supabase
+          .from("reading_status")
+          .select("book_id")
+          .eq("user_id", user.id)
+          .in("book_id", ids);
+        if (!linked?.length) return;
+        const linkedIds = new Set(linked.map(r => r.book_id));
+        setIncompleteBooks(allNullCovers.filter(b => linkedIds.has(b.id)));
+      });
+  }, [user]);
+
+  const startRepair = async () => {
+    setRepairPhase("repairing");
+    abortRepair.current = false;
+    const total = incompleteBooks.length;
+    setRepairProgress({ current: 0, total, fixed: 0, failed: 0 });
+    let fixed = 0, failed = 0;
+
+    for (let i = 0; i < incompleteBooks.length; i++) {
+      if (abortRepair.current) break;
+      const book = incompleteBooks[i];
+
+      try {
+        const query = book.isbn_13 || `${book.title} ${book.authors?.[0] || ""}`.trim();
+        const results = await searchBooks(query);
+
+        if (results?.length) {
+          const r = results[0];
+          const patch = {};
+          if (r.coverUrl) patch.cover_url = r.coverUrl;
+          if (r.description) patch.description = r.description;
+          if (r.pageCount) patch.page_count = r.pageCount;
+          if (r.publisher) patch.publisher = r.publisher;
+          if (r.publishedDate) patch.publication_date = r.publishedDate;
+
+          if (Object.keys(patch).length) {
+            await supabase.from("books").update(patch).eq("id", book.id);
+            fixed++;
+          } else {
+            failed++;
+          }
+        } else {
+          failed++;
+        }
+      } catch {
+        failed++;
+      }
+
+      setRepairProgress({ current: i + 1, total, fixed, failed });
+    }
+    setRepairPhase("done");
+  };
+
+  if (!incompleteBooks.length || repairPhase === "done") {
+    if (repairPhase === "done") {
+      return (
+        <div className="mb-8 p-4 border border-[#eee] rounded-lg text-center">
+          <p className="text-[13px] font-body text-[#1a1a1a]">
+            {repairProgress.fixed} livre{repairProgress.fixed > 1 ? "s" : ""} réparé{repairProgress.fixed > 1 ? "s" : ""} · {repairProgress.failed} non trouvé{repairProgress.failed > 1 ? "s" : ""}
+          </p>
+        </div>
+      );
+    }
+    return null;
+  }
+
+  if (repairPhase === "repairing") {
+    const pct = repairProgress.total ? Math.round(repairProgress.current / repairProgress.total * 100) : 0;
+    return (
+      <div className="mb-8 p-4 border border-[#eee] rounded-lg">
+        <p className="text-[13px] font-body text-[#666] mb-3 text-center">
+          Réparation en cours… {repairProgress.current} / {repairProgress.total}
+        </p>
+        <div className="h-[3px] bg-[#f0ede8] rounded-sm overflow-hidden mb-2">
+          <div className="h-full bg-[#1a1a1a] rounded-sm transition-[width] duration-200" style={{ width: `${pct}%` }} />
+        </div>
+        <div className="flex justify-center gap-4 text-[12px] font-body mt-2">
+          <span className="text-[#1a1a1a]">{repairProgress.fixed} réparé{repairProgress.fixed > 1 ? "s" : ""}</span>
+          <span className="text-[#767676]">{repairProgress.failed} non trouvé{repairProgress.failed > 1 ? "s" : ""}</span>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mb-8 p-4 border border-[#eee] rounded-lg flex items-center justify-between gap-4">
+      <p className="text-[13px] font-body text-[#666]">
+        {incompleteBooks.length} livre{incompleteBooks.length > 1 ? "s" : ""} importé{incompleteBooks.length > 1 ? "s" : ""} sans métadonnées complètes
+      </p>
+      <button
+        onClick={startRepair}
+        className="px-4 py-2 rounded-[16px] text-[12px] font-medium font-body bg-[#1a1a1a] text-white border-none cursor-pointer hover:bg-[#333] transition-colors duration-150 shrink-0"
+      >
+        Réparer
+      </button>
+    </div>
+  );
+}
+
 export default function BackfillPage() {
   const onBack = () => navigate(-1);
   const navigate = useNavigate();
@@ -153,6 +267,9 @@ export default function BackfillPage() {
 
       {/* CSV Import */}
       <CSVImport />
+
+      {/* Réparer les livres incomplets */}
+      <RepairSection user={user} />
 
       {/* Séparateur */}
       <div className="flex items-center gap-3 mb-8">
