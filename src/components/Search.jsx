@@ -203,7 +203,6 @@ export default function Search({ open, onClose, go }) {
     setImporting(gb.googleId);
 
     const book = await importBook(gb);
-    console.log("[Search] importBook result:", book?.id, "slug:", book?.slug, "title:", book?.title);
     setImporting(null);
     if (book) {
       const normalized = {
@@ -234,7 +233,6 @@ export default function Search({ open, onClose, go }) {
   };
 
   const handleBnFSelect = async (gb) => {
-    console.log("[handleBnFSelect] gb:", JSON.stringify(gb));
     const key = `bnf:${gb.isbn13 ?? gb.title}`;
     if (addedGoogleIds.has(key)) return;
     setImporting(key);
@@ -244,16 +242,13 @@ export default function Search({ open, onClose, go }) {
     let bookResults = [];
     if (isbn) {
       bookResults = await searchBooks(`isbn:${isbn}`);
-      console.log("[handleBnFSelect] ISBN search:", isbn, "→ result[0]:", bookResults[0]?.title);
     }
 
     // 2. Fallback : recherche par titre+auteur
     if (!bookResults.length) {
       const query = `${gb.title} ${gb.authors?.[0] || ""}`.trim();
       bookResults = await searchBooks(query);
-      console.log("[handleBnFSelect] title search:", query, "→ result[0]:", bookResults[0]?.title);
     }
-    console.log("[handleBnFSelect] Google Books result[0]:", bookResults[0]?.title, bookResults[0]?.googleId);
 
     if (bookResults.length > 0) {
       const normStr = s => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9\s]/g, "").trim();
@@ -267,8 +262,6 @@ export default function Search({ open, onClose, go }) {
         await handleSelect(match);
         return;
       }
-      // Aucun match titre : importer directement depuis les données BnF
-      console.warn("[handleBnFSelect] Aucun match titre GB — import direct BnF pour:", gb.title);
     }
 
     // Fallback : import direct avec les données BnF
@@ -516,7 +509,6 @@ export default function Search({ open, onClose, go }) {
                   const handleClick = () => {
                     if (isImporting || added) return;
                     if (isDb) {
-                      console.log("[Search] DB click:", gb.title, "slug:", gb.slug, "dbId:", gb.dbId, "source:", gb._source);
                       handleClose();
                       setQ("");
                       setResults([]);
