@@ -55,24 +55,43 @@ export default function Search({ open, onClose, go }) {
       className="fixed inset-0 z-200 bg-white/97 backdrop-blur-[8px]"
       onClick={onClose}
     >
+      {/* Bouton fermer (croix) */}
+      <button
+        onClick={onClose}
+        className="absolute top-4 right-4 sm:top-6 sm:right-6 p-3 sm:p-0 cursor-pointer bg-transparent border-none text-[#999] hover:text-[#1a1a1a] transition-colors duration-150"
+        aria-label="Fermer la recherche"
+      >
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+        </svg>
+      </button>
+
       <div
         className="max-w-[500px] mx-auto pt-12 sm:pt-20 px-5"
         onClick={e => e.stopPropagation()}
       >
-        <div className="bg-surface rounded-lg py-[11px] px-4 flex items-center gap-2.5 border border-[#eee] focus-within:border-[#ccc] transition-[border] duration-150">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#bbb" strokeWidth="2" className="shrink-0">
-            <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
-          </svg>
-          <input
-            autoFocus
-            value={q}
-            onChange={e => setQ(e.target.value)}
-            placeholder="Chercher un livre, un auteur..."
-            className="bg-transparent border-none outline-none text-[#1a1a1a] text-sm w-full font-body placeholder:text-[#767676]"
-          />
-          {q && (
-            <button onClick={() => { setQ(""); setResults([]); }} className="text-[#767676] hover:text-[#1a1a1a] bg-transparent border-none cursor-pointer text-sm shrink-0">×</button>
-          )}
+        <div className="flex items-center gap-3">
+          <div className="bg-surface rounded-lg py-[11px] px-4 flex items-center gap-2.5 border border-[#eee] focus-within:border-[#ccc] transition-[border] duration-150 flex-1 min-w-0">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#bbb" strokeWidth="2" className="shrink-0">
+              <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
+            <input
+              autoFocus
+              value={q}
+              onChange={e => setQ(e.target.value)}
+              placeholder="Chercher un livre, un auteur..."
+              className="bg-transparent border-none outline-none text-[#1a1a1a] text-base w-full font-body placeholder:text-[#767676]"
+            />
+            {q && (
+              <button onClick={() => { setQ(""); setResults([]); }} className="text-[#767676] hover:text-[#1a1a1a] bg-transparent border-none cursor-pointer text-sm shrink-0">×</button>
+            )}
+          </div>
+          <button
+            onClick={onClose}
+            className="sm:hidden shrink-0 bg-transparent border-none cursor-pointer text-[14px] text-[#999] font-body"
+          >
+            Annuler
+          </button>
         </div>
 
         <div className="mt-3">

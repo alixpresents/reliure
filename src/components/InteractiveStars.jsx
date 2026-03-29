@@ -5,7 +5,9 @@ export default function InteractiveStars({ value = 0, onChange, size = "text-xl"
   const [pop, setPop] = useState(0);
 
   const handleClick = n => {
-    onChange(n === value ? 0 : n);
+    const next = n === value ? 0 : n;
+    onChange(next);
+    setHv(0);
     setPop(n);
     setTimeout(() => setPop(0), 200);
   };

@@ -434,4 +434,30 @@ L'animation shimmer en CSS pur (un gradient linéaire animé en `translateX`), p
 
 ---
 
-*Dernière mise à jour : 28 mars 2026*
+## 5. Critique par relecture
+
+**Statut :** Idée · Post-MVP
+**Portée :** Évolution du système de critiques
+
+### Le concept
+
+Actuellement : une critique par livre par utilisateur (upsert sur `user_id` + `book_id`). Si l'utilisateur relit un livre, sa nouvelle critique écrase l'ancienne.
+
+Évolution envisagée : lier la review au `reading_status_id` plutôt qu'au `book_id`, pour permettre une critique par lecture. Un lecteur qui relit *Ficciones* trois fois pourrait avoir trois critiques distinctes, chacune liée à une entrée du diary.
+
+### Changements nécessaires
+
+- Ajouter `reading_status_id` (nullable, FK) sur la table `reviews`
+- Revoir le unique constraint : passer de `(user_id, book_id)` à `(user_id, book_id, reading_status_id)`
+- Côté UI : dans le diary, chaque relecture affiche sa propre critique
+- Sur la fiche livre : les critiques multiples d'un même utilisateur sont regroupées avec un indicateur "Relecture #2", "Relecture #3"
+- La note du livre reste la moyenne de toutes les critiques (pas seulement la dernière)
+
+### Ce qu'on ne fait PAS en v1
+
+- Pas de migration des critiques existantes (elles restent liées au `book_id` seul)
+- Pas de critique par relecture tant que le système de relecture n'est pas activement utilisé
+
+---
+
+*Dernière mise à jour : 29 mars 2026*
