@@ -8,6 +8,22 @@
 
 const BNF_SRU_BASE = "https://catalogue.bnf.fr/api/SRU";
 
+function cleanTitle(raw) {
+  // Couper au premier " : " ou " / " (sous-titre ou auteur BnF)
+  return raw.split(/ : | \/ /)[0].trim();
+}
+
+function cleanAuthor(raw) {
+  // Supprimer le rôle après le premier point suivi d'un espace ("Auteur du texte", etc.)
+  let s = raw.replace(/\.\s+.+$/, "").trim();
+  // Supprimer les dates entre parenthèses
+  s = s.replace(/\s*\([^)]*\)/g, "").trim();
+  // Inverser "Nom, Prénom" → "Prénom Nom"
+  const parts = s.split(",").map((p) => p.trim());
+  if (parts.length === 2 && parts[1]) return `${parts[1]} ${parts[0]}`;
+  return parts[0];
+}
+
 function buildSRUQuery(query) {
   const words = query.trim().split(/\s+/);
   let cql =
@@ -42,10 +58,11 @@ function parseDublinCoreXML(xmlText) {
     const recordData = record.querySelector("recordData");
     if (!recordData) continue;
 
-    const title = getField(recordData, "title");
-    if (!title) continue;
+    const rawTitle = getField(recordData, "title");
+    if (!rawTitle) continue;
+    const title = cleanTitle(rawTitle);
 
-    const creators = getAllFields(recordData, "creator");
+    const creators = getAllFields(recordData, "creator").map(cleanAuthor);
     const publisher = getField(recordData, "publisher");
     const date = getField(recordData, "date");
     const language = getField(recordData, "language");
