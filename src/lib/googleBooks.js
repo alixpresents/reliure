@@ -300,6 +300,89 @@ function scoreBook(item, originalQuery) {
 }
 
 // ═══════════════════════════════════════════════
+// DB books injection
+// ═══════════════════════════════════════════════
+
+async function fetchDbBooks(query) {
+  try {
+    const { data } = await supabase
+      .from("books")
+      .select("id, title, authors, cover_url, slug, isbn_13, publication_date, page_count, description")
+      .ilike("title", `%${query}%`)
+      .limit(5);
+    if (!data?.length) return [];
+    return data.map(b => ({
+      _source: "db",
+      id: `db_${b.id}`,
+      volumeInfo: {
+        title: b.title,
+        authors: Array.isArray(b.authors) ? b.authors : [],
+        imageLinks: b.cover_url ? { thumbnail: b.cover_url } : undefined,
+        industryIdentifiers: b.isbn_13
+          ? [{ type: "ISBN_13", identifier: b.isbn_13 }]
+          : [{ type: "OTHER", identifier: `db_${b.id}` }],
+        publishedDate: b.publication_date || undefined,
+        pageCount: b.page_count || undefined,
+        description: b.description || undefined,
+      },
+    }));
+  } catch {
+    return [];
+  }
+}
+
+// ═══════════════════════════════════════════════
+// Work-level dedup (titre + auteur normalisés)
+// ═══════════════════════════════════════════════
+
+function normalizeWorkTitle(title) {
+  return stripAccents(title.toLowerCase())
+    // Supprimer suffixes entre parenthèses : "(French Edition)", "(Folio)", etc.
+    .replace(/\s*\([^)]*\)/g, " ")
+    // Couper au premier " : " ou " / " (sous-titres BnF)
+    .split(/\s*[:/]\s/)[0]
+    .replace(/[^a-z0-9\s]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function workAuthorKey(authors) {
+  if (!authors?.length) return "";
+  const parts = stripAccents(authors[0].toLowerCase()).split(/\s+/);
+  return parts[parts.length - 1];
+}
+
+function deduplicateByWork(scoredItems) {
+  const groups = new Map();
+  for (const entry of scoredItems) {
+    const v = entry.item.volumeInfo;
+    const key = `${normalizeWorkTitle(v.title || "")}|${workAuthorKey(v.authors)}`;
+    if (!groups.has(key)) {
+      groups.set(key, entry);
+      continue;
+    }
+    const existing = groups.get(key);
+    if (entry.score > existing.score) {
+      groups.set(key, entry);
+    } else if (entry.score === existing.score) {
+      // Préférer la source DB
+      if (entry.item._source === "db" && existing.item._source !== "db") {
+        groups.set(key, entry);
+      // Puis préférer un résultat avec couverture
+      } else if (!existing.item.volumeInfo.imageLinks?.thumbnail && entry.item.volumeInfo.imageLinks?.thumbnail) {
+        groups.set(key, entry);
+      // Enfin préférer l'édition la plus ancienne (originale)
+      } else {
+        const eYear = parseInt(existing.item.volumeInfo.publishedDate || "9999");
+        const nYear = parseInt(entry.item.volumeInfo.publishedDate || "9999");
+        if (nYear < eYear) groups.set(key, entry);
+      }
+    }
+  }
+  return [...groups.values()];
+}
+
+// ═══════════════════════════════════════════════
 // Cross-source dedup by ISBN-13
 // ═══════════════════════════════════════════════
 
@@ -349,17 +432,18 @@ export async function searchBooks(query) {
   const analysis = analyzeQuery(effectiveQuery);
   const queries = buildQueries(effectiveQuery, analysis);
 
-  // Lancer Google Books (multi-requêtes) ET BnF en parallèle
-  const [googleBatches, bnfItems] = await Promise.all([
+  // Lancer Google Books, BnF ET DB en parallèle
+  const [googleBatches, bnfItems, dbItems] = await Promise.all([
     Promise.all(queries.map(fetchGB)),
     analysis.looksLikeISBN ? Promise.resolve([]) : searchBnF(effectiveQuery, 10),
+    analysis.looksLikeISBN ? Promise.resolve([]) : fetchDbBooks(effectiveQuery),
   ]);
 
   // Google Books : dedup par google id
   const googleItems = dedup(googleBatches.flat());
 
-  // Fusion cross-source + dedup par ISBN-13
-  const allItems = deduplicateByISBN([...googleItems, ...bnfItems]);
+  // Fusion cross-source + dedup par ISBN-13 (DB en premier pour priorité)
+  const allItems = deduplicateByISBN([...dbItems, ...googleItems, ...bnfItems]);
   const filtered = filterItems(allItems);
 
   // Score (contre la query originale pour la pertinence)
@@ -384,12 +468,19 @@ export async function searchBooks(query) {
 
   const boosted = scored.map(({ item, score }) => {
     const isbn = item.volumeInfo.industryIdentifiers?.find(i => i.type === "ISBN_13")?.identifier;
-    return { item, score: isbn && inDb.has(isbn) ? score + 4 : score };
+    let s = score;
+    if (isbn && inDb.has(isbn)) s += 4;
+    if (item._source === "db") s += 6; // Forte priorité aux livres déjà importés
+    return { item, score: s };
   });
   boosted.sort((a, b) => b.score - a.score);
 
+  // Déduplication par œuvre (titre normalisé + auteur) — une seule fiche par livre
+  const deduped = deduplicateByWork(boosted);
+  deduped.sort((a, b) => b.score - a.score);
+
   // Map to output format, max 10 results
-  const results = boosted.slice(0, 10).map(({ item }) => {
+  const results = deduped.slice(0, 10).map(({ item }) => {
     const v = item.volumeInfo;
     const isbn = v.industryIdentifiers?.find(i => i.type === "ISBN_13");
     const cover = v.imageLinks?.thumbnail?.replace("http://", "https://") || null;
