@@ -26,7 +26,15 @@ export function useFeed() {
       .select("*, users(username, display_name)")
       .order("created_at", { ascending: false })
       .limit(20);
-    setItems(data ?? []);
+    // Deduplicate: keep only the most recent activity per user + book
+    const seen = new Set();
+    const deduped = (data ?? []).filter(it => {
+      const key = `${it.user_id}:${it.metadata?.book_id || it.id}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+    setItems(deduped);
     setLoading(false);
   }, []);
 

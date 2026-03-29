@@ -33,9 +33,10 @@ export function useReadingStatus(bookId) {
     const activityMeta = { status: newStatus, book_id: bookId, ...meta };
 
     if (status?.id) {
+      const unchanged = status.status === newStatus;
       await supabase.from("reading_status").update(payload).eq("id", status.id);
       setStatusState(prev => ({ ...prev, ...payload }));
-      logActivity(user.id, "reading_status", status.id, "reading_status", activityMeta);
+      if (!unchanged) logActivity(user.id, "reading_status", status.id, "reading_status", activityMeta);
     } else {
       const { data } = await supabase
         .from("reading_status")
