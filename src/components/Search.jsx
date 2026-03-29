@@ -234,14 +234,25 @@ export default function Search({ open, onClose, go }) {
   };
 
   const handleBnFSelect = async (gb) => {
-    console.log("[handleBnFSelect] onSelect called with:", gb.title, "slug:", gb.slug, "id:", gb.dbId, "source:", gb._source);
+    console.log("[handleBnFSelect] gb:", JSON.stringify(gb));
     const key = `bnf:${gb.isbn13 ?? gb.title}`;
     if (addedGoogleIds.has(key)) return;
     setImporting(key);
 
-    // Tenter Google Books par ISBN ou titre+auteur pour un import enrichi
-    const query = gb.isbn13 || `${gb.title} ${gb.authors?.[0] || ""}`.trim();
-    const bookResults = await searchBooks(query);
+    // 1. Essai par ISBN si disponible (résultat exact)
+    const isbn = gb.isbn13 || gb.isbn10 || gb.isbn || null;
+    let bookResults = [];
+    if (isbn) {
+      bookResults = await searchBooks(`isbn:${isbn}`);
+      console.log("[handleBnFSelect] ISBN search:", isbn, "→ result[0]:", bookResults[0]?.title);
+    }
+
+    // 2. Fallback : recherche par titre+auteur
+    if (!bookResults.length) {
+      const query = `${gb.title} ${gb.authors?.[0] || ""}`.trim();
+      bookResults = await searchBooks(query);
+      console.log("[handleBnFSelect] title search:", query, "→ result[0]:", bookResults[0]?.title);
+    }
     console.log("[handleBnFSelect] Google Books result[0]:", bookResults[0]?.title, bookResults[0]?.googleId);
 
     if (bookResults.length > 0) {
