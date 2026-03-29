@@ -4,8 +4,13 @@ import { searchBooks } from "../lib/googleBooks";
 import { importBook } from "../lib/importBook";
 import { resetIOSZoom } from "../lib/resetZoom";
 import { supabase } from "../lib/supabase";
+import { useSmartSearch, looksLikeNaturalLanguage } from "../hooks/useSmartSearch";
 import Avatar from "./Avatar";
 import Skeleton from "./Skeleton";
+
+function normalize(s) {
+  return (s || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+}
 
 async function fetchUsers(query, limit = 5) {
   let req = supabase.from("users").select("id, username, display_name, avatar_url");
@@ -36,12 +41,29 @@ export default function Search({ open, onClose, go }) {
   const [addedGoogleIds, setAddedGoogleIds] = useState(new Set());
   const [userResults, setUserResults] = useState([]);
   const [userSuggestionLabel, setUserSuggestionLabel] = useState("Lecteurs");
+  const [ghostDismissed, setGhostDismissed] = useState(false);
   const timer = useRef(null);
   const inputRef = useRef(null);
   const multiAddMode = useRef(false);
 
   const atMode = q.startsWith("@");
   const atQuery = q.slice(1);
+
+  // AI smart search — enabled when classic results are weak or NL query
+  const aiEnabled = !atMode && q.length >= 2 && (
+    results.length < 3 || looksLikeNaturalLanguage(q)
+  );
+  const {
+    books: aiBooks,
+    ghost: rawGhost,
+    interpretedAs,
+    isLoading: aiLoading,
+  } = useSmartSearch(q, { enabled: aiEnabled, debounceMs: 600 });
+
+  const ghost = rawGhost && !ghostDismissed ? rawGhost : null;
+
+  // Reset ghost dismissal when query changes
+  useEffect(() => { setGhostDismissed(false); }, [q]);
 
   useEffect(() => {
     if (open) {
@@ -65,7 +87,6 @@ export default function Search({ open, onClose, go }) {
     clearTimeout(timer.current);
 
     if (atMode) {
-      // @ mode: user search only, no books
       setResults([]);
       setLoading(true);
       const delay = atQuery.length === 0 ? 0 : 400;
@@ -78,7 +99,6 @@ export default function Search({ open, onClose, go }) {
       return () => clearTimeout(timer.current);
     }
 
-    // Normal mode: books + users secondary
     if (!q || q.length < 2) { setResults([]); setUserResults([]); setLoading(false); return; }
     setLoading(true);
     timer.current = setTimeout(async () => {
@@ -142,10 +162,47 @@ export default function Search({ open, onClose, go }) {
     }
   };
 
+  const handleAIBookClick = async (aiBook) => {
+    setLoading(true);
+    const canonicalQuery = `${aiBook.title} ${aiBook.author}`;
+    const bookResults = await searchBooks(canonicalQuery);
+    setLoading(false);
+    if (bookResults.length > 0) {
+      await handleSelect(bookResults[0]);
+    }
+  };
+
+  const acceptGhost = () => {
+    if (!ghost) return;
+    const full = q + ghost;
+    const titleOnly = full.split(" — ")[0].trim();
+    setQ(titleOnly);
+  };
+
+  const handleInputKeyDown = (e) => {
+    if (ghost) {
+      if (e.key === "Tab" || (e.key === "ArrowRight" && e.target.selectionStart === q.length)) {
+        e.preventDefault();
+        acceptGhost();
+        return;
+      }
+      if (e.key === "Escape") {
+        e.stopPropagation();
+        setGhostDismissed(true);
+        return;
+      }
+    }
+  };
+
   const addedCount = addedGoogleIds.size;
   const placeholder = atMode
     ? "Chercher un lecteur par pseudo..."
     : "Chercher un livre, un auteur, un lecteur...";
+
+  // Deduplicated AI books (exclude titles already in classic results)
+  const filteredAIBooks = aiBooks.filter(
+    ab => !results.some(cr => normalize(cr.title) === normalize(ab.title))
+  );
 
   return (
     <>
@@ -195,13 +252,39 @@ export default function Search({ open, onClose, go }) {
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#bbb" strokeWidth="2" className="shrink-0">
               <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
             </svg>
-            <input
-              ref={inputRef}
-              value={q}
-              onChange={e => setQ(e.target.value)}
-              placeholder={placeholder}
-              className="flex-1 min-w-0 text-base bg-transparent border-none outline-none text-[#1a1a1a] font-display italic placeholder:text-[#999] placeholder:font-display placeholder:italic"
-            />
+
+            {/* Input with ghost text overlay */}
+            <div className="relative flex-1 min-w-0">
+              {ghost && (
+                <div
+                  className="absolute inset-0 pointer-events-none flex items-center overflow-hidden whitespace-nowrap"
+                  style={{ fontFamily: "Instrument Serif, serif", fontStyle: "italic", fontSize: "1rem" }}
+                >
+                  <span style={{ visibility: "hidden" }}>{q}</span>
+                  <span className="text-[#ccc]">{ghost}</span>
+                </div>
+              )}
+              <input
+                ref={inputRef}
+                value={q}
+                onChange={e => setQ(e.target.value)}
+                onKeyDown={handleInputKeyDown}
+                placeholder={placeholder}
+                className="w-full text-base border-none outline-none text-[#1a1a1a] font-display italic placeholder:text-[#999] placeholder:font-display placeholder:italic"
+                style={{ background: "transparent" }}
+              />
+              {/* Mobile ghost accept button */}
+              {ghost && (
+                <button
+                  onClick={acceptGhost}
+                  className="absolute right-0 top-1/2 -translate-y-1/2 z-20 text-[10px] text-[#999] bg-[#f0ede8] rounded px-1.5 py-0.5 md:hidden border-none cursor-pointer font-body"
+                  aria-label="Accepter la suggestion"
+                >
+                  Tab
+                </button>
+              )}
+            </div>
+
             {q && (
               <button
                 onClick={() => { setQ(""); setResults([]); setUserResults([]); inputRef.current?.focus(); }}
@@ -250,7 +333,7 @@ export default function Search({ open, onClose, go }) {
             {/* Normal mode */}
             {!loading && !atMode && (
               <>
-                {q.length >= 2 && results.length === 0 && userResults.length === 0 && (
+                {q.length >= 2 && results.length === 0 && userResults.length === 0 && !aiLoading && filteredAIBooks.length === 0 && (
                   <div className="py-8 text-center text-[13px] text-[#767676] font-body">Aucun résultat pour cette recherche.</div>
                 )}
 
@@ -267,6 +350,7 @@ export default function Search({ open, onClose, go }) {
                   </>
                 )}
 
+                {/* Classic book results */}
                 {results.map(gb => {
                   const added = addedGoogleIds.has(gb.googleId);
                   const isImporting = importing === gb.googleId;
@@ -297,6 +381,50 @@ export default function Search({ open, onClose, go }) {
                     </div>
                   );
                 })}
+
+                {/* AI results — below classic results */}
+                {filteredAIBooks.length > 0 && (
+                  <>
+                    {results.length > 0 && (
+                      <div className="flex items-center gap-2 px-5 py-3">
+                        <div className="flex-1 h-px bg-[#f0f0f0]" />
+                        <span className="text-[10px] uppercase tracking-widest text-[#ccc] font-medium font-body">
+                          {interpretedAs ? `\u00AB ${interpretedAs} \u00BB` : "Suggestions"}
+                        </span>
+                        <span className="text-[10px]">✨</span>
+                        <div className="flex-1 h-px bg-[#f0f0f0]" />
+                      </div>
+                    )}
+                    {results.length === 0 && interpretedAs && (
+                      <div className="px-5 py-2 text-xs text-[#999] font-body">
+                        Compris : « {interpretedAs} »
+                      </div>
+                    )}
+                    {filteredAIBooks.map((aiBook, i) => (
+                      <div
+                        key={`ai-${i}`}
+                        onClick={() => handleAIBookClick(aiBook)}
+                        className="flex gap-3 py-2.5 px-5 min-h-[44px] items-center cursor-pointer hover:bg-[#fafaf8] transition-colors duration-100"
+                      >
+                        <div className="w-9 h-[52px] rounded-sm bg-[#f0ede8] flex items-center justify-center text-[10px] text-[#bbb] shrink-0">✨</div>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-[14px] font-medium font-body truncate">{aiBook.title}</div>
+                          <div className="text-xs text-[#737373] font-body truncate">{aiBook.author}</div>
+                          {aiBook.why && (
+                            <div className="text-[11px] text-[#bbb] font-body mt-0.5">→ {aiBook.why}</div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </>
+                )}
+
+                {/* AI loading indicator (subtle) */}
+                {aiLoading && results.length > 0 && (
+                  <div className="text-center py-3 text-[11px] text-[#ccc] font-body">
+                    Recherche approfondie…
+                  </div>
+                )}
               </>
             )}
           </div>

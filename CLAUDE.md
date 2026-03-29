@@ -133,6 +133,33 @@ La fonction `searchBooks` applique un pipeline en 6 étapes :
 5. **Seuil minimum** : score > 5 requis pour être retenu (fallback à > 2 si < 3 résultats au-dessus du seuil)
 6. **Boost DB** : +4 points pour les livres déjà dans notre table `books` ; tri final + troncature à 10 résultats
 
+### Recherche assistée IA (`supabase/functions/smart-search/index.ts` + `src/hooks/useSmartSearch.js`)
+
+Filet de secours intelligent qui complète le pipeline classique Google Books. Activé automatiquement quand la recherche classique retourne < 3 résultats ou quand la requête ressemble à du langage naturel.
+
+**Edge function `smart-search`** :
+- Appelle Claude Haiku (`claude-haiku-4-5-20251001`) avec un system prompt spécialisé livres francophones
+- Retourne `{ books: [{title, author, isbn13, why}], ghost, interpreted_as }`
+- Cache des résultats dans `search_cache` (7 jours, clé = query normalisée NFD+lowercase)
+- Accès cache via `service_role` uniquement (pas de RLS publique)
+- Toujours retourne 200 même en cas d'erreur (ne casse jamais la recherche)
+- Requiert `ANTHROPIC_API_KEY` en secret Supabase
+
+**Table `search_cache`** (`migrations/004_search_cache.sql`) :
+- `query_normalized text` (PK), `response jsonb`, `hit_count int`, `expires_at timestamptz` (7 jours)
+- Index sur `expires_at`, RLS activée (service_role only)
+
+**Hook `useSmartSearch(query, { enabled, debounceMs })`** :
+- Debounce 600ms, AbortController pour annulation
+- Retourne `{ books, ghost, interpretedAs, isLoading }`
+- `looksLikeNaturalLanguage(query)` : détecte les mots-clés NL ou queries ≥ 4 mots
+
+**Intégration dans `Search.jsx`** :
+- Ghost text : overlay invisible aligné sur l'input, accepté par Tab/ArrowRight, rejeté par Escape
+- Résultats IA affichés sous les résultats classiques avec indicateur ✨, dédoublonnés par titre normalisé
+- Clic sur un résultat IA → recherche Google Books avec le titre canonique → import normal
+- Indicateur "Recherche approfondie…" pendant le chargement IA
+
 ## Architecture de données
 
 ### Tables principales
@@ -148,6 +175,7 @@ La fonction `searchBooks` applique un pipeline en 6 étapes :
 - `activity` — id, user_id, action_type, target_id, target_type, metadata (jsonb), created_at
 - `quotes` — id, user_id, book_id, text, likes_count, created_at
 - `likes` — id, user_id, target_id, target_type (review/quote/list), created_at
+- `search_cache` — query_normalized (PK), response (jsonb), hit_count, expires_at (service_role only, pas de RLS publique)
 
 ### Décisions clés
 - `reading_status` séparée de `reviews` : on peut marquer "lu" sans critiquer (geste minimal = plus de volume)
