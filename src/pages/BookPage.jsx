@@ -1,5 +1,4 @@
 import { useState, useRef, useEffect } from "react";
-import { B } from "../data";
 import Img from "../components/Img";
 import Stars from "../components/Stars";
 import Avatar from "../components/Avatar";
@@ -119,6 +118,22 @@ export default function BookPage({ book }) {
 
   const KNOWN_TAGS = ["en vacances", "recommandé par Margaux", "avion CDG-JFK", "relu", "en VO", "café Oberkampf", "métro"];
   const [tagFocused, setTagFocused] = useState(false);
+  const [similarBooks, setSimilarBooks] = useState([]);
+  useEffect(() => {
+    if (!isUuid) return;
+    const genres = book.tags?.length ? book.tags : null;
+    (async () => {
+      let query = supabase
+        .from("books")
+        .select("id, title, authors, cover_url, slug")
+        .neq("id", bookId)
+        .order("rating_count", { ascending: false })
+        .limit(6);
+      if (genres) query = query.overlaps("genres", genres);
+      const { data } = await query;
+      if (data?.length) setSimilarBooks(data);
+    })();
+  }, [bookId, isUuid]);
 
   // Sync from DB on load
   useEffect(() => {
@@ -728,17 +743,22 @@ export default function BookPage({ book }) {
       </div>
 
       {/* Also liked */}
-      <div className="border-t border-border-light py-6">
-        <Label>Les lecteurs ont aussi aimé</Label>
-        <HScroll>
-          {B.filter(x => x.id !== book.id).slice(0, 6).map(b => (
-            <div key={b.id} className="text-center min-w-[100px]">
-              <Img book={b} w={100} h={150} onClick={() => go(b)} />
-              <div className="text-[10px] font-medium mt-1.5 overflow-hidden text-ellipsis whitespace-nowrap max-w-[100px] font-body">{b.t}</div>
-            </div>
-          ))}
-        </HScroll>
-      </div>
+      {similarBooks.length > 0 && (
+        <div className="border-t border-border-light py-6">
+          <Label>Les lecteurs ont aussi aimé</Label>
+          <HScroll>
+            {similarBooks.map(b => {
+              const sb = { id: b.id, t: b.title, a: Array.isArray(b.authors) ? b.authors.join(", ") : (b.authors || ""), c: b.cover_url, slug: b.slug };
+              return (
+                <div key={b.id} className="text-center min-w-[100px]">
+                  <Img book={sb} w={100} h={150} onClick={() => go(sb)} />
+                  <div className="text-[10px] font-medium mt-1.5 overflow-hidden text-ellipsis whitespace-nowrap max-w-[100px] font-body">{b.title}</div>
+                </div>
+              );
+            })}
+          </HScroll>
+        </div>
+      )}
     </div>
   );
 }
