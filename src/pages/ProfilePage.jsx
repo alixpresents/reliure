@@ -501,19 +501,16 @@ export default function ProfilePage({ viewedProfile, initialTab }) {
       {/* Header */}
       <div className="pt-8 pb-6">
         <div className="flex items-center gap-3.5 mb-3.5 flex-wrap sm:flex-nowrap">
-          <Avatar i="AL" s={52} />
+          <Avatar
+            i={(profile.display_name || profile.username || "?").split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2)}
+            s={52}
+            src={profile.avatar_url}
+          />
           <div className="flex-1">
-            <div className="text-[22px] font-normal font-display italic flex items-center gap-1.5">
-              Alix
-              <span className="relative group/verified inline-flex">
-                <svg width="16" height="16" viewBox="0 0 24 24" className="shrink-0 cursor-pointer"><circle cx="12" cy="12" r="10" fill="#1a1a1a" /><path d="M8 12.5l2.5 2.5L16 9.5" fill="none" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
-                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2.5 py-1.5 rounded-md bg-[#1a1a1a] text-white text-[11px] font-body whitespace-nowrap opacity-0 scale-95 group-hover/verified:opacity-100 group-hover/verified:scale-100 transition-all duration-150 pointer-events-none">
-                  Compte vérifié
-                  <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-[#1a1a1a]" />
-                </div>
-              </span>
+            <div className="text-[22px] font-normal font-display italic">
+              {profile.display_name || profile.username}
             </div>
-            <div className="text-xs text-[#767676] font-body">Paris · @alix</div>
+            <div className="text-xs text-[#767676] font-body">@{profile.username}</div>
           </div>
           <div className="flex gap-5 text-xs text-[#737373] font-body w-full sm:w-auto mt-2 sm:mt-0">
             {[[String(totalBooks), "livres"], [String(booksThisYear), "cette année"], [String(followers), "abonnés"], [String(followingCount), "abonnements"]].map(([n, l]) => (
@@ -544,30 +541,11 @@ export default function ProfilePage({ viewedProfile, initialTab }) {
             </button>
           )}
         </div>
-        <p className="text-[13px] text-[#6b6b6b] leading-relaxed max-w-[480px] m-0 mb-3 font-body">
-          Lecteur compulsif. Fiction contemporaine, littérature latino-américaine, existentialisme.
-        </p>
-        <div className="flex items-center gap-1.5 flex-wrap">
-          {[
-            { label: "Rossignol — Multi-Défis 2026", border: "#e8dfd2", bg: "linear-gradient(135deg, #faf6f0, #f0e8d8)", content: <span className="text-star text-sm">★</span> },
-            { label: "Défi Francophone 2025 — Mésange", border: "#c8d8c8", bg: "linear-gradient(135deg, #f0f5f0, #dce8dc)", content: <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><polygon points="12,2 15,9 22,9 16.5,14 18.5,21 12,17 5.5,21 7.5,14 2,9 9,9" fill="#6a9a5a" /></svg> },
-            { label: "100 livres lus", border: "#d8cce8", bg: "linear-gradient(135deg, #f5f0fa, #e8ddf5)", content: <span className="text-[11px] font-bold text-[#7a5aaa] font-body">100</span> },
-          ].map(b => (
-            <div key={b.label} className="relative group/badge">
-              <div
-                className={`w-8 h-8 rounded-full flex items-center justify-center cursor-pointer border-[1.5px] transition-transform duration-150 hover:scale-110 shrink-0`}
-                style={{ background: b.bg, borderColor: b.border }}
-              >
-                {b.content}
-              </div>
-              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2.5 py-1.5 rounded-md bg-[#1a1a1a] text-white text-[11px] font-body whitespace-nowrap opacity-0 scale-95 group-hover/badge:opacity-100 group-hover/badge:scale-100 transition-all duration-150 pointer-events-none">
-                {b.label}
-                <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-[#1a1a1a]" />
-              </div>
-            </div>
-          ))}
-          <span className="text-[11px] text-[#767676] font-body ml-0.5">3 badges</span>
-        </div>
+        {profile.bio && (
+          <p className="text-[13px] text-[#6b6b6b] leading-relaxed max-w-[480px] m-0 mb-3 font-body">
+            {profile.bio}
+          </p>
+        )}
       </div>
 
       {/* Backfill banner — own profile only */}

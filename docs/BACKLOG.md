@@ -756,4 +756,241 @@ organique gratuite portant le nom "reliure" dans le feed des amis.
 
 ---
 
+## 13. Normalisation IA des requêtes de recherche
+
+**Statut :** Post-bêta · Priorité haute
+**Portée :** src/lib/googleBooks.js + API Anthropic
+
+### Le concept
+Avant d'envoyer une requête à Google Books, passer par
+Claude Haiku pour normaliser et enrichir la query.
+"bolano detectiv" → "Les Détectives sauvages Roberto Bolaño".
+"letranger" → "L'Étranger Albert Camus".
+
+### Pourquoi c'est nécessaire
+Google Books est une source bruyante contrairement à TMDb
+(Letterboxd) ou FEL/Dilicom (Babelio) qui sont des bases
+propres à la source. Le scoring compense en partie ce
+désavantage structurel, mais la normalisation IA le règle
+définitivement pour les requêtes ambiguës ou mal orthographiées.
+
+### Implémentation envisagée
+- Fonction `normalizeQueryWithAI(query)` dans googleBooks.js
+- Modèle : Claude Haiku (~$0.00025/requête, quasi gratuit au bêta)
+- Timeout 800ms max — fallback query originale si pas de réponse
+- Cache en mémoire (même Map que les résultats)
+- Retourne : { normalizedQuery, authorHint, titleHint }
+- Utiliser authorHint pour ajouter une requête parallèle
+  `inauthor:+intitle:` au mix existant
+
+### Ce qu'on ne fait PAS en v1
+- Pas d'IA sur les requêtes ISBN (inutile)
+- Pas d'appel IA si query < 3 caractères
+- Jamais bloquer la recherche si l'IA échoue
+
+---
+
+## 14. Enrichissement IA des fiches livres (système de crédits)
+
+**Statut :** Post-bêta · Priorité moyenne
+**Portée :** BookPage + modération communautaire + edge function
+
+### Le concept
+Certaines fiches livres sont pauvres : description absente
+ou trop courte, genres incorrects, thèmes manquants.
+Permettre aux utilisateurs de confiance de déclencher
+un enrichissement IA de la fiche, financé par un système
+de crédits.
+
+### Pourquoi un système de crédits
+- Évite les abus (enrichissement en masse, spam)
+- Crée une mécanique de contribution valorisante
+- Le coût réel est faible (Claude Haiku ~$0.001 par
+  enrichissement) mais le crédit donne une valeur perçue
+
+### Qui peut enrichir
+- **Modérateurs** : crédits illimités, accès immédiat
+- **Users vérifiés** (badge "Contributeur") :
+  5 crédits/mois offerts, rechargeables
+- **Tous les users** : 1 crédit offert à l'inscription,
+  gagnable par contribution (critique longue, citations, etc.)
+
+### Ce que l'IA enrichit
+Bouton discret "Améliorer cette fiche" sur BookPage,
+visible uniquement si l'user a des crédits :
+- **Description** : si absente ou < 100 chars, générer
+  150-200 mots sobres à partir titre/auteur/année/genres
+- **Thèmes** : suggérer 3-5 thèmes pertinents
+  (à valider avant publication)
+- **Biographie auteur courte** : 2-3 phrases factuelles
+- **Genres affinés** : remplacer "Fiction" générique
+  par des genres précis
+
+### Validation obligatoire
+L'enrichissement n'est jamais publié automatiquement.
+L'user voit un aperçu et valide ou rejette chaque champ.
+Un champ rejeté ne consomme pas de crédit.
+
+### Tables envisagées
+- `ai_credits` : user_id, balance, lifetime_earned, updated_at
+- `ai_enrichment_log` : id, user_id, book_id, fields_enriched (jsonb), model_used, tokens_used, created_at
+
+### Ce qu'on ne fait PAS en v1
+- Pas d'enrichissement automatique sans action humaine
+- Pas de vente de crédits (gratuit uniquement)
+- Pas d'enrichissement des critiques ou citations
+- Pas de rollback automatique (signalement manuel suffit)
+
+---
+
+## 15. Recommandations personnalisées IA
+
+**Statut :** Post-bêta · Différenciateur majeur
+**Portée :** Nouvelle section profil + algorithme de recommandation
+
+### Le concept
+"Basé sur tes 5 derniers livres, tu pourrais aimer..."
+Une recommandation personnalisée générée par IA à partir
+de l'historique de lecture réel de l'utilisateur.
+Ni Letterboxd ni Babelio ne font ça bien.
+C'est un territoire libre sur le marché francophone.
+
+### Pourquoi c'est fort
+- La recommandation algorithmique classique nécessite
+  des millions d'utilisateurs (cold start problem)
+- L'IA générative peut faire des recommandations
+  pertinentes dès le premier utilisateur, à partir
+  de seulement 5-10 livres lus
+- C'est visible, utile, et immédiatement perçu
+  comme de la valeur par l'utilisateur
+
+### Implémentation envisagée
+- Déclenchement : quand l'user a 5+ livres lus
+- Contexte envoyé à Claude Sonnet :
+  liste des livres lus avec notes, auteurs, années, thèmes
+- Output : 3 recommandations avec explication courte
+  "Parce que tu as aimé Bolaño, tu pourrais aimer..."
+- Affichage : section "Pour toi" sur la page Explorer
+  ou widget sur le profil
+- Rafraîchissement : hebdomadaire ou après 3 nouvelles lectures
+- Cache Supabase : stocker les recommandations pour ne pas
+  recalculer à chaque visite
+
+### Modèle recommandé
+Claude Sonnet (meilleure qualité de recommandation
+que Haiku pour ce type de raisonnement littéraire).
+Coût estimé : ~$0.01 par génération, 1x/semaine max.
+
+### Ce qu'on ne fait PAS en v1
+- Pas de recommandations temps réel
+- Pas d'explication algorithmique visible ("parce que
+  tu as noté X étoiles à Y") — garder ça magique
+- Pas de recommandations sociales (ce que tes amis lisent
+  est dans le fil, pas dans les recommandations perso)
+
+---
+
+## 16. Analyse du profil de lecteur IA
+
+**Statut :** Post-bêta · Différenciateur unique
+**Portée :** Onglet Bilan + edge function analyse
+
+### Le concept
+"Tu lis surtout de la littérature latino-américaine
+post-1980, avec une préférence pour les structures
+non-linéaires et les narrateurs ambigus."
+Une analyse textuelle de ton profil de lecteur,
+générée par IA à partir de l'ensemble de ta bibliothèque.
+Personne ne propose ça actuellement.
+
+### Pourquoi c'est unique
+- Les stats classiques (nb de livres, pages, note moyenne)
+  sont présentes partout
+- Une analyse qualitative de tes goûts littéraires
+  est quelque chose qu'aucune app ne fait
+- C'est partageable, identitaire, et donne envie
+  de compléter sa bibliothèque pour affiner l'analyse
+- Effet miroir : voir son propre profil décrit avec
+  précision crée une forte adhésion émotionnelle
+
+### Implémentation envisagée
+- Déclenchement : 10+ livres lus (seuil de pertinence)
+- Contexte envoyé à Claude Opus :
+  liste complète des livres avec notes, auteurs, années,
+  pays d'origine, genres, thèmes, critiques écrites
+- Output structuré :
+  - "Tes territoires littéraires" : 2-3 zones géo/temporelles
+  - "Ce que tu cherches dans un livre" : 2-3 tendances
+  - "Ton auteur emblématique" : celui qui représente
+    le mieux tes goûts
+  - "Ta prochaine frontière" : un territoire que tu
+    n'as pas encore exploré mais qui te correspondrait
+- Affiché dans l'onglet Bilan, section dédiée
+- Ton : littéraire, précis, jamais condescendant
+
+### Modèle recommandé
+Claude Opus — ce type d'analyse qualitative fine
+nécessite le meilleur modèle.
+Coût estimé : ~$0.05 par analyse, 1x/mois max.
+Généré à la demande (bouton "Analyser ma bibliothèque")
+pas automatiquement.
+
+### Ce qu'on ne fait PAS en v1
+- Pas de comparaison entre utilisateurs
+  ("ton profil ressemble à @margaux")
+- Pas d'analyse en temps réel (trop cher)
+- Pas d'export de l'analyse (screenshot suffit)
+
+---
+
+## 17. Résumé intelligent des critiques
+
+**Statut :** Post-bêta · Différenciateur fort
+**Portée :** BookPage + edge function synthèse
+
+### Le concept
+Synthétiser les critiques d'un livre en "ce que les
+lecteurs Reliure en pensent vraiment" — un paragraphe
+court, honnête, qui capture le consensus et les
+divergences. StoryGraph commence à faire quelque chose
+dans ce sens mais en anglais uniquement.
+
+### Pourquoi c'est fort
+- Sur une fiche avec 50 critiques, personne ne les lit
+  toutes — le résumé IA donne accès à l'intelligence
+  collective en 10 secondes
+- C'est un contenu unique à Reliure, généré à partir
+  de notre communauté — impossible à copier sans
+  avoir la même base d'utilisateurs
+- Différenciateur visible sur la fiche livre
+
+### Implémentation envisagée
+- Déclenchement : 5+ critiques sur un livre
+- Contexte : toutes les critiques du livre avec notes
+- Output :
+  - 1 paragraphe "Ce qu'en pensent les lecteurs" (100 mots)
+  - "Points forts mentionnés" : 2-3 bullets
+  - "Points de divergence" : 1-2 bullets si applicable
+  - Score de consensus (% qui recommandent)
+- Affiché en haut des critiques sur BookPage,
+  avant les critiques individuelles
+- Rafraîchissement : à chaque nouvelle critique
+  (si le livre a < 20 critiques) ou hebdomadaire
+  (si le livre a 20+ critiques)
+- Stocké en cache dans la table `books`
+  (champ `review_summary jsonb`)
+
+### Modèle recommandé
+Claude Haiku suffit pour cette synthèse.
+Coût estimé : ~$0.001 par synthèse.
+
+### Ce qu'on ne fait PAS en v1
+- Pas de résumé si < 5 critiques (pas assez de signal)
+- Pas de résumé sur les critiques avec spoilers
+  (trop risqué de les synthétiser)
+- Pas d'indication que c'est généré par IA
+  dans l'UI principale (note de bas de page discrète suffit)
+
+---
+
 *Dernière mise à jour : 29 mars 2026*

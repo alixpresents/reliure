@@ -122,13 +122,16 @@ L'edge function `book_import` (`supabase/functions/book_import/index.ts`) interr
 - `language` : BnF > Google
 - `genres` : Google > Open Library
 
-### Qualité des résultats de recherche (`src/lib/googleBooks.js`)
+### Qualité des résultats de recherche (`src/lib/googleBooks.js` + `src/lib/searchSuggestions.js`)
 
-La fonction `searchBooks` applique un pipeline en 4 étapes après l'appel API :
-1. **Paramètres API** : `maxResults=20`, `orderBy=relevance`, `printType=books`, `langRestrict=fr`
-2. **Filtrage** : exclusion des résultats sans couverture (`imageLinks`), sans ISBN (`industryIdentifiers`), et dont le titre contient des mots-clés parasites (résumé, fiche de lecture, analyse, sparknotes, bac…)
-3. **Scoring** : score basé sur complétude des métadonnées, éditeur francophone connu, langue FR, popularité ; pénalité sur les mauvais titres
-4. **Boost DB** : +3 points pour les livres déjà importés dans notre table `books` (requête Supabase sur les ISBN) ; tri final + troncature à 10 résultats
+La fonction `searchBooks` applique un pipeline en 6 étapes :
+
+1. **Suggestions locales** (`searchSuggestions.js`) : une liste curatée de ~150 livres populaires permet le prefix-matching côté client. "harry p" → "Harry Potter à l'école des sorciers", "belle du sei" → "Belle du Seigneur". Le matching supporte les séquences de mots partiels (chaque mot de la query matche le début du mot correspondant dans le titre/auteur). Si une suggestion matche, la query canonique est envoyée à l'API au lieu de la query brute.
+2. **Stratégie de requête adaptative** : analyse de la query (court, mot unique, 2 mots, ISBN, signal auteur "de/par/by") et construction de requêtes parallèles ciblées (intitle, inauthor, permutations, broad). Les queries 3+ mots utilisent aussi `intitle:` sans guillemets pour couvrir les préfixes.
+3. **Filtrage** : exclusion des résultats sans couverture, sans ISBN, avec mots-clés parasites dans le titre (résumé, fiche de lecture, analyse, sparknotes, bac…), et **blacklist d'éditeurs parasites** (fichesdelecture, primento, ebookslib, bookelis, etc.)
+4. **Scoring** : score multi-signaux — complétude métadonnées, éditeurs FR/EN connus (+3/+2), langue FR/EN (+2/+1), popularité (ratingsCount/averageRating), pertinence titre (exact +5, startsWith +3, contains +1), prefix-matching multi-mots (+6), pertinence auteur (last-name matching +4 own-work bonus, -4 biographie penalty), préférence tome 1, pénalité meta-works (-3) et contenu parasitaire (-4/keyword)
+5. **Seuil minimum** : score > 5 requis pour être retenu (fallback à > 2 si < 3 résultats au-dessus du seuil)
+6. **Boost DB** : +4 points pour les livres déjà dans notre table `books` ; tri final + troncature à 10 résultats
 
 ## Architecture de données
 
@@ -249,6 +252,8 @@ Chaque onglet a sa propre URL (`/:username/critiques`, etc.).
 #### Auth
 - Magic link + OAuth Google via Supabase Auth
 - Onboarding flow 2 étapes : pseudo + ajout de livres (vérification dispo réelle)
+- Détection nouvel utilisateur dans `App.jsx` : `needsOnboarding = isLoggedIn && !profile` — si l'user n'a pas de row dans `users`, affiche directement `OnboardingPage` (pas de route dédiée)
+- Après onboarding, redirection vers `/explorer`
 - ProtectedRoute pour les pages /fil, /parametres, /backfill
 
 #### Fiche livre (BookPage)
@@ -367,6 +372,13 @@ Toutes les pages sont accessibles sans compte, sauf `/fil`, `/parametres`, `/bac
 - Profil : bouton "Suivre" visible sur tous les profils tiers ; redirige vers `/login` si non connecté, sinon toggle follow/unfollow via `useFollow`
 
 ## Logique profil visiteur vs. propriétaire
+
+**Header profil** : toutes les données viennent de `viewedProfile` (Supabase). Aucune valeur hardcodée.
+- `display_name || username` — nom affiché
+- `@username` — sous le nom
+- `bio` — affiché seulement si non null
+- `avatar_url` — `Avatar` supporte `src` (prop optionnelle), fallback sur initiales
+- Badges : pas encore dans le schéma, section retirée jusqu'à implémentation
 
 Variable `isOwnProfile = user?.id === viewedProfile?.id` contrôle l'affichage conditionnel.
 
