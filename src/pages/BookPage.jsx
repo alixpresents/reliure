@@ -108,7 +108,7 @@ export default function BookPage({ book, onBack, onTag, go }) {
         setFinDate(null); setNoDate(false);
       }
       setIsReread(false);
-      dbSetStatus(STATUS_MAP[s], extras, { book_title: book.t || book.title, book_author: book.a || book.authors, cover_url: book.c || book.cover_url });
+      dbSetStatus(STATUS_MAP[s], extras, { book_title: book.t || book.title, book_author: book.a || book.authors, cover_url: book.c || book.cover_url, ...(s === "Lu" && alreadyRead ? { is_reread: true } : {}) });
     }
   };
 
@@ -121,7 +121,7 @@ export default function BookPage({ book, onBack, onTag, go }) {
       setSt("Lu");
       setFinDate(todayLabel());
       setNoDate(false);
-      dbSetStatus("read", { finished_at: now }, { book_title: book.t || book.title });
+      dbSetStatus("read", { finished_at: now }, { book_title: book.t || book.title, book_author: book.a || book.authors, cover_url: book.c || book.cover_url });
     }
     if (isUuid) {
       const { data } = await supabase.from("books").select("avg_rating, rating_count").eq("id", bookId).single();
@@ -233,11 +233,11 @@ export default function BookPage({ book, onBack, onTag, go }) {
                 isReread ? (
                   <span className="inline-flex items-center gap-1.5 pl-2.5 pr-1.5 py-[5px] rounded-2xl text-xs bg-tag-bg border border-[#eee] text-[#1a1a1a] font-body">
                     Relecture
-                    <button onClick={() => setIsReread(false)} className="bg-transparent border-none cursor-pointer text-[#767676] hover:text-[#1a1a1a] text-[11px] leading-none p-0 ml-0.5 transition-colors duration-150">×</button>
+                    <button onClick={() => { setIsReread(false); if (dbStatus?.id) supabase.from("reading_status").update({ is_reread: false }).eq("id", dbStatus.id); }} className="bg-transparent border-none cursor-pointer text-[#767676] hover:text-[#1a1a1a] text-[11px] leading-none p-0 ml-0.5 transition-colors duration-150">×</button>
                   </span>
                 ) : (
                   <button
-                    onClick={() => setIsReread(true)}
+                    onClick={() => { setIsReread(true); if (dbStatus?.id) supabase.from("reading_status").update({ is_reread: true }).eq("id", dbStatus.id); }}
                     className="inline-flex items-center px-2.5 py-[5px] rounded-2xl text-xs bg-transparent border-[1.5px] border-dashed border-[#ddd] text-[#767676] font-body cursor-pointer hover:border-[#767676] hover:text-[#1a1a1a] transition-colors duration-150"
                   >
                     + Relecture

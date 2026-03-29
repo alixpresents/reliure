@@ -16,10 +16,9 @@ export function useReadingStatus(bookId) {
       .select("*")
       .eq("user_id", user.id)
       .eq("book_id", bookId)
-      .eq("is_reread", false)
       .order("created_at", { ascending: false })
       .limit(1)
-      .single();
+      .maybeSingle();
     setStatusState(data ?? null);
     setAlreadyRead(data?.status === "read");
     setLoading(false);

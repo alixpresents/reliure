@@ -3,6 +3,7 @@ import Avatar from "../components/Avatar";
 import Heading from "../components/Heading";
 import LikeButton from "../components/LikeButton";
 import { useFeed } from "../hooks/useActivity";
+import { supabase } from "../lib/supabase";
 import { formatRelativeTime } from "../lib/formatTime";
 
 function actionLabel(actionType, metadata) {
@@ -12,7 +13,7 @@ function actionLabel(actionType, metadata) {
     const s = metadata?.status;
     if (s === "want_to_read") return "veut lire";
     if (s === "reading") return "a commencé";
-    if (s === "read") return "a terminé";
+    if (s === "read") return metadata?.is_reread ? "a relu" : "a terminé";
     if (s === "abandoned") return "a abandonné";
     return "a mis à jour";
   }
@@ -43,9 +44,14 @@ function MiniCover({ url, title, onClick }) {
 export default function FeedPage({ go }) {
   const { items, loading } = useFeed();
 
-  const goToBook = (meta) => {
+  const goToBook = async (meta) => {
     if (!meta.book_id) return;
-    go({ id: meta.book_id, _supabase: { id: meta.book_id }, t: meta.book_title, a: meta.book_author, c: meta.cover_url });
+    const { data } = await supabase.from("books").select("*").eq("id", meta.book_id).single();
+    if (data) {
+      go({ id: data.id, _supabase: data, t: data.title, a: Array.isArray(data.authors) ? data.authors.join(", ") : data.authors, c: data.cover_url, y: data.publication_date, p: data.page_count, r: data.avg_rating, rt: data.rating_count });
+    } else {
+      go({ id: meta.book_id, _supabase: { id: meta.book_id }, t: meta.book_title, a: meta.book_author, c: meta.cover_url });
+    }
   };
 
   return (
