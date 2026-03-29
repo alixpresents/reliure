@@ -1,4 +1,10 @@
 import { supabase } from "./supabase";
+import { generateBookSlug } from "../utils/slugify";
+
+async function slugExists(slug) {
+  const { data } = await supabase.from("books").select("id").eq("slug", slug).limit(1).maybeSingle();
+  return !!data;
+}
 
 export async function importBook(googleBook) {
   // Try to find by ISBN first
@@ -23,6 +29,14 @@ export async function importBook(googleBook) {
     if (existing) return existing;
   }
 
+  // Generate slug
+  const slug = await generateBookSlug(
+    googleBook.title,
+    googleBook.authors || [],
+    googleBook.publishedDate,
+    slugExists
+  );
+
   // Insert new book
   const { data: newBook, error } = await supabase
     .from("books")
@@ -38,6 +52,7 @@ export async function importBook(googleBook) {
       description: googleBook.description,
       language: "fr",
       source: "google_books",
+      slug,
     })
     .select("*")
     .single();

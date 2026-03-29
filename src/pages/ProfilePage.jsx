@@ -13,6 +13,8 @@ import { useMyQuotes } from "../hooks/useQuotes";
 import { useFollowCounts } from "../hooks/useFollow";
 import { useFavorites } from "../hooks/useFavorites";
 import { useAuth } from "../lib/AuthContext";
+import { useNav } from "../lib/NavigationContext";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 
 function ReadingItem({ book, go, onFinish, initialPage = 0, statusId = null }) {
@@ -403,9 +405,12 @@ function EmptyState({ children }) {
   return <div className="py-10 text-center">{children}</div>;
 }
 
-export default function ProfilePage({ go, onBackfill, onSearch, onSearchFor }) {
-  const [tab, setTab] = useState("journal");
+export default function ProfilePage({ viewedProfile, initialTab }) {
+  const [tab, setTab] = useState(initialTab || "journal");
   const [libView, setLibView] = useState("grille");
+  useEffect(() => { if (initialTab) setTab(initialTab); }, [initialTab]);
+  const { goToBook: go, openSearchFor } = useNav();
+  const navigate = useNavigate();
   const { books: dbReading, refetch: refetchReading } = useReadingList("reading");
   const profileData = useProfileData();
   const { reviews: myReviews } = useMyReviews();
@@ -413,6 +418,8 @@ export default function ProfilePage({ go, onBackfill, onSearch, onSearchFor }) {
   const { user } = useAuth();
   const { followers, following: followingCount } = useFollowCounts(user?.id);
   const { favorites, setFavorite, removeFavorite, swapPositions, updateNote } = useFavorites();
+  const onSearch = () => navigate("/explorer");
+  const onBackfill = () => navigate("/backfill");
 
   // Normalize reading books from Supabase
   const normalizeStatus = rs => ({
@@ -422,6 +429,8 @@ export default function ProfilePage({ go, onBackfill, onSearch, onSearchFor }) {
     c: rs.books?.cover_url,
     p: rs.books?.page_count || 0,
     r: rs.books?.avg_rating || 0,
+    slug: rs.books?.slug,
+    _supabase: rs.books,
     _currentPage: rs.current_page || 0,
     _statusId: rs.id,
   });
@@ -441,12 +450,12 @@ export default function ProfilePage({ go, onBackfill, onSearch, onSearchFor }) {
   const diaryMonths = (() => {
     const months = ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre"];
     const grouped = new Map();
-    (profileData.readBooks || []).forEach(rs => {
+    (profileData.diaryBooks || []).forEach(rs => {
       const d = new Date(rs.finished_at);
       const key = `${months[d.getMonth()].charAt(0).toUpperCase() + months[d.getMonth()].slice(1)} ${d.getFullYear()}`;
       if (!grouped.has(key)) grouped.set(key, []);
       grouped.get(key).push({
-        b: { id: rs.books?.id, t: rs.books?.title, c: rs.books?.cover_url, a: Array.isArray(rs.books?.authors) ? rs.books.authors.join(", ") : "" },
+        b: { id: rs.books?.id, t: rs.books?.title, c: rs.books?.cover_url, a: Array.isArray(rs.books?.authors) ? rs.books.authors.join(", ") : "", slug: rs.books?.slug, _supabase: rs.books },
         d: String(d.getDate()),
         lk: false,
       });
@@ -737,7 +746,7 @@ export default function ProfilePage({ go, onBackfill, onSearch, onSearchFor }) {
           {myReviews.length > 0 ? myReviews.map(rv => {
             const b = rv.books;
             if (!b) return null;
-            const bookObj = { id: b.id, t: b.title, a: Array.isArray(b.authors) ? b.authors.join(", ") : "", c: b.cover_url, y: b.publication_date ? parseInt(b.publication_date) : null };
+            const bookObj = { id: b.id, t: b.title, a: Array.isArray(b.authors) ? b.authors.join(", ") : "", c: b.cover_url, y: b.publication_date ? parseInt(b.publication_date) : null, slug: b.slug, _supabase: b };
             return (
               <div key={rv.id} className="py-5 border-b border-border-light">
                 <div className="flex gap-4">
@@ -772,7 +781,7 @@ export default function ProfilePage({ go, onBackfill, onSearch, onSearchFor }) {
         <div className="py-3">
           {myQuotes.length > 0 ? myQuotes.map(q => {
             const b = q.books;
-            const bookObj = b ? { id: q.book_id, t: b.title, a: Array.isArray(b.authors) ? b.authors.join(", ") : "", c: b.cover_url } : null;
+            const bookObj = b ? { id: q.book_id, t: b.title, a: Array.isArray(b.authors) ? b.authors.join(", ") : "", c: b.cover_url, slug: b.slug, _supabase: b } : null;
             return (
               <div key={q.id} className="py-5 border-b border-border-light">
                 <div className="text-[15px] italic text-[#1a1a1a] leading-[1.7] border-l-[3px] border-l-cover-fallback pl-4 mb-3 font-display">

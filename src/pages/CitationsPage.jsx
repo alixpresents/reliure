@@ -3,10 +3,12 @@ import Img from "../components/Img";
 import Heading from "../components/Heading";
 import LikeButton from "../components/LikeButton";
 import UserName from "../components/UserName";
+import { useNav } from "../lib/NavigationContext";
 import { useCommunityQuotes } from "../hooks/useQuotes";
 import { useLikes } from "../hooks/useLikes";
 
-export default function CitationsPage({ go }) {
+export default function CitationsPage() {
+  const { goToBook: go } = useNav();
   const { quotes: dbQuotes, loading } = useCommunityQuotes();
   const { likedSet, initialSet, toggle } = useLikes(dbQuotes.map(q => q.id), "quote");
 
@@ -22,7 +24,7 @@ export default function CitationsPage({ go }) {
         <div className="py-8 text-center text-[13px] text-[#767676] font-body">Chargement...</div>
       ) : useDb ? (
         dbQuotes.map(q => {
-          const bookObj = q.books ? { id: q.book_id, t: q.books.title, a: Array.isArray(q.books.authors) ? q.books.authors.join(", ") : "", c: q.books.cover_url } : null;
+          const bookObj = q.books ? { id: q.book_id, t: q.books.title, a: Array.isArray(q.books.authors) ? q.books.authors.join(", ") : "", c: q.books.cover_url, slug: q.books.slug, _supabase: q.books } : null;
           return (
             <div key={q.id} className="py-[22px] border-b border-border-light">
               <div className="text-base italic text-[#1a1a1a] leading-[1.75] border-l-[3px] border-l-cover-fallback pl-[18px] mb-3.5 font-display">

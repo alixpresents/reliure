@@ -18,10 +18,14 @@ import { logActivity } from "../hooks/useActivity";
 import { resetIOSZoom } from "../lib/resetZoom";
 import { useLikes } from "../hooks/useLikes";
 import UserName from "../components/UserName";
+import { useNavigate, Link } from "react-router-dom";
+import { useNav } from "../lib/NavigationContext";
 
-export default function BookPage({ book, onBack, onTag, go }) {
+export default function BookPage({ book }) {
+  const navigate = useNavigate();
+  const { goToBook: go } = useNav();
   const bookId = book._supabase?.id || book.id;
-  const { status: dbStatus, loading: statusLoading, alreadyRead, setStatus: dbSetStatus, removeStatus: dbRemoveStatus } = useReadingStatus(bookId);
+  const { status: dbStatus, loading: statusLoading, alreadyRead, setStatus: dbSetStatus, removeStatus: dbRemoveStatus, updateFields: dbUpdateFields } = useReadingStatus(bookId);
   const { rating: dbRating, setRating: dbSetRating } = useUserRating(bookId);
   const { reviews: dbReviews, loading: reviewsLoading, refetch: refetchReviews } = useBookReviews(bookId);
   const { quotes: dbQuotes, loading: quotesLoading, refetch: refetchQuotes } = useBookQuotes(bookId);
@@ -54,6 +58,7 @@ export default function BookPage({ book, onBack, onTag, go }) {
   const [quoteSaving, setQuoteSaving] = useState(false);
   const [finDate, setFinDate] = useState(null);
   const [noDate, setNoDate] = useState(false);
+  const [dateError, setDateError] = useState(false);
   const [isReread, setIsReread] = useState(false);
   const [tagInput, setTagInput] = useState("");
   const [tags, setTags] = useState([]);
@@ -69,10 +74,16 @@ export default function BookPage({ book, onBack, onTag, go }) {
     if (statusLoading) return;
     if (dbStatus) {
       setSt(dbStatus.status === "want_to_read" ? "À lire" : dbStatus.status === "reading" ? "En cours" : dbStatus.status === "read" ? "Lu" : dbStatus.status === "abandoned" ? "Abandonné" : null);
-      if (dbStatus.finished_at) setFinDate(dateToLabel(dbStatus.finished_at));
+      if (dbStatus.finished_at) {
+        setFinDate(dateToLabel(dbStatus.finished_at));
+        setNoDate(false);
+      } else {
+        setFinDate(null);
+        setNoDate(dbStatus.status === "read");
+      }
       setIsReread(dbStatus.is_reread || false);
     } else {
-      setSt(null); setFinDate(null); setIsReread(false);
+      setSt(null); setFinDate(null); setNoDate(false); setIsReread(false);
     }
   }, [dbStatus, statusLoading]);
 
@@ -91,6 +102,8 @@ export default function BookPage({ book, onBack, onTag, go }) {
     const months = ["janvier","février","mars","avril","mai","juin","juillet","août","septembre","octobre","novembre","décembre"];
     return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
   };
+
+  const todayISO = new Date().toISOString().split("T")[0];
 
   const dateToLabel = iso => {
     const d = new Date(iso);
@@ -193,7 +206,7 @@ export default function BookPage({ book, onBack, onTag, go }) {
 
   return (
     <div>
-      <button onClick={onBack} className="bg-transparent border-none text-[#737373] cursor-pointer text-[13px] py-4 font-body">
+      <button onClick={() => navigate(-1)} className="bg-transparent border-none text-[#737373] cursor-pointer text-[13px] py-4 font-body">
         ← Retour
       </button>
 
@@ -236,13 +249,40 @@ export default function BookPage({ book, onBack, onTag, go }) {
                   <input
                     ref={dateRef}
                     type="date"
+                    max={todayISO}
                     className="absolute w-0 h-0 opacity-0"
-                    onChange={e => { if (e.target.value) setFinDate(dateToLabel(e.target.value)); }}
+                    onChange={e => {
+                      if (!e.target.value) return;
+                      if (e.target.value > todayISO) { setDateError(true); setTimeout(() => setDateError(false), 3000); return; }
+                      setDateError(false); setFinDate(dateToLabel(e.target.value)); dbUpdateFields({ finished_at: e.target.value });
+                    }}
                   />
-                  <button onClick={() => { setFinDate(null); setNoDate(true); }} className="bg-transparent border-none cursor-pointer text-[#767676] hover:text-[#1a1a1a] text-[11px] leading-none p-0 ml-0.5 transition-colors duration-150">×</button>
+                  <button onClick={() => { setFinDate(null); setNoDate(true); dbUpdateFields({ finished_at: null }); }} className="bg-transparent border-none cursor-pointer text-[#767676] hover:text-[#1a1a1a] text-[11px] leading-none p-0 ml-0.5 transition-colors duration-150">×</button>
                 </span>
               ) : noDate && st === "Lu" ? (
-                <span className="text-[11px] text-[#767676] font-body">Ajouté à ta bibliothèque</span>
+                <>
+                  <input
+                    ref={dateRef}
+                    type="date"
+                    max={todayISO}
+                    className="absolute w-0 h-0 opacity-0"
+                    onChange={e => {
+                      if (!e.target.value) return;
+                      if (e.target.value > todayISO) { setDateError(true); setTimeout(() => setDateError(false), 3000); return; }
+                      setDateError(false); setFinDate(dateToLabel(e.target.value)); setNoDate(false);
+                      dbUpdateFields({ finished_at: e.target.value });
+                    }}
+                  />
+                  <span
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => dateRef.current?.showPicker()}
+                    onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); dateRef.current?.showPicker(); } }}
+                    className="text-[12px] text-[#999] font-body cursor-pointer hover:text-[#1a1a1a] transition-colors duration-150"
+                  >
+                    Ajouter une date
+                  </span>
+                </>
               ) : null}
 
               {/* Reread pill */}
@@ -250,11 +290,11 @@ export default function BookPage({ book, onBack, onTag, go }) {
                 isReread ? (
                   <span className="inline-flex items-center gap-1.5 pl-2.5 pr-1.5 py-[5px] rounded-2xl text-xs bg-tag-bg border border-[#eee] text-[#1a1a1a] font-body">
                     Relecture
-                    <button onClick={() => { setIsReread(false); if (dbStatus?.id) supabase.from("reading_status").update({ is_reread: false }).eq("id", dbStatus.id); }} className="bg-transparent border-none cursor-pointer text-[#767676] hover:text-[#1a1a1a] text-[11px] leading-none p-0 ml-0.5 transition-colors duration-150">×</button>
+                    <button onClick={() => { setIsReread(false); dbUpdateFields({ is_reread: false }); }} className="bg-transparent border-none cursor-pointer text-[#767676] hover:text-[#1a1a1a] text-[11px] leading-none p-0 ml-0.5 transition-colors duration-150">×</button>
                   </span>
                 ) : (
                   <button
-                    onClick={() => { setIsReread(true); if (dbStatus?.id) supabase.from("reading_status").update({ is_reread: true }).eq("id", dbStatus.id); }}
+                    onClick={() => { setIsReread(true); dbUpdateFields({ is_reread: true }); }}
                     className="inline-flex items-center px-2.5 py-[5px] rounded-2xl text-xs bg-transparent border-[1.5px] border-dashed border-[#ddd] text-[#767676] font-body cursor-pointer hover:border-[#767676] hover:text-[#1a1a1a] transition-colors duration-150"
                   >
                     + Relecture
@@ -262,6 +302,7 @@ export default function BookPage({ book, onBack, onTag, go }) {
                 )
               )}
             </div>
+            {dateError && <div className="text-[11px] text-spoiler font-body mt-1.5">La date ne peut pas être dans le futur</div>}
           </div>
 
           {/* User rating */}
@@ -323,7 +364,7 @@ export default function BookPage({ book, onBack, onTag, go }) {
       {book.tags && (
         <div className="pb-5">
           <Label>Thèmes</Label>
-          <div className="flex flex-wrap gap-1">{book.tags.map(t => <Tag key={t} onClick={() => onTag(t)}>{t}</Tag>)}</div>
+          <div className="flex flex-wrap gap-1">{book.tags.map(t => <Link key={t} to={`/explorer/theme/${encodeURIComponent(t)}`}><Tag>{t}</Tag></Link>)}</div>
         </div>
       )}
 
@@ -545,7 +586,7 @@ export default function BookPage({ book, onBack, onTag, go }) {
         <HScroll>
           {B.filter(x => x.id !== book.id).slice(0, 6).map(b => (
             <div key={b.id} className="text-center min-w-[100px]">
-              <Img book={b} w={100} h={150} onClick={() => { onBack(); setTimeout(() => go(b), 0); }} />
+              <Img book={b} w={100} h={150} onClick={() => go(b)} />
               <div className="text-[10px] font-medium mt-1.5 overflow-hidden text-ellipsis whitespace-nowrap max-w-[100px] font-body">{b.t}</div>
             </div>
           ))}

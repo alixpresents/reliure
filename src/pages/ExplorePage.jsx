@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import Img from "../components/Img";
 import Avatar from "../components/Avatar";
 import Tag from "../components/Tag";
@@ -7,6 +8,7 @@ import HScroll from "../components/HScroll";
 import LikeButton from "../components/LikeButton";
 import Stars from "../components/Stars";
 import UserName from "../components/UserName";
+import { useNav } from "../lib/NavigationContext";
 import { usePopularBooks, usePopularReviews, usePopularQuotes, usePopularLists } from "../hooks/useExplore";
 import { useLikes } from "../hooks/useLikes";
 
@@ -16,10 +18,11 @@ function Skeleton({ className = "" }) {
 
 function normalizeQuoteBook(q) {
   if (!q.books) return null;
-  return { id: q.book_id, t: q.books.title, a: Array.isArray(q.books.authors) ? q.books.authors.join(", ") : "", c: q.books.cover_url, _supabase: q.books };
+  return { id: q.book_id, t: q.books.title, a: Array.isArray(q.books.authors) ? q.books.authors.join(", ") : "", c: q.books.cover_url, slug: q.books.slug, _supabase: q.books };
 }
 
-export default function ExplorePage({ go, onTag, onSearch }) {
+export default function ExplorePage({ onSearch }) {
+  const { goToBook: go } = useNav();
   const { books: popular, loading: loadingBooks } = usePopularBooks();
   const { reviews, loading: loadingReviews } = usePopularReviews();
   const { quotes, loading: loadingQuotes } = usePopularQuotes();
@@ -55,7 +58,7 @@ export default function ExplorePage({ go, onTag, onSearch }) {
       <div className="mb-6">
         <Label>Parcourir par thème</Label>
         <div className="flex flex-wrap gap-1">
-          {ptags.map(t => <Tag key={t} onClick={() => onTag(t)}>{t}</Tag>)}
+          {ptags.map(t => <Link key={t} to={`/explorer/theme/${encodeURIComponent(t)}`}><Tag>{t}</Tag></Link>)}
         </div>
       </div>
 
@@ -135,7 +138,7 @@ export default function ExplorePage({ go, onTag, onSearch }) {
               a: Array.isArray(rv.books.authors) ? rv.books.authors.join(", ") : (rv.books.authors || ""),
               c: rv.books.cover_url,
               y: rv.books.publication_date ? parseInt(rv.books.publication_date) : null,
-              _supabase: rv.books,
+              slug: rv.books.slug, _supabase: rv.books,
             } : null;
             return (
               <div key={rv.id} className="flex gap-3.5 py-5 border-b border-[#f3f3f3]">

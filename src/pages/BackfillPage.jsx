@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { B } from "../data";
 import Img from "../components/Img";
 import Label from "../components/Label";
@@ -40,7 +41,9 @@ function StatusPill({ label, active, variant, onClick }) {
   return <button onClick={onClick} className={`${base} bg-transparent text-[#767676] border-[#ddd] hover:border-[#999]`}>{label}</button>;
 }
 
-export default function BackfillPage({ onBack, onRefreshProfile }) {
+export default function BackfillPage() {
+  const onBack = () => navigate(-1);
+  const navigate = useNavigate();
   const { user } = useAuth();
   const [q, setQ] = useState("");
   const [picks, setPicks] = useState([]);

@@ -1,10 +1,13 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { JARTICLES, JAGENDA } from "../data";
 import Img from "../components/Img";
 import Tag from "../components/Tag";
 import Label from "../components/Label";
 
-export default function JournalPage({ go, goArticle }) {
+export default function JournalPage() {
+  const goArticle = (a) => navigate(`/la-revue/${a.id}`);
+  const navigate = useNavigate();
   const [jt, setJt] = useState("textes");
   const feat = JARTICLES[0];
 

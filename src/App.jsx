@@ -1,44 +1,49 @@
 import { useState } from "react";
+import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
 import { FONT_URL } from "./data";
 import { useAuth } from "./lib/AuthContext";
 import { useProfile } from "./hooks/useProfile";
 import Header from "./components/Header";
 import Search from "./components/Search";
+import ScrollToTop from "./components/ScrollToTop";
+import ProtectedRoute from "./components/ProtectedRoute";
+import { NavigationProvider } from "./lib/NavigationContext";
 import LoginPage from "./pages/LoginPage";
 import OnboardingPage from "./pages/OnboardingPage";
-import ProfilePage from "./pages/ProfilePage";
-import FeedPage from "./pages/FeedPage";
 import ExplorePage from "./pages/ExplorePage";
-import BookPage from "./pages/BookPage";
-import JournalPage from "./pages/JournalPage";
+import FeedPage from "./pages/FeedPage";
 import CitationsPage from "./pages/CitationsPage";
-import TagPage from "./pages/TagPage";
-import BackfillPage from "./pages/BackfillPage";
+import JournalPage from "./pages/JournalPage";
 import ArticlePage from "./pages/ArticlePage";
 import ChallengesPage from "./pages/ChallengesPage";
+import BookPageRoute from "./pages/BookPageRoute";
+import ProfilePageRoute from "./pages/ProfilePageRoute";
+import TagPage from "./pages/TagPage";
+import BackfillPage from "./pages/BackfillPage";
+import SettingsPage from "./pages/SettingsPage";
+import NotFoundPage from "./pages/NotFoundPage";
 
 export default function App() {
   const { user, loading: authLoading } = useAuth();
   const { profile, loading: profileLoading, refetch } = useProfile();
-  const [pg, setPg] = useState("explore");
-  const [sb, setSb] = useState(null);
-  const [sa, setSa] = useState(null);
-  const [st, setSt] = useState(null);
-  const [prev, setPrev] = useState("explore");
+  const navigate = useNavigate();
   const [search, setSearch] = useState(false);
-  const [searchCb, setSearchCb] = useState(null); // custom callback for Search, or null = navigate
+  const [searchCb, setSearchCb] = useState(null);
 
-  const scroll0 = () => window.scrollTo(0, 0);
-  const go = b => { setPrev(pg); setSb(b); setPg("book"); scroll0(); };
   const openSearchFor = (cb) => { setSearchCb(() => cb); setSearch(true); };
   const closeSearch = () => { setSearch(false); setSearchCb(null); };
-  const back = () => { setSb(null); setPg(prev); scroll0(); };
-  const tag = t => { setPrev(pg); setSt(t); setPg("tag"); scroll0(); };
-  const goArticle = a => { setSa(a); setPg("article"); scroll0(); };
-  const backArticle = (nextArticle) => {
-    if (nextArticle) { setSa(nextArticle); scroll0(); }
-    else { setSa(null); setPg("journal"); scroll0(); }
+
+  const goToBook = (book) => {
+    const slug = book.slug || book._supabase?.slug;
+    if (slug) {
+      navigate(`/livre/${slug}`);
+    } else {
+      // Fallback for books without slug (shouldn't happen for new imports)
+      navigate(`/livre/${book.id}`);
+    }
   };
+
+  const searchGo = searchCb || goToBook;
 
   // Loading
   if (authLoading || (user && profileLoading)) {
@@ -50,53 +55,57 @@ export default function App() {
     );
   }
 
-  // Not logged in
-  if (!user) {
+  // Not logged in — show public pages with header, login for protected
+  const isLoggedIn = !!user;
+  const needsOnboarding = isLoggedIn && !profile;
+
+  if (needsOnboarding) {
     return (
       <div className="bg-white min-h-screen text-[#1a1a1a] font-body">
         <link href={FONT_URL} rel="stylesheet" />
-        <LoginPage />
+        <OnboardingPage onComplete={() => { refetch(); navigate("/explorer"); }} />
       </div>
     );
   }
 
-  // Logged in but no profile → onboarding
-  if (!profile) {
-    return (
-      <div className="bg-white min-h-screen text-[#1a1a1a] font-body">
-        <link href={FONT_URL} rel="stylesheet" />
-        <OnboardingPage onComplete={() => { refetch(); setPg("explore"); }} />
-      </div>
-    );
-  }
-
-  // Initials from profile
-  const initials = (profile.display_name || profile.username || "?")
-    .split(" ")
-    .map(w => w[0])
-    .join("")
-    .toUpperCase()
-    .slice(0, 2);
+  const initials = profile
+    ? (profile.display_name || profile.username || "?").split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2)
+    : "?";
 
   return (
     <div className="bg-white min-h-screen text-[#1a1a1a] font-body">
       <link href={FONT_URL} rel="stylesheet" />
-      <Header pg={pg} setPg={p => { setPg(p); setSb(null); scroll0(); }} onSearch={() => { setSearchCb(null); setSearch(!search); }} initials={initials} />
-      <Search open={search} onClose={closeSearch} go={searchCb || go} />
+      <ScrollToTop />
+      {isLoggedIn && (
+        <Header
+          onSearch={() => { setSearchCb(null); setSearch(!search); }}
+          initials={initials}
+          username={profile?.username}
+        />
+      )}
+      <Search open={search} onClose={closeSearch} go={searchGo} />
+      <NavigationProvider openSearchFor={openSearchFor}>
       <div className="max-w-[760px] mx-auto px-4 sm:px-6 pb-20">
-        <div key={`${pg}-${sb?.id || ""}-${sa?.id || ""}`} className="animate-page-in">
-          {pg === "profile" && <ProfilePage go={go} onBackfill={() => { setPrev("profile"); setPg("backfill"); scroll0(); }} onSearch={() => setSearch(true)} onSearchFor={openSearchFor} />}
-          {pg === "backfill" && <BackfillPage onBack={() => { setPg("profile"); scroll0(); }} />}
-          {pg === "feed" && <FeedPage go={go} />}
-          {pg === "explore" && <ExplorePage go={go} onTag={tag} onSearch={() => setSearch(true)} />}
-          {pg === "journal" && <JournalPage go={go} goArticle={goArticle} />}
-          {pg === "article" && sa && <ArticlePage article={sa} onBack={backArticle} go={go} />}
-          {pg === "citations" && <CitationsPage go={go} />}
-          {pg === "challenges" && <ChallengesPage />}
-          {pg === "book" && sb && <BookPage book={sb} onBack={back} onTag={tag} go={go} />}
-          {pg === "tag" && <TagPage tag={st} go={go} onBack={() => setPg(prev)} />}
-        </div>
+        <Routes>
+          <Route path="/" element={<Navigate to="/explorer" replace />} />
+          <Route path="/explorer" element={<ExplorePage onSearch={() => setSearch(true)} />} />
+          <Route path="/explorer/theme/:tag" element={<TagPage />} />
+          <Route path="/citations" element={<CitationsPage />} />
+          <Route path="/fil" element={<ProtectedRoute><FeedPage /></ProtectedRoute>} />
+          <Route path="/defis" element={<ChallengesPage />} />
+          <Route path="/la-revue" element={<JournalPage />} />
+          <Route path="/la-revue/:slug" element={<ArticlePage />} />
+          <Route path="/livre/:slug" element={<BookPageRoute />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/parametres" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
+          <Route path="/backfill" element={<ProtectedRoute><BackfillPage /></ProtectedRoute>} />
+          {/* Profile routes — MUST be after all global routes */}
+          <Route path="/:username" element={<ProfilePageRoute />} />
+          <Route path="/:username/:tab" element={<ProfilePageRoute />} />
+          <Route path="*" element={<NotFoundPage />} />
+        </Routes>
       </div>
+      </NavigationProvider>
     </div>
   );
 }

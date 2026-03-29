@@ -9,6 +9,7 @@ export function useProfile() {
 
   const fetch = useCallback(async () => {
     if (!user) { setProfile(null); setLoading(false); return; }
+    setLoading(true);
     const { data } = await supabase
       .from("users")
       .select("*")

@@ -6,6 +6,7 @@ import { supabase } from "../lib/supabase";
 import { useAuth } from "../lib/AuthContext";
 import { searchBooks } from "../lib/googleBooks";
 import { importBook } from "../lib/importBook";
+import { RESERVED_USERNAMES } from "../constants/reserved-usernames";
 
 function CoverBackdrop() {
   const covers = [...B, ...B.slice(0, 4)];
@@ -55,6 +56,8 @@ function Step1({ username, setUsername, bio, setBio, onNext, error: externalErro
   useEffect(() => {
     clearTimeout(timer.current);
     if (username.length < 2) { setStatus(null); return; }
+    if (!/^[a-z0-9_]+$/.test(username)) { setStatus("invalid"); return; }
+    if (RESERVED_USERNAMES.has(username)) { setStatus("reserved"); return; }
     timer.current = setTimeout(async () => {
       const { data, error } = await supabase
         .from("users")
@@ -71,7 +74,7 @@ function Step1({ username, setUsername, bio, setBio, onNext, error: externalErro
   const valid = username.length >= 2 && status === "available" && !saving;
 
   const borderColor = status === "available" ? "border-[#2E7D32]"
-    : status === "taken" ? "border-spoiler"
+    : (status === "taken" || status === "reserved" || status === "invalid") ? "border-spoiler"
     : "border-[#eee] focus-within:border-[#1a1a1a]";
 
   const handleNext = async () => {
@@ -102,8 +105,10 @@ function Step1({ username, setUsername, bio, setBio, onNext, error: externalErro
           />
           {status === "available" && <span className="text-[#2E7D32] text-sm font-medium shrink-0">✓</span>}
         </div>
-        {(status === "taken" || externalError) && (
-          <p className="text-xs text-spoiler mt-1.5 font-body">{externalError || "Ce pseudo est déjà pris"}</p>
+        {(status === "taken" || status === "reserved" || status === "invalid" || externalError) && (
+          <p className="text-xs text-spoiler mt-1.5 font-body">
+            {externalError || (status === "reserved" ? "Ce pseudo est réservé" : status === "invalid" ? "Lettres minuscules, chiffres et _ uniquement" : "Ce pseudo est déjà pris")}
+          </p>
         )}
       </div>
 

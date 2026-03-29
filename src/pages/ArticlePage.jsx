@@ -1,10 +1,16 @@
 import { useState, useEffect, useRef } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import { JARTICLES } from "../data";
 import Img from "../components/Img";
 import Tag from "../components/Tag";
 import Label from "../components/Label";
+import { useNav } from "../lib/NavigationContext";
 
-export default function ArticlePage({ article, onBack, go }) {
+export default function ArticlePage() {
+  const { slug } = useParams();
+  const navigate = useNavigate();
+  const { goToBook: go } = useNav();
+  const article = JARTICLES.find(a => a.id === slug) || JARTICLES[0];
   const others = JARTICLES.filter(a => a.id !== article.id).slice(0, 3);
   const [progress, setProgress] = useState(0);
   const articleRef = useRef(null);
@@ -41,7 +47,7 @@ export default function ArticlePage({ article, onBack, go }) {
         <div className="h-full bg-[#1a1a1a] will-change-[width]" style={{ width: `${progress}%`, transition: "width 100ms linear" }} />
       </div>
       <button
-        onClick={onBack}
+        onClick={() => navigate("/la-revue")}
         className="bg-transparent border-none text-[#737373] cursor-pointer text-[13px] py-4 font-body"
       >
         ← La Revue
@@ -104,8 +110,8 @@ export default function ArticlePage({ article, onBack, go }) {
             key={a.id}
             role="button"
             tabIndex={0}
-            onClick={() => onBack(a)}
-            onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onBack(a); } }}
+            onClick={() => navigate(`/la-revue/${a.id}`)}
+            onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); navigate(`/la-revue/${a.id}`); } }}
             className="flex gap-5 py-5 border-b border-border-light cursor-pointer"
           >
             <div className="flex-1">

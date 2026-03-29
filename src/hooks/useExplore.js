@@ -13,6 +13,7 @@ function normalizeBook(b) {
     rt: b.rating_count || 0,
     tags: Array.isArray(b.genres) ? b.genres : [],
     desc: b.description,
+    slug: b.slug,
     _supabase: b,
   };
 }

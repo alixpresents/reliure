@@ -62,11 +62,42 @@ L'app ne doit jamais ressembler à un tableur ou à un webzine. C'est un objet c
 
 ## Stack technique
 
-- **Frontend** : React + Vite
+- **Frontend** : React + Vite + React Router (BrowserRouter)
 - **Backend** : Supabase (auth, PostgreSQL, storage, realtime, edge functions)
 - **Styling** : Tailwind CSS (migré depuis CSS-in-JS)
-- **Déploiement** : Vercel
+- **Routing** : React Router v7, convention URLs Letterboxd (/:username, /livre/:slug, /explorer, etc.)
+- **Déploiement** : Vercel (vercel.json rewrite SPA)
 - **Jobs asynchrones** : pg_cron (stats agrégées, trending, cache invalidation)
+
+## Routes
+
+### Pages globales
+- `/` → redirige vers `/explorer`
+- `/explorer` → ExplorePage
+- `/explorer/theme/:tag` → TagPage
+- `/citations` → CitationsPage
+- `/fil` → FeedPage (protégée)
+- `/defis` → ChallengesPage
+- `/la-revue` → JournalPage
+- `/la-revue/:slug` → ArticlePage
+- `/livre/:slug` → BookPage (slug généré à l'import, fallback ID)
+- `/login` → LoginPage
+- `/parametres` → SettingsPage (protégée)
+- `/backfill` → BackfillPage (protégée)
+
+### Pages profil (pseudo à la racine)
+- `/:username` → ProfilePage, onglet journal
+- `/:username/bibliotheque` → onglet bibliothèque
+- `/:username/critiques` → onglet critiques
+- `/:username/citations` → onglet citations
+- `/:username/listes` → onglet listes
+- `/:username/bilan` → onglet bilan
+
+### Slugs livres
+Générés à l'import via `src/utils/slugify.js`. Unicité garantie : titre → titre-auteur → titre-auteur-année → titre-n.
+
+### Mots réservés
+Liste dans `src/constants/reserved-usernames.js`. Vérifiés à l'inscription (frontend + backend).
 
 ## Sources de métadonnées livres
 
@@ -181,8 +212,10 @@ L'edge function `book_import` interroge les sources par ISBN, fusionne les résu
 - "Défis" (pas "Challenges" — terme français pour les challenges de lecture)
 
 ### Navigation
+React Router (BrowserRouter). Header avec NavLink. Navigation via `useNav()` context (goToBook) et `useNavigate()`.
 6 sections principales : Explorer, Citations, Fil, Défis, Profil | La Revue (séparée visuellement, serif italic).
 Onglets profil : Journal (diary), Bibliothèque, Mes critiques, Mes citations, Mes listes, Bilan.
+Chaque onglet a sa propre URL (`/:username/critiques`, etc.).
 
 ## Features prototypées (frontend mock)
 

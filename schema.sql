@@ -45,10 +45,12 @@ create table public.books (
   avg_rating numeric(3,2) default 0,
   rating_count int default 0,
   source text,
+  slug text unique,
   created_at timestamptz default now() not null
 );
 
 create unique index books_isbn_idx on public.books (isbn_13) where isbn_13 is not null;
+create unique index books_slug_idx on public.books (slug) where slug is not null;
 create index books_title_idx on public.books using gin (to_tsvector('french', title));
 
 -- ─── Reading Status ──────────────────────────

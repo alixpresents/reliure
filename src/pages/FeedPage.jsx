@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom";
 import Stars from "../components/Stars";
 import Avatar from "../components/Avatar";
 import Heading from "../components/Heading";
@@ -43,7 +44,8 @@ function MiniCover({ url, title, onClick }) {
   );
 }
 
-export default function FeedPage({ go }) {
+export default function FeedPage() {
+  const nav = useNavigate();
   const { items, loading } = useFeed();
   const reviewIds = items.filter(i => i.action_type === "review").map(i => i.target_id);
   const quoteIds = items.filter(i => i.action_type === "quote").map(i => i.target_id);
@@ -52,11 +54,9 @@ export default function FeedPage({ go }) {
 
   const goToBook = async (meta) => {
     if (!meta.book_id) return;
-    const { data } = await supabase.from("books").select("*").eq("id", meta.book_id).single();
-    if (data) {
-      go({ id: data.id, _supabase: data, t: data.title, a: Array.isArray(data.authors) ? data.authors.join(", ") : data.authors, c: data.cover_url, y: data.publication_date, p: data.page_count, r: data.avg_rating, rt: data.rating_count });
-    } else {
-      go({ id: meta.book_id, _supabase: { id: meta.book_id }, t: meta.book_title, a: meta.book_author, c: meta.cover_url });
+    const { data } = await supabase.from("books").select("slug").eq("id", meta.book_id).single();
+    if (data?.slug) {
+      nav(`/livre/${data.slug}`);
     }
   };
 

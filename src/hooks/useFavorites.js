@@ -28,6 +28,8 @@ export function useFavorites() {
           p: d.books.page_count || 0,
           r: d.books.avg_rating || 0,
           rt: d.books.rating_count || 0,
+          slug: d.books.slug,
+          _supabase: d.books,
         } : null,
       }))
     );

@@ -62,7 +62,13 @@ export function useReadingStatus(bookId) {
     setStatusState(prev => ({ ...prev, current_page: page }));
   };
 
-  return { status, loading, alreadyRead, setStatus, removeStatus, updatePage, refetch: fetch };
+  const updateFields = async (fields) => {
+    if (!status?.id) return;
+    await supabase.from("reading_status").update(fields).eq("id", status.id);
+    setStatusState(prev => ({ ...prev, ...fields }));
+  };
+
+  return { status, loading, alreadyRead, setStatus, removeStatus, updatePage, updateFields, refetch: fetch };
 }
 
 export function useUserRating(bookId) {
