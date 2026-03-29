@@ -54,6 +54,8 @@ export default function BookPage({ book, onBack, onTag, go }) {
   const [tagInput, setTagInput] = useState("");
   const [tags, setTags] = useState([]);
   const dateRef = useRef(null);
+  const newReviewRef = useRef(null);
+  const newQuoteRef = useRef(null);
 
   const KNOWN_TAGS = ["en vacances", "recommandé par Margaux", "avion CDG-JFK", "relu", "en VO", "café Oberkampf", "métro"];
   const [tagFocused, setTagFocused] = useState(false);
@@ -143,7 +145,10 @@ export default function BookPage({ book, onBack, onTag, go }) {
     setReviewText("");
     setReviewSpoiler(false);
     resetIOSZoom();
-    refetchReviews();
+    await refetchReviews();
+    requestAnimationFrame(() => {
+      newReviewRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    });
   };
 
   const handlePublishQuote = async () => {
@@ -155,7 +160,10 @@ export default function BookPage({ book, onBack, onTag, go }) {
     setShowQuoteForm(false);
     setQuoteText("");
     resetIOSZoom();
-    refetchQuotes();
+    await refetchQuotes();
+    requestAnimationFrame(() => {
+      newQuoteRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    });
   };
 
   const norm = s => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
@@ -193,14 +201,16 @@ export default function BookPage({ book, onBack, onTag, go }) {
           <div className="text-[15px] text-[#737373] mt-1.5 font-body">{book.a}</div>
           <div className="text-[13px] text-[#767676] mt-1 font-body">{book.y || book.publication_date}{(book.p || book.page_count) ? ` · ${book.p || book.page_count} pages` : ""}</div>
 
-          {/* Rating box */}
-          <div className="flex items-center gap-3 mt-5 p-3.5 px-[18px] bg-surface rounded-lg">
-            <span className="text-[32px] font-bold font-body">{avgRating}</span>
-            <div>
-              <Stars r={avgRating} s={14} />
-              <div className="text-[11px] text-[#767676] mt-0.5 font-body">{ratingCount?.toLocaleString("fr-FR")} évaluation{ratingCount > 1 ? "s" : ""}</div>
+          {/* Rating box — masqué si aucune évaluation */}
+          {ratingCount > 0 && avgRating > 0 && (
+            <div className="flex items-center gap-3 mt-5 p-3.5 px-[18px] bg-surface rounded-lg">
+              <span className="text-[32px] font-bold font-body">{avgRating}</span>
+              <div>
+                <Stars r={avgRating} s={14} />
+                <div className="text-[11px] text-[#767676] mt-0.5 font-body">{ratingCount?.toLocaleString("fr-FR")} évaluation{ratingCount > 1 ? "s" : ""}</div>
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Status pills */}
           <div className="flex gap-1.5 mt-[18px] flex-wrap items-center">
@@ -406,11 +416,12 @@ export default function BookPage({ book, onBack, onTag, go }) {
             {reviewsLoading ? (
               <div className="py-6 text-center text-[13px] text-[#767676] font-body">Chargement...</div>
             ) : dbReviews.length > 0 ? (
-              dbReviews.map(rv => {
+              dbReviews.map((rv, i) => {
                 const name = rv.users?.display_name || rv.users?.username || "?";
                 const initials = name.split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2);
+                const isOwn = rv.user_id === user?.id;
                 return (
-                  <div key={rv.id} className="py-4 border-b border-border-light">
+                  <div key={rv.id} ref={isOwn && i === dbReviews.findIndex(r => r.user_id === user?.id) ? newReviewRef : undefined} className="py-4 border-b border-border-light">
                     <div className="flex items-center gap-2.5 mb-2">
                       <Avatar i={initials} s={26} />
                       <span className="text-[13px] font-semibold font-body">{name}</span>
@@ -477,10 +488,11 @@ export default function BookPage({ book, onBack, onTag, go }) {
             {quotesLoading ? (
               <div className="py-6 text-center text-[13px] text-[#767676] font-body">Chargement...</div>
             ) : dbQuotes.length > 0 ? (
-              dbQuotes.map(q => {
+              dbQuotes.map((q, i) => {
                 const name = q.users?.display_name || q.users?.username || "?";
+                const isOwn = q.user_id === user?.id;
                 return (
-                  <div key={q.id} className="py-[18px] border-b border-border-light">
+                  <div key={q.id} ref={isOwn && i === dbQuotes.findIndex(qt => qt.user_id === user?.id) ? newQuoteRef : undefined} className="py-[18px] border-b border-border-light">
                     <div className="text-[15px] italic text-[#1a1a1a] leading-[1.7] border-l-[3px] border-l-cover-fallback pl-4 font-display">
                       « {q.body} »
                     </div>

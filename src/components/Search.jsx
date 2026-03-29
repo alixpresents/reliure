@@ -12,7 +12,7 @@ export default function Search({ open, onClose, go }) {
   const timer = useRef(null);
   const inputRef = useRef(null);
 
-  // Animate in
+  // Animate in/out
   useEffect(() => {
     if (open) {
       requestAnimationFrame(() => setVisible(true));
@@ -25,10 +25,10 @@ export default function Search({ open, onClose, go }) {
   // Escape key
   useEffect(() => {
     if (!open) return;
-    const handler = e => { if (e.key === "Escape") onClose(); };
+    const handler = e => { if (e.key === "Escape") handleClose(); };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [open, onClose]);
+  }, [open]);
 
   // Debounced search
   useEffect(() => {
@@ -44,6 +44,11 @@ export default function Search({ open, onClose, go }) {
   }, [q]);
 
   if (!open) return null;
+
+  const handleClose = () => {
+    resetIOSZoom();
+    onClose();
+  };
 
   const handleSelect = async (gb) => {
     setImporting(gb.googleId);
@@ -65,97 +70,106 @@ export default function Search({ open, onClose, go }) {
         _supabase: book,
       };
       go(normalized);
-      onClose();
-      resetIOSZoom();
+      handleClose();
       setQ("");
       setResults([]);
     }
   };
 
-  const handleClose = () => {
-    resetIOSZoom();
-    onClose();
-  };
-
   return (
     <>
-      {/* Overlay */}
+      {/* Overlay sombre — couvre toute la page */}
       <div
-        className="fixed inset-0 z-150 transition-opacity duration-150"
-        style={{ backgroundColor: visible ? "rgba(0,0,0,0.3)" : "rgba(0,0,0,0)" }}
+        className="fixed inset-0 z-200"
+        style={{
+          backgroundColor: visible ? "rgba(0,0,0,0.3)" : "rgba(0,0,0,0)",
+          transition: "background-color 150ms ease-out",
+        }}
         onClick={handleClose}
       />
 
-      {/* Dropdown */}
+      {/* Conteneur de positionnement — fixe sous le header, centré */}
       <div
-        className="fixed left-0 right-0 z-200 bg-white shadow-[0_8px_32px_rgba(0,0,0,0.12)] rounded-b-none sm:rounded-b-[12px] sm:left-1/2 sm:-translate-x-1/2 sm:max-w-[560px] sm:w-full transition-all duration-150 ease-out overflow-hidden"
-        style={{
-          top: 52,
-          opacity: visible ? 1 : 0,
-          transform: visible ? "translateY(0)" : "translateY(-10px)",
-        }}
-        onClick={e => e.stopPropagation()}
+        className="fixed left-0 right-0 z-201 flex justify-center"
+        style={{ top: 52 }}
+        onClick={handleClose}
       >
-        {/* Input row */}
-        <div className="flex items-center gap-3 px-5 border-b border-[#eee]">
-          <input
-            ref={inputRef}
-            value={q}
-            onChange={e => setQ(e.target.value)}
-            placeholder="Chercher un livre, un auteur..."
-            className="flex-1 min-w-0 py-4 text-base bg-transparent border-none outline-none text-[#1a1a1a] font-display italic placeholder:text-[#999] placeholder:font-display placeholder:italic"
-          />
-          {q && (
+        {/* Panneau blanc */}
+        <div
+          className="w-full sm:max-w-[560px] bg-white rounded-b-none sm:rounded-b-[12px] overflow-hidden"
+          style={{
+            boxShadow: "0 8px 32px rgba(0,0,0,0.12)",
+            maxHeight: "60vh",
+            opacity: visible ? 1 : 0,
+            transform: visible ? "translateY(0)" : "translateY(-8px)",
+            transition: "opacity 150ms ease-out, transform 150ms ease-out",
+          }}
+          onClick={e => e.stopPropagation()}
+        >
+          {/* Input */}
+          <div className="flex items-center gap-3 px-5 py-4 border-b border-[#eee]">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#bbb" strokeWidth="2" className="shrink-0">
+              <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
+            <input
+              ref={inputRef}
+              value={q}
+              onChange={e => setQ(e.target.value)}
+              placeholder="Chercher un livre, un auteur..."
+              className="flex-1 min-w-0 text-base bg-transparent border-none outline-none text-[#1a1a1a] font-display italic placeholder:text-[#999] placeholder:font-display placeholder:italic"
+            />
+            {q && (
+              <button
+                onClick={() => { setQ(""); setResults([]); inputRef.current?.focus(); }}
+                className="text-[#999] hover:text-[#1a1a1a] bg-transparent border-none cursor-pointer p-2 shrink-0 transition-colors duration-150"
+                aria-label="Effacer"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
+            )}
             <button
-              onClick={() => { setQ(""); setResults([]); inputRef.current?.focus(); }}
-              className="text-[#999] hover:text-[#1a1a1a] bg-transparent border-none cursor-pointer p-2 shrink-0 transition-colors duration-150"
-              aria-label="Effacer"
+              onClick={handleClose}
+              className="sm:hidden shrink-0 bg-transparent border-none cursor-pointer text-[14px] text-[#999] font-body py-1"
             >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
-              </svg>
+              Annuler
             </button>
-          )}
-          <button
-            onClick={handleClose}
-            className="sm:hidden shrink-0 bg-transparent border-none cursor-pointer text-[14px] text-[#999] font-body py-2"
-          >
-            Annuler
-          </button>
-        </div>
+          </div>
 
-        {/* Results */}
-        <div className="overflow-y-auto" style={{ maxHeight: "calc(60vh - 56px)" }}>
-          {loading && (
-            <div className="py-6 text-center text-[13px] text-[#767676] font-body">Recherche...</div>
-          )}
+          {/* Résultats */}
+          <div className="overflow-y-auto" style={{ maxHeight: "calc(60vh - 64px)" }}>
+            {loading && (
+              <div className="py-8 text-center text-[13px] text-[#767676] font-body">Recherche...</div>
+            )}
 
-          {!loading && q.length >= 2 && results.length === 0 && (
-            <div className="py-6 text-center text-[13px] text-[#767676] font-body">Aucun résultat pour cette recherche.</div>
-          )}
+            {!loading && q.length >= 2 && results.length === 0 && (
+              <div className="py-8 text-center text-[13px] text-[#767676] font-body">Aucun résultat pour cette recherche.</div>
+            )}
 
-          {results.map(gb => (
-            <div
-              key={gb.googleId}
-              onClick={() => importing ? null : handleSelect(gb)}
-              className={`flex gap-3 py-2.5 px-5 min-h-[44px] items-center transition-colors duration-100 ${importing === gb.googleId ? "opacity-50" : "cursor-pointer hover:bg-surface"}`}
-            >
-              {gb.coverUrl ? (
-                <img src={gb.coverUrl} alt="" className="w-9 h-[52px] object-cover rounded-sm shrink-0 bg-cover-fallback" />
-              ) : (
-                <div className="w-9 h-[52px] rounded-sm bg-cover-fallback shrink-0" />
-              )}
-              <div className="flex-1 min-w-0">
-                <div className="text-[14px] font-medium font-body truncate">{gb.title}</div>
-                <div className="text-xs text-[#737373] font-body truncate">
-                  {gb.authors.join(", ")}{gb.publishedDate ? ` · ${gb.publishedDate.slice(0, 4)}` : ""}
+            {results.map(gb => (
+              <div
+                key={gb.googleId}
+                onClick={() => importing ? null : handleSelect(gb)}
+                className={`flex gap-3 py-2.5 px-5 min-h-[44px] items-center transition-colors duration-100 ${importing === gb.googleId ? "opacity-50" : "cursor-pointer hover:bg-surface"}`}
+              >
+                {gb.coverUrl ? (
+                  <img src={gb.coverUrl} alt="" className="w-9 h-[52px] object-cover rounded-sm shrink-0 bg-cover-fallback" />
+                ) : (
+                  <div className="w-9 h-[52px] rounded-sm bg-cover-fallback shrink-0" />
+                )}
+                <div className="flex-1 min-w-0">
+                  <div className="text-[14px] font-medium font-body truncate">{gb.title}</div>
+                  <div className="text-xs text-[#737373] font-body truncate">
+                    {gb.authors.join(", ")}{gb.publishedDate ? ` · ${gb.publishedDate.slice(0, 4)}` : ""}
+                  </div>
                 </div>
+                {importing === gb.googleId && (
+                  <span className="text-[11px] text-[#767676] font-body self-center shrink-0">Ajout...</span>
+                )}
               </div>
-              {importing === gb.googleId && (
-                <span className="text-[11px] text-[#767676] font-body self-center shrink-0">Ajout...</span>
-              )}
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </div>
     </>
