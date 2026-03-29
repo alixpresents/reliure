@@ -164,12 +164,36 @@ export default function Search({ open, onClose, go }) {
 
   const handleAIBookClick = async (aiBook) => {
     setLoading(true);
-    const canonicalQuery = `${aiBook.title} ${aiBook.author}`;
-    const bookResults = await searchBooks(canonicalQuery);
-    setLoading(false);
+
+    // 1. Essai Google Books avec titre canonique
+    const bookResults = await searchBooks(`${aiBook.title} ${aiBook.author}`);
     if (bookResults.length > 0) {
+      setLoading(false);
       await handleSelect(bookResults[0]);
+      return;
     }
+
+    // 2. Fallback : importer directement depuis les données IA
+    // importBook gère : check ISBN existant → edge function → insert minimal
+    const book = await importBook({
+      title: aiBook.title,
+      authors: aiBook.author ? [aiBook.author] : [],
+      isbn13: aiBook.isbn13 || null,
+      coverUrl: null,
+      subtitle: null,
+      publisher: null,
+      publishedDate: null,
+      pageCount: null,
+      description: null,
+    });
+
+    setLoading(false);
+    handleClose();
+    setQ("");
+    setResults([]);
+
+    if (book?.slug) navigate(`/livre/${book.slug}`);
+    else if (book?.id) navigate(`/livre/${book.id}`);
   };
 
   const acceptGhost = () => {
