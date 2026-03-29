@@ -682,7 +682,7 @@ casser l'existant (nullable au début, migration progressive).
 
 ## 10. Import CSV Babelio / Goodreads
 
-**Statut :** Post-bêta · Levier d'acquisition #1
+**Statut :** En cours · Levier d'acquisition #1
 **Portée :** BackfillPage + edge function d'import
 
 ### Le concept

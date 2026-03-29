@@ -4,6 +4,7 @@ import { B } from "../data";
 import Img from "../components/Img";
 import Label from "../components/Label";
 import InteractiveStars from "../components/InteractiveStars";
+import CSVImport from "../components/CSVImport";
 import { searchBooks } from "../lib/googleBooks";
 import { importBook } from "../lib/importBook";
 import { useAuth } from "../lib/AuthContext";
@@ -150,9 +151,19 @@ export default function BackfillPage() {
         ← Retour au profil
       </button>
 
+      {/* CSV Import */}
+      <CSVImport />
+
+      {/* Séparateur */}
+      <div className="flex items-center gap-3 mb-8">
+        <div className="flex-1 h-px bg-[#f0f0f0]" />
+        <span className="text-[11px] uppercase tracking-widest text-[#ccc] font-body">ou ajoute manuellement</span>
+        <div className="flex-1 h-px bg-[#f0f0f0]" />
+      </div>
+
       {/* Header */}
       <div className="text-center mb-6">
-        <h1 className="font-display italic text-2xl font-normal mb-1 leading-tight">
+        <h1 className="font-display italic text-xl font-normal mb-1 leading-tight">
           Qu'as-tu lu récemment ?
         </h1>
         <p className="text-[13px] text-[#737373] font-body">
