@@ -993,4 +993,64 @@ Coût estimé : ~$0.001 par synthèse.
 
 ---
 
+## 4. Enrichissement communautaire des fiches livres
+
+**Statut :** Idée · Post-beta
+**Inspiré de :** TMDb (contributions ouvertes + modération), Babelio (corrections communautaires), Open Library (éditions collaboratives)
+**Portée :** Feature fiche livre + back-office modération
+
+### Le concept
+
+Quand une fiche livre est incomplète (pas de couverture, pas de description, nombre de pages manquant, auteur mal orthographié), n'importe quel utilisateur connecté peut proposer une correction ou un enrichissement. La modification est soumise à validation avant d'être appliquée.
+
+### Ce qu'on peut enrichir
+
+- Couverture (upload d'image)
+- Description / résumé
+- Nombre de pages
+- Date de publication
+- Éditeur
+- ISBN
+- Genres / thèmes
+- Correction du titre ou de l'auteur
+
+### Mécanique de modération
+
+Deux niveaux envisageables :
+
+**V1 — modération manuelle par l'équipe Reliure** : toutes les contributions passent dans une file d'attente, l'équipe valide ou rejette. Simple à implémenter, contrôle total, mais ne scale pas.
+
+**V2 — modération communautaire** : les utilisateurs avec un seuil de contributions validées (ex : 10+ acceptées) obtiennent un statut "contributeur de confiance" et leurs modifications sont appliquées directement, sans attente. Modèle Wikipedia/TMDb.
+
+### UX sur la fiche livre
+
+- Bouton discret "Compléter cette fiche" visible uniquement si des champs sont manquants
+- Formulaire léger : un champ à la fois, pas une page entière
+- Feedback : "Merci ! Ta contribution sera examinée sous 48h"
+- Si la contribution est acceptée : notification à l'utilisateur + badge "Contributeur" sur son profil
+
+### Tables envisagées
+```sql
+book_contributions
+  id, user_id, book_id,
+  field (cover/description/page_count/etc.),
+  proposed_value text,
+  status (pending/accepted/rejected),
+  reviewed_by, reviewed_at,
+  created_at
+
+-- Optionnel v2 :
+contributor_stats
+  user_id, accepted_count, rejected_count, trusted (boolean)
+```
+
+### Ce qu'on ne fait PAS en v1
+
+- Pas d'historique de modifications visible publiquement (v2)
+- Pas de système de votes sur les contributions
+- Pas d'upload de couverture par les users en v1 (trop complexe — modération image, stockage Supabase Storage) — uniquement les champs texte/numériques
+- Pas de merge automatique sans validation humaine
+
+---
+
 *Dernière mise à jour : 29 mars 2026*
