@@ -158,16 +158,31 @@ export default function Search({ open, onClose, go }) {
   const displayResults = useMemo(() => {
     if (!aiBooks.length || !results.length) return results;
 
-    const matched = [];
-    const unmatched = [];
+    const normT = (s) => normalize(s);
+    const normA = (s) =>
+      normalize(s)
+        .replace(/\([^)]*\)/g, "")
+        .replace(/[^a-z\s]/g, "")
+        .trim()
+        .split(/\s+/)
+        .sort()
+        .join(" ");
 
-    for (const r of results) {
-      if (isAIConfirmed(r, aiBooks)) matched.push(r);
-      else unmatched.push(r);
-    }
+    const confirmed = results.filter(r =>
+      aiBooks.some(ai => {
+        const aiTitle = normT(ai.title);
+        const aiAuthor = normA(ai.author || "");
+        const rTitle = normT(r.title);
+        const rAuthor = normA(r.authors?.[0] || "");
+        return rTitle === aiTitle || (aiAuthor && rAuthor === aiAuthor && rTitle.includes(aiTitle.split(" ")[0]));
+      })
+    );
 
-    // Limiter les non-confirmés à 2 pour réduire le bruit
-    return [...matched, ...unmatched.slice(0, 2)];
+    const unconfirmed = results
+      .filter(r => !confirmed.includes(r))
+      .slice(0, 2);
+
+    return [...confirmed, ...unconfirmed];
   }, [results, aiBooks]);
 
   if (!open) return null;
