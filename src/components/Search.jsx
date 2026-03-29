@@ -203,6 +203,7 @@ export default function Search({ open, onClose, go }) {
     setImporting(gb.googleId);
 
     const book = await importBook(gb);
+    console.log("[Search] importBook result:", book?.id, "slug:", book?.slug, "title:", book?.title);
     setImporting(null);
     if (book) {
       const normalized = {
@@ -491,11 +492,12 @@ export default function Search({ open, onClose, go }) {
 
                   const handleClick = () => {
                     if (isImporting || added) return;
-                    if (isDb && gb.slug) {
+                    if (isDb) {
+                      console.log("[Search] DB click:", gb.title, "slug:", gb.slug, "dbId:", gb.dbId);
                       handleClose();
                       setQ("");
                       setResults([]);
-                      navigate(`/livre/${gb.slug}`);
+                      navigate(`/livre/${gb.slug ?? gb.dbId}`);
                     } else if (isBnF) {
                       handleBnFSelect(gb);
                     } else {
