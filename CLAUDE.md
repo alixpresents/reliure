@@ -62,6 +62,8 @@ L'app ne doit jamais ressembler à un tableur ou à un webzine. C'est un objet c
 
 ## Stack technique
 
+> **Ce projet est React + Vite, PAS Next.js.** Ne jamais utiliser `"use client"`, `"use server"`, `getServerSideProps`, `getStaticProps`, ou toute autre convention Next.js.
+
 - **Frontend** : React + Vite + React Router (BrowserRouter)
 - **Backend** : Supabase (auth, PostgreSQL, storage, realtime, edge functions)
 - **Styling** : Tailwind CSS (migré depuis CSS-in-JS)
