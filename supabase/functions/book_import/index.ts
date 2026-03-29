@@ -285,6 +285,57 @@ function mergeSources(
 }
 
 // ---------------------------------------------------------------------------
+// Anti-doublons : recherche par titre normalisé + auteur
+// ---------------------------------------------------------------------------
+function normTitle(t: string): string {
+  return t
+    .toLowerCase()
+    .trim()
+    .split(/\s*[:/]\s/)[0]
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9\s]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function lastNameOf(authors: string[] | null): string | null {
+  const first = authors?.[0];
+  if (!first) return null;
+  let n = first.replace(/\([^)]*\)/g, "").replace(/\.\s*[A-Z].*$/, "").trim();
+  if (n.includes(",")) n = n.split(",")[0].trim();
+  else { const p = n.split(/\s+/); n = p[p.length - 1]; }
+  return n.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+}
+
+async function findByTitleAuthor(
+  supabase: ReturnType<typeof createClient>,
+  title: string,
+  authors: string[] | null,
+) {
+  const nt = normTitle(title);
+  if (!nt) return null;
+  const firstWord = nt.split(" ")[0];
+  if (firstWord.length < 2) return null;
+  const authorLast = lastNameOf(authors);
+
+  const { data: candidates } = await supabase
+    .from("books")
+    .select("*")
+    .ilike("title", `%${firstWord}%`)
+    .limit(20);
+
+  if (!candidates?.length) return null;
+
+  for (const c of candidates) {
+    if (normTitle(c.title) !== nt) continue;
+    const cAuthor = lastNameOf(Array.isArray(c.authors) ? c.authors : null);
+    if (!authorLast || !cAuthor || cAuthor === authorLast) return c;
+  }
+  return null;
+}
+
+// ---------------------------------------------------------------------------
 // Handler
 // ---------------------------------------------------------------------------
 Deno.serve(async (req) => {
@@ -339,6 +390,21 @@ Deno.serve(async (req) => {
     );
 
     const merged = mergeSources(google, openLib, bnf, fallback);
+
+    // Anti-doublons : même oeuvre sous un ISBN différent ?
+    if (merged.title) {
+      const dup = await findByTitleAuthor(
+        supabase,
+        merged.title,
+        (merged.authors as string[]) || null,
+      );
+      if (dup) {
+        return new Response(JSON.stringify(dup), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
+
     const slug = await generateSlug(
       merged.title!,
       (merged.authors as string[]) || [],

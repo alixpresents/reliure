@@ -1,5 +1,6 @@
 import { supabase } from "./supabase";
 import { generateBookSlug } from "../utils/slugify";
+import { findExistingBook } from "../utils/deduplicateBook";
 
 async function slugExists(slug) {
   const { data } = await supabase.from("books").select("id").eq("slug", slug).limit(1).maybeSingle();
@@ -7,27 +8,13 @@ async function slugExists(slug) {
 }
 
 export async function importBook(googleBook) {
-  // Try to find by ISBN first
-  if (googleBook.isbn13) {
-    const { data: existing } = await supabase
-      .from("books")
-      .select("*")
-      .eq("isbn_13", googleBook.isbn13)
-      .single();
-    if (existing) return existing;
-  }
-
-  // Try to find by exact title + first author
-  const firstAuthor = googleBook.authors?.[0];
-  if (firstAuthor) {
-    const { data: existing } = await supabase
-      .from("books")
-      .select("*")
-      .eq("title", googleBook.title)
-      .contains("authors", [firstAuthor])
-      .single();
-    if (existing) return existing;
-  }
+  // Anti-doublons : ISBN exact puis titre normalisé + auteur
+  const existing = await findExistingBook(supabase, {
+    title: googleBook.title,
+    authors: googleBook.authors,
+    isbn13: googleBook.isbn13,
+  });
+  if (existing) return existing;
 
   // If ISBN available → multi-API enrichment via edge function
   if (googleBook.isbn13) {
