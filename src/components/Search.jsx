@@ -521,7 +521,7 @@ export default function Search({ open, onClose, go }) {
                       <div className="flex-1 min-w-0">
                         <div className="text-[14px] font-medium font-body truncate">{gb.title}</div>
                         <div className="text-xs text-[#737373] font-body truncate">
-                          {gb.authors.join(", ")}{gb.publishedDate ? ` · ${gb.publishedDate.slice(0, 4)}` : ""}
+                          {gb.authors.join(", ")}
                         </div>
                       </div>
                       {added && (
