@@ -86,10 +86,24 @@ export function useUserRating(bookId) {
   const setRating = async (newRating) => {
     if (!user || !bookId) return;
     setRatingState(newRating); // optimistic
-    await supabase.from("reviews").upsert(
-      { user_id: user.id, book_id: bookId, rating: newRating },
-      { onConflict: "user_id,book_id" }
-    );
+    if (newRating === 0) {
+      // Remove rating — delete review if no body either
+      const { data } = await supabase
+        .from("reviews")
+        .update({ rating: null })
+        .eq("user_id", user.id)
+        .eq("book_id", bookId)
+        .select("id, body")
+        .single();
+      if (data && !data.body) {
+        await supabase.from("reviews").delete().eq("id", data.id);
+      }
+    } else {
+      await supabase.from("reviews").upsert(
+        { user_id: user.id, book_id: bookId, rating: newRating },
+        { onConflict: "user_id,book_id" }
+      );
+    }
   };
 
   return { rating, loading: loading, setRating };

@@ -115,6 +115,14 @@ export default function BookPage({ book, onBack, onTag, go }) {
   const handleRating = async r => {
     setUr(r);
     await dbSetRating(r);
+    // Auto-create reading_status "read" if none exists
+    if (!dbStatus) {
+      const now = new Date().toISOString();
+      setSt("Lu");
+      setFinDate(todayLabel());
+      setNoDate(false);
+      dbSetStatus("read", { finished_at: now });
+    }
     if (isUuid) {
       const { data } = await supabase.from("books").select("avg_rating, rating_count").eq("id", bookId).single();
       if (data) setLiveBook(data);
@@ -180,14 +188,14 @@ export default function BookPage({ book, onBack, onTag, go }) {
         <div className="flex-1 pt-1">
           <h1 className="m-0 text-[26px] font-normal leading-tight font-display italic">{book.t}</h1>
           <div className="text-[15px] text-[#737373] mt-1.5 font-body">{book.a}</div>
-          <div className="text-[13px] text-[#767676] mt-1 font-body">{book.y} · {book.p} pages</div>
+          <div className="text-[13px] text-[#767676] mt-1 font-body">{book.y || book.publication_date}{(book.p || book.page_count) ? ` · ${book.p || book.page_count} pages` : ""}</div>
 
           {/* Rating box */}
           <div className="flex items-center gap-3 mt-5 p-3.5 px-[18px] bg-surface rounded-lg">
             <span className="text-[32px] font-bold font-body">{avgRating}</span>
             <div>
               <Stars r={avgRating} s={14} />
-              <div className="text-[11px] text-[#767676] mt-0.5 font-body">{ratingCount?.toLocaleString("fr-FR")} évaluations</div>
+              <div className="text-[11px] text-[#767676] mt-0.5 font-body">{ratingCount?.toLocaleString("fr-FR")} évaluation{ratingCount > 1 ? "s" : ""}</div>
             </div>
           </div>
 
