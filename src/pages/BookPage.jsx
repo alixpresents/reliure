@@ -22,6 +22,52 @@ import { useNavigate, Link } from "react-router-dom";
 import { useNav } from "../lib/NavigationContext";
 import { useBookLists } from "../hooks/useBookLists";
 
+function LoginModal({ book, onClose, onNavigate }) {
+  useEffect(() => {
+    const handler = e => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [onClose]);
+
+  return (
+    <>
+      <div onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: 9998, backgroundColor: "rgba(0,0,0,0.4)" }} />
+      <div style={{ position: "fixed", inset: 0, zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 16px" }}>
+        <div onClick={e => e.stopPropagation()} style={{ width: "100%", maxWidth: 360, background: "#fff", borderRadius: 16, boxShadow: "0 12px 48px rgba(0,0,0,0.16)", padding: "28px 24px 24px", textAlign: "center" }}>
+          {/* Cover */}
+          {(book.c || book.cover_url) && (
+            <div className="flex justify-center mb-5">
+              <img
+                src={book.c || book.cover_url}
+                alt=""
+                style={{ width: 48, height: 72, objectFit: "cover", borderRadius: 3, boxShadow: "0 2px 8px rgba(0,0,0,0.12)" }}
+              />
+            </div>
+          )}
+          <div className="text-[17px] font-semibold font-body text-[#1a1a1a] mb-1.5 leading-snug">
+            Garde une trace de cette lecture
+          </div>
+          <div className="text-[13px] text-[#767676] font-body mb-6 leading-relaxed">
+            Crée ton profil gratuit en 30 secondes.
+          </div>
+          <button
+            onClick={() => onNavigate("/login")}
+            className="w-full py-3 rounded-full bg-[#1a1a1a] text-white text-[14px] font-medium font-body border-none cursor-pointer hover:bg-[#333] transition-colors duration-150 mb-3"
+          >
+            Créer mon profil
+          </button>
+          <button
+            onClick={() => onNavigate("/login")}
+            className="w-full bg-transparent border-none cursor-pointer text-[13px] text-[#767676] font-body hover:text-[#1a1a1a] transition-colors duration-150"
+          >
+            Déjà un compte ? Se connecter
+          </button>
+        </div>
+      </div>
+    </>
+  );
+}
+
 export default function BookPage({ book }) {
   const navigate = useNavigate();
   const { goToBook: go } = useNav();
@@ -66,8 +112,7 @@ export default function BookPage({ book }) {
   const [isReread, setIsReread] = useState(false);
   const [tagInput, setTagInput] = useState("");
   const [tags, setTags] = useState([]);
-  const [loginToast, setLoginToast] = useState(false);
-  const loginToastTimer = useRef(null);
+  const [loginModal, setLoginModal] = useState(false);
   const dateRef = useRef(null);
   const newReviewRef = useRef(null);
   const newQuoteRef = useRef(null);
@@ -101,11 +146,30 @@ export default function BookPage({ book }) {
     setTagInput(""); setTags([]); setTagFocused(false);
   }, [book.id]);
 
-  const showLoginToast = () => {
-    setLoginToast(true);
-    clearTimeout(loginToastTimer.current);
-    loginToastTimer.current = setTimeout(() => setLoginToast(false), 3500);
+  const showLoginModal = (saveIntent = false) => {
+    if (saveIntent) {
+      const slug = book._supabase?.slug || book.slug;
+      localStorage.setItem("reliure_pending_intent", JSON.stringify({ bookId, bookSlug: slug, action: "want_to_read" }));
+    }
+    setLoginModal(true);
   };
+
+  // Execute pending intent after login
+  useEffect(() => {
+    if (!user || statusLoading) return;
+    const raw = localStorage.getItem("reliure_pending_intent");
+    if (!raw) return;
+    try {
+      const { bookId: intentId, action } = JSON.parse(raw);
+      if (intentId === bookId && action === "want_to_read" && !dbStatus) {
+        localStorage.removeItem("reliure_pending_intent");
+        setSt("À lire");
+        dbSetStatus("want_to_read");
+      }
+    } catch {
+      localStorage.removeItem("reliure_pending_intent");
+    }
+  }, [user?.id, statusLoading]);
 
   const STATUS_MAP = { "En cours": "reading", "Lu": "read", "À lire": "want_to_read", "Abandonné": "abandoned" };
 
@@ -124,7 +188,7 @@ export default function BookPage({ book }) {
   };
 
   const handleStatus = s => {
-    if (!user) { showLoginToast(); return; }
+    if (!user) { showLoginModal(s === "À lire"); return; }
     if (st === s) {
       // Remove status
       setSt(null); setFinDate(null); setNoDate(false); setIsReread(false);
@@ -146,7 +210,7 @@ export default function BookPage({ book }) {
   };
 
   const handleRating = async r => {
-    if (!user) { showLoginToast(); return; }
+    if (!user) { showLoginModal(false); return; }
     setUr(r);
     await dbSetRating(r);
     // Auto-create reading_status "read" if none exists
@@ -220,14 +284,8 @@ export default function BookPage({ book }) {
 
   return (
     <div>
-      {/* Toast connexion requise */}
-      {loginToast && (
-        <div className="fixed bottom-[60px] left-1/2 -translate-x-1/2 z-[9995] bg-[#1a1a1a] text-white text-[13px] font-body py-2.5 px-4 rounded-lg shadow-lg flex items-center gap-3 whitespace-nowrap">
-          <span>Connecte-toi pour interagir avec ce livre</span>
-          <Link to="/login" className="text-white underline shrink-0 font-medium">Se connecter</Link>
-          <button onClick={() => setLoginToast(false)} className="bg-transparent border-none cursor-pointer text-white/60 hover:text-white p-0 ml-1 leading-none">×</button>
-        </div>
-      )}
+      {/* Modal connexion requise */}
+      {loginModal && <LoginModal book={book} onClose={() => setLoginModal(false)} onNavigate={path => { setLoginModal(false); navigate(path); }} />}
 
       <button onClick={() => navigate(-1)} className="bg-transparent border-none text-[#737373] cursor-pointer text-[13px] py-4 font-body">
         ← Retour

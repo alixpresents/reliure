@@ -368,7 +368,8 @@ Toutes les pages sont accessibles sans compte, sauf `/fil`, `/parametres`, `/bac
 
 - Header visible pour tous : nav réduite (Explorer, Citations, La Revue) + bouton "Se connecter" pour les visiteurs
 - `JoinBanner` : bandeau fixe en bas (48px, fond #1a1a1a) visible uniquement pour les non-connectés, fermable via localStorage (`reliure_join_banner_dismissed`)
-- Fiche livre : pills de statut et étoiles visibles mais protégées — clic → toast "Connecte-toi pour interagir avec ce livre" (auto-dismiss 3,5s)
+- Fiche livre : pills de statut et étoiles visibles mais protégées — clic → mini-modal `LoginModal` avec couverture du livre, titre "Garde une trace de cette lecture", CTA "Créer mon profil" → /login, Échap/clic extérieur ferme
+- Intention persistée : clic "À lire" sans compte → `reliure_pending_intent` dans localStorage `{ bookId, bookSlug, action: 'want_to_read' }` — exécutée automatiquement au retour sur la fiche après connexion (`useEffect` sur `user?.id + statusLoading`)
 - Profil : bouton "Suivre" visible sur tous les profils tiers ; redirige vers `/login` si non connecté, sinon toggle follow/unfollow via `useFollow`
 
 ## Logique profil visiteur vs. propriétaire
