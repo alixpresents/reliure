@@ -42,9 +42,11 @@ export default function Search({ open, onClose, go }) {
   const [userResults, setUserResults] = useState([]);
   const [userSuggestionLabel, setUserSuggestionLabel] = useState("Lecteurs");
   const [ghostDismissed, setGhostDismissed] = useState(false);
+  const [enrichedMap, setEnrichedMap] = useState({});
   const timer = useRef(null);
   const inputRef = useRef(null);
   const multiAddMode = useRef(false);
+  const enrichingRef = useRef(new Set());
 
   const atMode = q.startsWith("@");
   const atQuery = q.slice(1);
@@ -85,6 +87,8 @@ export default function Search({ open, onClose, go }) {
 
   useEffect(() => {
     clearTimeout(timer.current);
+    setEnrichedMap({});
+    enrichingRef.current.clear();
 
     if (atMode) {
       setResults([]);
@@ -143,6 +147,46 @@ export default function Search({ open, onClose, go }) {
     }
     return boosted;
   }, [results, aiBooks]);
+
+  // Enrichissement par ISBN IA en arrière-plan
+  useEffect(() => {
+    if (!aiBooks.length || !rankedResults.length) return;
+
+    const normalizeAuthor = (s) =>
+      normalize(s).replace(/\([^)]*\)/g, "").replace(/[^a-z\s]/g, "").trim()
+        .split(/\s+/).sort().join(" ");
+
+    for (const aiBook of aiBooks) {
+      if (!aiBook.isbn13) continue;
+      const aiTitle = normalize(aiBook.title);
+      const aiAuthor = normalizeAuthor(aiBook.author || "");
+
+      const match = rankedResults.find(r => {
+        const rTitle = normalize(r.title);
+        const rAuthor = normalizeAuthor(r.authors?.[0] || "");
+        return rTitle === aiTitle || (aiAuthor && rAuthor === aiAuthor && rTitle.includes(aiTitle.split(" ")[0]));
+      });
+
+      if (!match) continue;
+      if (match.isbn13 === aiBook.isbn13) continue; // Déjà la bonne édition
+
+      const key = normalize(match.title);
+      if (enrichingRef.current.has(key)) continue;
+      enrichingRef.current.add(key);
+
+      searchBooks(aiBook.isbn13).then(res => {
+        if (!res?.length) return;
+        const r = res[0];
+        if (!r.coverUrl && !r.publishedDate) return;
+        setEnrichedMap(prev => ({ ...prev, [key]: {
+          coverUrl: r.coverUrl || null,
+          publishedDate: r.publishedDate || null,
+          publisher: r.publisher || null,
+          isbn13: r.isbn13 || aiBook.isbn13,
+        }}));
+      });
+    }
+  }, [rankedResults, aiBooks]);
 
   if (!open) return null;
 
@@ -463,6 +507,10 @@ export default function Search({ open, onClose, go }) {
                     }
                   };
 
+                  const enriched = enrichedMap[normalize(gb.title)];
+                  const displayCover = enriched?.coverUrl ?? gb.coverUrl;
+                  const displayDate = enriched?.publishedDate ?? gb.publishedDate;
+
                   return (
                     <div
                       key={itemKey}
@@ -473,15 +521,15 @@ export default function Search({ open, onClose, go }) {
                     >
                       {isImporting ? (
                         <Skeleton.Cover w={36} h={52} className="rounded-sm" />
-                      ) : gb.coverUrl ? (
-                        <img src={gb.coverUrl} alt="" className="w-9 h-[52px] object-cover rounded-sm shrink-0 bg-cover-fallback" />
+                      ) : displayCover ? (
+                        <img src={displayCover} alt="" className="w-9 h-[52px] object-cover rounded-sm shrink-0 bg-cover-fallback" />
                       ) : (
                         <div className="w-9 h-[52px] rounded-sm bg-cover-fallback shrink-0" />
                       )}
                       <div className="flex-1 min-w-0">
                         <div className="text-[14px] font-medium font-body truncate">{gb.title}</div>
                         <div className="text-xs text-[#737373] font-body truncate">
-                          {gb.authors.join(", ")}{gb.publishedDate ? ` · ${gb.publishedDate.slice(0, 4)}` : ""}
+                          {gb.authors.join(", ")}{displayDate ? ` · ${displayDate.slice(0, 4)}` : ""}
                         </div>
                       </div>
                       {added && (
