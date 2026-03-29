@@ -45,7 +45,8 @@ Règles :
 - "interpreted_as" = reformulation courte pour afficher à l'utilisateur
 - Ne jamais inventer de livres qui n'existent pas
 - Si la requête n'est pas liée à un livre : { "books": [], "ghost": null, "interpreted_as": null }
-- Si c'est un ISBN (suite de chiffres) : { "books": [], "ghost": null, "interpreted_as": null }`;
+- Si c'est un ISBN (suite de chiffres) : { "books": [], "ghost": null, "interpreted_as": null }
+- Pour isbn13 : toujours retourner l'ISBN de l'édition de poche française la plus courante (Folio Gallimard, Le Livre de Poche, Points Seuil, 10/18, Pocket, J'ai Lu, Babel Actes Sud). Si pas d'édition poche connue, retourner l'édition originale française. Ne jamais retourner un ISBN d'édition collector, illustrée, scolaire, ou numérique.`;
 
 function normalizeQuery(q: string): string {
   return q
@@ -100,6 +101,7 @@ Deno.serve(async (req) => {
 
     // Call Claude Haiku
     const apiKey = Deno.env.get("ANTHROPIC_API_KEY");
+    console.log("DEBUG: API key exists:", !!apiKey, "length:", apiKey?.length);
     if (!apiKey) {
       console.error("smart-search: ANTHROPIC_API_KEY not set");
       return Response.json(
@@ -124,6 +126,10 @@ Deno.serve(async (req) => {
       }),
     });
 
+    console.log("DEBUG: Anthropic status:", aiRes.status);
+    const rawText = await aiRes.text();
+    console.log("DEBUG: Anthropic raw response:", rawText.slice(0, 300));
+
     if (!aiRes.ok) {
       console.error("smart-search: Anthropic API error", aiRes.status);
       return Response.json(
@@ -132,13 +138,14 @@ Deno.serve(async (req) => {
       );
     }
 
-    const aiData = await aiRes.json();
+    const aiData = JSON.parse(rawText);
     const text =
       aiData.content?.[0]?.type === "text" ? aiData.content[0].text : "";
 
     let result;
     try {
-      result = JSON.parse(text);
+      const cleaned = text.replace(/```json\s*/g, "").replace(/```\s*/g, "").trim();
+      result = JSON.parse(cleaned);
     } catch {
       result = { books: [], ghost: null, interpreted_as: null };
     }

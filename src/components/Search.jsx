@@ -115,33 +115,59 @@ export default function Search({ open, onClose, go }) {
   }, [q]);
 
   // Hooks inconditionnels — DOIVENT être avant tout return conditionnel
-  const rankedResults = useMemo(() => {
-    if (!aiBooks.length || !results.length) return results;
 
-    const normalizeAuthor = (s) =>
-      normalize(s)
-        .replace(/\([^)]*\)/g, "")
-        .replace(/[^a-z\s]/g, "")
-        .trim()
-        .split(/\s+/)
-        .sort()
-        .join(" ");
+  // Normalisation partagée pour matching IA ↔ classique
+  const normalizeAuthorForMatch = (s) =>
+    normalize(s)
+      .replace(/\([^)]*\)/g, "")
+      .replace(/[^a-z\s]/g, "")
+      .trim()
+      .split(/\s+/)
+      .sort()
+      .join(" ");
 
-    const boosted = [...results];
-    for (const aiBook of aiBooks) {
-      const aiTitle = normalize(aiBook.title);
-      const aiAuthor = normalizeAuthor(aiBook.author || "");
-      const idx = boosted.findIndex(r => {
+  const isAIConfirmed = (r, aiBooksList) =>
+    aiBooksList.some(ai => {
+      const aiTitle = normalize(ai.title);
+      const aiAuthor = normalizeAuthorForMatch(ai.author || "");
+      const rTitle = normalize(r.title);
+      const rAuthor = normalizeAuthorForMatch(r.authors?.[0] || "");
+      return rTitle === aiTitle || (aiAuthor && rAuthor === aiAuthor && rTitle.includes(aiTitle.split(" ")[0]));
+    });
+
+  // Map résultat classique → livre IA correspondant (pour import par ISBN canonique)
+  const aiConfirmedMap = useMemo(() => {
+    const map = new Map();
+    if (!aiBooks.length) return map;
+    for (const r of results) {
+      for (const ai of aiBooks) {
+        const aiTitle = normalize(ai.title);
+        const aiAuthor = normalizeAuthorForMatch(ai.author || "");
         const rTitle = normalize(r.title);
-        const rAuthor = normalizeAuthor(r.authors?.[0] || "");
-        return rTitle === aiTitle || (aiAuthor && rAuthor === aiAuthor && rTitle.includes(aiTitle.split(" ")[0]));
-      });
-      if (idx > 0) {
-        const [match] = boosted.splice(idx, 1);
-        boosted.unshift(match);
+        const rAuthor = normalizeAuthorForMatch(r.authors?.[0] || "");
+        if (rTitle === aiTitle || (aiAuthor && rAuthor === aiAuthor && rTitle.includes(aiTitle.split(" ")[0]))) {
+          const key = r.googleId || r.isbn13 || r.title;
+          map.set(key, ai);
+          break;
+        }
       }
     }
-    return boosted;
+    return map;
+  }, [results, aiBooks]);
+
+  const displayResults = useMemo(() => {
+    if (!aiBooks.length || !results.length) return results;
+
+    const matched = [];
+    const unmatched = [];
+
+    for (const r of results) {
+      if (isAIConfirmed(r, aiBooks)) matched.push(r);
+      else unmatched.push(r);
+    }
+
+    // Limiter les non-confirmés à 2 pour réduire le bruit
+    return [...matched, ...unmatched.slice(0, 2)];
   }, [results, aiBooks]);
 
   if (!open) return null;
@@ -159,9 +185,23 @@ export default function Search({ open, onClose, go }) {
     navigate(`/${u.username}`);
   };
 
-  const handleSelect = async (gb) => {
+  const handleSelect = async (gb, { skipCanonical = false } = {}) => {
     if (addedGoogleIds.has(gb.googleId)) return;
     setImporting(gb.googleId);
+
+    // Si confirmé par l'IA avec un ISBN canonique, tenter d'importer la bonne édition
+    if (!skipCanonical) {
+      const key = gb.googleId || gb.isbn13 || gb.title;
+      const matchedAI = aiConfirmedMap.get(key);
+      if (matchedAI?.isbn13) {
+        const canonical = await searchBooks("isbn:" + matchedAI.isbn13);
+        if (canonical.length > 0 && canonical[0].googleId !== gb.googleId) {
+          setImporting(null);
+          return handleSelect(canonical[0], { skipCanonical: true });
+        }
+      }
+    }
+
     const book = await importBook(gb);
     setImporting(null);
     if (book) {
@@ -292,7 +332,7 @@ export default function Search({ open, onClose, go }) {
 
   // Deduplicated AI books (exclude titles already in classic results)
   const filteredAIBooks = aiBooks.filter(
-    ab => !rankedResults.some(cr => normalize(cr.title) === normalize(ab.title))
+    ab => !displayResults.some(cr => normalize(cr.title) === normalize(ab.title))
   );
 
   return (
@@ -424,7 +464,7 @@ export default function Search({ open, onClose, go }) {
             {/* Normal mode */}
             {!loading && !atMode && (
               <>
-                {q.length >= 2 && rankedResults.length === 0 && userResults.length === 0 && !aiLoading && filteredAIBooks.length === 0 && (
+                {q.length >= 2 && displayResults.length === 0 && userResults.length === 0 && !aiLoading && filteredAIBooks.length === 0 && (
                   <div className="py-8 text-center text-[13px] text-[#767676] font-body">Aucun résultat pour cette recherche.</div>
                 )}
 
@@ -433,16 +473,16 @@ export default function Search({ open, onClose, go }) {
                   <>
                     <div className="px-5 pt-3 pb-1 text-[11px] uppercase tracking-[1.5px] text-[#999] font-body">Lecteurs</div>
                     {userResults.map(u => <UserRow key={u.id} u={u} onSelect={handleSelectUser} />)}
-                    {rankedResults.length > 0 && (
+                    {displayResults.length > 0 && (
                       <div className="px-5 pt-3 pb-1 text-[11px] uppercase tracking-[1.5px] text-[#999] font-body">
-                        Livres {rankedResults.length > 0 && <span className="normal-case tracking-normal text-[#bbb]">({rankedResults.length})</span>}
+                        Livres {displayResults.length > 0 && <span className="normal-case tracking-normal text-[#bbb]">({displayResults.length})</span>}
                       </div>
                     )}
                   </>
                 )}
 
                 {/* Classic book results */}
-                {rankedResults.map(gb => {
+                {displayResults.map(gb => {
                   const isDb = gb._source === "db";
                   const isBnF = gb._source === "bnf";
                   const itemKey = gb.googleId ?? (isDb ? `db:${gb.dbId}` : `bnf:${gb.isbn13 ?? gb.title}`);
@@ -494,7 +534,7 @@ export default function Search({ open, onClose, go }) {
                 {/* AI results — below classic results */}
                 {filteredAIBooks.length > 0 && (
                   <>
-                    {rankedResults.length > 0 && (
+                    {displayResults.length > 0 && (
                       <div className="flex items-center gap-2 px-5 py-3">
                         <div className="flex-1 h-px bg-[#f0f0f0]" />
                         <span className="text-[10px] uppercase tracking-widest text-[#ccc] font-medium font-body">
@@ -504,7 +544,7 @@ export default function Search({ open, onClose, go }) {
                         <div className="flex-1 h-px bg-[#f0f0f0]" />
                       </div>
                     )}
-                    {rankedResults.length === 0 && interpretedAs && (
+                    {displayResults.length === 0 && interpretedAs && (
                       <div className="px-5 py-2 text-xs text-[#999] font-body">
                         Compris : « {interpretedAs} »
                       </div>
@@ -529,7 +569,7 @@ export default function Search({ open, onClose, go }) {
                 )}
 
                 {/* AI loading indicator (subtle) */}
-                {aiLoading && rankedResults.length > 0 && (
+                {aiLoading && displayResults.length > 0 && (
                   <div className="text-center py-3 text-[11px] text-[#ccc] font-body">
                     Recherche approfondie…
                   </div>
