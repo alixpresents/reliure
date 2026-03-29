@@ -3,9 +3,11 @@ import Img from "../components/Img";
 import Heading from "../components/Heading";
 import LikeButton from "../components/LikeButton";
 import { useCommunityQuotes } from "../hooks/useQuotes";
+import { useLikes } from "../hooks/useLikes";
 
 export default function CitationsPage({ go }) {
   const { quotes: dbQuotes, loading } = useCommunityQuotes();
+  const { likedSet, initialSet, toggle } = useLikes(dbQuotes.map(q => q.id), "quote");
 
   // Use Supabase data if available, fallback to mock
   const useDb = dbQuotes.length > 0;
@@ -34,7 +36,7 @@ export default function CitationsPage({ go }) {
                 </div>
                 <div className="text-right">
                   <div className="text-xs text-[#737373] font-body">{name}</div>
-                  <div className="text-xs text-[#767676] mt-0.5 font-body"><LikeButton count={q.likes_count || 0} /></div>
+                  <div className="text-xs text-[#767676] mt-0.5 font-body"><LikeButton count={q.likes_count || 0} liked={likedSet.has(q.id)} initialLiked={initialSet.has(q.id)} onToggle={() => toggle(q.id)} /></div>
                 </div>
               </div>
             </div>

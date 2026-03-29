@@ -1,11 +1,22 @@
 import { useState } from "react";
 
-export default function LikeButton({ count, className = "" }) {
-  const [liked, setLiked] = useState(false);
+/**
+ * @param {number} count - likes_count from DB (stale, not updated optimistically)
+ * @param {boolean} liked - whether current user has liked (from useLikes Set)
+ * @param {boolean} initialLiked - whether user had liked at fetch time (from useLikes initial Set)
+ * @param {function} onToggle - toggle callback
+ */
+export default function LikeButton({ count = 0, liked = false, initialLiked = false, onToggle, className = "" }) {
   const [pop, setPop] = useState(false);
 
+  // Compute optimistic count: adjust DB count based on local toggle vs initial state
+  let displayCount = count;
+  if (liked && !initialLiked) displayCount += 1;
+  if (!liked && initialLiked) displayCount = Math.max(0, displayCount - 1);
+
   const toggle = () => {
-    setLiked(l => !l);
+    if (!onToggle) return;
+    onToggle();
     setPop(true);
     setTimeout(() => setPop(false), 200);
   };
@@ -14,13 +25,13 @@ export default function LikeButton({ count, className = "" }) {
     <span
       role="button"
       tabIndex={0}
-      onClick={toggle}
+      onClick={e => { e.stopPropagation(); toggle(); }}
       onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggle(); } }}
       aria-label={liked ? "Retirer le like" : "Liker"}
-      className={`cursor-pointer select-none inline-flex items-center gap-[3px] transition-colors duration-200 ${liked ? "text-spoiler" : ""} ${className}`}
+      className={`cursor-pointer select-none inline-flex items-center gap-[3px] transition-colors duration-200 ${liked ? "text-spoiler" : "text-[#ccc]"} ${className}`}
     >
-      <span className={`inline-block transition-transform duration-200 ${pop ? "scale-125" : "scale-100"}`}>♥</span>
-      {count != null && <span>{liked ? count + 1 : count}</span>}
+      <span className={`inline-block transition-transform duration-200 ease-out ${pop ? "scale-[1.2]" : "scale-100"}`}>♥</span>
+      {displayCount > 0 && <span>{displayCount}</span>}
     </span>
   );
 }

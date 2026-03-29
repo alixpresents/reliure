@@ -16,6 +16,7 @@ import { useAuth } from "../lib/AuthContext";
 import { supabase } from "../lib/supabase";
 import { logActivity } from "../hooks/useActivity";
 import { resetIOSZoom } from "../lib/resetZoom";
+import { useLikes } from "../hooks/useLikes";
 
 export default function BookPage({ book, onBack, onTag, go }) {
   const bookId = book._supabase?.id || book.id;
@@ -24,6 +25,8 @@ export default function BookPage({ book, onBack, onTag, go }) {
   const { reviews: dbReviews, loading: reviewsLoading, refetch: refetchReviews } = useBookReviews(bookId);
   const { quotes: dbQuotes, loading: quotesLoading, refetch: refetchQuotes } = useBookQuotes(bookId);
   const { user } = useAuth();
+  const { likedSet: likedReviews, initialSet: initLikedReviews, toggle: toggleReviewLike } = useLikes(dbReviews.map(r => r.id), "review");
+  const { likedSet: likedQuotes, initialSet: initLikedQuotes, toggle: toggleQuoteLike } = useLikes(dbQuotes.map(q => q.id), "quote");
   const userReview = dbReviews.find(rv => rv.user_id === user?.id && rv.body);
 
   // Live book data from Supabase
@@ -435,6 +438,14 @@ export default function BookPage({ book, onBack, onTag, go }) {
                     ) : (
                       <p className="text-[15px] text-[#333] leading-[1.7] m-0 font-body">{rv.body}</p>
                     )}
+                    <div className="mt-2 text-[11px] font-body">
+                      <LikeButton
+                        count={rv.likes_count || 0}
+                        liked={likedReviews.has(rv.id)}
+                        initialLiked={initLikedReviews.has(rv.id)}
+                        onToggle={() => toggleReviewLike(rv.id)}
+                      />
+                    </div>
                   </div>
                 );
               })
@@ -498,6 +509,14 @@ export default function BookPage({ book, onBack, onTag, go }) {
                     </div>
                     <div className="flex items-center gap-2 mt-2.5">
                       <span className="text-xs text-[#737373] font-body">{name}</span>
+                      <span className="text-[11px] font-body">
+                        <LikeButton
+                          count={q.likes_count || 0}
+                          liked={likedQuotes.has(q.id)}
+                          initialLiked={initLikedQuotes.has(q.id)}
+                          onToggle={() => toggleQuoteLike(q.id)}
+                        />
+                      </span>
                     </div>
                   </div>
                 );

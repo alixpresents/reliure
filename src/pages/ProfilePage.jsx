@@ -186,10 +186,14 @@ function FavNote({ note, isOwner, onSave }) {
 function FavoritesSection({ favorites, isOwner, go, onAdd, onRemove, onSwap, onUpdateNote }) {
   const [editing, setEditing] = useState(false);
   const [dragFrom, setDragFrom] = useState(null);
-  const [dragOver, setDragOver] = useState(null);
-  const dragFromRef = useRef(null);
-  const longPressTimer = useRef(null);
+  const [dragOver, _setDragOver] = useState(null);
+  const dragOverRef = useRef(null);
+  const setDragOver = (v) => { dragOverRef.current = v; _setDragOver(v); };
+  const gridRef = useRef(null);
+  const slotRects = useRef([]);
+  const touchState = useRef({ timer: null, active: false, startX: 0, startY: 0, pos: null });
 
+  // Desktop HTML5 drag
   const handleDragStart = (e, pos) => {
     setDragFrom(pos);
     e.dataTransfer.effectAllowed = "move";
@@ -208,24 +212,77 @@ function FavoritesSection({ favorites, isOwner, go, onAdd, onRemove, onSwap, onU
   };
   const handleDragEnd = () => { setDragFrom(null); setDragOver(null); };
 
-  const setDrag = (pos) => { dragFromRef.current = pos; setDragFrom(pos); };
+  // Cache slot positions for hit testing
+  const cacheSlotRects = () => {
+    if (!gridRef.current) return;
+    const slots = gridRef.current.querySelectorAll("[data-fav-pos]");
+    slotRects.current = Array.from(slots).map(el => ({
+      pos: parseInt(el.dataset.favPos),
+      rect: el.getBoundingClientRect(),
+    }));
+  };
 
-  // Mobile: long press to pick, tap another to drop
-  const handleTouchStart = (pos) => {
-    if (dragFromRef.current !== null) return;
-    longPressTimer.current = setTimeout(() => setDrag(pos), 300);
-  };
-  const handleTouchEnd = (pos) => {
-    clearTimeout(longPressTimer.current);
-    if (dragFromRef.current !== null && dragFromRef.current !== pos) {
-      onSwap(dragFromRef.current, pos);
-      setDrag(null);
-      setDragOver(null);
+  const findSlotAtPoint = (x, y) => {
+    for (const { pos, rect } of slotRects.current) {
+      if (x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom) return pos;
     }
+    return null;
   };
-  const handleTouchCancel = () => {
-    clearTimeout(longPressTimer.current);
-    setDrag(null);
+
+  // Mobile touch drag
+  const onTouchStart = (e, pos) => {
+    if (!editing) return;
+    const t = e.touches[0];
+    const ts = touchState.current;
+    ts.startX = t.clientX;
+    ts.startY = t.clientY;
+    ts.pos = pos;
+    ts.active = false;
+    ts.timer = setTimeout(() => {
+      ts.active = true;
+      cacheSlotRects();
+      setDragFrom(pos);
+    }, 300);
+  };
+
+  const onTouchMove = (e, pos) => {
+    const ts = touchState.current;
+    const t = e.touches[0];
+    // Cancel long press if finger moved before activation
+    if (!ts.active) {
+      const dx = t.clientX - ts.startX;
+      const dy = t.clientY - ts.startY;
+      if (Math.abs(dx) > 10 || Math.abs(dy) > 10) {
+        clearTimeout(ts.timer);
+        ts.timer = null;
+      }
+      return;
+    }
+    // Prevent page scroll during drag
+    e.preventDefault();
+    const targetPos = findSlotAtPoint(t.clientX, t.clientY);
+    setDragOver(targetPos !== pos ? targetPos : null);
+  };
+
+  const onTouchEnd = () => {
+    const ts = touchState.current;
+    clearTimeout(ts.timer);
+    if (ts.active && dragFrom !== null) {
+      const targetPos = dragOverRef.current;
+      if (targetPos !== null && targetPos !== dragFrom) {
+        onSwap(dragFrom, targetPos);
+      }
+    }
+    ts.active = false;
+    ts.pos = null;
+    setDragFrom(null);
+    setDragOver(null);
+  };
+
+  const onTouchCancel = () => {
+    clearTimeout(touchState.current.timer);
+    touchState.current.active = false;
+    setDragFrom(null);
     setDragOver(null);
   };
 
@@ -242,7 +299,7 @@ function FavoritesSection({ favorites, isOwner, go, onAdd, onRemove, onSwap, onU
           </button>
         )}
       </div>
-      <div className="grid grid-cols-4 gap-4">
+      <div ref={gridRef} className="grid grid-cols-4 gap-4" style={dragFrom !== null ? { touchAction: "none" } : undefined}>
         {[1, 2, 3, 4].map(pos => {
           const fav = favorites.find(f => f.position === pos);
           const isDragging = dragFrom === pos;
@@ -250,7 +307,7 @@ function FavoritesSection({ favorites, isOwner, go, onAdd, onRemove, onSwap, onU
 
           if (fav?.book) {
             return (
-              <div key={pos} className="group/fav">
+              <div key={pos} className="group/fav" data-fav-pos={pos}>
                 <div
                   className="relative"
                   draggable={editing}
@@ -259,9 +316,10 @@ function FavoritesSection({ favorites, isOwner, go, onAdd, onRemove, onSwap, onU
                   onDrop={editing ? e => handleDrop(e, pos) : undefined}
                   onDragEnd={editing ? handleDragEnd : undefined}
                   onDragLeave={editing ? () => setDragOver(null) : undefined}
-                  onTouchStart={editing ? () => handleTouchStart(pos) : undefined}
-                  onTouchEnd={editing ? () => handleTouchEnd(pos) : undefined}
-                  onTouchCancel={editing ? handleTouchCancel : undefined}
+                  onTouchStart={editing ? e => onTouchStart(e, pos) : undefined}
+                  onTouchMove={editing ? e => onTouchMove(e, pos) : undefined}
+                  onTouchEnd={editing ? onTouchEnd : undefined}
+                  onTouchCancel={editing ? onTouchCancel : undefined}
                   style={{
                     opacity: isDragging ? 0.6 : 1,
                     boxShadow: isDragging ? "0 8px 24px rgba(0,0,0,0.15)" : "none",
@@ -278,7 +336,6 @@ function FavoritesSection({ favorites, isOwner, go, onAdd, onRemove, onSwap, onU
                     className={`w-full h-auto aspect-[2/3] ${editing ? "cursor-grab active:cursor-grabbing" : ""}`}
                   />
 
-                  {/* Gradient + action buttons (edit mode only) */}
                   {editing && (
                     <div className="absolute inset-0 rounded-[3px] overflow-hidden opacity-100 sm:opacity-0 sm:group-hover/fav:opacity-100 transition-opacity duration-150 pointer-events-none">
                       <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, transparent 50%, rgba(0,0,0,0.5))" }} />
@@ -320,9 +377,9 @@ function FavoritesSection({ favorites, isOwner, go, onAdd, onRemove, onSwap, onU
           return (
             <div
               key={pos}
+              data-fav-pos={pos}
               onDragOver={editing ? e => handleDragOver(e, pos) : undefined}
               onDrop={editing ? e => handleDrop(e, pos) : undefined}
-              onTouchEnd={editing ? () => handleTouchEnd(pos) : undefined}
             >
               <div
                 role="button"
@@ -330,7 +387,7 @@ function FavoritesSection({ favorites, isOwner, go, onAdd, onRemove, onSwap, onU
                 onClick={() => { if (!dragFrom) onAdd(pos); }}
                 onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onAdd(pos); } }}
                 className="w-full aspect-[2/3] border-[1.5px] border-dashed border-[#ddd] rounded-[3px] flex items-center justify-center cursor-pointer hover:border-[#bbb] transition-colors duration-150"
-                style={dragFrom !== null && dragFrom !== pos ? { borderColor: "#bbb", borderWidth: 2 } : undefined}
+                style={isDropTarget ? { borderColor: "#bbb", borderWidth: 2 } : undefined}
               >
                 <span className="text-[20px] text-[#ccc]">+</span>
               </div>
@@ -338,13 +395,6 @@ function FavoritesSection({ favorites, isOwner, go, onAdd, onRemove, onSwap, onU
           );
         })}
       </div>
-      {editing && dragFrom !== null && (
-        <div className="sm:hidden text-center mt-3">
-          <button onClick={() => { setDragFrom(null); setDragOver(null); }} className="text-[12px] text-[#999] font-body bg-transparent border-none cursor-pointer">
-            Annuler le déplacement
-          </button>
-        </div>
-      )}
     </div>
   );
 }

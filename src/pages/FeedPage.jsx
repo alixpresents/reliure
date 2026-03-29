@@ -3,6 +3,7 @@ import Avatar from "../components/Avatar";
 import Heading from "../components/Heading";
 import LikeButton from "../components/LikeButton";
 import { useFeed } from "../hooks/useActivity";
+import { useLikes } from "../hooks/useLikes";
 import { supabase } from "../lib/supabase";
 import { formatRelativeTime } from "../lib/formatTime";
 
@@ -43,6 +44,10 @@ function MiniCover({ url, title, onClick }) {
 
 export default function FeedPage({ go }) {
   const { items, loading } = useFeed();
+  const reviewIds = items.filter(i => i.action_type === "review").map(i => i.target_id);
+  const quoteIds = items.filter(i => i.action_type === "quote").map(i => i.target_id);
+  const { likedSet: likedReviews, initialSet: initLikedReviews, toggle: toggleReviewLike } = useLikes(reviewIds, "review");
+  const { likedSet: likedQuotes, initialSet: initLikedQuotes, toggle: toggleQuoteLike } = useLikes(quoteIds, "quote");
 
   const goToBook = async (meta) => {
     if (!meta.book_id) return;
@@ -106,7 +111,12 @@ export default function FeedPage({ go }) {
                         <p className="text-[13px] text-[#333] leading-relaxed font-body m-0">{meta.review_body}</p>
                       )}
                       <div className="flex gap-4 mt-1.5 text-[11px] text-[#767676] font-body">
-                        <LikeButton count={0} size={11} />
+                        <LikeButton
+                          count={meta.likes_count || 0}
+                          liked={likedReviews.has(it.target_id)}
+                          initialLiked={initLikedReviews.has(it.target_id)}
+                          onToggle={() => toggleReviewLike(it.target_id)}
+                        />
                         <span className="cursor-pointer hover:text-[#1a1a1a] transition-colors duration-150">Répondre</span>
                       </div>
                     </div>
@@ -114,8 +124,18 @@ export default function FeedPage({ go }) {
 
                   {/* Quote content */}
                   {it.action_type === "quote" && meta.quote_body && (
-                    <div className="mt-2 border-l-[3px] border-l-cover-fallback pl-3">
-                      <span className="text-sm italic leading-relaxed font-display text-[#1a1a1a]">« {meta.quote_body} »</span>
+                    <div className="mt-2">
+                      <div className="border-l-[3px] border-l-cover-fallback pl-3">
+                        <span className="text-sm italic leading-relaxed font-display text-[#1a1a1a]">« {meta.quote_body} »</span>
+                      </div>
+                      <div className="mt-1.5 text-[11px] font-body">
+                        <LikeButton
+                          count={meta.likes_count || 0}
+                          liked={likedQuotes.has(it.target_id)}
+                          initialLiked={initLikedQuotes.has(it.target_id)}
+                          onToggle={() => toggleQuoteLike(it.target_id)}
+                        />
+                      </div>
                     </div>
                   )}
 
