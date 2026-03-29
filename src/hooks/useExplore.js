@@ -142,6 +142,45 @@ export function usePopularLists() {
   return { lists, loading };
 }
 
+export function useAvailableGenres() {
+  const [genres, setGenres] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    (async () => {
+      // Fetch all genres arrays from books, then count occurrences client-side.
+      // We only need the genres column, so the payload stays small.
+      const { data } = await supabase
+        .from("books")
+        .select("genres")
+        .not("genres", "is", null);
+
+      if (!data) { setGenres([]); setLoading(false); return; }
+
+      const counts = {};
+      for (const row of data) {
+        if (!Array.isArray(row.genres)) continue;
+        for (const g of row.genres) {
+          if (typeof g === "string" && g.trim()) {
+            counts[g] = (counts[g] || 0) + 1;
+          }
+        }
+      }
+
+      // Only genres with at least 1 book, sorted by count desc
+      const sorted = Object.entries(counts)
+        .filter(([, n]) => n >= 1)
+        .sort((a, b) => b[1] - a[1])
+        .map(([g]) => g);
+
+      setGenres(sorted);
+      setLoading(false);
+    })();
+  }, []);
+
+  return { genres, loading };
+}
+
 export function useBooksByGenre(genre) {
   const [books, setBooks] = useState([]);
   const [loading, setLoading] = useState(true);

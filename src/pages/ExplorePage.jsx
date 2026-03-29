@@ -10,7 +10,7 @@ import Stars from "../components/Stars";
 import UserName from "../components/UserName";
 import { useNav } from "../lib/NavigationContext";
 import { useNavigate } from "react-router-dom";
-import { usePopularBooks, usePopularReviews, usePopularQuotes, usePopularLists } from "../hooks/useExplore";
+import { usePopularBooks, usePopularReviews, usePopularQuotes, usePopularLists, useAvailableGenres } from "../hooks/useExplore";
 import { useLikes } from "../hooks/useLikes";
 import Skeleton from "../components/Skeleton";
 import { useAuth } from "../lib/AuthContext";
@@ -31,8 +31,7 @@ export default function ExplorePage({ onSearch }) {
   const { likedSet: likedReviews, initialSet: initLikedReviews, toggle: toggleReviewLike } = useLikes(reviews.map(r => r.id), "review");
   const { likedSet, initialSet, toggle: toggleQuoteLike } = useLikes(quotes.map(q => q.id), "quote");
   const { likedSet: likedLists, initialSet: initLikedLists, toggle: toggleListLike } = useLikes(lists.map(l => l.id), "list");
-
-  const ptags = ["autofiction", "réalisme magique", "Japon", "années 80", "féminisme", "dystopie", "poésie", "philosophie", "Paris", "mémoire", "nature writing"];
+  const { genres: availableGenres, loading: loadingGenres } = useAvailableGenres();
 
   const allEmpty = !loadingBooks && !loadingReviews && !loadingQuotes && !loadingLists && popular.length === 0 && reviews.length === 0 && quotes.length === 0 && lists.length === 0;
 
@@ -73,13 +72,15 @@ export default function ExplorePage({ onSearch }) {
         </div>
       </div>
 
-      {/* Tags */}
-      <div className="mb-6">
-        <Label>Parcourir par thème</Label>
-        <div className="flex flex-wrap gap-1">
-          {ptags.map(t => <Link key={t} to={`/explorer/theme/${encodeURIComponent(t)}`}><Tag>{t}</Tag></Link>)}
+      {/* Tags — uniquement les genres avec au moins 1 livre dans la base */}
+      {!loadingGenres && availableGenres.length > 0 && (
+        <div className="mb-6">
+          <Label>Parcourir par thème</Label>
+          <div className="flex flex-wrap gap-1">
+            {availableGenres.map(t => <Link key={t} to={`/explorer/theme/${encodeURIComponent(t)}`}><Tag>{t}</Tag></Link>)}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Empty state */}
       {allEmpty && (
