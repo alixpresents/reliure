@@ -270,7 +270,6 @@ export default function Search({ open, onClose, go }) {
       // Aucun match titre : importer directement depuis les données BnF
       console.warn("[handleBnFSelect] Aucun match titre GB — import direct BnF pour:", gb.title);
     }
-    }
 
     // Fallback : import direct avec les données BnF
     const book = await importBook({
