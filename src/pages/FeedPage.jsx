@@ -103,7 +103,12 @@ export default function FeedPage() {
             <div key={it.id} className="py-3.5 border-b border-border-light">
               <div className="flex gap-3 items-start">
                 {/* Avatar */}
-                <Avatar i={initials} s={28} />
+                <div
+                  className={it.users?.username ? "cursor-pointer shrink-0" : "shrink-0"}
+                  onClick={() => it.users?.username && nav(`/${it.users.username}`)}
+                >
+                  <Avatar i={initials} s={28} src={it.users?.avatar_url} />
+                </div>
 
                 {/* Text line */}
                 <div className="flex-1 min-w-0">

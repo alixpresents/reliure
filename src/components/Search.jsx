@@ -1,16 +1,21 @@
 import { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { searchBooks } from "../lib/googleBooks";
 import { importBook } from "../lib/importBook";
 import { resetIOSZoom } from "../lib/resetZoom";
+import { supabase } from "../lib/supabase";
+import Avatar from "./Avatar";
 import Skeleton from "./Skeleton";
 
 export default function Search({ open, onClose, go }) {
+  const navigate = useNavigate();
   const [q, setQ] = useState("");
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
   const [importing, setImporting] = useState(null);
   const [visible, setVisible] = useState(false);
   const [addedGoogleIds, setAddedGoogleIds] = useState(new Set());
+  const [userResults, setUserResults] = useState([]);
   const timer = useRef(null);
   const inputRef = useRef(null);
   const multiAddMode = useRef(false);
@@ -35,11 +40,27 @@ export default function Search({ open, onClose, go }) {
 
   useEffect(() => {
     clearTimeout(timer.current);
-    if (!q || q.length < 2) { setResults([]); setLoading(false); return; }
+    if (!q || q.length < 2) { setResults([]); setUserResults([]); setLoading(false); return; }
     setLoading(true);
     timer.current = setTimeout(async () => {
-      const res = await searchBooks(q);
-      setResults(res);
+      const [bookRes, { data: users }] = await Promise.all([
+        searchBooks(q),
+        supabase.from("users").select("id, username, display_name, avatar_url")
+          .or(`username.ilike.%${q}%,display_name.ilike.%${q}%`).limit(3),
+      ]);
+      setResults(bookRes);
+
+      if (users?.length) {
+        const userIds = users.map(u => u.id);
+        const { data: readRows } = await supabase
+          .from("reading_status").select("user_id")
+          .in("user_id", userIds).eq("status", "read");
+        const countMap = {};
+        for (const r of (readRows || [])) countMap[r.user_id] = (countMap[r.user_id] || 0) + 1;
+        setUserResults(users.map(u => ({ ...u, readCount: countMap[u.id] || 0 })));
+      } else {
+        setUserResults([]);
+      }
       setLoading(false);
     }, 400);
     return () => clearTimeout(timer.current);
@@ -139,7 +160,7 @@ export default function Search({ open, onClose, go }) {
               ref={inputRef}
               value={q}
               onChange={e => setQ(e.target.value)}
-              placeholder="Chercher un livre, un auteur..."
+              placeholder="Chercher un livre, un auteur, un lecteur..."
               className="flex-1 min-w-0 text-base bg-transparent border-none outline-none text-[#1a1a1a] font-display italic placeholder:text-[#999] placeholder:font-display placeholder:italic"
             />
             {q && (
@@ -175,6 +196,33 @@ export default function Search({ open, onClose, go }) {
 
             {!loading && q.length >= 2 && results.length === 0 && (
               <div className="py-8 text-center text-[13px] text-[#767676] font-body">Aucun résultat pour cette recherche.</div>
+            )}
+
+            {/* Lecteurs */}
+            {userResults.length > 0 && (
+              <>
+                <div className="px-5 pt-3 pb-1 text-[11px] uppercase tracking-[1.5px] text-[#999] font-body">Lecteurs</div>
+                {userResults.map(u => {
+                  const name = u.display_name || u.username || "?";
+                  const initials = name.split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2);
+                  return (
+                    <div
+                      key={u.id}
+                      onClick={() => { handleClose(); setQ(""); setResults([]); setUserResults([]); navigate(`/${u.username}`); }}
+                      className="flex items-center gap-3 py-2.5 px-5 cursor-pointer hover:bg-[#fafaf8] transition-colors duration-100"
+                    >
+                      <Avatar i={initials} s={32} src={u.avatar_url} />
+                      <div className="flex-1 min-w-0">
+                        <div className="text-[14px] font-medium font-body truncate">{name}</div>
+                        <div className="text-xs text-[#767676] font-body">
+                          @{u.username}{u.readCount > 0 ? ` · ${u.readCount} livre${u.readCount > 1 ? "s" : ""} lu${u.readCount > 1 ? "s" : ""}` : ""}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+                {results.length > 0 && <div className="px-5 pt-3 pb-1 text-[11px] uppercase tracking-[1.5px] text-[#999] font-body">Livres</div>}
+              </>
             )}
 
             {results.map(gb => {

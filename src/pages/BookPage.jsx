@@ -544,7 +544,9 @@ export default function BookPage({ book }) {
                 return (
                   <div key={rv.id} ref={isOwn && i === dbReviews.findIndex(r => r.user_id === user?.id) ? newReviewRef : undefined} className="py-4 border-b border-border-light">
                     <div className="flex items-center gap-2.5 mb-2">
-                      <Avatar i={initials} s={26} />
+                      <div className={rv.users?.username ? "cursor-pointer" : ""} onClick={() => rv.users?.username && navigate(`/${rv.users.username}`)}>
+                        <Avatar i={initials} s={26} src={rv.users?.avatar_url} />
+                      </div>
                       <UserName user={rv.users} className="text-[13px]" />
                       {rv.rating > 0 && <Stars r={rv.rating} s={11} />}
                     </div>
