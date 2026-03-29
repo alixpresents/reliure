@@ -27,11 +27,18 @@ function col(row, ...names) {
   return "";
 }
 
+function stripGoodreadsISBN(raw) {
+  if (!raw) return null;
+  const match = raw.match(/^="?(.+?)"?$/);
+  const cleaned = match ? match[1] : raw;
+  return cleaned.length >= 10 ? cleaned : null;
+}
+
 function normalizeGoodreads(row) {
   const shelf = col(row, "exclusive shelf").toLowerCase();
   const statusMap = { read: "read", "currently-reading": "reading", "to-read": "want_to_read" };
-  const rawIsbn = col(row, "isbn13", "isbn/uid").replace(/[="]/g, "");
-  const rawIsbn10 = col(row, "isbn").replace(/[="]/g, "");
+  const rawIsbn = stripGoodreadsISBN(col(row, "isbn13", "isbn/uid")) || "";
+  const rawIsbn10 = stripGoodreadsISBN(col(row, "isbn")) || "";
   return {
     title: col(row, "title"),
     author: col(row, "author", "author l-f"),
