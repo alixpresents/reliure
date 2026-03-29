@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import Papa from "papaparse";
 import { searchBooks } from "../lib/googleBooks";
 import { importBook } from "../lib/importBook";
@@ -72,6 +72,7 @@ export default function CSVImport() {
   const { user } = useAuth();
   const fileRef = useRef(null);
   const abortRef = useRef(false);
+  const pauseRef = useRef(false);
 
   // States: idle → preview → importing → done
   const [phase, setPhase] = useState("idle");
@@ -79,10 +80,26 @@ export default function CSVImport() {
   const [source, setSource] = useState(null);
   const [rows, setRows] = useState([]);
   const [dragOver, setDragOver] = useState(false);
+  const [paused, setPaused] = useState(false);
 
   // Import progress
   const [progress, setProgress] = useState({ current: 0, total: 0, imported: 0, skipped: 0, failed: 0 });
   const [failedTitles, setFailedTitles] = useState([]);
+
+  // Pause/resume on tab visibility change
+  useEffect(() => {
+    const handler = () => {
+      if (document.visibilityState === "hidden") {
+        pauseRef.current = true;
+        setPaused(true);
+      } else {
+        pauseRef.current = false;
+        setPaused(false);
+      }
+    };
+    document.addEventListener("visibilitychange", handler);
+    return () => document.removeEventListener("visibilitychange", handler);
+  }, []);
 
   const reset = () => {
     setPhase("idle");
@@ -156,6 +173,11 @@ export default function CSVImport() {
     const failures = [];
 
     for (let i = 0; i < rows.length; i++) {
+      if (abortRef.current) break;
+      // Wait while paused (tab hidden)
+      while (pauseRef.current && !abortRef.current) {
+        await new Promise(r => setTimeout(r, 200));
+      }
       if (abortRef.current) break;
       const row = rows[i];
 
@@ -336,6 +358,16 @@ export default function CSVImport() {
           <p className="text-[13px] text-[#666] font-body">
             {progress.current} / {progress.total}
           </p>
+        </div>
+
+        {/* Tab warning */}
+        <div
+          className="text-[12px] font-body text-[#666] px-3 py-2 rounded-md mb-4"
+          style={{ background: "#fef9e7", border: "1px solid #f0e68c" }}
+        >
+          {paused
+            ? "Import en pause — reviens sur cet onglet pour continuer."
+            : "Ne change pas d'onglet pendant l'import — la progression s'arrêterait."}
         </div>
 
         {/* Progress bar */}
