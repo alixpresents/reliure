@@ -410,10 +410,29 @@ function EmptyState({ children }) {
   return <div className="py-10 text-center">{children}</div>;
 }
 
+const TAB_SUBTITLES = {
+  "journal": "Tes lectures terminées, par date",
+  "bibliothèque": "Tous tes livres, quel que soit leur statut",
+  "mes critiques": "Tes avis sur les livres lus",
+  "mes citations": "Les phrases que tu as sauvegardées",
+  "mes listes": "Tes sélections de livres",
+  "bilan": "Tes stats de lecture",
+};
+
 export default function ProfilePage({ viewedProfile, initialTab }) {
   const [tab, setTab] = useState(initialTab || "journal");
   const [libView, setLibView] = useState("grille");
+  const [showHints, setShowHints] = useState(() => !localStorage.getItem("reliure_tab_hints_seen"));
+  const [hintsOpacity, setHintsOpacity] = useState(0);
   useEffect(() => { if (initialTab) setTab(initialTab); }, [initialTab]);
+  useEffect(() => {
+    if (!showHints) return;
+    localStorage.setItem("reliure_tab_hints_seen", "1");
+    const t1 = setTimeout(() => setHintsOpacity(1), 30);
+    const t2 = setTimeout(() => setHintsOpacity(0), 3000);
+    const t3 = setTimeout(() => setShowHints(false), 3200);
+    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
+  }, [showHints]);
   const { goToBook: go, openSearchFor } = useNav();
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -621,13 +640,18 @@ export default function ProfilePage({ viewedProfile, initialTab }) {
             <button
               key={value}
               onClick={() => setTab(value)}
-              className={`flex-1 py-3 bg-transparent border-none cursor-pointer text-xs font-body ${
+              className={`flex-1 py-3 bg-transparent border-none cursor-pointer font-body ${
                 tab === value
                   ? "font-semibold text-[#1a1a1a] border-b-2 border-b-[#1a1a1a]"
                   : "font-normal text-[#767676] border-b-2 border-b-transparent"
               }`}
             >
-              {label}
+              <div className="text-xs">{label}</div>
+              {showHints && tab === value && (
+                <div style={{ opacity: hintsOpacity, transition: "opacity 150ms" }} className="text-[11px] text-[#bbb] font-normal mt-0.5 leading-tight">
+                  {TAB_SUBTITLES[value]}
+                </div>
+              )}
             </button>
           ))}
         </div>
