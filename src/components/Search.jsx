@@ -245,8 +245,15 @@ export default function Search({ open, onClose, go }) {
     console.log("[handleBnFSelect] Google Books result[0]:", bookResults[0]?.title, bookResults[0]?.googleId);
 
     if (bookResults.length > 0) {
+      const normStr = s => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9\s]/g, "").trim();
+      const targetNorm = normStr(gb.title);
+      const match = bookResults.find(r => {
+        const rNorm = normStr(r.title);
+        return rNorm.includes(targetNorm) || targetNorm.includes(rNorm);
+      });
+      if (!match) console.warn("[handleBnFSelect] Aucun match titre — fallback sur result[0]:", bookResults[0]?.title);
       setImporting(null);
-      await handleSelect(bookResults[0]);
+      await handleSelect(match || bookResults[0]);
       return;
     }
 
