@@ -18,11 +18,24 @@ import { logActivity } from "../hooks/useActivity";
 
 export default function BookPage({ book, onBack, onTag, go }) {
   const bookId = book._supabase?.id || book.id;
-  const { status: dbStatus, loading: statusLoading, setStatus: dbSetStatus, removeStatus: dbRemoveStatus } = useReadingStatus(bookId);
+  const { status: dbStatus, loading: statusLoading, alreadyRead, setStatus: dbSetStatus, removeStatus: dbRemoveStatus } = useReadingStatus(bookId);
   const { rating: dbRating, setRating: dbSetRating } = useUserRating(bookId);
   const { reviews: dbReviews, loading: reviewsLoading, refetch: refetchReviews } = useBookReviews(bookId);
   const { quotes: dbQuotes, loading: quotesLoading, refetch: refetchQuotes } = useBookQuotes(bookId);
   const { user } = useAuth();
+  const userReview = dbReviews.find(rv => rv.user_id === user?.id && rv.body);
+
+  // Live book data from Supabase
+  const isUuid = typeof bookId === "string" && bookId.includes("-");
+  const [liveBook, setLiveBook] = useState(null);
+  useEffect(() => {
+    if (!isUuid) return;
+    supabase.from("books").select("avg_rating, rating_count").eq("id", bookId).single().then(({ data }) => {
+      if (data) setLiveBook(data);
+    });
+  }, [bookId, isUuid]);
+  const avgRating = liveBook?.avg_rating ?? book.r ?? 0;
+  const ratingCount = liveBook?.rating_count ?? book.rt ?? 0;
 
   const [st, setSt] = useState(null);
   const [ur, setUr] = useState(0);
@@ -41,7 +54,6 @@ export default function BookPage({ book, onBack, onTag, go }) {
   const [tags, setTags] = useState([]);
   const dateRef = useRef(null);
 
-  const ALREADY_READ = [1, 7];
   const KNOWN_TAGS = ["en vacances", "recommandé par Margaux", "avion CDG-JFK", "relu", "en VO", "café Oberkampf", "métro"];
   const [tagFocused, setTagFocused] = useState(false);
 
@@ -100,9 +112,13 @@ export default function BookPage({ book, onBack, onTag, go }) {
     }
   };
 
-  const handleRating = r => {
+  const handleRating = async r => {
     setUr(r);
-    dbSetRating(r);
+    await dbSetRating(r);
+    if (isUuid) {
+      const { data } = await supabase.from("books").select("avg_rating, rating_count").eq("id", bookId).single();
+      if (data) setLiveBook(data);
+    }
   };
 
   const handlePublishReview = async () => {
@@ -168,10 +184,10 @@ export default function BookPage({ book, onBack, onTag, go }) {
 
           {/* Rating box */}
           <div className="flex items-center gap-3 mt-5 p-3.5 px-[18px] bg-surface rounded-lg">
-            <span className="text-[32px] font-bold font-body">{book.r}</span>
+            <span className="text-[32px] font-bold font-body">{avgRating}</span>
             <div>
-              <Stars r={book.r} s={14} />
-              <div className="text-[11px] text-[#767676] mt-0.5 font-body">{book.rt?.toLocaleString("fr-FR")} évaluations</div>
+              <Stars r={avgRating} s={14} />
+              <div className="text-[11px] text-[#767676] mt-0.5 font-body">{ratingCount?.toLocaleString("fr-FR")} évaluations</div>
             </div>
           </div>
 
@@ -205,7 +221,7 @@ export default function BookPage({ book, onBack, onTag, go }) {
               ) : null}
 
               {/* Reread pill */}
-              {ALREADY_READ.includes(book.id) && st === "Lu" && (
+              {alreadyRead && st === "Lu" && (
                 isReread ? (
                   <span className="inline-flex items-center gap-1.5 pl-2.5 pr-1.5 py-[5px] rounded-2xl text-xs bg-tag-bg border border-[#eee] text-[#1a1a1a] font-body">
                     Relecture
@@ -330,10 +346,16 @@ export default function BookPage({ book, onBack, onTag, go }) {
             {/* Write review */}
             {!showReviewForm ? (
               <button
-                onClick={() => setShowReviewForm(true)}
+                onClick={() => {
+                  if (userReview) {
+                    setReviewText(userReview.body);
+                    setReviewSpoiler(userReview.contains_spoilers || false);
+                  }
+                  setShowReviewForm(true);
+                }}
                 className="w-full mb-4 py-2.5 rounded-lg border-[1.5px] border-dashed border-[#ddd] bg-transparent cursor-pointer text-[13px] text-[#767676] font-body transition-colors duration-200 hover:border-[#767676] hover:text-[#1a1a1a]"
               >
-                + Écrire une critique
+                {userReview ? "Modifier ma critique" : "+ Écrire une critique"}
               </button>
             ) : (
               <div className="mb-4 p-4 bg-surface rounded-lg">

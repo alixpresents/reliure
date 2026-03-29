@@ -7,9 +7,10 @@ export function useReadingStatus(bookId) {
   const { user } = useAuth();
   const [status, setStatusState] = useState(null); // full row or null
   const [loading, setLoading] = useState(true);
+  const [alreadyRead, setAlreadyRead] = useState(false);
 
   const fetch = useCallback(async () => {
-    if (!user || !bookId) { setStatusState(null); setLoading(false); return; }
+    if (!user || !bookId) { setStatusState(null); setAlreadyRead(false); setLoading(false); return; }
     const { data } = await supabase
       .from("reading_status")
       .select("*")
@@ -20,6 +21,7 @@ export function useReadingStatus(bookId) {
       .limit(1)
       .single();
     setStatusState(data ?? null);
+    setAlreadyRead(data?.status === "read");
     setLoading(false);
   }, [user, bookId]);
 
@@ -59,7 +61,7 @@ export function useReadingStatus(bookId) {
     setStatusState(prev => ({ ...prev, current_page: page }));
   };
 
-  return { status, loading, setStatus, removeStatus, updatePage, refetch: fetch };
+  return { status, loading, alreadyRead, setStatus, removeStatus, updatePage, refetch: fetch };
 }
 
 export function useUserRating(bookId) {
