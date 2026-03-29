@@ -5,7 +5,7 @@
 ---
 
 1. Challenges de lecture
-Statut : Idée · Priorité à définir
+Statut : UI complète (données mock) · Post-bêta
 Inspiré de : Challenges annuels sur les forums Babelio (ex : Challenge Multi-Défis 2026)
 Portée : Nouvelle section majeure (onglet nav)
 Le concept
@@ -382,7 +382,7 @@ bookshops
 
 ## 4. Skeleton loaders et animations de chargement
 
-**Statut :** Idée · Priorité à définir
+**Statut :** ✅ Fait
 **Inspiré de :** Record Club (skeleton loaders sur couvertures et textes), Letterboxd, Instagram
 **Portée :** UX transversale · Chargement perçu
 
@@ -436,7 +436,7 @@ L'animation shimmer en CSS pur (un gradient linéaire animé en `translateX`), p
 
 ## 5. Critique par relecture
 
-**Statut :** Idée · Post-MVP
+**Statut :** ✅ Fait (is_reread dans reading_status, toggle sur BookPage, badge relecture dans le fil)
 **Portée :** Évolution du système de critiques
 
 ### Le concept
@@ -462,7 +462,7 @@ Actuellement : une critique par livre par utilisateur (upsert sur `user_id` + `b
 
 ## 6. Qualité des résultats de recherche (ranking & déduplication)
 
-**Statut :** Idée · Priorité haute (impacte l'onboarding et la boucle quotidienne)
+**Statut :** ✅ Fait (pipeline 6 étapes, BnF SRU, anti-doublons ISBN + œuvre, DB boost, scoring multi-signaux)
 **Portée :** Edge function `book_import` + logique de ranking côté recherche
 
 ### Le problème
@@ -515,7 +515,7 @@ Un score composite calculé à l'import ou à la recherche, basé sur :
 
 ## 7. Personnaliser la page login
 
-**Statut :** To Do · Priorité moyenne
+**Statut :** ✅ Fait (page custom avec branding Reliure, magic link OTP — OAuth Google non implémenté)
 **Portée :** Auth UI Supabase + template email magic link
 
 ### Le problème
@@ -682,7 +682,7 @@ casser l'existant (nullable au début, migration progressive).
 
 ## 10. Import CSV Babelio / Goodreads
 
-**Statut :** En cours · Levier d'acquisition #1
+**Statut :** ✅ Fait (CSVImport.jsx sur BackfillPage, Goodreads + Babelio, preview + progression + résumé)
 **Portée :** BackfillPage + edge function d'import
 
 ### Le concept
@@ -758,7 +758,7 @@ organique gratuite portant le nom "reliure" dans le feed des amis.
 
 ## 13. Normalisation IA des requêtes de recherche
 
-**Statut :** Post-bêta · Priorité haute
+**Statut :** ✅ Fait (edge function smart-search, Claude Haiku, ghost text, cache 7j, filtrage IA confirmé/non-confirmé)
 **Portée :** src/lib/googleBooks.js + API Anthropic
 
 ### Le concept
