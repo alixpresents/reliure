@@ -29,7 +29,20 @@ export async function importBook(googleBook) {
     if (existing) return existing;
   }
 
-  // Generate slug
+  // If ISBN available → multi-API enrichment via edge function
+  if (googleBook.isbn13) {
+    try {
+      const { data, error } = await supabase.functions.invoke("book_import", {
+        body: { isbn: googleBook.isbn13, fallback: googleBook },
+      });
+      if (!error && data && data.id) return data;
+      if (error) console.warn("[importBook] edge function error:", error);
+    } catch (err) {
+      console.warn("[importBook] edge function unavailable:", err);
+    }
+  }
+
+  // Fallback: client-side import with Google Books data only
   const slug = await generateBookSlug(
     googleBook.title,
     googleBook.authors || [],
@@ -37,7 +50,6 @@ export async function importBook(googleBook) {
     slugExists
   );
 
-  // Insert new book
   const { data: newBook, error } = await supabase
     .from("books")
     .insert({

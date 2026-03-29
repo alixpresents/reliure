@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { searchBooks } from "../lib/googleBooks";
 import { importBook } from "../lib/importBook";
 import { resetIOSZoom } from "../lib/resetZoom";
+import Skeleton from "./Skeleton";
 
 export default function Search({ open, onClose, go }) {
   const [q, setQ] = useState("");
@@ -187,7 +188,9 @@ export default function Search({ open, onClose, go }) {
                     added ? "bg-[#fafaf8]" : isImporting ? "opacity-50" : "cursor-pointer hover:bg-[#fafaf8]"
                   }`}
                 >
-                  {gb.coverUrl ? (
+                  {isImporting ? (
+                    <Skeleton.Cover w={36} h={52} className="rounded-sm" />
+                  ) : gb.coverUrl ? (
                     <img src={gb.coverUrl} alt="" className="w-9 h-[52px] object-cover rounded-sm shrink-0 bg-cover-fallback" />
                   ) : (
                     <div className="w-9 h-[52px] rounded-sm bg-cover-fallback shrink-0" />
@@ -198,9 +201,6 @@ export default function Search({ open, onClose, go }) {
                       {gb.authors.join(", ")}{gb.publishedDate ? ` · ${gb.publishedDate.slice(0, 4)}` : ""}
                     </div>
                   </div>
-                  {isImporting && (
-                    <span className="text-[11px] text-[#767676] font-body self-center shrink-0">Ajout...</span>
-                  )}
                   {added && (
                     <span className="text-[13px] text-[#1a1a1a] font-medium font-body self-center shrink-0">✓</span>
                   )}

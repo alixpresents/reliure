@@ -109,7 +109,18 @@ Stratégie hybride, par priorité :
 4. **Nudger (Open Data ISBN)** — base ISBN française, licence ODbL, CSV gratuit via data.gouv.fr
 5. **Enrichissement communautaire** — les utilisateurs corrigent/complètent les fiches (comme TMDb pour Letterboxd)
 
-L'edge function `book_import` interroge les sources par ISBN, fusionne les résultats, et stocke le livre consolidé dans la table `books`. Une fois importé, le livre vit dans notre base.
+L'edge function `book_import` (`supabase/functions/book_import/index.ts`) interroge 3 sources en parallèle par ISBN (Google Books, Open Library, BnF SRU), fusionne les résultats selon une priorité par champ, génère le slug, et upsert dans `books`. Si l'edge function échoue, `importBook.js` retombe sur un import client-side avec les données Google Books.
+
+### Priorité de fusion par champ (edge function `book_import`)
+- `title` : BnF > Google > Open Library
+- `authors` : Google > BnF > Open Library
+- `publisher` : BnF > Open Library > Google
+- `publication_date` : BnF > Google > Open Library
+- `page_count` : Open Library > Google > BnF
+- `cover_url` : Google (zoom 2) > Open Library
+- `description` : Google > Open Library
+- `language` : BnF > Google
+- `genres` : Google > Open Library
 
 ### Qualité des résultats de recherche (`src/lib/googleBooks.js`)
 
