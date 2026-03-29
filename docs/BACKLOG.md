@@ -596,4 +596,164 @@ Permettre d'ajouter des tags libres sur une liste pour faciliter la découverte 
 
 ---
 
+## 8. Notifications
+
+**Statut :** Post-bêta · Priorité haute avant v2 sociale
+**Portée :** Système transversal (in-app + email)
+
+### Le concept
+Plusieurs features du backlog dépendent d'un système de notifications :
+suivre une liste, les Défis (badge débloqué, soumission validée),
+les critiques likées, les nouveaux abonnés. Sans ce système,
+ces features sont incomplètes.
+
+### Types de notifications envisagées
+- Quelqu'un a liké ta critique ou ta citation
+- Quelqu'un t'a suivi
+- Un livre a été ajouté à une liste que tu suis
+- Ta soumission à un Défi a été validée
+- Quelqu'un a répondu à ta critique
+
+### Deux canaux
+- **In-app** : cloche dans le header, badge rouge, liste de notifications
+  avec mark-as-read. Priorité absolue.
+- **Email digest** : résumé hebdomadaire optionnel ("cette semaine sur Reliure").
+  Désactivable dans les paramètres. Jamais d'email pour chaque action
+  individuelle — trop agressif.
+
+### Préférences utilisateur
+Table `notification_preferences` : un toggle par type d'événement,
+in-app et email séparément. Désactivé par défaut pour l'email,
+activé par défaut pour l'in-app.
+
+### Tables envisagées
+```
+notifications
+  id, user_id, type, actor_id, target_id, target_type,
+  is_read, created_at
+notification_preferences
+  user_id, event_type, in_app_enabled, email_enabled
+```
+
+### Ce qu'on ne fait PAS en v1
+- Pas de notifications push mobile (PWA d'abord)
+- Pas d'email par action individuelle
+- Pas de notifications temps réel (polling toutes les 30s suffit au MVP)
+
+---
+
+## 9. Pages auteurs
+
+**Statut :** Post-bêta · Fort levier SEO
+**Portée :** Nouvelle page + migration données
+
+### Le concept
+Une page par auteur regroupant sa bibliographie sur Reliure,
+ses stats communautaires (note moyenne, nombre de lecteurs),
+et les critiques les plus likées. Accessible via `/auteur/:slug`.
+
+### Pourquoi c'est fort pour Reliure
+- **SEO** : les requêtes "livres de [auteur]", "bibliographie [auteur]"
+  sont parmi les plus recherchées en littérature. Babelio domine
+  ces requêtes — c'est un territoire à conquérir.
+- **Découverte** : depuis une fiche livre, cliquer sur l'auteur
+  pour voir toute son œuvre disponible sur Reliure.
+- **Données** : les auteurs `jsonb` dans `books` deviennent une
+  vraie table avec pages dédiées.
+
+### Contenu de la page auteur
+- Photo (Wikimedia Commons, licence libre) + biographie courte
+- Liste de ses livres présents sur Reliure, triés par popularité
+- Note moyenne communautaire par livre
+- Citations populaires extraites de ses œuvres
+- "X lecteurs sur Reliure ont lu cet auteur"
+
+### Migration nécessaire
+Passer de `authors jsonb` dans `books` à une table `authors`
++ table de jointure `book_authors`. Prévoir la migration sans
+casser l'existant (nullable au début, migration progressive).
+
+### Ce qu'on ne fait PAS en v1
+- Pas de page auteur éditable par la communauté (modération trop lourde)
+- Pas de biographie longue (Wikipedia suffit, on linke)
+- Pas de timeline de parution
+
+---
+
+## 10. Import CSV Babelio / Goodreads
+
+**Statut :** Post-bêta · Levier d'acquisition #1
+**Portée :** BackfillPage + edge function d'import
+
+### Le concept
+Permettre aux utilisateurs de migrer leur bibliothèque depuis
+Babelio, Goodreads ou Booknode en important un fichier CSV.
+C'est le levier d'acquisition le plus fort pour convertir
+les utilisateurs des plateformes concurrentes.
+
+### Pourquoi c'est critique
+Un utilisateur Babelio a potentiellement 500 livres loggés.
+Le back-fill manuel un par un est dissuasif. L'import CSV
+réduit le cold start de plusieurs heures à quelques secondes.
+C'est exactement ce qu'a fait The StoryGraph pour détrôner
+Goodreads — l'import Goodreads était leur feature #1 au lancement.
+
+### Sources supportées
+- **Goodreads** : export CSV natif depuis les paramètres du compte.
+  Champs : Title, Author, ISBN, My Rating, Date Read, Bookshelves.
+- **Babelio** : export via leur interface (format CSV).
+  Champs similaires, encodage parfois différent.
+- **Booknode** : export CSV communautaire.
+
+### Implémentation envisagée
+- Page `/backfill` enrichie avec un onglet "Importer un fichier"
+- Upload CSV → parsing côté client (PapaParse)
+- Matching par ISBN en priorité, fallback titre+auteur
+- Prévisualisation avant import : "X livres trouvés, Y non reconnus"
+- Les livres non reconnus sont listés pour correction manuelle
+- Import en batch vers Supabase via edge function
+
+### Ce qu'on ne fait PAS en v1
+- Pas d'import des critiques (trop complexe, encodages variables)
+- Pas d'import des dates de lecture (trop peu fiables dans les exports)
+- Pas d'import automatique via API (Goodreads a fermé leur API)
+
+---
+
+## 11. Partage social (image générée)
+
+**Statut :** Post-bêta · Fort levier de viralité
+**Portée :** Feature transversale (bilan, listes, critiques)
+
+### Le concept
+Générer une image partageable au format carré (1:1) ou story (9:16)
+depuis les contenus clés de Reliure. L'image est téléchargeable
+et partageable directement sur Instagram, Twitter/X, ou en story.
+
+### Pourquoi c'est fort
+Le bilan annuel Letterboxd est viral chaque année en décembre.
+Spotify Wrapped a popularisé ce format. Reliure peut faire pareil
+avec le bilan de lecture — et l'image devient une publicité
+organique gratuite portant le nom "reliure" dans le feed des amis.
+
+### Contenus partageables envisagés
+- **Bilan annuel** : "J'ai lu X livres en 2026 sur Reliure" avec
+  les 4 meilleures couvertures, la note moyenne, le nombre de pages
+- **Une liste** : titre de la liste + mosaïque de couvertures + username
+- **Une critique** : extrait de la critique + couverture + étoiles
+- **Une citation** : la citation en grand + titre du livre
+
+### Implémentation envisagée
+- Génération côté client avec `html2canvas` ou `dom-to-image`
+- Template fixe par type de contenu, couleurs du design system
+- Bouton "Partager" sur le bilan, les listes et les critiques
+- Téléchargement direct en PNG
+
+### Ce qu'on ne fait PAS en v1
+- Pas de partage direct vers les réseaux (juste téléchargement)
+- Pas de template personnalisable
+- Pas de watermark agressif (juste "reliure" discret en bas)
+
+---
+
 *Dernière mise à jour : 29 mars 2026*

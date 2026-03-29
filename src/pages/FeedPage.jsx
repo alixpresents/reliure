@@ -9,6 +9,7 @@ import { useLikes } from "../hooks/useLikes";
 import { supabase } from "../lib/supabase";
 import UserName from "../components/UserName";
 import { formatRelativeTime } from "../lib/formatTime";
+import Skeleton from "../components/Skeleton";
 
 function actionLabel(actionType, metadata) {
   if (actionType === "review") return "a critiqué";
@@ -88,9 +89,9 @@ export default function FeedPage() {
       <Heading>Fil d'activité</Heading>
 
       {loading ? (
-        <div className="py-8 text-center text-[13px] text-[#767676] font-body">Chargement...</div>
+        <div>{[1, 2, 3].map(i => <Skeleton.Card key={i} />)}</div>
       ) : items.length > 0 ? (
-        items.map(it => {
+        <div className="sk-fade">{items.map(it => {
           const displayName = it.users?.display_name || it.users?.username || "?";
           const initials = displayName.split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2);
           const meta = it.metadata || {};
@@ -218,7 +219,7 @@ export default function FeedPage() {
               </div>
             </div>
           );
-        })
+        })}</div>
       ) : (
         <div className="py-12 text-center font-body">
           <div className="text-sm text-[#999]">Suis des lecteurs pour voir leur activité ici.</div>

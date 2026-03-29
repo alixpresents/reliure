@@ -291,6 +291,17 @@ Chaque onglet a sa propre URL (`/:username/critiques`, etc.).
 - Vue publique : hero centré, stats, paliers, aperçu items, participants récents
 - Bandeau WIP affiché en haut de page (composant `WipBanner`)
 
+### Skeleton loading
+
+- Composant global : `src/components/Skeleton.jsx`
+- CSS injecté une fois via `document.head` au chargement du module (pas de fichier CSS séparé)
+- Classe `.sk` : fond `#f0ede8` + shimmer `::after` animé (1.4s ease-in-out)
+- Classe `.sk-fade` : fade-in 200ms sur le contenu réel une fois chargé (appliquer sur le wrapper du contenu)
+- Sous-composants : `Skeleton.Cover` (ratio 2:3), `Skeleton.Text` (barre arrondie), `Skeleton.Avatar` (cercle), `Skeleton.Stars`, `Skeleton.Card` (ligne fil d'activité)
+- Skeleton de page (route-level) : dans les fichiers `*Route.jsx` — `BookPageRoute`, `ProfilePageRoute`
+- Skeleton inline (section-level) : dans `FeedPage` (3 × `Skeleton.Card`), `ExplorePage` (couvertures, critiques, citations, listes), `ProfilePage` (favoris 4 covers, journal 5 covers)
+- Ne jamais utiliser `animate-pulse` de Tailwind — utiliser uniquement les classes `.sk` du composant global
+
 ### Micro-interactions
 - LikeButton avec animation scale + toggle couleur
 - Étoiles avec hover scale-110, click scale-125 pop

@@ -12,10 +12,7 @@ import { useNav } from "../lib/NavigationContext";
 import { useNavigate } from "react-router-dom";
 import { usePopularBooks, usePopularReviews, usePopularQuotes, usePopularLists } from "../hooks/useExplore";
 import { useLikes } from "../hooks/useLikes";
-
-function Skeleton({ className = "" }) {
-  return <div className={`bg-[#f0ede8] rounded-[3px] animate-pulse ${className}`} />;
-}
+import Skeleton from "../components/Skeleton";
 
 function normalizeQuoteBook(q) {
   if (!q.books) return null;
@@ -85,11 +82,11 @@ export default function ExplorePage({ onSearch }) {
         <div className="border-t border-border-light py-6">
           <Heading>Populaires cette semaine</Heading>
           <HScroll>
-            {[1, 2, 3, 4, 5].map(i => (
+            {[1, 2, 3, 4, 5, 6, 7].map(i => (
               <div key={i} className="min-w-[130px]">
-                <Skeleton className="w-[130px] h-[195px]" />
-                <Skeleton className="w-20 h-3 mt-2" />
-                <Skeleton className="w-14 h-2.5 mt-1" />
+                <Skeleton.Cover w={130} h={195} />
+                <Skeleton.Text width={80} height={12} className="mt-2" />
+                <Skeleton.Text width={56} height={10} className="mt-1" />
               </div>
             ))}
           </HScroll>
@@ -121,11 +118,11 @@ export default function ExplorePage({ onSearch }) {
           <Heading>Critiques populaires</Heading>
           {[1, 2, 3].map(i => (
             <div key={i} className="flex gap-3.5 py-5 border-b border-[#f3f3f3]">
-              <Skeleton className="w-[72px] h-[108px] shrink-0" />
-              <div className="flex-1">
-                <Skeleton className="w-32 h-4 mb-1.5" />
-                <Skeleton className="w-20 h-3 mb-2" />
-                <Skeleton className="w-full h-12" />
+              <Skeleton.Cover w={72} h={108} />
+              <div className="flex-1 flex flex-col gap-2 pt-0.5">
+                <Skeleton.Text width="60%" height={14} />
+                <Skeleton.Text width="40%" height={11} />
+                <Skeleton className="w-full rounded-[3px]" style={{ height: 48 }} />
               </div>
             </div>
           ))}
@@ -182,10 +179,10 @@ export default function ExplorePage({ onSearch }) {
           <Heading>Citations populaires</Heading>
           {[1, 2, 3].map(i => (
             <div key={i} className="py-4 border-b border-border-light">
-              <Skeleton className="w-full h-12 mb-2.5" />
+              <Skeleton className="w-full rounded-[3px] mb-2.5" style={{ height: 48 }} />
               <div className="flex items-center gap-2">
-                <Skeleton className="w-6 h-[34px]" />
-                <Skeleton className="w-24 h-3" />
+                <Skeleton.Cover w={24} h={34} />
+                <Skeleton.Text width={96} height={11} />
               </div>
             </div>
           ))}
@@ -226,10 +223,10 @@ export default function ExplorePage({ onSearch }) {
           {[1, 2].map(i => (
             <div key={i} className="py-5 border-b border-border-light">
               <div className="flex gap-2 mb-3.5 p-3.5 px-4 bg-surface rounded-lg">
-                {[1, 2, 3, 4].map(j => <Skeleton key={j} className="w-[68px] h-[102px] shrink-0" />)}
+                {[1, 2, 3, 4].map(j => <Skeleton.Cover key={j} w={68} h={102} />)}
               </div>
-              <Skeleton className="w-40 h-4" />
-              <Skeleton className="w-28 h-3 mt-2" />
+              <Skeleton.Text width={160} height={14} />
+              <Skeleton.Text width={112} height={11} className="mt-2" />
             </div>
           ))}
         </div>

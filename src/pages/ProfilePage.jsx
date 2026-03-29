@@ -18,6 +18,7 @@ import { useNav } from "../lib/NavigationContext";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 import CreateListModal from "../components/CreateListModal";
+import Skeleton from "../components/Skeleton";
 
 function ReadingItem({ book, go, onFinish, initialPage = 0, statusId = null, isOwner = true }) {
   const [currentPage, setCurrentPage] = useState(initialPage);
@@ -425,7 +426,7 @@ export default function ProfilePage({ viewedProfile, initialTab }) {
   const { quotes: myQuotes } = useMyQuotes(profileId);
   const { followers, following: followingCount } = useFollowCounts(profileId);
   const { following: isFollowing, follow, unfollow } = useFollow(!isOwnProfile ? profileId : null);
-  const { favorites, setFavorite, removeFavorite, swapPositions, updateNote } = useFavorites(profileId);
+  const { favorites, loading: favoritesLoading, setFavorite, removeFavorite, swapPositions, updateNote } = useFavorites(profileId);
   const { lists: myLists, refetch: refetchLists } = useMyLists(profileId);
   const listIds = myLists.map(l => l.id);
   const { likedSet: listLikedSet, initialSet: listInitialSet, toggle: toggleListLike } = useLikes(listIds, "list");
@@ -589,7 +590,13 @@ export default function ProfilePage({ viewedProfile, initialTab }) {
       )}
 
       {/* Quatre favoris — masqué pour les visiteurs si aucun favori */}
-      {(isOwnProfile || favorites.some(f => f.book)) && <FavoritesSection
+      {favoritesLoading ? (
+        <div className="border-t border-border-light py-6">
+          <div className="grid grid-cols-4 gap-4">
+            {[1, 2, 3, 4].map(i => <Skeleton.Cover key={i} />)}
+          </div>
+        </div>
+      ) : (isOwnProfile || favorites.some(f => f.book)) && <FavoritesSection
         favorites={favorites}
         isOwner={isOwnProfile}
         go={go}
@@ -651,7 +658,11 @@ export default function ProfilePage({ viewedProfile, initialTab }) {
       {/* Journal/diary */}
       {tab === "journal" && (
         <div className="py-4">
-          {diaryMonths.length > 0 ? (
+          {profileData.loading ? (
+            <div className="flex gap-1.5 flex-wrap">
+              {[1, 2, 3, 4, 5].map(i => <Skeleton.Cover key={i} w={80} h={120} />)}
+            </div>
+          ) : diaryMonths.length > 0 ? (
             diaryMonths.map(([monthLabel, entries]) => (
               <div key={monthLabel} className="mb-6">
                 <div className="text-[11px] font-semibold uppercase tracking-[1.5px] text-[#767676] mb-3 pb-2 border-b border-border-light font-body">
