@@ -234,6 +234,7 @@ export default function Search({ open, onClose, go }) {
   };
 
   const handleBnFSelect = async (gb) => {
+    console.log("[handleBnFSelect] onSelect called with:", gb.title, "slug:", gb.slug, "id:", gb.dbId, "source:", gb._source);
     const key = `bnf:${gb.isbn13 ?? gb.title}`;
     if (addedGoogleIds.has(key)) return;
     setImporting(key);
@@ -241,6 +242,7 @@ export default function Search({ open, onClose, go }) {
     // Tenter Google Books par ISBN ou titre+auteur pour un import enrichi
     const query = gb.isbn13 || `${gb.title} ${gb.authors?.[0] || ""}`.trim();
     const bookResults = await searchBooks(query);
+    console.log("[handleBnFSelect] Google Books result[0]:", bookResults[0]?.title, bookResults[0]?.googleId);
 
     if (bookResults.length > 0) {
       setImporting(null);
@@ -493,7 +495,7 @@ export default function Search({ open, onClose, go }) {
                   const handleClick = () => {
                     if (isImporting || added) return;
                     if (isDb) {
-                      console.log("[Search] DB click:", gb.title, "slug:", gb.slug, "dbId:", gb.dbId);
+                      console.log("[Search] DB click:", gb.title, "slug:", gb.slug, "dbId:", gb.dbId, "source:", gb._source);
                       handleClose();
                       setQ("");
                       setResults([]);
