@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { searchBooks } from "../lib/googleBooks";
 import { importBook } from "../lib/importBook";
@@ -260,9 +260,29 @@ export default function Search({ open, onClose, go }) {
     ? "Chercher un lecteur par pseudo..."
     : "Chercher un livre, un auteur, un lecteur...";
 
+  // Re-rank classique avec le signal IA : quand l'IA répond, remonter les résultats confirmés
+  const rankedResults = useMemo(() => {
+    if (!aiBooks.length || !results.length) return results;
+    const boosted = [...results];
+    for (const aiBook of aiBooks) {
+      const aiTitle = normalize(aiBook.title);
+      const aiAuthor = normalize(aiBook.author || "");
+      const idx = boosted.findIndex(r => {
+        const rTitle = normalize(r.title);
+        const rAuthor = normalize(r.authors?.[0] || "");
+        return rTitle === aiTitle || (aiAuthor && rAuthor.includes(aiAuthor) && rTitle.includes(aiTitle.split(" ")[0]));
+      });
+      if (idx > 0) {
+        const [match] = boosted.splice(idx, 1);
+        boosted.unshift(match);
+      }
+    }
+    return boosted;
+  }, [results, aiBooks]);
+
   // Deduplicated AI books (exclude titles already in classic results)
   const filteredAIBooks = aiBooks.filter(
-    ab => !results.some(cr => normalize(cr.title) === normalize(ab.title))
+    ab => !rankedResults.some(cr => normalize(cr.title) === normalize(ab.title))
   );
 
   return (
@@ -394,7 +414,7 @@ export default function Search({ open, onClose, go }) {
             {/* Normal mode */}
             {!loading && !atMode && (
               <>
-                {q.length >= 2 && results.length === 0 && userResults.length === 0 && !aiLoading && filteredAIBooks.length === 0 && (
+                {q.length >= 2 && rankedResults.length === 0 && userResults.length === 0 && !aiLoading && filteredAIBooks.length === 0 && (
                   <div className="py-8 text-center text-[13px] text-[#767676] font-body">Aucun résultat pour cette recherche.</div>
                 )}
 
@@ -403,16 +423,16 @@ export default function Search({ open, onClose, go }) {
                   <>
                     <div className="px-5 pt-3 pb-1 text-[11px] uppercase tracking-[1.5px] text-[#999] font-body">Lecteurs</div>
                     {userResults.map(u => <UserRow key={u.id} u={u} onSelect={handleSelectUser} />)}
-                    {results.length > 0 && (
+                    {rankedResults.length > 0 && (
                       <div className="px-5 pt-3 pb-1 text-[11px] uppercase tracking-[1.5px] text-[#999] font-body">
-                        Livres {results.length > 0 && <span className="normal-case tracking-normal text-[#bbb]">({results.length})</span>}
+                        Livres {rankedResults.length > 0 && <span className="normal-case tracking-normal text-[#bbb]">({rankedResults.length})</span>}
                       </div>
                     )}
                   </>
                 )}
 
                 {/* Classic book results */}
-                {results.map(gb => {
+                {rankedResults.map(gb => {
                   const isBnF = gb._source === "bnf";
                   const itemKey = gb.googleId ?? `bnf:${gb.isbn13 ?? gb.title}`;
                   const added = addedGoogleIds.has(itemKey);
@@ -448,7 +468,7 @@ export default function Search({ open, onClose, go }) {
                 {/* AI results — below classic results */}
                 {filteredAIBooks.length > 0 && (
                   <>
-                    {results.length > 0 && (
+                    {rankedResults.length > 0 && (
                       <div className="flex items-center gap-2 px-5 py-3">
                         <div className="flex-1 h-px bg-[#f0f0f0]" />
                         <span className="text-[10px] uppercase tracking-widest text-[#ccc] font-medium font-body">
@@ -458,7 +478,7 @@ export default function Search({ open, onClose, go }) {
                         <div className="flex-1 h-px bg-[#f0f0f0]" />
                       </div>
                     )}
-                    {results.length === 0 && interpretedAs && (
+                    {rankedResults.length === 0 && interpretedAs && (
                       <div className="px-5 py-2 text-xs text-[#999] font-body">
                         Compris : « {interpretedAs} »
                       </div>
@@ -483,7 +503,7 @@ export default function Search({ open, onClose, go }) {
                 )}
 
                 {/* AI loading indicator (subtle) */}
-                {aiLoading && results.length > 0 && (
+                {aiLoading && rankedResults.length > 0 && (
                   <div className="text-center py-3 text-[11px] text-[#ccc] font-body">
                     Recherche approfondie…
                   </div>
