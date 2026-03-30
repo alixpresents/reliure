@@ -1251,4 +1251,30 @@ Feedback minimaliste quand une mutation réseau échoue (like, follow, création
 
 ---
 
+## 25. Cohérence du fil d'activité — nettoyage et validation
+
+**Statut :** Implémenté · MVP
+**Portée :** `src/hooks/useActivity.js`, `src/hooks/useReadingStatus.js`, `src/hooks/useExplore.js`
+
+### Problèmes corrigés
+
+**Activité orpheline après suppression de contenu**
+- `ContentMenu` (reviews/quotes) et `deleteList` (lists) supprimaient déjà l'entrée `activity` correspondante.
+- Cas manquant : `useReadingStatus.setRating(0)` supprimait une review sans body (rating retiré) sans nettoyer l'activité. Corrigé.
+
+**Filet de sécurité côté fil (`useFeed`)**
+Après dédoublonnage, 3 requêtes parallèles vérifient que les reviews/quotes/lists référencées existent encore en base. Les entrées orphelines sont filtrées avant `setItems`. Les `reading_status` passent toujours (pas de contenu séparé à vérifier).
+
+```
+reviewIds → supabase.from("reviews").select("id").in(...)
+quoteIds  → supabase.from("quotes").select("id").in(...)
+listIds   → supabase.from("lists").select("id").in(...)
+→ filter: target_type === "review" ? reviewSet.has(target_id) : ...
+```
+
+**Slugs manquants dans les sections populaires**
+`usePopularReviews` et `usePopularQuotes` ne sélectionnaient pas `slug` dans le join `books(...)`. Résultat : navigation vers `/livre/{id}` au lieu de `/livre/{slug}`. Corrigé en ajoutant `slug` aux deux selects.
+
+---
+
 *Dernière mise à jour : 30 mars 2026*
