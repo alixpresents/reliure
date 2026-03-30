@@ -4,6 +4,7 @@ import { FONT_URL } from "./data";
 import { useAuth } from "./lib/AuthContext";
 import { useProfile } from "./hooks/useProfile";
 import Header from "./components/Header";
+import AnnouncementBanner from "./components/AnnouncementBanner";
 import Search from "./components/Search";
 import ScrollToTop from "./components/ScrollToTop";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -115,6 +116,13 @@ export default function App() {
     <div className="bg-white min-h-screen text-[#1a1a1a] font-body">
       <link href={FONT_URL} rel="stylesheet" />
       <ScrollToTop />
+      <AnnouncementBanner
+        pill="Bêta"
+        message="est en bêta fermée —"
+        ctaLabel="Demander un accès"
+        ctaHref="/login"
+        storageKey="reliure_banner_dismissed_v1"
+      />
       <Header
         onSearch={() => { setSearchCb(null); setSearch(!search); }}
         initials={initials}
