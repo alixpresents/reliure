@@ -13,7 +13,7 @@ export default function Img({ book, w, h, onClick, className = "" }) {
       tabIndex={onClick ? 0 : undefined}
       onKeyDown={onClick ? e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onClick(); } } : undefined}
       className={`rounded-[3px] overflow-hidden shrink-0 relative shadow-[0_1px_3px_rgba(0,0,0,0.08)] transition-all duration-150 ${onClick ? "cursor-pointer hover:-translate-y-0.5 hover:shadow-[0_4px_12px_rgba(0,0,0,0.13)]" : ""} ${className}`}
-      style={{ ...(hasOverride ? {} : { width: w, height: h }), backgroundColor: "#e8e4de" }}
+      style={{ ...(hasOverride ? {} : { width: w, height: h }), backgroundColor: "var(--cover-fallback)" }}
     >
       {src && !imgFailed && (
         <img

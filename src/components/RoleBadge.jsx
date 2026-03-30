@@ -1,11 +1,11 @@
 const STYLES = {
   admin: {
-    backgroundColor: "#1a1a1a",
-    color: "#fff",
+    backgroundColor: "var(--text-primary)",
+    color: "var(--bg-primary)",
     border: "none",
   },
   moderator: {
-    backgroundColor: "#f0ede8",
+    backgroundColor: "var(--avatar-bg)",
     color: "#8B6914",
     border: "1px solid #e8d5a3",
   },

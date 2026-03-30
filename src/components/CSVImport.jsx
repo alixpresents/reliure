@@ -435,7 +435,7 @@ export default function CSVImport() {
               {progress.imported} livre{progress.imported > 1 ? "s" : ""} importé{progress.imported > 1 ? "s" : ""} avec succès
             </span>
           </div>
-          <p className="font-body mt-1" style={{ fontSize: 13, color: "#666", margin: "6px 0 0 0" }}>
+          <p className="font-body mt-1" style={{ fontSize: 13, color: "var(--text-secondary)", margin: "6px 0 0 0" }}>
             Ils apparaissent maintenant dans ta bibliothèque.
           </p>
           {progress.skipped > 0 && (

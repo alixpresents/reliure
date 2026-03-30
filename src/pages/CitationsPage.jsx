@@ -118,10 +118,10 @@ function AddQuoteModal({ onClose, onPublished }) {
       >
         <div
           onClick={e => e.stopPropagation()}
-          style={{ width: "100%", maxWidth: 520, background: "#fff", borderRadius: 12, boxShadow: "0 8px 40px rgba(0,0,0,0.14)", overflow: "hidden" }}
+          style={{ width: "100%", maxWidth: 520, background: "var(--bg-primary)", borderRadius: 12, boxShadow: "0 8px 40px rgba(0,0,0,0.14)", overflow: "hidden" }}
         >
           {/* Header */}
-          <div style={{ padding: "16px 20px 14px", borderBottom: "1px solid #f0f0f0", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <div style={{ padding: "16px 20px 14px", borderBottom: "1px solid var(--border-subtle)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
             <span className="text-[15px] font-semibold font-body text-[#1a1a1a]">
               {step === "search" ? "Choisir un livre" : "Ajouter une citation"}
             </span>

@@ -329,7 +329,7 @@ function FavoritesSection({ favorites, isOwner, go, onAdd, onRemove, onSwap, onU
                 onClick={() => { if (!dragFrom) onAdd(pos); }}
                 onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onAdd(pos); } }}
                 className="w-full aspect-[2/3] border-[1.5px] border-dashed border-[#eee] rounded-[3px] flex items-center justify-center cursor-pointer hover:border-[#767676] transition-colors duration-150"
-                style={isDropTarget ? { borderColor: "#eee", borderWidth: 2 } : undefined}
+                style={isDropTarget ? { borderColor: "var(--border-default)", borderWidth: 2 } : undefined}
               >
                 <span className="text-[16px] text-[#ccc] group-hover/fav:text-[#999] transition-colors duration-150">+</span>
               </div>
@@ -703,13 +703,13 @@ export default function ProfilePage({ viewedProfile, initialTab }) {
           tabIndex={0}
           onClick={onBackfill}
           onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onBackfill(); } }}
-          className="flex items-center gap-4 p-3 px-4 bg-surface rounded-lg border border-[#eee] cursor-pointer hover:border-[#eee] transition-colors duration-150 mb-0"
+          className="flex items-center gap-4 p-3 px-4 rounded-lg cursor-pointer transition-colors duration-150 mb-0" style={{ backgroundColor: "var(--bg-elevated)", border: "1px solid var(--border-default)" }}
         >
           <div className="flex-1">
             <div className="text-[13px] font-medium font-body">Tu as lu d'autres livres ?</div>
             <div className="text-xs text-[#767676] font-body">Remplis ta bibliothèque en quelques clics.</div>
           </div>
-          <button className="px-3 py-[6px] rounded-[16px] text-xs font-medium font-body bg-white border-[1.5px] border-[#eee] text-[#1a1a1a] cursor-pointer hover:border-[#767676] transition-colors duration-150">
+          <button className="px-3 py-[6px] rounded-[16px] text-xs font-medium font-body cursor-pointer transition-colors duration-150" style={{ backgroundColor: "var(--bg-primary)", border: "1.5px solid var(--border-default)", color: "var(--text-primary)" }}>
             Ajouter
           </button>
         </div>
@@ -910,7 +910,7 @@ export default function ProfilePage({ viewedProfile, initialTab }) {
                   onClick={() => go(b)}
                   onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); go(b); } }}
                   className="flex items-center gap-3 py-2.5 cursor-pointer hover:bg-[#fafafa] transition-colors duration-100"
-                  style={{ borderBottom: "0.5px solid #f0f0f0" }}
+                  style={{ borderBottom: "0.5px solid var(--border-subtle)" }}
                 >
                   <Img book={b} w={36} h={54} />
                   <div className="flex-1 min-w-0">

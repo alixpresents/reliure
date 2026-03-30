@@ -216,23 +216,56 @@ Reliure regroupe les éditions par oeuvre (comme Letterboxd : un film = une fich
 - **Body** : Geist — tout le reste (nav, labels, corps de texte, métadonnées)
 - Pas de mélange de poids fantaisistes : 400 regular, 500 medium, 600 semibold, 700 bold
 
-### Palette de couleurs (corrigée accessibilité WCAG AA)
-- Texte primaire : `#1a1a1a` (titres, noms, UI principale)
-- Texte corps : `#333` (critiques, articles, contenu de lecture longue)
-- Texte secondaire : `#666` (bio, auteurs, métadonnées lisibles)
-- Texte tertiaire : `#767676` (labels, timestamps, compteurs — gris le plus clair passant AA sur blanc)
-- Étoiles / notation : `#D4883A`
-- Spoiler tag : `#e25555`
-- Fond principal : `#fff`
-- Fond surface : `#fafaf8`
-- Fond couverture fallback : `#e8e4de`
-- Bordures : `#f0f0f0` (séparateurs fins), `#eee` (bordures de composants)
-- Fond tags : `#f5f3f0` avec bordure `#eee`
-- Succès (check) : `#2E7D32`
-- Erreur texte : `#c00`, fond `#fff3f3`, bordure `#fdd`
-- Warning/info : texte `#8B6914`, fond `#fef9e7`, bordure `#f0e68c`
-- Badge Aperçu/WIP : texte `#8B6914`, fond `#faf6f0`, bordure `#e8dfd2`
-- Skeleton / progress bars : `#f0ede8`
+### Palette de couleurs — CSS custom properties (dark mode ready)
+
+Toutes les couleurs UI sont gérées via CSS custom properties dans `src/index.css` (`:root` pour light, `[data-theme="dark"]` pour dark). Les variables `@theme` de Tailwind (`--color-*`) pointent vers ces custom properties pour que les classes utilitaires (`bg-surface`, `bg-cover-fallback`, etc.) switchent automatiquement.
+
+**Variables principales** (valeurs light / dark) :
+- `--bg-primary` : `#fff` / `#131211` — fond principal
+- `--bg-surface` : `#fafaf8` / `#1a1918` — fond surface
+- `--bg-elevated` : `#fff` / `#222120` — fond élevé (modals, cards, skeletons)
+- `--text-primary` : `#1a1a1a` / `#e8e5df` — titres, noms, UI principale
+- `--text-body` : `#333` / `#c5c2ba` — critiques, articles, contenu de lecture longue
+- `--text-secondary` : `#666` / `#9c9890` — bio, auteurs, métadonnées
+- `--text-tertiary` : `#767676` / `#706c65` — labels, timestamps, compteurs
+- `--text-muted` : `#b5b0a8` / `#363330` — placeholders très discrets
+- `--border-subtle` : `#f0f0f0` / `#262422` — séparateurs fins
+- `--border-default` : `#eee` / `#302e2b` — bordures de composants
+- `--header-bg` : `rgba(255,255,255,0.92)` / `rgba(19,18,17,0.95)` — header backdrop
+- `--avatar-bg` : `#f0ede8` / `#2a2724` — fond avatar initiales
+- `--cover-fallback` : `#e8e4de` / `#2a2724` — fond couverture fallback
+- `--tag-bg` : `#f5f3f0` / `#1e1d1b` — fond tags
+- `--tag-border` : `#eee` / `#302e2b` — bordure tags
+- `--tag-text` : `#777` / `#7a756d` — texte tags
+- `--focus-ring` : `#1a1a1a` / `#e8e5df` — outline focus clavier
+- `--star-empty` : `#ddd` / `#3a3630` — étoiles non remplies
+- `--shadow-cover` : `0 1px 3px rgba(0,0,0,0.08)` / `0 1px 4px rgba(0,0,0,0.4)` — ombre couvertures
+
+**Couleurs sémantiques** (switchent entre light et dark) :
+- `--color-star` : `#D4883A` — étoiles / notation (identique light/dark)
+- `--color-spoiler` : `#e25555` — spoiler tag (identique light/dark)
+- `--color-success` : `#2E7D32` / `#4ade80` — succès texte
+- `--color-success-bg` : `#e8f5e9` / `#1a2e1a` — succès fond
+- `--color-error` : `#c00` / `#f87171` — erreur texte
+- `--color-error-bg` : `#fff3f3` / `#2a1515` — erreur fond
+- `--color-error-border` : `#fdd` / `#4a2020` — erreur bordure
+- `--color-warn-text` : `#8B6914` / `#e8c547` — warning texte
+- `--color-warn-bg` : `#fef9e7` / `#2a2515` — warning fond
+- `--color-warn-border` : `#f0e68c` / `#4a3d12` — warning bordure
+- `--color-wip-text` : `#8B6914` / `#d4a843` — badge Aperçu texte
+- `--color-wip-bg` : `#faf6f0` / `#231f15` — badge Aperçu fond
+- `--color-wip-border` : `#e8dfd2` / `#3d3520` — badge Aperçu bordure
+
+**Convention** : pour les nouvelles couleurs, toujours utiliser `var(--xxx)` en inline style ou la classe Tailwind correspondante (ex: `bg-cover-fallback`). Ne jamais hardcoder de hex pour les couleurs UI.
+
+### Dark mode
+
+- Toggle manuel via `useTheme()` (`src/hooks/useTheme.js`)
+- Persisté dans `localStorage` sous `reliure-theme`
+- Applique `data-theme="light|dark"` sur `<html>`
+- Pas de `prefers-color-scheme` — toggle manuel uniquement pour la beta
+- Bouton lune/soleil dans le Header entre la recherche et l'avatar
+- `useTheme()` appelé dans `App.jsx`, `theme` + `toggleTheme` passés au Header
 
 ### Layout
 - Max-width contenu : `760px` (single column, optimal pour lecture longue)
@@ -253,9 +286,10 @@ Reliure regroupe les éditions par oeuvre (comme Letterboxd : un film = une fich
 - **Label** : label uppercase discret pour les sous-sections (10px, tracking 2px, muted)
 - **HScroll** : conteneur de scroll horizontal sans scrollbar
 - **LikeButton** : coeur toggle avec animation scale, compteur, couleur spoiler quand liked
-- **Search** : overlay de recherche plein écran avec champ + résultats filtrés
+- **Search** : dropdown de recherche ancré au header (420px, border-radius 12, pas d'overlay plein écran). Filtres chips (Tout/Livres/Auteurs/Lecteurs). Click-outside + Escape ferment. Rendu dans `Header.jsx`.
 - **ContentMenu** : menu "···" édition/suppression pour critiques et citations. Visible uniquement si `user.id === item.user_id`. Desktop : opacity 0 → 1 au hover du parent (`group`/`group-hover`). Mobile : toujours visible. Menu contextuel (blanc, border, shadow) avec "✏️ Modifier" (modal inline) et "🗑 Supprimer" (confirmation "Oui/Annuler"). Modal d'édition : textarea pré-rempli + InteractiveStars + checkbox spoilers pour les critiques. Intégré dans BookPage, ProfilePage, ExplorePage, FeedPage, CitationsPage.
-- **Toast** : notification d'erreur fixe, centrée en bas (z-10000), fond `#1a1a1a`, texte blanc, animation slide-up 180ms, auto-dismiss 3s. Hook `useToast()` → `{ toast, showToast }` (src/hooks/useToast.js). Déclenché sur les erreurs de mutation (likes, follows, création de liste, publication de citation). Intégré dans BookPage, ProfilePage, ExplorePage, FeedPage, CitationsPage, CreateListModal.
+- **AnnouncementBanner** : bandeau au-dessus du header (fond `#1a1a1a`, texte blanc). Props : `pill`, `message`, `ctaLabel`, `ctaHref`, `storageKey`. Fermable via localStorage. Affiché dans `App.jsx` avant le Header.
+- **Toast** : notification d'erreur fixe, centrée en bas (z-10000), fond `var(--text-primary)`, texte `var(--bg-primary)`, animation slide-up 180ms, auto-dismiss 3s. Hook `useToast()` → `{ toast, showToast }` (src/hooks/useToast.js). Déclenché sur les erreurs de mutation (likes, follows, création de liste, publication de citation). Intégré dans BookPage, ProfilePage, ExplorePage, FeedPage, CitationsPage, CreateListModal.
 
 ## Règles React — performance et boucles
 
@@ -395,7 +429,7 @@ Chaque onglet a sa propre URL (`/:username/critiques`, etc.).
 
 - Composant global : `src/components/Skeleton.jsx`
 - CSS injecté une fois via `document.head` au chargement du module (pas de fichier CSS séparé)
-- Classe `.sk` : fond `#f0ede8` + shimmer `::after` animé (1.4s ease-in-out)
+- Classe `.sk` : fond `var(--bg-elevated)` + shimmer `::after` `var(--border-subtle)` animé (1.4s ease-in-out)
 - Classe `.sk-fade` : fade-in 200ms sur le contenu réel une fois chargé (appliquer sur le wrapper du contenu)
 - Sous-composants : `Skeleton.Cover` (ratio 2:3), `Skeleton.Text` (barre arrondie), `Skeleton.Avatar` (cercle), `Skeleton.Stars`, `Skeleton.Card` (ligne fil d'activité)
 - Skeleton de page (route-level) : dans les fichiers `*Route.jsx` — `BookPageRoute`, `ProfilePageRoute`
@@ -492,7 +526,7 @@ Variable `isOwnProfile = user?.id === viewedProfile?.id` contrôle l'affichage c
 - Pas de messagerie privée
 - Pas de scan code-barres (v2)
 - Pas de lien librairies (v2)
-- Pas de dark mode (v2, mais penser l'architecture couleur pour que ce soit ajoutable)
+- ~~Pas de dark mode~~ → implémenté (toggle manuel, CSS custom properties, pas de prefers-color-scheme)
 - Pas de notifications push
 - Pas de table AUTHORS séparée (JSONB suffit au MVP)
 

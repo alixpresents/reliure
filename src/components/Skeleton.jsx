@@ -7,8 +7,8 @@ if (typeof document !== "undefined") {
     s.textContent =
       "@keyframes sk-shimmer{0%{transform:translateX(-100%)}100%{transform:translateX(100%)}}" +
       "@keyframes sk-fadein{from{opacity:0}to{opacity:1}}" +
-      ".sk{position:relative;overflow:hidden;background:#f0ede8;}" +
-      ".sk::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent 0%,#f8f6f2 50%,transparent 100%);animation:sk-shimmer 1.4s ease-in-out infinite;}" +
+      ".sk{position:relative;overflow:hidden;background:var(--bg-elevated);}" +
+      ".sk::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent 0%,var(--border-subtle) 50%,transparent 100%);animation:sk-shimmer 1.4s ease-in-out infinite;}" +
       ".sk-fade{animation:sk-fadein 200ms ease-in-out;}";
     document.head.appendChild(s);
   }
@@ -54,7 +54,7 @@ Skeleton.Stars = function Stars() {
 // composition fil d'activité : avatar + 2 lignes + mini couverture
 Skeleton.Card = function Card() {
   return (
-    <div className="py-3.5 border-b border-[#f0f0f0] flex gap-3 items-start">
+    <div className="py-3.5 border-b flex gap-3 items-start" style={{ borderColor: "var(--border-subtle)" }}>
       <Skeleton.Avatar size={28} />
       <div className="flex-1 flex flex-col gap-2 pt-0.5">
         <Skeleton.Text width="55%" height={12} />

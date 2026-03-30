@@ -403,8 +403,8 @@ export default function Search({ open, onClose, go, initialQuery = "" }) {
         width: 420,
         maxWidth: "calc(100vw - 32px)",
         zIndex: 200,
-        backgroundColor: "#fff",
-        border: "0.5px solid #eee",
+        backgroundColor: "var(--bg-primary)",
+        border: "0.5px solid var(--border-default)",
         borderRadius: 12,
         boxShadow: "0 4px 20px rgba(0,0,0,0.07)",
         maxHeight: 440,
@@ -417,7 +417,7 @@ export default function Search({ open, onClose, go, initialQuery = "" }) {
       }}
     >
       {/* Input row */}
-      <div className="flex items-center gap-2 px-3" style={{ height: 44, borderBottom: "0.5px solid #f0f0f0" }}>
+      <div className="flex items-center gap-2 px-3" style={{ height: 44, borderBottom: "0.5px solid var(--border-subtle)" }}>
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#ccc" strokeWidth="2" className="shrink-0">
           <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
         </svg>
@@ -473,7 +473,7 @@ export default function Search({ open, onClose, go, initialQuery = "" }) {
       </div>
 
       {/* Filter chips */}
-      <div className="flex gap-1.5 border-b" style={{ borderColor: "#f0f0f0", padding: "8px 12px" }}>
+      <div className="flex gap-1.5 border-b" style={{ borderColor: "var(--border-subtle)", padding: "8px 12px" }}>
         {FILTERS.map(f => (
           <button
             key={f.key}

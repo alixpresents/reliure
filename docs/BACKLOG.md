@@ -411,7 +411,7 @@ Record Club fait ça particulièrement bien : chaque couverture d'album, chaque 
 - Le skeleton doit reproduire fidèlement le layout du contenu final (mêmes dimensions, mêmes espacements) pour éviter le layout shift
 - Animation subtile : shimmer léger ou pulse d'opacité, pas de clignotement agressif
 - Transition fade-in quand le contenu arrive (200-300ms)
-- Utiliser les couleurs du design system : fond `#f0ede8` pour les placeholders, shimmer en `#f8f6f2`
+- Utiliser les CSS custom properties : fond `var(--bg-elevated)` pour les placeholders, shimmer en `var(--border-subtle)` (dark mode ready)
 - Jamais de spinner sauf pour les actions utilisateur (envoi de critique, sauvegarde)
 
 ### Implémentation envisagée
@@ -1348,6 +1348,72 @@ Sur `/citations`, les titres de livres et couvertures associés aux citations ne
 Le contenu passe par un état très pâle pendant 2-3 secondes avant d'être pleinement lisible. La transition `.sk-fade` est trop longue.
 
 **Action envisagée :** réduire la durée du fade-in de 200ms à 80-100ms, ou supprimer l'opacité initiale si le skeleton loading est déjà en place (pas besoin de double transition).
+
+---
+
+## 26. Dark mode
+
+**Statut :** Partiellement implémenté · Migration Tailwind en cours
+**Portée :** Toute l'app (index.css, composants, pages)
+
+### Ce qui est implémenté
+
+**Architecture CSS custom properties** (`src/index.css`) :
+- `:root` définit 17 variables light (--bg-primary, --bg-surface, --bg-elevated, --text-primary, --text-secondary, --text-tertiary, --text-muted, --border-subtle, --border-default, --header-bg, --avatar-bg, --cover-fallback, --tag-bg, --tag-border, --tag-text, --focus-ring)
+- `[data-theme="dark"]` override ces 17 variables avec les valeurs sombres
+- Les variables `@theme` Tailwind (--color-surface, --color-cover-fallback, --color-avatar-bg, --color-tag-bg, --color-border-light) pointent vers les CSS vars → les classes utilitaires (`bg-surface`, `bg-cover-fallback`, etc.) switchent automatiquement
+
+**Hook `useTheme()`** (`src/hooks/useTheme.js`) :
+- `useState` initialisé depuis `localStorage('reliure-theme')`, défaut `'light'`
+- `useEffect` applique `data-theme` sur `<html>` + persiste dans localStorage
+- `toggleTheme()` toggle light/dark
+- Appelé dans `App.jsx`, `theme` + `toggleTheme` passés à `Header`
+
+**Bouton toggle** (`Header.jsx`) :
+- Icône lune (light → dark) / soleil (dark → light), SVG 16×16
+- Positionné entre la recherche et l'avatar
+- `color: var(--text-tertiary)`, hover opacity 0.7
+- `aria-label` : "Mode sombre" / "Mode clair"
+
+**Composants migrés vers CSS vars** (inline styles) :
+- `App.jsx` : conteneurs principaux (bg-primary, text-primary)
+- `Header.jsx` : header-bg, border-default, bg-elevated (dropdown menu), text-primary (logo)
+- `Search.jsx` : bg-primary, border-default, border-subtle
+- `BookPage.jsx` : bg-primary (modals LoginModal, EnrichModal), text-primary/bg-primary (toast)
+- `CitationsPage.jsx` : bg-primary (modal), border-subtle
+- `ProfilePage.jsx` : bg-elevated + border-default (card backfill), border-subtle, border-default
+- `Img.jsx` : cover-fallback
+- `RoleBadge.jsx` : text-primary, bg-primary (admin), avatar-bg (moderator)
+- `CSVImport.jsx` : text-secondary
+- `Skeleton.jsx` : bg-elevated (fond), border-subtle (shimmer)
+
+### Migration restante — classes Tailwind hardcodées
+
+Les classes Tailwind avec hex hardcodé (`text-[#xxx]`, `bg-[#xxx]`, `border-[#xxx]`) ne switchent pas en dark mode. C'est le gros de la migration restante.
+
+**Fichiers concernés (non exhaustif) :**
+- `Header.jsx` : `text-[#1a1a1a]`, `text-[#767676]`, `text-[#888]`
+- `ExplorePage.jsx` : `text-[#1a1a1a]`, `text-[#767676]`, `text-[#999]`, `border-[#f0f0f0]`, `hover:bg-[#fafaf8]`
+- `ProfilePage.jsx` : `text-[#1a1a1a]`, `text-[#767676]`, `text-[#ccc]`, `border-[#eee]`, `bg-white`
+- `BookPage.jsx` : `text-[#1a1a1a]`, `text-[#767676]`, `text-[#999]`, `border-[#eee]`, `bg-white`
+- `CitationsPage.jsx`, `FeedPage.jsx` : `text-[#1a1a1a]`, `text-[#767676]`, `border-[#f0f0f0]`
+- `BackfillPage.jsx`, `ChallengesPage.jsx`, `JournalPage.jsx`, `ArticlePage.jsx` : `bg-white`, `text-[#1a1a1a]`
+- `OnboardingPage.jsx`, `LoginPage.jsx`, `SettingsPage.jsx` : `bg-white`
+- `Search.jsx`, `LikeButton.jsx`, `ContentMenu.jsx`, `Avatar.jsx`, `Tag.jsx`, `Pill.jsx`
+
+**Stratégie recommandée :**
+Ajouter dans `@theme` des mappings qui pointent vers les CSS vars (comme déjà fait pour `--color-surface` → `var(--bg-surface)`), puis remplacer `text-[#1a1a1a]` par `text-primary`, `bg-white` par `bg-primary`, etc. Cela permet de garder le flow Tailwind tout en supportant le dark mode.
+
+**Éléments sémantiques non migrés** (intentionnel) :
+- Couleurs de statut : `#D4883A` (étoiles), `#e25555` (spoiler), `#2E7D32`/`#16a34a` (succès), `#c00` (erreur)
+- Badges : `#8B6914`/`#faf6f0`/`#e8dfd2` (Aperçu/WIP)
+- Gradient étagère : `#c4a882` → `#a08462`
+- `JoinBanner` et `AnnouncementBanner` (fond `#1a1a1a` — contraste inversé en dark, à designer)
+
+### Ce qu'on ne fait PAS en v1
+- Pas de `prefers-color-scheme` (toggle manuel uniquement pour la beta)
+- Pas de thème par page ou par profil (toggle global uniquement)
+- Pas de redesign des couleurs sémantiques pour le dark mode
 
 ---
 

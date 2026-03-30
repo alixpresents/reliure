@@ -35,7 +35,7 @@ function LoginModal({ book, onClose, onNavigate }) {
     <>
       <div onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: 9998, backgroundColor: "rgba(0,0,0,0.4)" }} />
       <div style={{ position: "fixed", inset: 0, zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 16px" }}>
-        <div onClick={e => e.stopPropagation()} style={{ width: "100%", maxWidth: 360, background: "#fff", borderRadius: 16, boxShadow: "0 12px 48px rgba(0,0,0,0.16)", padding: "28px 24px 24px", textAlign: "center" }}>
+        <div onClick={e => e.stopPropagation()} style={{ width: "100%", maxWidth: 360, background: "var(--bg-primary)", borderRadius: 16, boxShadow: "0 12px 48px rgba(0,0,0,0.16)", padding: "28px 24px 24px", textAlign: "center" }}>
           {/* Cover */}
           {(book.c || book.cover_url) && (
             <div className="flex justify-center mb-5">
@@ -141,7 +141,7 @@ function EnrichModal({ bookId, onClose, onSaved, initialDescription, initialPage
     <>
       <div onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: 9998, backgroundColor: "rgba(0,0,0,0.4)" }} />
       <div style={{ position: "fixed", inset: 0, zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 16px" }}>
-        <div onClick={e => e.stopPropagation()} style={{ width: "100%", maxWidth: 440, background: "#fff", borderRadius: 16, boxShadow: "0 12px 48px rgba(0,0,0,0.16)", padding: "28px 24px 24px", maxHeight: "90vh", overflowY: "auto" }}>
+        <div onClick={e => e.stopPropagation()} style={{ width: "100%", maxWidth: 440, background: "var(--bg-primary)", borderRadius: 16, boxShadow: "0 12px 48px rgba(0,0,0,0.16)", padding: "28px 24px 24px", maxHeight: "90vh", overflowY: "auto" }}>
           <h2 className="font-display italic text-[20px] font-normal m-0 mb-1">Compléter cette fiche</h2>
           <div className="text-[11px] text-[#767676] font-body mb-5">Les modifications sont appliquées immédiatement.</div>
 
@@ -487,7 +487,7 @@ export default function BookPage({ book }) {
 
       {/* Toast contribution */}
       {enrichToast && (
-        <div style={{ position: "fixed", bottom: 24, left: "50%", transform: "translateX(-50%)", zIndex: 9999, background: "#1a1a1a", color: "#fff", borderRadius: 8, padding: "10px 18px", fontSize: 13, fontFamily: "inherit", boxShadow: "0 4px 16px rgba(0,0,0,0.18)", whiteSpace: "nowrap" }}>
+        <div style={{ position: "fixed", bottom: 24, left: "50%", transform: "translateX(-50%)", zIndex: 9999, background: "var(--text-primary)", color: "var(--bg-primary)", borderRadius: 8, padding: "10px 18px", fontSize: 13, fontFamily: "inherit", boxShadow: "0 4px 16px rgba(0,0,0,0.18)", whiteSpace: "nowrap" }}>
           Merci pour ta contribution !
         </div>
       )}

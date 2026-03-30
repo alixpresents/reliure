@@ -28,6 +28,7 @@ import JoinBanner from "./components/JoinBanner";
 import OnboardingTooltip from "./components/OnboardingTooltip";
 import Toast from "./components/Toast";
 import { useToast } from "./hooks/useToast";
+import { useTheme } from "./hooks/useTheme";
 
 export default function App() {
   const { user, loading: authLoading } = useAuth();
@@ -38,6 +39,7 @@ export default function App() {
   const [searchInitialQuery, setSearchInitialQuery] = useState("");
   const [walkthroughActive, setWalkthroughActive] = useState(false);
   const { toast, showToast } = useToast();
+  const { theme, toggleTheme } = useTheme();
 
   const openSearchFor = (cb) => { setSearchCb(() => cb); setSearch(true); };
   const closeSearch = () => { setSearch(false); setSearchCb(null); setSearchInitialQuery(""); };
@@ -84,7 +86,7 @@ export default function App() {
   // Loading
   if (authLoading || (user && profileLoading)) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center font-body">
+      <div className="min-h-screen flex items-center justify-center font-body" style={{ backgroundColor: "var(--bg-primary)" }}>
         <link href={FONT_URL} rel="stylesheet" />
         <span className="text-[17px] font-bold tracking-tight">reliure</span>
       </div>
@@ -97,7 +99,7 @@ export default function App() {
 
   if (needsOnboarding) {
     return (
-      <div className="bg-white min-h-screen text-[#1a1a1a] font-body">
+      <div className="min-h-screen font-body" style={{ backgroundColor: "var(--bg-primary)", color: "var(--text-primary)" }}>
         <link href={FONT_URL} rel="stylesheet" />
         <OnboardingPage onComplete={(uname) => {
           refetch();
@@ -113,7 +115,7 @@ export default function App() {
     : "?";
 
   return (
-    <div className="bg-white min-h-screen text-[#1a1a1a] font-body">
+    <div className="min-h-screen font-body" style={{ backgroundColor: "var(--bg-primary)", color: "var(--text-primary)" }}>
       <link href={FONT_URL} rel="stylesheet" />
       <ScrollToTop />
       <AnnouncementBanner
@@ -133,6 +135,8 @@ export default function App() {
         username={profile?.username}
         avatarUrl={profile?.avatar_url}
         isLoggedIn={isLoggedIn}
+        theme={theme}
+        toggleTheme={toggleTheme}
       />
       <NavigationProvider openSearchFor={openSearchFor}>
       <div className={`max-w-[760px] mx-auto px-4 sm:px-6 ${isLoggedIn ? "pb-20" : "pb-32"}`}>

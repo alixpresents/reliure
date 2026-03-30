@@ -152,7 +152,7 @@ export default function ExplorePage() {
       {/* Search bar */}
       <div className="py-6 pb-5">
         <div ref={wrapperRef} className="relative">
-          <div className="bg-surface rounded-lg py-[11px] px-4 flex items-center gap-2.5 border border-[#eee] hover:border-[#ccc] transition-[border] duration-150">
+          <div className="rounded-lg py-[11px] px-4 flex items-center gap-2.5 transition-[border] duration-150" style={{ backgroundColor: "var(--bg-surface)", border: "1px solid var(--border-default)" }}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ccc" strokeWidth="2" className="shrink-0">
               <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
             </svg>
@@ -182,10 +182,11 @@ export default function ExplorePage() {
           {/* Results dropdown */}
           {showDropdown && (
             <div
-              className="absolute left-0 right-0 bg-white overflow-hidden"
+              className="absolute left-0 right-0 overflow-hidden"
               style={{
                 top: "calc(100% + 4px)",
-                border: "0.5px solid #eee",
+                backgroundColor: "var(--bg-primary)",
+                border: "0.5px solid var(--border-default)",
                 borderRadius: 12,
                 boxShadow: "0 4px 16px rgba(0,0,0,0.06)",
                 maxHeight: 360,
