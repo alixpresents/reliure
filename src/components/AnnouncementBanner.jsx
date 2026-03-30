@@ -2,7 +2,7 @@ import { useState } from "react";
 
 export default function AnnouncementBanner({
   pill = "Bêta",
-  message = "est en bêta fermée —",
+  message = "est en bêta fermée -",
   ctaLabel = "Demander un accès",
   ctaHref = "/login",
   storageKey = "reliure_banner_dismissed_v1",
