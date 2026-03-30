@@ -8,6 +8,7 @@ import Skeleton from "../components/Skeleton";
 const TAB_MAP = {
   "": "journal",
   "bibliotheque": "bibliothèque",
+  "a-lire": "à lire",
   "critiques": "mes critiques",
   "citations": "mes citations",
   "listes": "mes listes",

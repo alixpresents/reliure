@@ -93,7 +93,8 @@ L'app ne doit jamais ressembler à un tableur ou à un webzine. C'est un objet c
 
 ### Pages profil (pseudo à la racine)
 - `/:username` → ProfilePage, onglet journal
-- `/:username/bibliotheque` → onglet bibliothèque
+- `/:username/bibliotheque` → onglet bibliothèque (read, reading, abandoned uniquement)
+- `/:username/a-lire` → onglet À lire (want_to_read, avec compteur si > 0)
 - `/:username/critiques` → onglet critiques
 - `/:username/citations` → onglet citations
 - `/:username/listes` → onglet listes
@@ -305,7 +306,7 @@ Reliure regroupe les éditions par oeuvre (comme Letterboxd : un film = une fich
 ### Navigation
 React Router (BrowserRouter). Header avec NavLink. Navigation via `useNav()` context (goToBook) et `useNavigate()`.
 6 sections principales : Explorer, Citations, Fil, Défis, Profil | La Revue (séparée visuellement, serif italic).
-Onglets profil : Journal (diary), Bibliothèque, Mes critiques, Mes citations, Mes listes, Bilan.
+Onglets profil : Journal (diary), Bibliothèque, À lire, Mes critiques, Mes citations, Mes listes, Bilan.
 Chaque onglet a sa propre URL (`/:username/critiques`, etc.).
 
 ## État d'avancement des features

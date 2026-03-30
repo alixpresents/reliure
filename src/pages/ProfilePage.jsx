@@ -347,7 +347,8 @@ function EmptyState({ children }) {
 
 const TAB_SUBTITLES = {
   "journal": "Tes lectures terminées, par date",
-  "bibliothèque": "Tous tes livres, quel que soit leur statut",
+  "bibliothèque": "Livres lus, en cours ou abandonnés",
+  "à lire": "Ta liste de livres à découvrir",
   "mes critiques": "Tes avis sur les livres lus",
   "mes citations": "Les phrases que tu as sauvegardées",
   "mes listes": "Tes sélections de livres",
@@ -531,11 +532,17 @@ export default function ProfilePage({ viewedProfile, initialTab }) {
     return Array.from(grouped.entries());
   }, [profileData.diaryBooks]);
 
-  // Library: all statuses
-  const libraryBooks = (profileData.allStatuses || []).map(rs => ({
-    ...normalizeStatus(rs),
-    _rating: profileData.reviewMap?.get(rs.book_id) || 0,
-  }));
+  // Library: read, reading, abandoned only (want_to_read has its own tab)
+  const libraryBooks = (profileData.allStatuses || [])
+    .filter(rs => rs.status !== "want_to_read")
+    .map(rs => ({
+      ...normalizeStatus(rs),
+      _rating: profileData.reviewMap?.get(rs.book_id) || 0,
+    }));
+
+  const wantToReadBooks = (profileData.allStatuses || [])
+    .filter(rs => rs.status === "want_to_read")
+    .map(rs => normalizeStatus(rs));
 
   // Stats
   const totalBooks = profileData.stats?.total || 0;
@@ -754,6 +761,7 @@ export default function ProfilePage({ viewedProfile, initialTab }) {
           {[
             ["journal", "Journal", "tab-journal"],
             ["bibliothèque", "Bibliothèque", "tab-bibliotheque"],
+            ["à lire", wantToReadBooks.length > 0 ? `À lire (${wantToReadBooks.length})` : "À lire", "tab-a-lire"],
             ["mes critiques", isOwnProfile ? "Mes critiques" : "Ses critiques", "tab-critiques"],
             ["mes citations", isOwnProfile ? "Mes citations" : "Ses citations", "tab-citations"],
             ["mes listes", isOwnProfile ? "Mes listes" : "Ses listes", "tab-listes"],
@@ -952,6 +960,33 @@ export default function ProfilePage({ viewedProfile, initialTab }) {
         </div>
       )}
 
+      {/* À lire */}
+      {tab === "à lire" && (
+        <div className="py-4">
+          {wantToReadBooks.length === 0 ? (
+            <EmptyState>
+              <div className="text-sm text-[#767676] font-body">
+                {isOwnProfile ? "Ta liste de lecture est vide." : "Aucun livre en liste de lecture."}
+              </div>
+              {isOwnProfile && (
+                <button
+                  onClick={() => navigate("/explorer")}
+                  className="mt-3 px-4 py-2 rounded-[20px] text-[12px] font-medium font-body bg-transparent text-[#1a1a1a] border border-[#eee] cursor-pointer hover:border-[#767676] transition-colors duration-150"
+                >
+                  Parcourir les livres
+                </button>
+              )}
+            </EmptyState>
+          ) : (
+            <div className="grid grid-cols-5 sm:grid-cols-8 gap-2.5">
+              {wantToReadBooks.map(b => (
+                <Img key={b.id} book={b} w={999} h={999} onClick={() => go(b)} className="w-full h-auto aspect-[2/3]" />
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Critiques */}
       {tab === "mes critiques" && (
         <div className="py-3">
@@ -1027,6 +1062,14 @@ export default function ProfilePage({ viewedProfile, initialTab }) {
               <div className="text-sm text-[#767676] font-body">
                 {isOwnProfile ? "Tu n'as pas encore sauvegardé de citation." : "Aucune citation pour l'instant."}
               </div>
+              {isOwnProfile && (
+                <button
+                  onClick={() => navigate("/citations")}
+                  className="mt-3 px-4 py-2 rounded-[20px] text-[12px] font-medium font-body bg-transparent text-[#1a1a1a] border border-[#eee] cursor-pointer hover:border-[#767676] transition-colors duration-150"
+                >
+                  Explorer les citations
+                </button>
+              )}
             </EmptyState>
           )}
         </div>
