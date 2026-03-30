@@ -147,12 +147,14 @@ function ReadingItem({ book, go, onFinish, initialPage = 0, statusId = null, isO
 function FavNote({ note, isOwner, onSave }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(note);
+  const [popping, setPopping] = useState(false);
   const inputRef = useRef(null);
 
   useEffect(() => { if (editing && inputRef.current) { inputRef.current.focus(); inputRef.current.select(); } }, [editing]);
 
   const commit = () => {
     setEditing(false);
+    if (draft.trim()) setPopping(true);
     onSave(draft.trim());
   };
 
@@ -180,7 +182,8 @@ function FavNote({ note, isOwner, onSave }) {
       <div className="flex justify-center -mt-1.5 relative z-1">
         <div
           onClick={isOwner ? (e) => { e.stopPropagation(); setEditing(true); setDraft(note); } : undefined}
-          className={`inline-block bg-white border border-[#eee] rounded-[10px] px-2.5 py-[2px] shadow-[0_1px_4px_rgba(0,0,0,0.06)] whitespace-nowrap ${isOwner ? "cursor-text" : ""}`}
+          onAnimationEnd={() => setPopping(false)}
+          className={`inline-block bg-white border border-[#eee] rounded-[10px] px-2.5 py-[2px] shadow-[0_1px_4px_rgba(0,0,0,0.06)] whitespace-nowrap ${isOwner ? "cursor-text" : ""} ${popping ? "animate-confirm-pop" : ""}`}
         >
           <span className="text-[11px] text-[#666] font-body">{note}</span>
         </div>
@@ -209,6 +212,18 @@ function FavoritesSection({ favorites, isOwner, go, onAdd, onRemove, onSwap, onU
   const [dragOver, _setDragOver] = useState(null);
   const dragOverRef = useRef(null);
   const setDragOver = (v) => { dragOverRef.current = v; _setDragOver(v); };
+  const [poppingPos, setPoppingPos] = useState(null);
+  const prevFavsRef = useRef(favorites);
+  useEffect(() => {
+    const prev = prevFavsRef.current;
+    const newPos = [1, 2, 3, 4].find(pos => {
+      const hadBook = prev.find(f => f.position === pos)?.book;
+      const hasBook = favorites.find(f => f.position === pos)?.book;
+      return !hadBook && hasBook;
+    });
+    if (newPos) setPoppingPos(newPos);
+    prevFavsRef.current = favorites;
+  }, [favorites]);
 
   // HTML5 drag (triggered from handle only)
   const handleDragStart = (e, pos) => {
@@ -244,7 +259,8 @@ function FavoritesSection({ favorites, isOwner, go, onAdd, onRemove, onSwap, onU
             return (
               <div key={pos} className="group/fav" data-fav-pos={pos}>
                 <div
-                  className="relative"
+                  className={`relative ${poppingPos === pos ? "animate-confirm-pop" : ""}`}
+                  onAnimationEnd={() => setPoppingPos(null)}
                   onDragOver={isOwner ? e => handleDragOver(e, pos) : undefined}
                   onDrop={isOwner ? e => handleDrop(e, pos) : undefined}
                   onDragLeave={isOwner ? () => setDragOver(null) : undefined}
@@ -462,7 +478,7 @@ export default function ProfilePage({ viewedProfile, initialTab }) {
   const profileData = useProfileData(profileId);
   const { reviews: myReviews, refetch: refetchReviews } = useMyReviews(profileId);
   const { quotes: myQuotes, refetch: refetchQuotes } = useMyQuotes(profileId);
-  const { followers, following: followingCount } = useFollowCounts(profileId);
+  const { followers, following: followingCount, refetch: refetchCounts } = useFollowCounts(profileId);
   const { following: isFollowing, follow, unfollow } = useFollow(!isOwnProfile ? profileId : null);
   const { favorites, loading: favoritesLoading, setFavorite, removeFavorite, swapPositions, updateNote } = useFavorites(profileId);
   const { lists: myLists, refetch: refetchLists } = useMyLists(profileId);
@@ -607,7 +623,7 @@ export default function ProfilePage({ viewedProfile, initialTab }) {
             </div>
           </div>
           <div className="flex gap-5 text-xs text-[#767676] font-body w-full sm:w-auto mt-2 sm:mt-0">
-            {[[String(totalBooks), "livres"], [String(booksThisYear), "cette année"], [String(followers), "abonnés"], [String(followingCount), "abonnements"]].map(([n, l]) => (
+            {[[totalBooks, totalBooks < 2 ? "livre" : "livres"], [booksThisYear, "cette année"], [followers, followers < 2 ? "abonné" : "abonnés"], [followingCount, followingCount < 2 ? "abonnement" : "abonnements"]].map(([n, l]) => (
               <span key={l}><strong className="text-[#1a1a1a] font-semibold">{n}</strong> {l}</span>
             ))}
           </div>
@@ -615,7 +631,8 @@ export default function ProfilePage({ viewedProfile, initialTab }) {
             <button
               onClick={() => {
                 if (!user) { navigate("/login"); return; }
-                isFollowing ? unfollow(() => showToast("Une erreur est survenue")) : follow(() => showToast("Une erreur est survenue"));
+                const action = isFollowing ? unfollow : follow;
+                action(() => showToast("Une erreur est survenue")).then(() => refetchCounts());
               }}
               className={`shrink-0 px-4 py-1.5 rounded-full text-[13px] font-medium font-body border transition-colors duration-150 ${
                 isFollowing

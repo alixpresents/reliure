@@ -425,12 +425,21 @@ export default function CSVImport() {
   if (phase === "done") {
     return (
       <div className="mb-10">
-        <div className="text-center mb-5">
-          <h2 className="font-display italic text-xl font-normal mb-1">
-            {progress.imported} livre{progress.imported > 1 ? "s" : ""} ajouté{progress.imported > 1 ? "s" : ""} à ta bibliothèque
-          </h2>
+        <div
+          className="mb-5"
+          style={{ background: "#f0faf4", border: "1px solid #86efac", borderRadius: 8, padding: "12px 16px" }}
+        >
+          <div className="flex items-center gap-2 font-body">
+            <span style={{ color: "#16a34a", fontWeight: 700, fontSize: 15 }}>✓</span>
+            <span style={{ color: "#16a34a", fontWeight: 700, fontSize: 14 }}>
+              {progress.imported} livre{progress.imported > 1 ? "s" : ""} importé{progress.imported > 1 ? "s" : ""} avec succès
+            </span>
+          </div>
+          <p className="font-body mt-1" style={{ fontSize: 13, color: "#666", margin: "6px 0 0 0" }}>
+            Ils apparaissent maintenant dans ta bibliothèque.
+          </p>
           {progress.skipped > 0 && (
-            <p className="text-[13px] text-[#767676] font-body">
+            <p className="font-body" style={{ fontSize: 12, color: "#999", margin: "4px 0 0 0" }}>
               {progress.skipped} déjà présent{progress.skipped > 1 ? "s" : ""} · {progress.failed} non trouvé{progress.failed > 1 ? "s" : ""}
             </p>
           )}

@@ -24,8 +24,8 @@ export async function safeMutation({ mutate, onOptimistic, onRevert, onSuccess, 
   }
 }
 
-export function unwrapSupabase(result, context = '') {
-  const { data, error } = result;
+export async function unwrapSupabase(result, context = '') {
+  const { data, error } = await result;
   if (error) throw new Error(`${context}: ${error.message}`);
   return data;
 }

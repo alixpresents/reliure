@@ -8,14 +8,18 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let initialised = false;
+
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
       setLoading(false);
+      initialised = true;
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setUser(session?.user ?? null);
-      if (event === "SIGNED_IN" && session) {
+      // Only redirect after an explicit login, not on session restore at page load
+      if (event === "SIGNED_IN" && session && initialised) {
         window.dispatchEvent(new Event("reliure:signed-in"));
       }
     });

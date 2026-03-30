@@ -32,6 +32,14 @@ details > summary::-webkit-details-marker { display: none; }
 }
 .animate-toast-in { animation: toastIn 180ms ease both; }
 
+@keyframes confirmPop {
+  0%   { transform: scale(1);    box-shadow: 0 0 0 0 rgba(22, 163, 74, 0); }
+  35%  { transform: scale(1.05); box-shadow: 0 0 0 4px rgba(22, 163, 74, 0.18); }
+  70%  { transform: scale(0.99); box-shadow: 0 0 0 2px rgba(22, 163, 74, 0.08); }
+  100% { transform: scale(1);    box-shadow: 0 0 0 0 rgba(22, 163, 74, 0); }
+}
+.animate-confirm-pop { animation: confirmPop 300ms ease-out both; }
+
 /* Focus visible — accessibilité clavier (WCAG 2.4.7) */
 [role="button"]:focus-visible,
 button:focus-visible,
