@@ -208,6 +208,18 @@ export default function Search({ open, onClose, go, initialQuery = "" }) {
     return [...confirmed, ...unconfirmed];
   }, [results, aiBooks]);
 
+  // For "authors" filter: group books by first author
+  const authorGroups = useMemo(() => {
+    if (filter !== "authors") return null;
+    const groups = new Map();
+    for (const gb of displayResults) {
+      const author = gb.authors?.[0] || "Auteur inconnu";
+      if (!groups.has(author)) groups.set(author, []);
+      groups.get(author).push(gb);
+    }
+    return groups;
+  }, [filter, displayResults]);
+
   if (!open) return null;
 
   const handleClose = () => {
@@ -380,18 +392,6 @@ export default function Search({ open, onClose, go, initialQuery = "" }) {
   const showBooks = filter === "all" || filter === "books" || filter === "authors";
   const showUsers = filter === "all" || filter === "users";
   const showAI = filter === "all" || filter === "books";
-
-  // For "authors" filter: group books by first author
-  const authorGroups = useMemo(() => {
-    if (filter !== "authors") return null;
-    const groups = new Map();
-    for (const gb of displayResults) {
-      const author = gb.authors?.[0] || "Auteur inconnu";
-      if (!groups.has(author)) groups.set(author, []);
-      groups.get(author).push(gb);
-    }
-    return groups;
-  }, [filter, displayResults]);
 
   return (
     <div
