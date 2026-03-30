@@ -98,13 +98,13 @@ export default function ArticlePage() {
         {/* Article body */}
         <div className="flex-1 sm:order-1">
           {/* First paragraph with drop cap */}
-          <p className="text-base text-[#333] leading-[1.85] mb-6 font-body">
-            <span className="font-display italic text-[48px] float-left leading-[0.8] mr-2 mt-1 text-[#1a1a1a]">{firstChar}</span>
+          <p className="text-base leading-[1.85] mb-6 font-body" style={{ color: "var(--text-body)" }}>
+            <span className="font-display italic text-[48px] float-left leading-[0.8] mr-2 mt-1" style={{ color: "var(--text-primary)" }}>{firstChar}</span>
             {restOfFirst}
           </p>
 
           {paragraphs.slice(1).map((p, i) => (
-            <p key={i} className="text-base text-[#333] leading-[1.85] mb-6 font-body">{p}</p>
+            <p key={i} className="text-base leading-[1.85] mb-6 font-body" style={{ color: "var(--text-body)" }}>{p}</p>
           ))}
         </div>
       </div>

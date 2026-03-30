@@ -52,7 +52,7 @@ export default function Header({ onSearch, onClose, searchOpen, searchGo, search
             >
               {label}
               {label === "Défis" && (
-                <span className="text-[9px] font-medium px-1 py-px rounded border" style={{ background: "#faf6f0", borderColor: "#e8dfd2", color: "#8B6914", lineHeight: "1.4" }}>Aperçu</span>
+                <span className="text-[9px] font-medium px-1 py-px rounded border" style={{ background: "var(--color-wip-bg)", borderColor: "var(--color-wip-border)", color: "var(--color-wip-text)", lineHeight: "1.4" }}>Aperçu</span>
               )}
             </NavLink>
           ))}
@@ -66,7 +66,7 @@ export default function Header({ onSearch, onClose, searchOpen, searchGo, search
             }
           >
             La Revue
-            <span className="text-[9px] font-body not-italic font-medium px-1 py-px rounded border" style={{ background: "#faf6f0", borderColor: "#e8dfd2", color: "#8B6914", lineHeight: "1.4" }}>Aperçu</span>
+            <span className="text-[9px] font-body not-italic font-medium px-1 py-px rounded border" style={{ background: "var(--color-wip-bg)", borderColor: "var(--color-wip-border)", color: "var(--color-wip-text)", lineHeight: "1.4" }}>Aperçu</span>
           </NavLink>
         </nav>
 

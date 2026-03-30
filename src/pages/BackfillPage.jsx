@@ -171,7 +171,7 @@ function EnrichSection({ user }) {
         </p>
         {uncertainBooks.length > 0 && (
           <div className="mt-2">
-            <p className="text-[12px] font-body text-[#D4883A] mb-1">
+            <p className="text-[12px] font-body mb-1" style={{ color: "var(--color-star)" }}>
               {uncertainBooks.length} livre{uncertainBooks.length > 1 ? "s" : ""} incertain{uncertainBooks.length > 1 ? "s" : ""} — vérifie les fiches :
             </p>
             <div className="flex flex-wrap gap-1">
@@ -208,7 +208,7 @@ function EnrichSection({ user }) {
         </div>
         <div className="flex justify-center gap-4 text-[12px] font-body mt-2">
           <span className="text-[#1a1a1a]">{progress.enriched} enrichi{progress.enriched > 1 ? "s" : ""}</span>
-          {progress.uncertain > 0 && <span className="text-[#D4883A]">{progress.uncertain} incertain{progress.uncertain > 1 ? "s" : ""}</span>}
+          {progress.uncertain > 0 && <span style={{ color: "var(--color-star)" }}>{progress.uncertain} incertain{progress.uncertain > 1 ? "s" : ""}</span>}
           <span className="text-[#767676]">{progress.failed} non trouvé{progress.failed > 1 ? "s" : ""}</span>
         </div>
         {eta != null && (

@@ -190,10 +190,10 @@ export default function FeedPage() {
                       {meta.contains_spoilers ? (
                         <details>
                           <summary className="text-[11px] text-spoiler cursor-pointer font-medium font-body">Cette critique contient des spoilers</summary>
-                          <p className="text-[13px] text-[#333] leading-relaxed mt-1 font-body m-0">{meta.review_body}</p>
+                          <p className="text-[13px] leading-relaxed mt-1 font-body m-0" style={{ color: "var(--text-body)" }}>{meta.review_body}</p>
                         </details>
                       ) : (
-                        <p className="text-[13px] text-[#333] leading-relaxed font-body m-0">{meta.review_body}</p>
+                        <p className="text-[13px] leading-relaxed font-body m-0" style={{ color: "var(--text-body)" }}>{meta.review_body}</p>
                       )}
                       <div className="flex items-center gap-4 mt-1.5 text-[11px] text-[#767676] font-body">
                         <LikeButton

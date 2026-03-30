@@ -133,18 +133,20 @@ export default function ContentMenu({ type, item, onDelete, onEdit }) {
               </button>
               <button
                 onClick={() => setConfirm(true)}
-                className="w-full text-left px-3 py-2 text-[13px] font-body bg-transparent border-none cursor-pointer hover:bg-[#faf8f5] transition-colors duration-100 text-[#e25555]"
+                className="w-full text-left px-3 py-2 text-[13px] font-body bg-transparent border-none cursor-pointer hover:bg-[#faf8f5] transition-colors duration-100"
+                style={{ color: "var(--color-spoiler)" }}
               >
                 🗑 Supprimer
               </button>
             </>
           ) : (
             <div className="px-3 py-2">
-              <div className="text-[13px] font-body text-[#333] mb-2">Confirmer ?</div>
+              <div className="text-[13px] font-body mb-2" style={{ color: "var(--text-body)" }}>Confirmer ?</div>
               <div className="flex gap-2">
                 <button
                   onClick={handleDelete}
-                  className="px-3 py-1.5 text-[12px] font-medium font-body rounded-full bg-[#e25555] text-white border-none cursor-pointer hover:bg-[#d04444] transition-colors duration-150"
+                  className="px-3 py-1.5 text-[12px] font-medium font-body rounded-full text-white border-none cursor-pointer hover:opacity-90 transition-colors duration-150"
+                  style={{ backgroundColor: "var(--color-spoiler)" }}
                 >
                   Oui
                 </button>

@@ -690,7 +690,7 @@ export default function ProfilePage({ viewedProfile, initialTab }) {
         ) : null}
         {/* Avatar error toast */}
         {avatarError && (
-          <div className="mt-3 px-3 py-2 rounded-lg bg-[#fff3f3] border border-[#fdd] text-[12px] text-[#c00] font-body max-w-[360px]">
+          <div className="mt-3 px-3 py-2 rounded-lg text-[12px] font-body max-w-[360px]" style={{ backgroundColor: "var(--color-error-bg)", border: "1px solid var(--color-error-border)", color: "var(--color-error)" }}>
             {avatarError}
           </div>
         )}
@@ -1010,10 +1010,10 @@ export default function ProfilePage({ viewedProfile, initialTab }) {
                     {rv.contains_spoilers ? (
                       <details className="mt-2.5">
                         <summary className="text-[11px] text-spoiler cursor-pointer font-medium font-body">Cette critique contient des spoilers</summary>
-                        <p className="text-[15px] text-[#333] leading-[1.7] mt-2.5 font-body">{rv.body}</p>
+                        <p className="text-[15px] leading-[1.7] mt-2.5 font-body" style={{ color: "var(--text-body)" }}>{rv.body}</p>
                       </details>
                     ) : (
-                      <p className="text-[15px] text-[#333] leading-[1.7] mt-2.5 font-body">{rv.body}</p>
+                      <p className="text-[15px] leading-[1.7] mt-2.5 font-body" style={{ color: "var(--text-body)" }}>{rv.body}</p>
                     )}
                   </div>
                 </div>

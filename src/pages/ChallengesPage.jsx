@@ -64,7 +64,7 @@ function ChallengesIndex({ onSelect, enrolled, onJoin }) {
                 onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onSelect(c.id, "progression"); } }}
                 className="flex items-center gap-4 p-4 bg-surface rounded-[10px] cursor-pointer hover:bg-[#f5f2ed] transition-colors duration-150"
               >
-                <div className="w-11 h-11 rounded-[10px] bg-[#faf6f0] border-[1.5px] border-[#e8dfd2] flex items-center justify-center shrink-0">
+                <div className="w-11 h-11 rounded-[10px] flex items-center justify-center shrink-0" style={{ backgroundColor: "var(--color-wip-bg)", border: "1.5px solid var(--color-wip-border)" }}>
                   <span className="text-[18px] text-star">{c.icon}</span>
                 </div>
                 <div className="flex-1 min-w-0">
@@ -93,7 +93,7 @@ function ChallengesIndex({ onSelect, enrolled, onJoin }) {
               onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onSelect(c.id, "publique"); } }}
               className="flex items-center gap-4 p-4 bg-surface rounded-[10px] cursor-pointer hover:bg-[#f5f2ed] transition-colors duration-150"
             >
-              <div className="w-11 h-11 rounded-[10px] bg-[#faf6f0] border-[1.5px] border-[#e8dfd2] flex items-center justify-center shrink-0">
+              <div className="w-11 h-11 rounded-[10px] flex items-center justify-center shrink-0" style={{ backgroundColor: "var(--color-wip-bg)", border: "1.5px solid var(--color-wip-border)" }}>
                 <span className="text-[18px] text-star">{c.icon}</span>
               </div>
               <div className="flex-1 min-w-0">
@@ -130,7 +130,7 @@ function ParticipantView() {
         <div className="text-center sm:text-left">
           <h1 className="font-display italic text-xl sm:text-2xl font-normal m-0 leading-tight">{c.title}</h1>
           <div className="text-[13px] font-body mt-1">
-            Objectif : <span className="font-medium text-[#8B6914]">{c.targetTier}</span>
+            Objectif : <span className="font-medium" style={{ color: "var(--color-wip-text)" }}>{c.targetTier}</span>
           </div>
           <div className="text-[13px] font-body">
             Palier actuel : <span className="font-medium">{c.currentTier}</span>
@@ -163,8 +163,8 @@ function ParticipantView() {
             <div className={`absolute -left-[27px] top-[2px] w-3 h-3 rounded-full ${item.completed ? "bg-[#1a1a1a]" : "bg-avatar-bg border-2 border-[#eee]"}`} />
             <div className="flex items-center gap-2 mb-1">
               <span className={`text-[11px] font-semibold font-body ${item.completed ? "text-[#1a1a1a]" : "text-[#767676]"}`}>{item.code}</span>
-              {item.completed && <span className="text-[9px] font-medium px-1.5 py-[2px] rounded-lg bg-[#e8f5e9] text-[#2e7d32] font-body">Complété</span>}
-              {item.difficulty === "Difficile" && <span className="text-[9px] font-medium px-1.5 py-[2px] rounded-lg bg-[#faf6f0] border border-[#e8dfd2] text-[#8B6914] font-body">Difficile</span>}
+              {item.completed && <span className="text-[9px] font-medium px-1.5 py-[2px] rounded-lg font-body" style={{ backgroundColor: "var(--color-success-bg)", color: "var(--color-success)" }}>Complété</span>}
+              {item.difficulty === "Difficile" && <span className="text-[9px] font-medium px-1.5 py-[2px] rounded-lg font-body" style={{ backgroundColor: "var(--color-wip-bg)", border: "1px solid var(--color-wip-border)", color: "var(--color-wip-text)" }}>Difficile</span>}
             </div>
             <div className="text-[13px] text-[#1a1a1a] font-body mb-1.5">{item.title}</div>
             {item.completed && item.myBook ? (
@@ -201,7 +201,7 @@ function PublicView() {
     <div>
       <div className="text-center mb-8">
         <div className="flex justify-center mb-4">
-          <div className="w-16 h-16 rounded-2xl bg-[#faf6f0] border-[1.5px] border-[#e8dfd2] flex items-center justify-center">
+          <div className="w-16 h-16 rounded-2xl flex items-center justify-center" style={{ backgroundColor: "var(--color-wip-bg)", border: "1.5px solid var(--color-wip-border)" }}>
             <span className="text-[28px] text-star">★</span>
           </div>
         </div>
@@ -229,7 +229,7 @@ function PublicView() {
           {c.tiers.map(t => {
             const isTop = t.name === "Rossignol";
             return (
-              <span key={t.name} className={`px-3 py-1 rounded-xl text-[11px] font-body ${isTop ? "bg-[#faf6f0] border border-[#e8dfd2] text-[#8B6914] font-medium" : "bg-surface text-[#767676]"}`}>
+              <span key={t.name} className={`px-3 py-1 rounded-xl text-[11px] font-body ${isTop ? "font-medium" : "bg-surface text-[#767676]"}`} style={isTop ? { backgroundColor: "var(--color-wip-bg)", border: "1px solid var(--color-wip-border)", color: "var(--color-wip-text)" } : undefined}>
                 {isTop && <span className="text-star mr-0.5">★</span>}{t.name} · {t.required}
               </span>
             );

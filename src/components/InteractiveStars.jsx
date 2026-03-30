@@ -29,7 +29,7 @@ export default function InteractiveStars({ value = 0, onChange, size = "text-xl"
           onClick={() => handleClick(n)}
           onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); handleClick(n); } }}
           className={`cursor-pointer ${size} transition-all duration-200 inline-block ${n <= (hv || 0) ? "scale-110" : "scale-100"} ${pop === n ? "scale-125" : ""}`}
-          style={{ color: n <= (hv || value) ? "#D4883A" : "#eee" }}
+          style={{ color: n <= (hv || value) ? "var(--color-star)" : "var(--star-empty)" }}
         >
           ★
         </span>

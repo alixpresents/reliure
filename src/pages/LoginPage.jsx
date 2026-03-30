@@ -70,7 +70,7 @@ export default function LoginPage() {
           <div className="text-center">
             <div className="flex justify-center mb-4">
               <svg width="40" height="40" viewBox="0 0 24 24" fill="none">
-                <circle cx="12" cy="12" r="10" fill="#2E7D32" />
+                <circle cx="12" cy="12" r="10" fill="var(--color-success)" />
                 <path d="M8 12.5l2.5 2.5L16 9.5" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </div>

@@ -58,7 +58,7 @@ export default function JournalPage() {
             <div className="flex flex-col sm:flex-row gap-6">
               <Img book={feat.cv} w={200} h={300} className="sm:w-[200px] sm:h-[300px] w-full h-auto aspect-[2/3] mx-auto sm:mx-0" />
               <div className="flex-1">
-                <p className="text-[15px] text-[#333] leading-[1.7] mb-5 font-body">{feat.ex}</p>
+                <p className="text-[15px] leading-[1.7] mb-5 font-body" style={{ color: "var(--text-body)" }}>{feat.ex}</p>
                 <div className="text-xs text-[#767676] font-body">
                   <span className="font-medium text-[#666]">{feat.a}</span>
                   <span className="mx-1.5 text-[#f0f0f0]">·</span>{feat.d}

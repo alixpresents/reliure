@@ -501,7 +501,7 @@ export default function BookPage({ book }) {
         <div className="flex flex-col items-center gap-2">
           <Img book={displayBook} w={180} h={270} />
           {book._supabase?.source === "ai_enriched" && book._supabase?.ai_confidence < 0.7 && (
-            <div className="px-2.5 py-1.5 bg-[#fef9e7] border border-[#f0e68c] rounded text-[11px] font-body text-[#666] text-center leading-snug max-w-[180px]">
+            <div className="px-2.5 py-1.5 rounded text-[11px] font-body text-center leading-snug max-w-[180px]" style={{ backgroundColor: "var(--color-warn-bg)", border: "1px solid var(--color-warn-border)", color: "var(--text-secondary)" }}>
               ℹ️ Métadonnées générées par IA · Incertaines
             </div>
           )}
@@ -515,7 +515,8 @@ export default function BookPage({ book }) {
           {user && isUuid && (
             <button
               onClick={() => setShowEnrichModal(true)}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-2xl text-[13px] text-[#333] font-body bg-[#f5f3f0] border border-[#eee] cursor-pointer hover:bg-[#ede9e3] transition-colors duration-150 mt-3"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-2xl text-[13px] font-body border cursor-pointer hover:opacity-80 transition-colors duration-150 mt-3"
+              style={{ color: "var(--text-body)", backgroundColor: "var(--tag-bg)", borderColor: "var(--border-default)" }}
             >
               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
@@ -687,7 +688,7 @@ export default function BookPage({ book }) {
       {(bookDescription || isUuid) && (
         <div className="border-t border-border-light py-5">
           {bookDescription ? (
-            <p className="text-[14px] text-[#333] leading-[1.75] m-0 font-body">{bookDescription}</p>
+            <p className="text-[14px] leading-[1.75] m-0 font-body" style={{ color: "var(--text-body)" }}>{bookDescription}</p>
           ) : (
             <button
               onClick={() => setShowEnrichModal(true)}
@@ -862,10 +863,10 @@ export default function BookPage({ book }) {
                     {rv.contains_spoilers ? (
                       <details>
                         <summary className="text-[11px] text-spoiler cursor-pointer font-medium font-body">Cette critique contient des spoilers</summary>
-                        <p className="text-[15px] text-[#333] leading-[1.7] mt-2 font-body">{rv.body}</p>
+                        <p className="text-[15px] leading-[1.7] mt-2 font-body" style={{ color: "var(--text-body)" }}>{rv.body}</p>
                       </details>
                     ) : (
-                      <p className="text-[15px] text-[#333] leading-[1.7] m-0 font-body">{rv.body}</p>
+                      <p className="text-[15px] leading-[1.7] m-0 font-body" style={{ color: "var(--text-body)" }}>{rv.body}</p>
                     )}
                     <div className="mt-2 text-[11px] font-body">
                       <LikeButton

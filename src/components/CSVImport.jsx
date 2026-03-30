@@ -308,7 +308,7 @@ export default function CSVImport() {
         </div>
 
         {error && (
-          <p className="mt-3 text-[13px] text-[#e25555] font-body text-center">{error}</p>
+          <p className="mt-3 text-[13px] font-body text-center" style={{ color: "var(--color-error)" }}>{error}</p>
         )}
       </div>
     );
@@ -349,7 +349,7 @@ export default function CSVImport() {
         </div>
 
         {missingIsbnPct > 20 && (
-          <p className="text-[12px] text-[#D4883A] font-body mb-4 text-center">
+          <p className="text-[12px] font-body mb-4 text-center" style={{ color: "var(--color-star)" }}>
             ⚠ {missingIsbnPct}% des livres n'ont pas d'ISBN — l'import sera plus lent et certains titres pourraient ne pas être trouvés.
           </p>
         )}
@@ -387,7 +387,7 @@ export default function CSVImport() {
         {/* Tab warning */}
         <div
           className="text-[12px] font-body text-[#666] px-3 py-2 rounded-md mb-4"
-          style={{ background: "#fef9e7", border: "1px solid #f0e68c" }}
+          style={{ background: "var(--color-warn-bg)", border: "1px solid var(--color-warn-border)" }}
         >
           {paused
             ? "Import en pause — reviens sur cet onglet pour continuer."
@@ -406,7 +406,7 @@ export default function CSVImport() {
         <div className="flex justify-center gap-4 text-[12px] font-body mb-6">
           <span className="text-[#1a1a1a]">{progress.imported} importé{progress.imported > 1 ? "s" : ""}</span>
           <span className="text-[#767676]">{progress.skipped} déjà présent{progress.skipped > 1 ? "s" : ""}</span>
-          <span className="text-[#e25555]">{progress.failed} non trouvé{progress.failed > 1 ? "s" : ""}</span>
+          <span style={{ color: "var(--color-error)" }}>{progress.failed} non trouvé{progress.failed > 1 ? "s" : ""}</span>
         </div>
 
         <div className="flex justify-center">
@@ -427,11 +427,11 @@ export default function CSVImport() {
       <div className="mb-10">
         <div
           className="mb-5"
-          style={{ background: "#f0faf4", border: "1px solid #86efac", borderRadius: 8, padding: "12px 16px" }}
+          style={{ background: "var(--color-success-bg)", border: "1px solid var(--color-success)", borderRadius: 8, padding: "12px 16px" }}
         >
           <div className="flex items-center gap-2 font-body">
-            <span style={{ color: "#16a34a", fontWeight: 700, fontSize: 15 }}>✓</span>
-            <span style={{ color: "#16a34a", fontWeight: 700, fontSize: 14 }}>
+            <span style={{ color: "var(--color-success)", fontWeight: 700, fontSize: 15 }}>✓</span>
+            <span style={{ color: "var(--color-success)", fontWeight: 700, fontSize: 14 }}>
               {progress.imported} livre{progress.imported > 1 ? "s" : ""} importé{progress.imported > 1 ? "s" : ""} avec succès
             </span>
           </div>

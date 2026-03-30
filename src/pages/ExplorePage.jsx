@@ -330,10 +330,10 @@ export default function ExplorePage() {
                     {rv.contains_spoilers ? (
                       <details>
                         <summary className="text-[11px] text-spoiler cursor-pointer font-medium font-body">Cette critique contient des spoilers</summary>
-                        <p className="text-[14px] text-[#333] leading-[1.65] mt-1 font-body m-0">{rv.body}</p>
+                        <p className="text-[14px] leading-[1.65] mt-1 font-body m-0" style={{ color: "var(--text-body)" }}>{rv.body}</p>
                       </details>
                     ) : (
-                      <p className="text-[14px] text-[#333] leading-[1.65] font-body m-0" style={{ display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{rv.body}</p>
+                      <p className="text-[14px] leading-[1.65] font-body m-0" style={{ color: "var(--text-body)", display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{rv.body}</p>
                     )}
                   </div>
                   <div className="flex items-center gap-1 mt-2 text-xs text-[#767676] font-body">

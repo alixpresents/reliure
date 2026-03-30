@@ -162,7 +162,7 @@ function AddQuoteModal({ onClose, onPublished }) {
                     className="w-full flex items-center gap-3 px-5 py-3 bg-transparent border-none cursor-pointer hover:bg-surface transition-colors duration-100 text-left"
                   >
                     {gb.cover ? (
-                      <img src={gb.cover} alt="" className="w-9 h-[54px] rounded-[3px] object-cover shrink-0" style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.08)" }} />
+                      <img src={gb.cover} alt="" className="w-9 h-[54px] rounded-[3px] object-cover shrink-0" style={{ boxShadow: "var(--shadow-cover)" }} />
                     ) : (
                       <div className="w-9 h-[54px] rounded-[3px] bg-cover-fallback shrink-0 flex items-center justify-center text-[9px] text-[#767676] font-body text-center px-1 leading-tight">{gb.title}</div>
                     )}

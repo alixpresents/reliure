@@ -104,7 +104,7 @@ function StepUsername({ username, setUsername, bio, setBio, onNext, error: exter
 
   const valid = username.length >= 2 && status === "available" && !saving;
 
-  const borderColor = status === "available" ? "border-[#2E7D32]"
+  const borderColor = status === "available" ? "border-[var(--color-success)]"
     : (status === "taken" || status === "reserved" || status === "invalid") ? "border-spoiler"
     : "border-[#eee] focus-within:border-[#1a1a1a]";
 
@@ -134,7 +134,7 @@ function StepUsername({ username, setUsername, bio, setBio, onNext, error: exter
             placeholder="tonpseudo"
             className="w-full py-3 px-1 text-[17px] bg-transparent border-none outline-none text-[#1a1a1a] font-body"
           />
-          {status === "available" && <span className="text-[#2E7D32] text-sm font-medium shrink-0">✓</span>}
+          {status === "available" && <span className="text-sm font-medium shrink-0" style={{ color: "var(--color-success)" }}>✓</span>}
         </div>
         {(status === "taken" || status === "reserved" || status === "invalid" || externalError) && (
           <p className="text-xs text-spoiler mt-1.5 font-body">

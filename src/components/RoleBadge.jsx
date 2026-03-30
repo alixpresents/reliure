@@ -6,8 +6,8 @@ const STYLES = {
   },
   moderator: {
     backgroundColor: "var(--avatar-bg)",
-    color: "#8B6914",
-    border: "1px solid #e8d5a3",
+    color: "var(--color-wip-text)",
+    border: "1px solid var(--color-wip-border)",
   },
 };
 
