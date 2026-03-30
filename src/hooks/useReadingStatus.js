@@ -141,10 +141,11 @@ export function useReadingList(statusFilter, profileUserId) {
     if (!targetId) { setBooks([]); setLoading(false); return; }
     const { data } = await supabase
       .from("reading_status")
-      .select("*, books(*)")
+      .select("*, books(id, title, authors, cover_url, slug, publication_date, page_count, avg_rating)")
       .eq("user_id", targetId)
       .eq("status", statusFilter)
-      .order("created_at", { ascending: false });
+      .order("created_at", { ascending: false })
+      .limit(200);
     setBooks(data ?? []);
     setLoading(false);
   }, [targetId, statusFilter]);

@@ -41,7 +41,7 @@ async function fetchUsers(query, limit = 5) {
   return users.map(u => ({ ...u, readCount: countMap[u.id] || 0 }));
 }
 
-export default function Search({ open, onClose, go }) {
+export default function Search({ open, onClose, go, initialQuery = "" }) {
   const navigate = useNavigate();
   const [q, setQ] = useState("");
   const [results, setResults] = useState([]);
@@ -75,14 +75,16 @@ export default function Search({ open, onClose, go }) {
 
   useEffect(() => {
     if (open) {
+      setQ(initialQuery);
       requestAnimationFrame(() => setVisible(true));
       setTimeout(() => inputRef.current?.focus(), 50);
       multiAddMode.current = false;
       setAddedGoogleIds(new Set());
     } else {
       setVisible(false);
+      setQ("");
     }
-  }, [open]);
+  }, [open]); // initialQuery lu à l'ouverture via closure, pas besoin dans les deps
 
   useEffect(() => {
     if (!open) return;
@@ -506,13 +508,22 @@ export default function Search({ open, onClose, go }) {
                   const added = addedGoogleIds.has(itemKey);
                   const isImporting = importing === itemKey;
 
-                  const handleClick = () => {
+                  const handleClick = async () => {
                     if (isImporting || added) return;
                     if (isDb) {
-                      handleClose();
-                      setQ("");
-                      setResults([]);
-                      navigate(`/livre/${gb.slug ?? gb.dbId}`);
+                      const normalized = {
+                        id: gb.dbId,
+                        slug: gb.slug ?? gb.dbId,
+                        t: gb.title,
+                        a: Array.isArray(gb.authors) ? gb.authors.join(", ") : (gb.authors || ""),
+                        c: gb.coverUrl,
+                      };
+                      const result = await go(normalized);
+                      if (!(result && result.keepOpen)) {
+                        handleClose();
+                        setQ("");
+                        setResults([]);
+                      }
                     } else if (isBnF) {
                       handleBnFSelect(gb);
                     } else {

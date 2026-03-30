@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
 import { FONT_URL } from "./data";
 import { useAuth } from "./lib/AuthContext";
@@ -24,6 +24,9 @@ import BackfillPage from "./pages/BackfillPage";
 import SettingsPage from "./pages/SettingsPage";
 import NotFoundPage from "./pages/NotFoundPage";
 import JoinBanner from "./components/JoinBanner";
+import OnboardingTooltip from "./components/OnboardingTooltip";
+import Toast from "./components/Toast";
+import { useToast } from "./hooks/useToast";
 
 export default function App() {
   const { user, loading: authLoading } = useAuth();
@@ -31,9 +34,12 @@ export default function App() {
   const navigate = useNavigate();
   const [search, setSearch] = useState(false);
   const [searchCb, setSearchCb] = useState(null);
+  const [searchInitialQuery, setSearchInitialQuery] = useState("");
+  const [walkthroughActive, setWalkthroughActive] = useState(false);
+  const { toast, showToast } = useToast();
 
   const openSearchFor = (cb) => { setSearchCb(() => cb); setSearch(true); };
-  const closeSearch = () => { setSearch(false); setSearchCb(null); };
+  const closeSearch = () => { setSearch(false); setSearchCb(null); setSearchInitialQuery(""); };
 
   const goToBook = (book) => {
     const slug = book.slug || book._supabase?.slug;
@@ -44,6 +50,31 @@ export default function App() {
       navigate(`/livre/${book.id}`);
     }
   };
+
+  // Redirect after sign-in
+  useEffect(() => {
+    const handler = () => {
+      const redirect = localStorage.getItem("reliure_redirect_after_login") || "/explorer";
+      localStorage.removeItem("reliure_redirect_after_login");
+      navigate(redirect);
+    };
+    window.addEventListener("reliure:signed-in", handler);
+    return () => window.removeEventListener("reliure:signed-in", handler);
+  }, [navigate]);
+
+  // Auto-set onboarding_done for existing users (already have a profile)
+  useEffect(() => {
+    if (profile && !localStorage.getItem("reliure_onboarding_done") && !localStorage.getItem("reliure_walkthrough_pending")) {
+      localStorage.setItem("reliure_onboarding_done", "true");
+    }
+  }, [profile]);
+
+  // Resume walkthrough after page refresh
+  useEffect(() => {
+    if (profile && localStorage.getItem("reliure_walkthrough_pending") && !localStorage.getItem("reliure_onboarding_done")) {
+      setWalkthroughActive(true);
+    }
+  }, [profile]);
 
   const searchGo = searchCb || goToBook;
 
@@ -65,7 +96,11 @@ export default function App() {
     return (
       <div className="bg-white min-h-screen text-[#1a1a1a] font-body">
         <link href={FONT_URL} rel="stylesheet" />
-        <OnboardingPage onComplete={() => { refetch(); navigate("/explorer"); }} />
+        <OnboardingPage onComplete={(uname) => {
+          refetch();
+          navigate(uname ? `/${uname}` : "/explorer");
+          setWalkthroughActive(true);
+        }} />
       </div>
     );
   }
@@ -85,12 +120,12 @@ export default function App() {
         avatarUrl={profile?.avatar_url}
         isLoggedIn={isLoggedIn}
       />
-      <Search open={search} onClose={closeSearch} go={searchGo} />
+      <Search open={search} onClose={closeSearch} go={searchGo} initialQuery={searchInitialQuery} />
       <NavigationProvider openSearchFor={openSearchFor}>
       <div className={`max-w-[760px] mx-auto px-4 sm:px-6 ${isLoggedIn ? "pb-20" : "pb-32"}`}>
         <Routes>
           <Route path="/" element={<Navigate to="/explorer" replace />} />
-          <Route path="/explorer" element={<ExplorePage onSearch={() => setSearch(true)} />} />
+          <Route path="/explorer" element={<ExplorePage onSearch={(q) => { setSearchInitialQuery(q || ""); setSearch(true); }} searchOpen={search} />} />
           <Route path="/explorer/theme/:tag" element={<TagPage />} />
           <Route path="/citations" element={<CitationsPage />} />
           <Route path="/fil" element={<ProtectedRoute><FeedPage /></ProtectedRoute>} />
@@ -110,6 +145,13 @@ export default function App() {
       </div>
       </NavigationProvider>
       {!isLoggedIn && <JoinBanner />}
+      {walkthroughActive && (
+        <OnboardingTooltip
+          onComplete={() => setWalkthroughActive(false)}
+          showToast={showToast}
+        />
+      )}
+      {toast.visible && <Toast message={toast.message} />}
     </div>
   );
 }

@@ -13,7 +13,7 @@ export function useFavorites(profileUserId) {
     if (!targetId) { setFavorites([]); setLoading(false); return; }
     const { data } = await supabase
       .from("user_favorites")
-      .select("position, book_id, note, books(*)")
+      .select("position, book_id, note, books(id, title, authors, cover_url, slug, publication_date, page_count, avg_rating, rating_count)")
       .eq("user_id", targetId)
       .order("position");
     setFavorites(
@@ -62,6 +62,7 @@ export function useFavorites(profileUserId) {
         .insert({ user_id: user.id, book_id: bookId, status: "read" });
     }
     await fetch();
+    window.dispatchEvent(new Event("reliure:favorite-added"));
   };
 
   const removeFavorite = async (position) => {

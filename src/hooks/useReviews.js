@@ -10,10 +10,11 @@ export function useBookReviews(bookId) {
     if (!bookId) { setReviews([]); setLoading(false); return; }
     const { data } = await supabase
       .from("reviews")
-      .select("*, users(username, display_name)")
+      .select("id, rating, body, contains_spoilers, likes_count, created_at, users:user_id(username, display_name, avatar_url)")
       .eq("book_id", bookId)
       .not("body", "is", null)
-      .order("created_at", { ascending: false });
+      .order("created_at", { ascending: false })
+      .limit(50);
     setReviews(data ?? []);
     setLoading(false);
   }, [bookId]);
@@ -34,7 +35,7 @@ export function useMyReviews(profileUserId) {
     if (!targetId) { setReviews([]); setLoading(false); return; }
     const { data } = await supabase
       .from("reviews")
-      .select("*, books(*)")
+      .select("id, rating, body, contains_spoilers, likes_count, created_at, book_id, books:book_id(id, title, authors, cover_url, slug)")
       .eq("user_id", targetId)
       .not("body", "is", null)
       .order("created_at", { ascending: false })

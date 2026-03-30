@@ -34,7 +34,7 @@ export function usePopularBooks() {
         // Fallback: most rated books
         const { data: fallback } = await supabase
           .from("books")
-          .select("*")
+          .select("id, title, authors, cover_url, slug, publication_date, avg_rating, rating_count, page_count")
           .gt("rating_count", 0)
           .order("rating_count", { ascending: false })
           .limit(7);
@@ -54,7 +54,7 @@ export function usePopularReviews() {
   const fetch = useCallback(async () => {
     const { data } = await supabase
       .from("reviews")
-      .select("*, books(id, title, cover_url, authors, publication_date, slug), users(username, display_name)")
+      .select("id, body, rating, likes_count, contains_spoilers, created_at, books:book_id(id, title, cover_url, authors, publication_date, slug), users:user_id(username, display_name, avatar_url)")
       .not("body", "is", null)
       .neq("body", "")
       .order("likes_count", { ascending: false })
@@ -75,7 +75,7 @@ export function usePopularQuotes() {
   const fetch = useCallback(async () => {
     const { data } = await supabase
       .from("quotes")
-      .select("*, books(id, title, cover_url, authors, slug), users(username, display_name)")
+      .select("id, text, likes_count, created_at, books!quotes_book_id_fkey(id, title, cover_url, authors, slug), users!quotes_user_id_fkey(username, display_name)")
       .order("likes_count", { ascending: false })
       .limit(3);
     setQuotes(data ?? []);
@@ -95,7 +95,7 @@ export function usePopularLists() {
     (async () => {
       const { data } = await supabase
         .from("lists")
-        .select("*, users(username, display_name)")
+        .select("id, title, description, slug, user_id, likes_count, users(username, display_name)")
         .eq("is_public", true)
         .order("likes_count", { ascending: false })
         .limit(4);
@@ -153,7 +153,8 @@ export function useAvailableGenres() {
       const { data } = await supabase
         .from("books")
         .select("genres")
-        .not("genres", "eq", "[]");
+        .not("genres", "eq", "[]")
+        .limit(2000);
 
       if (!data) { setGenres([]); setLoading(false); return; }
 

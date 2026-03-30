@@ -20,41 +20,46 @@ export function useProfileData(profileUserId) {
   const [loading, setLoading] = useState(true);
 
   const currentYear = new Date().getFullYear();
-  const yearStart = new Date(currentYear, 0, 1);
-  const yearEnd = new Date(currentYear + 1, 0, 1);
 
   const fetch = useCallback(async () => {
     if (!targetId) { setLoading(false); return; }
+    const yearStart = new Date(currentYear, 0, 1);
+    const yearEnd = new Date(currentYear + 1, 0, 1);
 
     // All statuses with books (for library view — all statuses)
     const { data: allStatuses } = await supabase
       .from("reading_status")
-      .select("*, books(*)")
+      .select("*, books(id, title, authors, cover_url, slug, publication_date, page_count, avg_rating)")
       .eq("user_id", targetId)
-      .order("created_at", { ascending: false });
+      .order("created_at", { ascending: false })
+      .limit(500);
 
     // Diary: read books WITH date only (for journal/diary calendar)
     const { data: diaryBooks } = await supabase
       .from("reading_status")
-      .select("*, books(*)")
+      .select("*, books(id, title, authors, cover_url, slug, publication_date, page_count, avg_rating)")
       .eq("user_id", targetId)
       .eq("status", "read")
       .not("finished_at", "is", null)
-      .order("finished_at", { ascending: false });
+      .order("finished_at", { ascending: false })
+      .limit(500);
 
     // All read books: with OR without date (for stats, bilan, topRated)
     const { data: allReadBooks } = await supabase
       .from("reading_status")
-      .select("*, books(*)")
+      .select("*, books(id, title, authors, cover_url, slug, publication_date, page_count, avg_rating)")
       .eq("user_id", targetId)
       .eq("status", "read")
-      .order("created_at", { ascending: false });
+      .order("created_at", { ascending: false })
+      .limit(500);
 
     // All user reviews
     const { data: reviews } = await supabase
       .from("reviews")
-      .select("*")
-      .eq("user_id", targetId);
+      .select("id, book_id, rating, created_at")
+      .eq("user_id", targetId)
+      .order("created_at", { ascending: false })
+      .limit(200);
 
     const statuses = allStatuses || [];
     const diary = diaryBooks || [];
@@ -114,7 +119,7 @@ export function useProfileData(profileUserId) {
       topRated,
     });
     setLoading(false);
-  }, [targetId, yearStart, yearEnd]);
+  }, [targetId, currentYear]);
 
   useEffect(() => { fetch(); }, [fetch]);
 

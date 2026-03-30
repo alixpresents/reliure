@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { B } from "../data";
 import Img from "../components/Img";
 import InteractiveStars from "../components/InteractiveStars";
+import OnboardingProgress from "../components/OnboardingProgress";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../lib/AuthContext";
 import { searchBooks } from "../lib/googleBooks";
@@ -48,7 +49,37 @@ function PickedBook({ book, rating, onRate, onRemove }) {
   );
 }
 
-function Step1({ username, setUsername, bio, setBio, onNext, error: externalError }) {
+/* ─── Step 0: Welcome ─── */
+function StepWelcome({ onNext }) {
+  return (
+    <div className="text-center">
+      <div className="flex items-center justify-center gap-1.5 mb-10">
+        <span className="text-[28px] font-bold tracking-tight font-body">reliure</span>
+        <span className="text-[9px] font-semibold text-white bg-[#1a1a1a] rounded-[3px] px-[5px] py-[2px] font-body">
+          BETA
+        </span>
+      </div>
+
+      <h1 className="font-display italic text-[36px] font-normal mb-3 leading-tight">
+        Bienvenue sur Reliure.
+      </h1>
+      <p className="text-[15px] text-[#666] font-body mb-10 leading-relaxed max-w-[340px] mx-auto">
+        Ton journal de lecture. Tes coups de c&oelig;ur.<br />
+        La communauté qui lit comme toi.
+      </p>
+
+      <button
+        onClick={onNext}
+        className="bg-[#1a1a1a] text-white text-[14px] font-medium font-body px-7 py-3 rounded-lg border-none cursor-pointer hover:bg-[#333] transition-colors duration-200"
+      >
+        Commencer →
+      </button>
+    </div>
+  );
+}
+
+/* ─── Step 1: Username ─── */
+function StepUsername({ username, setUsername, bio, setBio, onNext, error: externalError }) {
   const [status, setStatus] = useState(null);
   const [saving, setSaving] = useState(false);
   const timer = useRef(null);
@@ -85,11 +116,11 @@ function Step1({ username, setUsername, bio, setBio, onNext, error: externalErro
 
   return (
     <div>
-      <h1 className="font-display italic text-[24px] sm:text-[32px] font-normal text-center mb-2 leading-tight">
-        Crée ton profil de lecteur
+      <h1 className="font-display italic text-[24px] font-normal text-center mb-2 leading-tight">
+        Comment on t'appelle ?
       </h1>
-      <p className="text-[15px] text-[#767676] text-center mb-10 font-body">
-        Rejoins une communauté de lecteurs passionnés.
+      <p className="text-[13px] text-[#767676] text-center mb-10 font-body">
+        Ton @pseudo est unique. Tu pourras partager ton profil avec ce lien.
       </p>
 
       <div className="mb-6">
@@ -140,7 +171,8 @@ function Step1({ username, setUsername, bio, setBio, onNext, error: externalErro
   );
 }
 
-function Step2({ picks, setPicks, onFinish, onSkip }) {
+/* ─── Step 2: Pick books ─── */
+function StepBooks({ picks, setPicks, onFinish, onSkip }) {
   const [q, setQ] = useState("");
   const [saving, setSaving] = useState(false);
   const [results, setResults] = useState([]);
@@ -186,11 +218,11 @@ function Step2({ picks, setPicks, onFinish, onSkip }) {
 
   return (
     <div>
-      <h1 className="font-display italic text-[28px] sm:text-[32px] font-normal text-center mb-2 leading-tight">
+      <h1 className="font-display italic text-[24px] font-normal text-center mb-2 leading-tight">
         Qu'est-ce que tu lis en ce moment ?
       </h1>
-      <p className="text-[15px] text-[#767676] text-center mb-8 font-body">
-        Ajoute 1 à 3 livres pour démarrer.
+      <p className="text-[13px] text-[#767676] text-center mb-8 font-body">
+        Ajoute 1 à 3 livres. On commence avec ça — tu ajouteras le reste après.
       </p>
 
       {picks.length < 3 && (
@@ -283,9 +315,10 @@ function Step2({ picks, setPicks, onFinish, onSkip }) {
   );
 }
 
+/* ─── Main OnboardingPage ─── */
 export default function OnboardingPage({ onComplete }) {
   const { user } = useAuth();
-  const [step, setStep] = useState(1);
+  const [step, setStep] = useState(0); // 0=welcome, 1=username, 2=books
   const [username, setUsername] = useState("");
   const [bio, setBio] = useState("");
   const [picks, setPicks] = useState([]);
@@ -300,7 +333,7 @@ export default function OnboardingPage({ onComplete }) {
     }, 300);
   };
 
-  const handleStep1 = async () => {
+  const handleUsernameNext = async () => {
     setStep1Error(null);
     const { error } = await supabase.from("users").insert({
       id: user.id,
@@ -319,16 +352,14 @@ export default function OnboardingPage({ onComplete }) {
     transition(() => setStep(2));
   };
 
-  const handleStep2 = async () => {
+  const handleBooksFinish = async () => {
     for (const pick of picks) {
       const gb = pick.book._google;
       let book;
 
       if (gb) {
-        // Google Books result — use importBook
         book = await importBook(gb);
       } else {
-        // Fallback for mock data
         const { data } = await supabase.from("books").select("id").eq("title", pick.book.t).single();
         if (data) book = data;
       }
@@ -349,43 +380,56 @@ export default function OnboardingPage({ onComplete }) {
         });
       }
     }
-    onComplete();
+    localStorage.setItem("reliure_walkthrough_pending", "true");
+    onComplete(username.toLowerCase());
   };
+
+  // Global step for progress bar: internal 0→1, 1→2, 2→3
+  const globalStep = step + 1;
 
   return (
     <div className="min-h-screen bg-white flex flex-col items-center justify-center px-4 relative">
+      <OnboardingProgress current={globalStep} />
       <CoverBackdrop />
 
       <div className="w-full max-w-[400px] relative z-10">
-        {/* Logo */}
-        <div className="flex items-center justify-center gap-1.5 mb-8">
-          <span className="text-[20px] font-bold tracking-tight font-body">reliure</span>
-          <span className="text-[8px] font-semibold text-white bg-[#1a1a1a] rounded-[3px] px-[5px] py-[2px] font-body">
-            BETA
-          </span>
-        </div>
+        {/* Logo — hidden on welcome (it has its own) */}
+        {step > 0 && (
+          <div className="flex items-center justify-center gap-1.5 mb-8">
+            <span className="text-[20px] font-bold tracking-tight font-body">reliure</span>
+            <span className="text-[8px] font-semibold text-white bg-[#1a1a1a] rounded-[3px] px-[5px] py-[2px] font-body">
+              BETA
+            </span>
+          </div>
+        )}
 
         <div
           className={`transition-all duration-300 ${
             leaving ? "opacity-0 translate-y-3" : "opacity-100 translate-y-0"
           }`}
         >
+          {step === 0 && (
+            <StepWelcome onNext={() => transition(() => setStep(1))} />
+          )}
           {step === 1 && (
-            <Step1
+            <StepUsername
               username={username}
               setUsername={setUsername}
               bio={bio}
               setBio={setBio}
-              onNext={handleStep1}
+              onNext={handleUsernameNext}
               error={step1Error}
             />
           )}
           {step === 2 && (
-            <Step2
+            <StepBooks
               picks={picks}
               setPicks={setPicks}
-              onFinish={handleStep2}
-              onSkip={() => transition(() => onComplete())}
+              onFinish={handleBooksFinish}
+              onSkip={() => {
+                localStorage.setItem("reliure_walkthrough_pending", "true");
+                onComplete(username.toLowerCase());
+              }}
             />
           )}
         </div>

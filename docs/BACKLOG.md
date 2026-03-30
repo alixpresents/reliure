@@ -1277,4 +1277,78 @@ listIds   → supabase.from("lists").select("id").in(...)
 
 ---
 
+---
+
+## Retours bêta — Mars 2026
+
+### B1. Couvertures manquantes — thème Manga
+
+**Statut :** Post-bêta · Données
+**Portée :** Google Books API, table `books`
+
+Plusieurs livres du thème Manga (ex: Sakamoto Days tomes 15, 18, 23, 24) n'ont pas de `cover_url` et affichent le fallback texte. Problème de complétude des métadonnées Google Books sur les mangas/BD.
+
+**Action envisagée :** enrichissement manuel ou fallback Open Library pour les livres sans cover dans les thèmes actifs.
+
+**Ce qu'on ne fait PAS en v1 :** scraping automatique de couvertures tierces.
+
+---
+
+### B2. Couverture polluée — image e-commerce
+
+**Statut :** Post-bêta · Données
+**Portée :** Google Books API, pipeline d'import
+
+Naruto Vol. 07 importe une capture d'écran e-commerce (prix, bouton "Add to cart") au lieu d'une vraie couverture. Problème de qualité à la source Google Books.
+
+**Action envisagée :** ajouter une heuristique de détection dans le pipeline d'import — rejeter les images dont les dimensions sont atypiques (trop larges, ratio non 2:3) ou dont l'URL contient des signaux e-commerce.
+
+---
+
+### B3. Doublon dans les résultats de recherche
+
+**Statut :** Post-bêta · Search
+**Portée :** `src/hooks/useBookSearch.js`, pipeline de déduplication
+
+La recherche "L'etranger" retourne un 3e résultat sans auteur ni couverture — probablement un doublon non dédupliqué issu d'une entrée incomplète en base ou d'un résultat Google Books dégradé.
+
+**Action envisagée :** renforcer la déduplication par ISBN-13 puis par (titre normalisé + auteur normalisé) dans le scoring. Filtrer les résultats sans auteur ET sans cover.
+
+**Ce qu'on ne fait PAS en v1 :** regroupement par "work" (toutes éditions confondues) — c'est un chantier v2.
+
+---
+
+### B4. Compteur "Listes" à 0 dans le Bilan
+
+**Statut :** Post-bêta · Profil
+**Portée :** `src/hooks/useProfileData.js`, onglet Bilan
+
+Le Bilan affiche "0 Listes" même quand des listes existent. Le compteur est probablement basé sur les entrées `activity` de type `list` dans l'année, plutôt que sur le count réel des listes de l'utilisateur.
+
+**Action envisagée :** aligner le compteur sur `SELECT count(*) FROM lists WHERE user_id = ? AND created_at >= yearStart`, indépendamment de l'activité.
+
+---
+
+### B5. Titres et couvertures non cliquables sur la page Citations
+
+**Statut :** Post-bêta · UX
+**Portée :** `src/pages/CitationsPage.jsx`
+
+Sur `/citations`, les titres de livres et couvertures associés aux citations ne sont pas cliquables. L'utilisateur s'attend naturellement à pouvoir naviguer vers la fiche du livre.
+
+**Action envisagée :** wrapper chaque titre et couverture dans un `<Link to={/livre/${quote.book.slug}}>`.
+
+---
+
+### B6. Fade-in trop lent au chargement du profil et du fil
+
+**Statut :** Post-bêta · Performance / Polish
+**Portée :** `src/components/Skeleton.jsx`, `.sk-fade`
+
+Le contenu passe par un état très pâle pendant 2-3 secondes avant d'être pleinement lisible. La transition `.sk-fade` est trop longue.
+
+**Action envisagée :** réduire la durée du fade-in de 200ms à 80-100ms, ou supprimer l'opacité initiale si le skeleton loading est déjà en place (pas besoin de double transition).
+
+---
+
 *Dernière mise à jour : 30 mars 2026*

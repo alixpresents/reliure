@@ -13,8 +13,11 @@ export function AuthProvider({ children }) {
       setLoading(false);
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setUser(session?.user ?? null);
+      if (event === "SIGNED_IN" && session) {
+        window.dispatchEvent(new Event("reliure:signed-in"));
+      }
     });
 
     return () => subscription.unsubscribe();

@@ -74,7 +74,7 @@ function AddQuoteModal({ onClose, onPublished }) {
     await safeMutation({
       mutate: () => unwrapSupabase(
         supabase.from("quotes")
-          .insert({ user_id: user.id, book_id: selectedBook.id, body: quoteText.trim() })
+          .insert({ user_id: user.id, book_id: selectedBook.id, text: quoteText.trim() })
           .select("id")
           .single(),
         "publish quote"
@@ -260,7 +260,7 @@ export default function CitationsPage() {
             <div key={q.id} className="group py-[22px] border-b border-border-light relative">
               <div className="flex items-start justify-between gap-2">
                 <div className="text-base italic text-[#1a1a1a] leading-[1.75] border-l-[3px] border-l-cover-fallback pl-[18px] mb-3.5 font-display flex-1">
-                  « {q.body} »
+                  « {q.text} »
                 </div>
                 <ContentMenu type="quote" item={q} onDelete={() => refetch()} onEdit={() => refetch()} />
               </div>

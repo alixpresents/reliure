@@ -10,9 +10,10 @@ export function useBookQuotes(bookId) {
     if (!bookId) { setQuotes([]); setLoading(false); return; }
     const { data } = await supabase
       .from("quotes")
-      .select("*, users(username, display_name)")
+      .select("id, text, likes_count, created_at, user_id, users!quotes_user_id_fkey(username, display_name)")
       .eq("book_id", bookId)
-      .order("created_at", { ascending: false });
+      .order("created_at", { ascending: false })
+      .limit(50);
     setQuotes(data ?? []);
     setLoading(false);
   }, [bookId]);
@@ -33,9 +34,10 @@ export function useMyQuotes(profileUserId) {
     if (!targetId) { setQuotes([]); setLoading(false); return; }
     const { data } = await supabase
       .from("quotes")
-      .select("*, books(title, authors, cover_url, slug)")
+      .select("id, text, likes_count, created_at, book_id, books!quotes_book_id_fkey(id, title, authors, cover_url, slug)")
       .eq("user_id", targetId)
-      .order("created_at", { ascending: false });
+      .order("created_at", { ascending: false })
+      .limit(100);
     setQuotes(data ?? []);
     setLoading(false);
   }, [targetId]);
@@ -52,7 +54,7 @@ export function useCommunityQuotes() {
   const fetch = useCallback(async () => {
     const { data } = await supabase
       .from("quotes")
-      .select("*, users(username, display_name), books(title, authors, cover_url, slug)")
+      .select("*, users!quotes_user_id_fkey(username, display_name), books!quotes_book_id_fkey(title, authors, cover_url, slug)")
       .order("likes_count", { ascending: false })
       .limit(20);
     setQuotes(data ?? []);

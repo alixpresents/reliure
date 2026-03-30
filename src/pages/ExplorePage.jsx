@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import Img from "../components/Img";
 import Avatar from "../components/Avatar";
@@ -31,7 +32,12 @@ function normalizeQuoteBook(q) {
   return { id: q.book_id, t: q.books.title, a: Array.isArray(q.books.authors) ? q.books.authors.join(", ") : "", c: q.books.cover_url, slug: q.books.slug, _supabase: q.books };
 }
 
-export default function ExplorePage({ onSearch }) {
+export default function ExplorePage({ onSearch, searchOpen }) {
+  const [query, setQuery] = useState("");
+
+  useEffect(() => {
+    if (!searchOpen) setQuery("");
+  }, [searchOpen]);
   const { goToBook: go } = useNav();
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -69,18 +75,22 @@ export default function ExplorePage({ onSearch }) {
 
       {/* Search bar */}
       <div className="py-6 pb-5">
-        <div
-          role="button"
-          tabIndex={0}
-          onClick={onSearch}
-          onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onSearch(); } }}
-          aria-label="Rechercher"
-          className="bg-surface rounded-lg py-[11px] px-4 flex items-center gap-2.5 border border-[#eee] cursor-pointer hover:border-[#eee] transition-[border] duration-150"
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f0f0f0" strokeWidth="2">
+        <div className="bg-surface rounded-lg py-[11px] px-4 flex items-center gap-2.5 border border-[#eee] hover:border-[#ccc] transition-[border] duration-150">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ccc" strokeWidth="2" className="shrink-0">
             <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
           </svg>
-          <span className="text-[#767676] text-sm font-body">Chercher des livres, auteurs, tags...</span>
+          <input
+            value={query}
+            onChange={e => {
+              setQuery(e.target.value);
+              if (e.target.value.length > 0) onSearch(e.target.value);
+            }}
+            onFocus={() => onSearch(query)}
+            placeholder="Chercher des livres, auteurs, thèmes..."
+            aria-label="Rechercher"
+            className="flex-1 bg-transparent border-none outline-none font-body text-[#1a1a1a] placeholder:text-[#767676] min-w-0"
+            style={{ fontSize: 16 }}
+          />
         </div>
       </div>
 
@@ -233,7 +243,7 @@ export default function ExplorePage({ onSearch }) {
               <div key={q.id} className="group py-4 border-b border-border-light relative">
                 <div className="flex items-start justify-between gap-2">
                   <div className="text-[15px] italic text-[#1a1a1a] leading-[1.7] border-l-[3px] border-l-cover-fallback pl-3.5 mb-2.5 font-display flex-1">
-                    « {q.body} »
+                    « {q.text} »
                   </div>
                   <ContentMenu type="quote" item={q} onDelete={refetchQuotes} onEdit={refetchQuotes} />
                 </div>

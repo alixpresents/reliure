@@ -256,6 +256,18 @@ Reliure regroupe les éditions par oeuvre (comme Letterboxd : un film = une fich
 - **ContentMenu** : menu "···" édition/suppression pour critiques et citations. Visible uniquement si `user.id === item.user_id`. Desktop : opacity 0 → 1 au hover du parent (`group`/`group-hover`). Mobile : toujours visible. Menu contextuel (blanc, border, shadow) avec "✏️ Modifier" (modal inline) et "🗑 Supprimer" (confirmation "Oui/Annuler"). Modal d'édition : textarea pré-rempli + InteractiveStars + checkbox spoilers pour les critiques. Intégré dans BookPage, ProfilePage, ExplorePage, FeedPage, CitationsPage.
 - **Toast** : notification d'erreur fixe, centrée en bas (z-10000), fond `#1a1a1a`, texte blanc, animation slide-up 180ms, auto-dismiss 3s. Hook `useToast()` → `{ toast, showToast }` (src/hooks/useToast.js). Déclenché sur les erreurs de mutation (likes, follows, création de liste, publication de citation). Intégré dans BookPage, ProfilePage, ExplorePage, FeedPage, CitationsPage, CreateListModal.
 
+## Règles React — performance et boucles
+
+- Jamais de `new Date()`, `[]`, `{}` ou de fonction créés au scope du composant dans les dépendances de `useCallback`/`useMemo`/`useEffect`.
+  → Toujours des primitifs (string, number, boolean) ou des valeurs déplacées à l'intérieur du callback.
+
+- Toute dépendance `useEffect`/`useCallback` qui est un objet doit être justifiée ou remplacée par son identifiant primitif (`user` → `user.id`, `book` → `book.id`).
+
+- Tout hook qui fait un fetch Supabase doit avoir :
+  - Un guard `if (!userId) return` en tête
+  - Des colonnes explicites (jamais `select('*')` ni `books(*)`)
+  - Un `.limit()` explicite
+
 ## Conventions
 
 ### Langue

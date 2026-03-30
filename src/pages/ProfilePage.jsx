@@ -212,6 +212,13 @@ function FavoritesSection({ favorites, isOwner, go, onAdd, onRemove, onSwap, onU
   const slotRects = useRef([]);
   const touchState = useRef({ timer: null, active: false, startX: 0, startY: 0, pos: null });
 
+  // Listen for onboarding event to activate edit mode
+  useEffect(() => {
+    const handler = () => setEditing(true);
+    window.addEventListener("reliure:activate-favorites-edit", handler);
+    return () => window.removeEventListener("reliure:activate-favorites-edit", handler);
+  }, []);
+
   // Desktop HTML5 drag
   const handleDragStart = (e, pos) => {
     setDragFrom(pos);
@@ -306,12 +313,18 @@ function FavoritesSection({ favorites, isOwner, go, onAdd, onRemove, onSwap, onU
   };
 
   return (
-    <div className="border-t border-border-light py-6">
+    <div className="border-t border-border-light py-6" data-onboarding="favorites">
       <div className="flex items-center justify-between mb-3">
         <div className="text-[10px] font-semibold uppercase tracking-[2px] text-[#767676] font-body">Quatre favoris</div>
         {isOwner && (
           <button
-            onClick={() => { setEditing(!editing); setDragFrom(null); setDragOver(null); }}
+            data-onboarding="favorites-done"
+            onClick={() => {
+              if (editing) {
+                window.dispatchEvent(new Event("reliure:favorites-edit-done"));
+              }
+              setEditing(!editing); setDragFrom(null); setDragOver(null);
+            }}
             className={`bg-transparent border-none cursor-pointer text-[12px] font-body transition-colors duration-150 ${editing ? "text-[#1a1a1a] font-medium" : "text-[#767676] hover:text-[#1a1a1a]"}`}
           >
             {editing ? "Terminé" : "Modifier"}
@@ -403,7 +416,7 @@ function FavoritesSection({ favorites, isOwner, go, onAdd, onRemove, onSwap, onU
               <div
                 role="button"
                 tabIndex={0}
-                onClick={() => { console.log('[Favorites] slot clicked, editMode:', editing); if (!dragFrom) onAdd(pos); }}
+                onClick={() => { if (!dragFrom) onAdd(pos); }}
                 onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onAdd(pos); } }}
                 className="w-full aspect-[2/3] border-[1.5px] border-dashed border-[#eee] rounded-[3px] flex items-center justify-center cursor-pointer hover:border-[#767676] transition-colors duration-150"
                 style={isDropTarget ? { borderColor: "#eee", borderWidth: 2 } : undefined}
@@ -824,15 +837,16 @@ export default function ProfilePage({ viewedProfile, initialTab }) {
       <div className="border-t border-border-light">
         <div className="flex">
           {[
-            ["journal", "Journal"],
-            ["bibliothèque", "Bibliothèque"],
-            ["mes critiques", isOwnProfile ? "Mes critiques" : "Ses critiques"],
-            ["mes citations", isOwnProfile ? "Mes citations" : "Ses citations"],
-            ["mes listes", isOwnProfile ? "Mes listes" : "Ses listes"],
-            ["bilan", "Bilan"],
-          ].map(([value, label]) => (
+            ["journal", "Journal", "tab-journal"],
+            ["bibliothèque", "Bibliothèque", "tab-bibliotheque"],
+            ["mes critiques", isOwnProfile ? "Mes critiques" : "Ses critiques", "tab-critiques"],
+            ["mes citations", isOwnProfile ? "Mes citations" : "Ses citations", "tab-citations"],
+            ["mes listes", isOwnProfile ? "Mes listes" : "Ses listes", "tab-listes"],
+            ["bilan", "Bilan", "tab-bilan"],
+          ].map(([value, label, onboardingKey]) => (
             <button
               key={value}
+              data-onboarding={onboardingKey}
               onClick={() => setTab(value)}
               className={`flex-1 py-3 bg-transparent border-none cursor-pointer font-body ${
                 tab === value
@@ -1080,7 +1094,7 @@ export default function ProfilePage({ viewedProfile, initialTab }) {
               <div key={q.id} className="group py-5 border-b border-border-light relative">
                 <div className="flex items-start justify-between gap-2">
                   <div className="text-[15px] italic text-[#1a1a1a] leading-[1.7] border-l-[3px] border-l-cover-fallback pl-4 mb-3 font-display flex-1">
-                    « {q.body} »
+                    « {q.text} »
                   </div>
                   <ContentMenu type="quote" item={q} onDelete={() => refetchQuotes()} onEdit={() => refetchQuotes()} />
                 </div>

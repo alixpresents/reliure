@@ -17,7 +17,7 @@ export function useMyLists(profileUserId) {
     if (!targetId) { setLists([]); setLoading(false); return; }
     let query = supabase
       .from("lists")
-      .select("*, list_items(id, book_id, position, note, books(id, title, authors, cover_url, slug))")
+      .select("id, title, description, is_public, is_ranked, slug, likes_count, created_at, list_items(id, book_id, position, note, books(id, title, authors, cover_url, slug))")
       .eq("user_id", targetId)
       .order("created_at", { ascending: false });
     // Visitors only see public lists (RLS also enforces this, but be explicit)

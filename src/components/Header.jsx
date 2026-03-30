@@ -40,6 +40,9 @@ export default function Header({ onSearch, initials = "?", username, avatarUrl, 
             <NavLink
               key={to}
               to={to}
+              data-onboarding={
+                label === "Explorer" ? "explorer" : label === "Citations" ? "citations" : undefined
+              }
               className={({ isActive }) =>
                 `no-underline rounded-md px-2 py-1.5 sm:px-[11px] sm:py-[7px] text-[13px] font-body shrink-0 flex items-center gap-1 ${
                   isActive ? "text-[#1a1a1a] font-semibold" : "text-[#767676] font-normal"
@@ -65,7 +68,7 @@ export default function Header({ onSearch, initials = "?", username, avatarUrl, 
             <span className="text-[9px] font-body not-italic font-medium px-1 py-px rounded border" style={{ background: "#faf6f0", borderColor: "#e8dfd2", color: "#8B6914", lineHeight: "1.4" }}>Aperçu</span>
           </NavLink>
         </nav>
-        <div role="button" tabIndex={0} onClick={onSearch} onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onSearch(); } }} aria-label="Rechercher" className="cursor-pointer text-[#767676] hover:text-[#1a1a1a] transition-colors duration-150 p-1">
+        <div role="button" tabIndex={0} onClick={onSearch} onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onSearch(); } }} aria-label="Rechercher" data-onboarding="search" className="cursor-pointer text-[#767676] hover:text-[#1a1a1a] transition-colors duration-150 p-1">
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
             <circle cx="11" cy="11" r="8" />
             <line x1="21" y1="21" x2="16.65" y2="16.65" />

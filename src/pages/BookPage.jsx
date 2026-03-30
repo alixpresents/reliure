@@ -427,7 +427,7 @@ export default function BookPage({ book }) {
   const handlePublishQuote = async () => {
     if (!quoteText.trim() || !user) return;
     setQuoteSaving(true);
-    const { data } = await supabase.from("quotes").insert({ user_id: user.id, book_id: bookId, body: quoteText.trim() }).select("id").single();
+    const { data } = await supabase.from("quotes").insert({ user_id: user.id, book_id: bookId, text: quoteText.trim() }).select("id").single();
     if (data) logActivity(user.id, "quote", data.id, "quote", { book_id: bookId, book_title: book.t || book.title, book_author: book.a || book.authors, cover_url: book.c || book.cover_url, quote_body: quoteText.trim() });
     setQuoteSaving(false);
     setShowQuoteForm(false);
@@ -667,12 +667,21 @@ export default function BookPage({ book }) {
       </div>
 
       {/* Tags */}
-      {book.tags && (
+      {book.tags?.length > 0 ? (
         <div className="pb-5">
           <Label>Thèmes</Label>
           <div className="flex flex-wrap gap-1">{book.tags.map(t => <Link key={t} to={`/explorer/theme/${encodeURIComponent(t)}`}><Tag>{t}</Tag></Link>)}</div>
         </div>
-      )}
+      ) : user ? (
+        <div className="pb-5">
+          <button
+            onClick={() => setShowEnrichModal(true)}
+            className="text-[12px] text-[#767676] font-body bg-transparent border-none cursor-pointer hover:text-[#1a1a1a] transition-colors duration-150 p-0"
+          >
+            + Suggérer des thèmes
+          </button>
+        </div>
+      ) : null}
 
       {/* Description */}
       {(bookDescription || isUuid) && (
@@ -924,7 +933,7 @@ export default function BookPage({ book }) {
                 return (
                   <div key={q.id} ref={isOwn && i === dbQuotes.findIndex(qt => qt.user_id === user?.id) ? newQuoteRef : undefined} className="group py-[18px] border-b border-border-light relative">
                     <div className="text-[15px] italic text-[#1a1a1a] leading-[1.7] border-l-[3px] border-l-cover-fallback pl-4 font-display">
-                      « {q.body} »
+                      « {q.text} »
                     </div>
                     <div className="flex items-center gap-2 mt-2.5">
                       <UserName user={q.users} className="text-xs" />

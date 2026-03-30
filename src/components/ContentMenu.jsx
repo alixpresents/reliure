@@ -41,7 +41,7 @@ export default function ContentMenu({ type, item, onDelete, onEdit }) {
   };
 
   const openEdit = () => {
-    setEditBody(item.body || "");
+    setEditBody((type === "quote" ? item.text : item.body) || "");
     if (type === "review") {
       setEditRating(item.rating || 0);
       setEditSpoiler(item.contains_spoilers || false);
@@ -54,7 +54,7 @@ export default function ContentMenu({ type, item, onDelete, onEdit }) {
     setSaving(true);
     try {
       const table = type === "review" ? "reviews" : "quotes";
-      const updates = { body: editBody.trim() };
+      const updates = { [type === "quote" ? "text" : "body"]: editBody.trim() };
       if (type === "review") {
         updates.rating = editRating || null;
         updates.contains_spoilers = editSpoiler;
