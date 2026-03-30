@@ -1053,4 +1053,39 @@ contributor_stats
 
 ---
 
-*Dernière mise à jour : 29 mars 2026*
+---
+
+## 18. Rôles utilisateur (admin / modérateur)
+
+**Statut :** Post-bêta · Infrastructure
+**Portée :** Supabase + UI profil + permissions
+
+### Le concept
+Système de rôles pour distinguer les utilisateurs ordinaires des
+modérateurs et administrateurs. Permet de contrôler l'accès à
+certaines actions (modifier les fiches livres, valider les
+contributions communautaires, accéder au back-office).
+
+### Rôles envisagés
+- **user** : rôle par défaut, accès standard
+- **moderator** : peut modifier toutes les fiches livres,
+  valider les contributions communautaires
+- **admin** : accès complet, peut promouvoir des modérateurs,
+  accès au back-office
+
+### Implémentation envisagée
+- Table `user_roles` : user_id, role (enum), granted_by, granted_at
+- RLS Supabase : policies conditionnelles selon le rôle
+- Badge discret sur le profil public (✓ Modérateur / ✓ Admin)
+- Bouton "Modifier la fiche" visible uniquement pour moderator/admin
+- Back-office minimal : liste des contributions en attente,
+  validation/rejet en un clic
+
+### Ce qu'on ne fait PAS en v1
+- Pas de permissions granulaires par livre ou par section
+- Pas de système de candidature modérateur (nomination manuelle)
+- Pas d'historique des actions de modération visible publiquement
+
+---
+
+*Dernière mise à jour : 30 mars 2026*

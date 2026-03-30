@@ -62,7 +62,11 @@ L'app ne doit jamais ressembler à un tableur ou à un webzine. C'est un objet c
 
 ## Stack technique
 
-> **Ce projet est React + Vite, PAS Next.js.** Ne jamais utiliser `"use client"`, `"use server"`, `getServerSideProps`, `getStaticProps`, ou toute autre convention Next.js.
+> ⚠️ CRITIQUE : Ce projet est React + Vite, PAS Next.js.
+> - Ne JAMAIS ajouter `"use client"` dans aucun fichier
+> - Ne JAMAIS utiliser `next/router`, `next/image`, `next/link`
+> - Ne JAMAIS suggérer des patterns Next.js (App Router, Server Components, etc.)
+> - Le bundler est Vite, le déploiement est Vercel via un build Vite standard
 
 - **Frontend** : React + Vite + React Router (BrowserRouter)
 - **Backend** : Supabase (auth, PostgreSQL, storage, realtime, edge functions)
@@ -110,6 +114,7 @@ Stratégie hybride, par priorité :
 3. **Open Library API** — complément pour les trous, open source
 4. **Nudger (Open Data ISBN)** — base ISBN française, licence ODbL, CSV gratuit via data.gouv.fr
 5. **Enrichissement communautaire** — les utilisateurs corrigent/complètent les fiches (comme TMDb pour Letterboxd)
+6. **Claude Haiku (enrichissement IA)** — utilisé en fallback quand Google Books, BnF et Open Library échouent. Edge function `book_ai_enrich` : Haiku génère métadonnées + description FR, Open Library confirme + fournit OLID, cascade de 4 sources pour la couverture. Source `ai_enriched`, champ `ai_confidence` (numeric 3,2) indique le niveau de certitude. Badge "À vérifier" sur BookPage si confidence < 0.7. Déclenché uniquement via BackfillPage (jamais automatique).
 
 L'edge function `book_import` (`supabase/functions/book_import/index.ts`) interroge 3 sources en parallèle par ISBN (Google Books, Open Library, BnF SRU), fusionne les résultats selon une priorité par champ, génère le slug, et upsert dans `books`. Si l'edge function échoue, `importBook.js` retombe sur un import client-side avec les données Google Books.
 

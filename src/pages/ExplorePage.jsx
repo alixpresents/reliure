@@ -8,9 +8,18 @@ import HScroll from "../components/HScroll";
 import LikeButton from "../components/LikeButton";
 import Stars from "../components/Stars";
 import UserName from "../components/UserName";
+import ContentMenu from "../components/ContentMenu";
 import { useNav } from "../lib/NavigationContext";
 import { useNavigate } from "react-router-dom";
-import { usePopularBooks, usePopularReviews, usePopularQuotes, usePopularLists, useAvailableGenres } from "../hooks/useExplore";
+import { usePopularBooks, usePopularReviews, usePopularQuotes, usePopularLists } from "../hooks/useExplore";
+
+const THEMES_PRINCIPAUX = [
+  'Roman', 'Littérature française', 'Manga', 'Science-fiction',
+  'Thriller', 'Philosophie', 'Poésie', 'Essai', 'Fantasy',
+  'Roman historique', 'Autobiographie', 'Littérature japonaise',
+  'Dystopie', 'Littérature américaine', 'Littérature russe',
+  'Policier', 'Développement personnel', 'Biographie', 'Théâtre', 'Conte',
+];
 import { useLikes } from "../hooks/useLikes";
 import Skeleton from "../components/Skeleton";
 import { useAuth } from "../lib/AuthContext";
@@ -31,7 +40,6 @@ export default function ExplorePage({ onSearch }) {
   const { likedSet: likedReviews, initialSet: initLikedReviews, toggle: toggleReviewLike } = useLikes(reviews.map(r => r.id), "review");
   const { likedSet, initialSet, toggle: toggleQuoteLike } = useLikes(quotes.map(q => q.id), "quote");
   const { likedSet: likedLists, initialSet: initLikedLists, toggle: toggleListLike } = useLikes(lists.map(l => l.id), "list");
-  const { genres: availableGenres, loading: loadingGenres } = useAvailableGenres();
 
   const allEmpty = !loadingBooks && !loadingReviews && !loadingQuotes && !loadingLists && popular.length === 0 && reviews.length === 0 && quotes.length === 0 && lists.length === 0;
 
@@ -72,15 +80,13 @@ export default function ExplorePage({ onSearch }) {
         </div>
       </div>
 
-      {/* Tags — uniquement les genres avec au moins 1 livre dans la base */}
-      {!loadingGenres && availableGenres.length > 0 && (
-        <div className="mb-6">
-          <Label>Parcourir par thème</Label>
-          <div className="flex flex-wrap gap-1">
-            {availableGenres.map(t => <Link key={t} to={`/explorer/theme/${encodeURIComponent(t)}`}><Tag>{t}</Tag></Link>)}
-          </div>
+      {/* Tags — liste curatée */}
+      <div className="mb-6">
+        <Label>Parcourir par thème</Label>
+        <div className="flex flex-wrap gap-1">
+          {THEMES_PRINCIPAUX.map(t => <Link key={t} to={`/explorer/theme/${encodeURIComponent(t)}`}><Tag>{t}</Tag></Link>)}
         </div>
-      )}
+      </div>
 
       {/* Empty state */}
       {allEmpty && (
@@ -161,11 +167,16 @@ export default function ExplorePage({ onSearch }) {
               slug: rv.books.slug, _supabase: rv.books,
             } : null;
             return (
-              <div key={rv.id} className="flex gap-3.5 py-5 border-b border-[#f3f3f3]">
+              <div key={rv.id} className="group flex gap-3.5 py-5 border-b border-[#f3f3f3] relative">
                 {bookObj && <Img book={bookObj} w={72} h={108} onClick={() => go(bookObj)} className="shrink-0" />}
                 <div className="flex-1 min-w-0">
-                  {bookObj && <div className="text-[15px] font-medium font-body">{bookObj.t}</div>}
-                  {bookObj && <div className="text-xs text-[#737373] font-body mt-0.5">{bookObj.a}{bookObj.y ? `, ${bookObj.y}` : ""}</div>}
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      {bookObj && <div className="text-[15px] font-medium font-body">{bookObj.t}</div>}
+                      {bookObj && <div className="text-xs text-[#737373] font-body mt-0.5">{bookObj.a}{bookObj.y ? `, ${bookObj.y}` : ""}</div>}
+                    </div>
+                    <ContentMenu type="review" item={rv} onDelete={() => window.location.reload()} onEdit={() => window.location.reload()} />
+                  </div>
                   {rv.rating > 0 && <div className="mt-1"><Stars r={rv.rating} s={11} /></div>}
                   <div className="mt-1.5">
                     {rv.contains_spoilers ? (
@@ -215,9 +226,12 @@ export default function ExplorePage({ onSearch }) {
           {quotes.map(q => {
             const bookObj = normalizeQuoteBook(q);
             return (
-              <div key={q.id} className="py-4 border-b border-border-light">
-                <div className="text-[15px] italic text-[#1a1a1a] leading-[1.7] border-l-[3px] border-l-cover-fallback pl-3.5 mb-2.5 font-display">
-                  « {q.body} »
+              <div key={q.id} className="group py-4 border-b border-border-light relative">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="text-[15px] italic text-[#1a1a1a] leading-[1.7] border-l-[3px] border-l-cover-fallback pl-3.5 mb-2.5 font-display flex-1">
+                    « {q.body} »
+                  </div>
+                  <ContentMenu type="quote" item={q} onDelete={() => window.location.reload()} onEdit={() => window.location.reload()} />
                 </div>
                 <div className="flex items-center gap-2">
                   {bookObj && <Img book={bookObj} w={24} h={34} onClick={() => go(bookObj)} />}

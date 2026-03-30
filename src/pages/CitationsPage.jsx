@@ -12,6 +12,7 @@ import { supabase } from "../lib/supabase";
 import { searchBooks } from "../lib/googleBooks";
 import { importBook } from "../lib/importBook";
 import { logActivity } from "../hooks/useActivity";
+import ContentMenu from "../components/ContentMenu";
 
 function AddQuoteModal({ onClose, onPublished }) {
   const { user } = useAuth();
@@ -243,9 +244,12 @@ export default function CitationsPage() {
         dbQuotes.map(q => {
           const bookObj = q.books ? { id: q.book_id, t: q.books.title, a: Array.isArray(q.books.authors) ? q.books.authors.join(", ") : "", c: q.books.cover_url, slug: q.books.slug, _supabase: q.books } : null;
           return (
-            <div key={q.id} className="py-[22px] border-b border-border-light">
-              <div className="text-base italic text-[#1a1a1a] leading-[1.75] border-l-[3px] border-l-cover-fallback pl-[18px] mb-3.5 font-display">
-                « {q.body} »
+            <div key={q.id} className="group py-[22px] border-b border-border-light relative">
+              <div className="flex items-start justify-between gap-2">
+                <div className="text-base italic text-[#1a1a1a] leading-[1.75] border-l-[3px] border-l-cover-fallback pl-[18px] mb-3.5 font-display flex-1">
+                  « {q.body} »
+                </div>
+                <ContentMenu type="quote" item={q} onDelete={() => refetch()} onEdit={() => refetch()} />
               </div>
               <div className="flex items-center gap-3">
                 {bookObj && <Img book={bookObj} w={36} h={52} onClick={() => go(bookObj)} />}

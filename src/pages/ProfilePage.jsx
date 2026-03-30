@@ -15,7 +15,8 @@ import { useMyLists, createList } from "../hooks/useLists";
 import { useLikes } from "../hooks/useLikes";
 import { useAuth } from "../lib/AuthContext";
 import { useNav } from "../lib/NavigationContext";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
+import ContentMenu from "../components/ContentMenu";
 import { supabase } from "../lib/supabase";
 import CreateListModal from "../components/CreateListModal";
 import Skeleton from "../components/Skeleton";
@@ -391,7 +392,7 @@ function FavoritesSection({ favorites, isOwner, go, onAdd, onRemove, onSwap, onU
               <div
                 role="button"
                 tabIndex={0}
-                onClick={() => { if (!dragFrom) onAdd(pos); }}
+                onClick={() => { console.log('[Favorites] slot clicked, editMode:', editing); if (!dragFrom) onAdd(pos); }}
                 onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onAdd(pos); } }}
                 className="w-full aspect-[2/3] border-[1.5px] border-dashed border-[#ddd] rounded-[3px] flex items-center justify-center cursor-pointer hover:border-[#bbb] transition-colors duration-150"
                 style={isDropTarget ? { borderColor: "#bbb", borderWidth: 2 } : undefined}
@@ -441,8 +442,8 @@ export default function ProfilePage({ viewedProfile, initialTab }) {
   const isOwnProfile = user?.id === profileId;
   const { books: dbReading, refetch: refetchReading } = useReadingList("reading", profileId);
   const profileData = useProfileData(profileId);
-  const { reviews: myReviews } = useMyReviews(profileId);
-  const { quotes: myQuotes } = useMyQuotes(profileId);
+  const { reviews: myReviews, refetch: refetchReviews } = useMyReviews(profileId);
+  const { quotes: myQuotes, refetch: refetchQuotes } = useMyQuotes(profileId);
   const { followers, following: followingCount } = useFollowCounts(profileId);
   const { following: isFollowing, follow, unfollow } = useFollow(!isOwnProfile ? profileId : null);
   const { favorites, loading: favoritesLoading, setFavorite, removeFavorite, swapPositions, updateNote } = useFavorites(profileId);
@@ -598,7 +599,7 @@ export default function ProfilePage({ viewedProfile, initialTab }) {
         isOwner={isOwnProfile}
         go={go}
         onAdd={pos => {
-          onSearchFor(async (book) => {
+          openSearchFor(async (book) => {
             const bookId = book._supabase?.id || book.id;
             await setFavorite(pos, bookId);
           });
@@ -737,7 +738,7 @@ export default function ProfilePage({ viewedProfile, initialTab }) {
 
           {/* Grille */}
           {libView === "grille" && (
-            <div className="grid grid-cols-4 sm:grid-cols-6 gap-2.5">
+            <div className="grid grid-cols-5 sm:grid-cols-8 gap-2.5">
               {libraryBooks.map(b => (
                 <Img key={b.id} book={b} w={999} h={999} onClick={() => go(b)} className="w-full h-auto aspect-[2/3]" />
               ))}
@@ -770,7 +771,7 @@ export default function ProfilePage({ viewedProfile, initialTab }) {
 
           {/* Étagère */}
           {libView === "étagère" && (() => {
-            const shelfSize = typeof window !== "undefined" && window.innerWidth < 640 ? 5 : 7;
+            const shelfSize = typeof window !== "undefined" && window.innerWidth < 640 ? 5 : 8;
             const shelves = [];
             for (let i = 0; i < libraryBooks.length; i += shelfSize) {
               shelves.push(libraryBooks.slice(i, i + shelfSize));
@@ -780,22 +781,14 @@ export default function ProfilePage({ viewedProfile, initialTab }) {
                 {shelves.map((shelf, si) => (
                   <div key={si} className="mb-1">
                     {/* Books */}
-                    <div className="flex items-end gap-1 px-1">
-                      {shelf.map(b => (
+                    <div className="flex items-end gap-1.5 px-1">
+                      {shelf.map((b, bi) => (
                         <div
                           key={b.id}
-                          role="button"
-                          tabIndex={0}
-                          onClick={() => go(b)}
-                          onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); go(b); } }}
-                          className="cursor-pointer border-l-2 border-l-[rgba(0,0,0,0.08)] rounded-tl-sm rounded-tr-[3px] overflow-hidden shrink-0 hover:-translate-y-1 transition-transform duration-150"
+                          className="shrink-0"
+                          style={{ transform: `rotate(${bi % 2 === 0 ? -1.5 : 1}deg)` }}
                         >
-                          <img
-                            src={b.c}
-                            alt={b.t}
-                            className="w-[56px] h-[84px] sm:w-[72px] sm:h-[108px] object-cover block"
-                            onError={e => { e.target.style.display = "none"; }}
-                          />
+                          <Img book={b} w={80} h={120} onClick={() => go(b)} />
                         </div>
                       ))}
                     </div>
@@ -821,12 +814,17 @@ export default function ProfilePage({ viewedProfile, initialTab }) {
             if (!b) return null;
             const bookObj = { id: b.id, t: b.title, a: Array.isArray(b.authors) ? b.authors.join(", ") : "", c: b.cover_url, y: b.publication_date ? parseInt(b.publication_date) : null, slug: b.slug, _supabase: b };
             return (
-              <div key={rv.id} className="py-5 border-b border-border-light">
+              <div key={rv.id} className="group py-5 border-b border-border-light relative">
                 <div className="flex gap-4">
                   <Img book={bookObj} w={72} h={108} onClick={() => go(bookObj)} />
                   <div className="flex-1">
-                    <div className="text-base font-medium font-body mb-0.5">{b.title}</div>
-                    <div className="text-xs text-[#737373] mb-2 font-body">{bookObj.a}{bookObj.y ? `, ${bookObj.y}` : ""}</div>
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <div className="text-base font-medium font-body mb-0.5">{b.title}</div>
+                        <div className="text-xs text-[#737373] mb-2 font-body">{bookObj.a}{bookObj.y ? `, ${bookObj.y}` : ""}</div>
+                      </div>
+                      <ContentMenu type="review" item={rv} onDelete={() => refetchReviews()} onEdit={() => refetchReviews()} />
+                    </div>
                     {rv.rating > 0 && <Stars r={rv.rating} s={12} />}
                     {rv.contains_spoilers ? (
                       <details className="mt-2.5">
@@ -862,14 +860,17 @@ export default function ProfilePage({ viewedProfile, initialTab }) {
             const b = q.books;
             const bookObj = b ? { id: q.book_id, t: b.title, a: Array.isArray(b.authors) ? b.authors.join(", ") : "", c: b.cover_url, slug: b.slug, _supabase: b } : null;
             return (
-              <div key={q.id} className="py-5 border-b border-border-light">
-                <div className="text-[15px] italic text-[#1a1a1a] leading-[1.7] border-l-[3px] border-l-cover-fallback pl-4 mb-3 font-display">
-                  « {q.body} »
+              <div key={q.id} className="group py-5 border-b border-border-light relative">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="text-[15px] italic text-[#1a1a1a] leading-[1.7] border-l-[3px] border-l-cover-fallback pl-4 mb-3 font-display flex-1">
+                    « {q.body} »
+                  </div>
+                  <ContentMenu type="quote" item={q} onDelete={() => refetchQuotes()} onEdit={() => refetchQuotes()} />
                 </div>
                 {bookObj && (
                   <div className="flex items-center gap-2.5">
                     <Img book={bookObj} w={28} h={40} onClick={() => go(bookObj)} />
-                    <span className="text-[13px] font-medium font-body">{bookObj.t}</span>
+                    <Link to={`/livre/${bookObj.slug}`} className="text-[13px] font-medium font-body text-[#1a1a1a] no-underline hover:text-[#444] transition-colors duration-100">{bookObj.t}</Link>
                     <span className="text-xs text-[#767676] font-body">· {bookObj.a}</span>
                   </div>
                 )}

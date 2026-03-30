@@ -20,6 +20,7 @@ import UserName from "../components/UserName";
 import { useNavigate, Link } from "react-router-dom";
 import { useNav } from "../lib/NavigationContext";
 import { useBookLists } from "../hooks/useBookLists";
+import ContentMenu from "../components/ContentMenu";
 
 function LoginModal({ book, onClose, onNavigate }) {
   useEffect(() => {
@@ -67,6 +68,158 @@ function LoginModal({ book, onClose, onNavigate }) {
   );
 }
 
+function EnrichModal({ bookId, onClose, onSaved, initialDescription, initialPages, initialPublisher, initialPubDate, initialCoverUrl }) {
+  useEffect(() => {
+    const handler = e => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [onClose]);
+
+  const [coverFile, setCoverFile] = useState(null);
+  const [coverPreview, setCoverPreview] = useState(null);
+  const [description, setDescription] = useState(initialDescription || "");
+  const [pages, setPages] = useState(initialPages ? String(initialPages) : "");
+  const [publisher, setPublisher] = useState(initialPublisher || "");
+  const [pubDate, setPubDate] = useState(initialPubDate || "");
+  const [saving, setSaving] = useState(false);
+  const [fileError, setFileError] = useState(null);
+
+  const handleFileChange = e => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!["image/jpeg", "image/png"].includes(file.type)) { setFileError("Format non supporté (jpg/png uniquement)"); return; }
+    if (file.size > 2 * 1024 * 1024) { setFileError("Fichier trop lourd (max 2 Mo)"); return; }
+    setFileError(null);
+    setCoverFile(file);
+    setCoverPreview(URL.createObjectURL(file));
+  };
+
+  const handleSubmit = async () => {
+    setSaving(true);
+    const updates = {};
+    try {
+      if (coverFile) {
+        const ext = coverFile.name.split(".").pop();
+        const filePath = `${bookId}/${Date.now()}.${ext}`;
+        console.log('[Cover upload] file path:', filePath);
+        const { error: uploadError } = await supabase.storage
+          .from("book-covers")
+          .upload(filePath, coverFile, { contentType: coverFile.type, upsert: true });
+        if (!uploadError) {
+          const { data } = supabase.storage.from("book-covers").getPublicUrl(filePath);
+          const publicUrl = data.publicUrl;
+          console.log('[Cover upload] public url:', publicUrl);
+          if (publicUrl) {
+            const { error } = await supabase.from("books").update({ cover_url: publicUrl }).eq("id", bookId);
+            console.log('[Cover upload] update result:', error);
+            updates.cover_url = publicUrl;
+          }
+        }
+      }
+
+      const pubDateStr = pubDate ? String(pubDate).trim() : null;
+      if (description.trim()) updates.description = description.trim();
+      if (pages && parseInt(pages) > 0) updates.page_count = parseInt(pages);
+      if (publisher.trim()) updates.publisher = publisher.trim();
+      if (pubDateStr) updates.publication_date = pubDateStr;
+
+      const remainingUpdates = Object.fromEntries(Object.entries(updates).filter(([k]) => k !== 'cover_url'));
+      if (Object.keys(remainingUpdates).length > 0) {
+        await supabase.from("books").update(remainingUpdates).eq("id", bookId);
+      }
+
+      onSaved();
+    } catch (err) {
+      console.error('[EnrichModal] save error:', err);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const hasContent = coverFile || description.trim() || pages || publisher.trim() || pubDate.trim();
+
+  return (
+    <>
+      <div onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: 9998, backgroundColor: "rgba(0,0,0,0.4)" }} />
+      <div style={{ position: "fixed", inset: 0, zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 16px" }}>
+        <div onClick={e => e.stopPropagation()} style={{ width: "100%", maxWidth: 440, background: "#fff", borderRadius: 16, boxShadow: "0 12px 48px rgba(0,0,0,0.16)", padding: "28px 24px 24px", maxHeight: "90vh", overflowY: "auto" }}>
+          <h2 className="font-display italic text-[20px] font-normal m-0 mb-1">Compléter cette fiche</h2>
+          <div className="text-[11px] text-[#767676] font-body mb-5">Les modifications sont appliquées immédiatement.</div>
+
+          {/* Couverture */}
+          <div className="mb-4">
+            <div className="text-[12px] text-[#767676] font-body mb-2">Couverture</div>
+            {coverPreview ? (
+              <div className="flex items-start gap-3">
+                <img src={coverPreview} alt="" style={{ width: 40, height: 60, objectFit: "cover", borderRadius: 3 }} />
+                <button onClick={() => { setCoverFile(null); setCoverPreview(null); }} className="text-[12px] text-[#767676] font-body bg-transparent border-none cursor-pointer hover:text-[#1a1a1a] transition-colors duration-150 mt-1">Supprimer</button>
+              </div>
+            ) : initialCoverUrl ? (
+              <div className="flex items-center gap-3">
+                <img src={initialCoverUrl} alt="" style={{ width: 40, height: 60, objectFit: "cover", borderRadius: 3 }} />
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <span className="px-3 py-1.5 rounded-md text-[12px] font-body bg-[#fafaf8] border border-[#eee] text-[#1a1a1a] hover:bg-[#f5f3f0] transition-colors duration-150">Remplacer</span>
+                  <span className="text-[11px] text-[#767676] font-body">jpg/png, max 2 Mo</span>
+                  <input type="file" accept="image/jpeg,image/png" onChange={handleFileChange} className="hidden" />
+                </label>
+              </div>
+            ) : (
+              <label className="flex items-center gap-2 cursor-pointer">
+                <span className="px-3 py-1.5 rounded-md text-[12px] font-body bg-[#fafaf8] border border-[#eee] text-[#1a1a1a] hover:bg-[#f5f3f0] transition-colors duration-150">Choisir une image</span>
+                <span className="text-[11px] text-[#767676] font-body">jpg/png, max 2 Mo</span>
+                <input type="file" accept="image/jpeg,image/png" onChange={handleFileChange} className="hidden" />
+              </label>
+            )}
+            {fileError && <div className="text-[11px] text-spoiler font-body mt-1">{fileError}</div>}
+          </div>
+
+          {/* Résumé */}
+          <div className="mb-4">
+            <div className="text-[12px] text-[#767676] font-body mb-2">Résumé</div>
+            <textarea
+              value={description}
+              onChange={e => setDescription(e.target.value)}
+              maxLength={1000}
+              placeholder="Résumé du livre..."
+              className="w-full min-h-[100px] p-3 bg-[#fafaf8] border border-[#eee] rounded-lg outline-none text-[13px] text-[#1a1a1a] font-body leading-[1.7] resize-y placeholder:text-[#aaa] focus:border-[#ccc] transition-[border] duration-150"
+            />
+            <div className="text-[11px] text-[#767676] font-body text-right mt-0.5">{description.length}/1000</div>
+          </div>
+
+          {/* Nombre de pages */}
+          <div className="mb-4">
+            <div className="text-[12px] text-[#767676] font-body mb-2">Nombre de pages</div>
+            <input type="number" value={pages} onChange={e => setPages(e.target.value)} min={1} placeholder="ex. 320" className="w-full py-2 px-3 bg-[#fafaf8] border border-[#eee] rounded-lg outline-none text-[13px] text-[#1a1a1a] font-body placeholder:text-[#aaa] focus:border-[#ccc] transition-[border] duration-150" />
+          </div>
+
+          {/* Éditeur */}
+          <div className="mb-4">
+            <div className="text-[12px] text-[#767676] font-body mb-2">Éditeur</div>
+            <input type="text" value={publisher} onChange={e => setPublisher(e.target.value)} placeholder="ex. Gallimard" className="w-full py-2 px-3 bg-[#fafaf8] border border-[#eee] rounded-lg outline-none text-[13px] text-[#1a1a1a] font-body placeholder:text-[#aaa] focus:border-[#ccc] transition-[border] duration-150" />
+          </div>
+
+          {/* Date de publication */}
+          <div className="mb-6">
+            <div className="text-[12px] text-[#767676] font-body mb-2">Date de publication</div>
+            <input type="text" value={pubDate} onChange={e => setPubDate(e.target.value)} placeholder='ex. 2024 ou "15 mars 2024"' className="w-full py-2 px-3 bg-[#fafaf8] border border-[#eee] rounded-lg outline-none text-[13px] text-[#1a1a1a] font-body placeholder:text-[#aaa] focus:border-[#ccc] transition-[border] duration-150" />
+          </div>
+
+          <div className="flex gap-2 justify-end">
+            <button onClick={onClose} className="px-4 py-2 text-[13px] text-[#767676] font-body bg-transparent border-none cursor-pointer hover:text-[#1a1a1a] transition-colors duration-150">Annuler</button>
+            <button
+              onClick={handleSubmit}
+              disabled={!hasContent || saving}
+              className={`px-5 py-2 rounded-lg text-[13px] font-medium font-body border-none transition-all duration-150 ${hasContent && !saving ? "bg-[#1a1a1a] text-white cursor-pointer hover:bg-[#333]" : "bg-[#f0ede8] text-[#767676] cursor-not-allowed"}`}
+            >
+              {saving ? "Enregistrement..." : "Enregistrer"}
+            </button>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
+
 export default function BookPage({ book }) {
   const navigate = useNavigate();
   const { goToBook: go } = useNav();
@@ -86,12 +239,20 @@ export default function BookPage({ book }) {
   const [liveBook, setLiveBook] = useState(null);
   useEffect(() => {
     if (!isUuid) return;
-    supabase.from("books").select("avg_rating, rating_count").eq("id", bookId).single().then(({ data }) => {
+    supabase.from("books").select("avg_rating, rating_count, description, cover_url, page_count, publisher").eq("id", bookId).single().then(({ data }) => {
       if (data) setLiveBook(data);
     });
   }, [bookId, isUuid]);
   const avgRating = liveBook?.avg_rating ?? book.r ?? 0;
   const ratingCount = liveBook?.rating_count ?? book.rt ?? 0;
+  const bookDescription = liveBook?.description ?? book.description ?? null;
+  const displayBook = liveBook?.cover_url ? { ...book, c: liveBook.cover_url } : book;
+  const refetchLiveBook = () => {
+    if (!isUuid) return;
+    supabase.from("books").select("avg_rating, rating_count, description, cover_url, page_count, publisher").eq("id", bookId).single().then(({ data }) => {
+      if (data) setLiveBook(data);
+    });
+  };
 
   const [st, setSt] = useState(null);
   const [ur, setUr] = useState(0);
@@ -112,6 +273,8 @@ export default function BookPage({ book }) {
   const [tagInput, setTagInput] = useState("");
   const [tags, setTags] = useState([]);
   const [loginModal, setLoginModal] = useState(false);
+  const [showEnrichModal, setShowEnrichModal] = useState(false);
+  const [enrichToast, setEnrichToast] = useState(false);
   const dateRef = useRef(null);
   const newReviewRef = useRef(null);
   const newQuoteRef = useRef(null);
@@ -129,7 +292,7 @@ export default function BookPage({ book }) {
         .neq("id", bookId)
         .order("rating_count", { ascending: false })
         .limit(6);
-      if (genres) query = query.overlaps("genres", genres);
+      if (genres?.length) query = query.contains("genres", [genres[0]]);
       const { data } = await query;
       if (data?.length) setSimilarBooks(data);
     })();
@@ -302,17 +465,63 @@ export default function BookPage({ book }) {
       {/* Modal connexion requise */}
       {loginModal && <LoginModal book={book} onClose={() => setLoginModal(false)} onNavigate={path => { setLoginModal(false); navigate(path); }} />}
 
+      {/* Modal enrichissement communautaire */}
+      {showEnrichModal && (
+        <EnrichModal
+          bookId={bookId}
+          initialDescription={bookDescription}
+          initialPages={book.p || book.page_count || liveBook?.page_count}
+          initialPublisher={liveBook?.publisher || book.publisher}
+          initialPubDate={book.y || book.publication_date}
+          initialCoverUrl={book.c || book.cover_url || liveBook?.cover_url}
+          onClose={() => setShowEnrichModal(false)}
+          onSaved={() => {
+            setShowEnrichModal(false);
+            refetchLiveBook();
+            setEnrichToast(true);
+            setTimeout(() => setEnrichToast(false), 3000);
+          }}
+        />
+      )}
+
+      {/* Toast contribution */}
+      {enrichToast && (
+        <div style={{ position: "fixed", bottom: 24, left: "50%", transform: "translateX(-50%)", zIndex: 9999, background: "#1a1a1a", color: "#fff", borderRadius: 8, padding: "10px 18px", fontSize: 13, fontFamily: "inherit", boxShadow: "0 4px 16px rgba(0,0,0,0.18)", whiteSpace: "nowrap" }}>
+          Merci pour ta contribution !
+        </div>
+      )}
+
       <button onClick={() => navigate(-1)} className="bg-transparent border-none text-[#737373] cursor-pointer text-[13px] py-4 font-body">
         ← Retour
       </button>
 
       {/* Hero */}
       <div className="flex flex-col sm:flex-row gap-8 py-2 pb-6 items-center sm:items-start">
-        <Img book={book} w={180} h={270} />
+        <div className="flex flex-col items-center gap-2">
+          <Img book={displayBook} w={180} h={270} />
+          {book._supabase?.source === "ai_enriched" && book._supabase?.ai_confidence < 0.7 && (
+            <div className="px-2.5 py-1.5 bg-[#fef9e7] border border-[#f0e68c] rounded text-[11px] font-body text-[#666] text-center leading-snug max-w-[180px]">
+              ℹ️ Métadonnées générées par IA · Incertaines
+            </div>
+          )}
+        </div>
         <div className="flex-1 pt-1">
           <h1 className="m-0 text-[26px] font-normal leading-tight font-display italic">{book.t}</h1>
           <div className="text-[15px] text-[#737373] mt-1.5 font-body">{book.a}</div>
           <div className="text-[13px] text-[#767676] mt-1 font-body">{book.y || book.publication_date}{(book.p || book.page_count) ? ` · ${book.p || book.page_count} pages` : ""}</div>
+
+          {/* Modifier la fiche */}
+          {user && isUuid && (
+            <button
+              onClick={() => setShowEnrichModal(true)}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-2xl text-[13px] text-[#333] font-body bg-[#f5f3f0] border border-[#eee] cursor-pointer hover:bg-[#ede9e3] transition-colors duration-150 mt-3"
+            >
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+              </svg>
+              Modifier la fiche
+            </button>
+          )}
 
           {/* Rating box — masqué si aucune évaluation */}
           {ratingCount > 0 && avgRating > 0 && (
@@ -461,6 +670,22 @@ export default function BookPage({ book }) {
         <div className="pb-5">
           <Label>Thèmes</Label>
           <div className="flex flex-wrap gap-1">{book.tags.map(t => <Link key={t} to={`/explorer/theme/${encodeURIComponent(t)}`}><Tag>{t}</Tag></Link>)}</div>
+        </div>
+      )}
+
+      {/* Description */}
+      {(bookDescription || isUuid) && (
+        <div className="border-t border-border-light py-5">
+          {bookDescription ? (
+            <p className="text-[14px] text-[#333] leading-[1.75] m-0 font-body">{bookDescription}</p>
+          ) : (
+            <button
+              onClick={() => setShowEnrichModal(true)}
+              className="text-[13px] text-[#999] font-body bg-transparent border-none cursor-pointer hover:text-[#1a1a1a] transition-colors duration-150 p-0"
+            >
+              + Suggérer un résumé
+            </button>
+          )}
         </div>
       )}
 
@@ -615,13 +840,14 @@ export default function BookPage({ book }) {
                 const initials = displayName.split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2);
                 const isOwn = rv.user_id === user?.id;
                 return (
-                  <div key={rv.id} ref={isOwn && i === dbReviews.findIndex(r => r.user_id === user?.id) ? newReviewRef : undefined} className="py-4 border-b border-border-light">
+                  <div key={rv.id} ref={isOwn && i === dbReviews.findIndex(r => r.user_id === user?.id) ? newReviewRef : undefined} className="group py-4 border-b border-border-light relative">
                     <div className="flex items-center gap-2.5 mb-2">
                       <div className={rv.users?.username ? "cursor-pointer" : ""} onClick={() => rv.users?.username && navigate(`/${rv.users.username}`)}>
                         <Avatar i={initials} s={26} src={rv.users?.avatar_url} />
                       </div>
                       <UserName user={rv.users} className="text-[13px]" />
                       {rv.rating > 0 && <Stars r={rv.rating} s={11} />}
+                      <div className="ml-auto"><ContentMenu type="review" item={rv} onDelete={() => refetchReviews()} onEdit={() => refetchReviews()} /></div>
                     </div>
                     {rv.contains_spoilers ? (
                       <details>
@@ -695,7 +921,7 @@ export default function BookPage({ book }) {
               dbQuotes.map((q, i) => {
                 const isOwn = q.user_id === user?.id;
                 return (
-                  <div key={q.id} ref={isOwn && i === dbQuotes.findIndex(qt => qt.user_id === user?.id) ? newQuoteRef : undefined} className="py-[18px] border-b border-border-light">
+                  <div key={q.id} ref={isOwn && i === dbQuotes.findIndex(qt => qt.user_id === user?.id) ? newQuoteRef : undefined} className="group py-[18px] border-b border-border-light relative">
                     <div className="text-[15px] italic text-[#1a1a1a] leading-[1.7] border-l-[3px] border-l-cover-fallback pl-4 font-display">
                       « {q.body} »
                     </div>
@@ -709,6 +935,7 @@ export default function BookPage({ book }) {
                           onToggle={() => toggleQuoteLike(q.id)}
                         />
                       </span>
+                      <div className="ml-auto"><ContentMenu type="quote" item={q} onDelete={() => refetchQuotes()} onEdit={() => refetchQuotes()} /></div>
                     </div>
                   </div>
                 );

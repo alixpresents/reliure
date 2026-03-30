@@ -10,6 +10,7 @@ import { supabase } from "../lib/supabase";
 import UserName from "../components/UserName";
 import { formatRelativeTime } from "../lib/formatTime";
 import Skeleton from "../components/Skeleton";
+import ContentMenu from "../components/ContentMenu";
 
 function actionLabel(actionType, metadata) {
   if (actionType === "review") return "a critiqué";
@@ -49,7 +50,7 @@ function MiniCover({ url, title, onClick }) {
 
 export default function FeedPage() {
   const nav = useNavigate();
-  const { items, loading } = useFeed();
+  const { items, loading, refetch: refetchFeed } = useFeed();
   const reviewIds = items.filter(i => i.action_type === "review").map(i => i.target_id);
   const quoteIds = items.filter(i => i.action_type === "quote").map(i => i.target_id);
   const { likedSet: likedReviews, initialSet: initLikedReviews, toggle: toggleReviewLike } = useLikes(reviewIds, "review");
@@ -100,7 +101,7 @@ export default function FeedPage() {
           const hasContent = (it.action_type === "review" && meta.review_body) || (it.action_type === "quote" && meta.quote_body);
 
           return (
-            <div key={it.id} className="py-3.5 border-b border-border-light">
+            <div key={it.id} className="group py-3.5 border-b border-border-light relative">
               <div className="flex gap-3 items-start">
                 {/* Avatar */}
                 <div
@@ -182,7 +183,7 @@ export default function FeedPage() {
                       ) : (
                         <p className="text-[13px] text-[#333] leading-relaxed font-body m-0">{meta.review_body}</p>
                       )}
-                      <div className="flex gap-4 mt-1.5 text-[11px] text-[#767676] font-body">
+                      <div className="flex items-center gap-4 mt-1.5 text-[11px] text-[#767676] font-body">
                         <LikeButton
                           count={meta.likes_count || 0}
                           liked={likedReviews.has(it.target_id)}
@@ -190,6 +191,7 @@ export default function FeedPage() {
                           onToggle={() => toggleReviewLike(it.target_id)}
                         />
                         <span className="cursor-pointer hover:text-[#1a1a1a] transition-colors duration-150">Répondre</span>
+                        <ContentMenu type="review" item={{ id: it.target_id, user_id: it.user_id, body: meta.review_body, rating: meta.rating, contains_spoilers: meta.contains_spoilers }} onDelete={() => refetchFeed()} onEdit={() => refetchFeed()} />
                       </div>
                     </div>
                   )}
@@ -200,13 +202,14 @@ export default function FeedPage() {
                       <div className="border-l-[3px] border-l-cover-fallback pl-3">
                         <span className="text-sm italic leading-relaxed font-display text-[#1a1a1a]">« {meta.quote_body} »</span>
                       </div>
-                      <div className="mt-1.5 text-[11px] font-body">
+                      <div className="flex items-center gap-2 mt-1.5 text-[11px] font-body">
                         <LikeButton
                           count={meta.likes_count || 0}
                           liked={likedQuotes.has(it.target_id)}
                           initialLiked={initLikedQuotes.has(it.target_id)}
                           onToggle={() => toggleQuoteLike(it.target_id)}
                         />
+                        <ContentMenu type="quote" item={{ id: it.target_id, user_id: it.user_id, body: meta.quote_body }} onDelete={() => refetchFeed()} onEdit={() => refetchFeed()} />
                       </div>
                     </div>
                   )}

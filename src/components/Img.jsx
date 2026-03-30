@@ -1,6 +1,11 @@
+import { useState } from "react";
+
 export default function Img({ book, w, h, onClick, className = "" }) {
   const hasOverride = className.includes("w-full");
-  const hasCover = !!book.c;
+  const [imgFailed, setImgFailed] = useState(false);
+  const src = book.c;
+  const showFallback = !src || imgFailed;
+
   return (
     <div
       onClick={onClick}
@@ -10,28 +15,22 @@ export default function Img({ book, w, h, onClick, className = "" }) {
       className={`rounded-[3px] overflow-hidden shrink-0 relative shadow-[0_1px_3px_rgba(0,0,0,0.08)] transition-all duration-150 ${onClick ? "cursor-pointer hover:-translate-y-0.5 hover:shadow-[0_4px_12px_rgba(0,0,0,0.13)]" : ""} ${className}`}
       style={{ ...(hasOverride ? {} : { width: w, height: h }), backgroundColor: "#e8e4de" }}
     >
-      {hasCover && (
+      {src && !imgFailed && (
         <img
-          src={book.c}
-          alt={book.t}
+          src={src}
+          alt=""
           className="w-full h-full object-cover block absolute inset-0"
-          onError={e => { e.target.style.display = "none"; }}
+          onLoad={e => { if (e.target.naturalWidth < 10 || e.target.naturalHeight < 10) setImgFailed(true); }}
+          onError={() => setImgFailed(true)}
         />
       )}
-      {/* Placeholder titre + auteur — visible si pas de couverture ou si l'image échoue */}
-      <div className="absolute inset-0 flex flex-col items-center justify-center p-3 z-0">
-        <span
-          className="font-display italic text-center leading-snug text-[#999] line-clamp-3"
-          style={{ fontSize: "clamp(10px, 14px, 14px)", display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden" }}
-        >
-          {book.t}
-        </span>
-        {book.a && (
-          <span className="font-body text-[10px] text-[#bbb] text-center mt-1 truncate w-full">
-            {book.a}
+      {showFallback && (
+        <div className="absolute inset-0 flex items-center justify-center p-2">
+          <span className="font-display italic text-center leading-snug text-[#999]" style={{ fontSize: "clamp(9px, 12%, 13px)", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+            {book.t}
           </span>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }

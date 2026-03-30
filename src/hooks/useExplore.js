@@ -190,8 +190,8 @@ export function useBooksByGenre(genre) {
     (async () => {
       const { data } = await supabase
         .from("books")
-        .select("*")
-        .contains("genres", [genre])
+        .select("id, title, authors, cover_url, slug")
+        .filter("genres", "cs", `["${genre}"]`)
         .order("rating_count", { ascending: false })
         .limit(20);
       setBooks((data ?? []).map(normalizeBook));

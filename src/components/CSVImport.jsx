@@ -207,6 +207,19 @@ export default function CSVImport() {
           book = await importBook(googleBook);
         }
 
+        // Fallback : chercher par titre exact dans notre DB si pas de livre trouvé et pas d'ISBN
+        if (!book && !row.isbn13 && !row.isbn10 && row.title) {
+          const { data: existingByTitle } = await supabase
+            .from('books')
+            .select('id')
+            .ilike('title', row.title.trim())
+            .limit(1);
+
+          if (existingByTitle?.[0]) {
+            book = { id: existingByTitle[0].id };
+          }
+        }
+
         if (!book) {
           failed++;
           failures.push(row.title);

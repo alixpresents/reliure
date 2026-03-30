@@ -42,62 +42,258 @@ function StatusPill({ label, active, variant, onClick }) {
   return <button onClick={onClick} className={`${base} bg-transparent text-[#767676] border-[#ddd] hover:border-[#999]`}>{label}</button>;
 }
 
-function RepairSection({ user }) {
+function EnrichSection({ user }) {
+  const navigate = useNavigate();
   const [incompleteBooks, setIncompleteBooks] = useState([]);
-  const [repairPhase, setRepairPhase] = useState("idle"); // idle | repairing | done
-  const [repairProgress, setRepairProgress] = useState({ current: 0, total: 0, fixed: 0, failed: 0 });
-  const abortRepair = useRef(false);
+  const [phase, setPhase] = useState("idle"); // idle | enriching | done
+  const [progress, setProgress] = useState({ current: 0, total: 0, enriched: 0, uncertain: 0, failed: 0 });
+  const [uncertainBooks, setUncertainBooks] = useState([]);
+  const [failedBooks, setFailedBooks] = useState([]);
+  const [eta, setEta] = useState(null);
+  const abortRef = useRef(false);
+  const startTimeRef = useRef(null);
 
   useEffect(() => {
     if (!user) return;
-    supabase
-      .from("books")
-      .select("id, title, authors, isbn_13")
-      .is("cover_url", null)
-      .then(async ({ data: allNullCovers }) => {
-        if (!allNullCovers?.length) return;
-        const ids = allNullCovers.map(b => b.id);
-        const { data: linked } = await supabase
-          .from("reading_status")
-          .select("book_id")
-          .eq("user_id", user.id)
-          .in("book_id", ids);
-        if (!linked?.length) return;
-        const linkedIds = new Set(linked.map(r => r.book_id));
-        setIncompleteBooks(allNullCovers.filter(b => linkedIds.has(b.id)));
-      });
+    (async () => {
+      // Livres sans cover_url OU sans description liés à l'utilisateur
+      const { data: allIncomplete } = await supabase
+        .from("books")
+        .select("id, title, authors, isbn_13, slug, cover_url, description")
+        .or("cover_url.is.null,description.is.null");
+      if (!allIncomplete?.length) return;
+      const ids = allIncomplete.map(b => b.id);
+      const { data: linked } = await supabase
+        .from("reading_status")
+        .select("book_id")
+        .eq("user_id", user.id)
+        .in("book_id", ids);
+      if (!linked?.length) return;
+      const linkedIds = new Set(linked.map(r => r.book_id));
+      const filtered = allIncomplete.filter(b => linkedIds.has(b.id));
+      console.log("[EnrichSection] books to enrich:", filtered.length, "first 3:", filtered.slice(0, 3).map(b => ({ title: b.title, authors: b.authors, isbn_13: b.isbn_13 })));
+      setIncompleteBooks(filtered);
+    })();
+  }, [user]);
+
+  const startEnrich = async () => {
+    setPhase("enriching");
+    abortRef.current = false;
+    const total = incompleteBooks.length;
+    setProgress({ current: 0, total, enriched: 0, uncertain: 0, failed: 0 });
+    setUncertainBooks([]);
+    setFailedBooks([]);
+    setEta(null);
+    startTimeRef.current = Date.now();
+    let enriched = 0, uncertain = 0, failed = 0;
+
+    for (let i = 0; i < incompleteBooks.length; i++) {
+      if (abortRef.current) break;
+      const book = incompleteBooks[i];
+      const authorStr = Array.isArray(book.authors) ? book.authors[0] : (book.authors || "");
+
+      try {
+        const res = await supabase.functions.invoke("book_ai_enrich", {
+          body: { title: book.title, author: authorStr, isbn13: book.isbn_13 },
+        });
+
+        if (i === 0) console.log("[EnrichSection] first invoke raw response:", JSON.stringify({ data: res.data, error: res.error }, null, 2));
+
+        // supabase.functions.invoke peut retourner data en string — parser si nécessaire
+        let parsed = res.data;
+        if (typeof parsed === "string") {
+          try { parsed = JSON.parse(parsed); } catch { /* reste string */ }
+        }
+
+        if (res.error || !parsed) {
+          failed++;
+          setFailedBooks(prev => [...prev, book]);
+        } else {
+          const r = parsed;
+          const patch = {};
+          if (r.cover_url && !book.cover_url) patch.cover_url = r.cover_url;
+          if (r.description && !book.description) patch.description = r.description;
+          if (r.publisher) patch.publisher = r.publisher;
+          if (r.publication_date) patch.publication_date = r.publication_date;
+          if (r.page_count) patch.page_count = r.page_count;
+          if (r.genres?.length) patch.genres = r.genres;
+          patch.source = "ai_enriched";
+          if (r.ai_confidence != null) patch.ai_confidence = r.ai_confidence;
+
+          if (Object.keys(patch).length > 2) {
+            await supabase.from("books").update(patch).eq("id", book.id);
+
+            // Après le premier livre, vérifier que l'UPDATE a bien fonctionné
+            if (i === 0 && patch.cover_url) {
+              const { data: check } = await supabase.from("books").select("cover_url").eq("id", book.id).single();
+              if (!check?.cover_url) {
+                setPhase("done");
+                setProgress({ current: 1, total, enriched: 0, uncertain: 0, failed: 1 });
+                setFailedBooks([{ ...book, title: "❌ Erreur : les données ne sont pas sauvegardées en base. Vérifie les permissions RLS sur la table books." }]);
+                return;
+              }
+            }
+
+            if (r.ai_confidence < 0.7) {
+              uncertain++;
+              setUncertainBooks(prev => [...prev, book]);
+            } else {
+              enriched++;
+            }
+          } else {
+            failed++;
+            setFailedBooks(prev => [...prev, book]);
+          }
+        }
+      } catch {
+        failed++;
+        setFailedBooks(prev => [...prev, book]);
+      }
+
+      setProgress({ current: i + 1, total, enriched, uncertain, failed });
+
+      // ETA : calculer après 3 livres, mettre à jour toutes les 5
+      const done = i + 1;
+      if (done >= 3 && done % 5 === 0) {
+        const elapsed = (Date.now() - startTimeRef.current) / 1000;
+        const remaining = Math.round((elapsed / done) * (total - done));
+        setEta(remaining);
+      }
+    }
+    setEta(null);
+    setPhase("done");
+  };
+
+  if (!incompleteBooks.length && phase !== "done") return null;
+
+  if (phase === "done") {
+    return (
+      <div className="mb-8 p-4 border border-[#eee] rounded-lg">
+        <p className="text-[13px] font-body text-[#1a1a1a] text-center mb-2">
+          {progress.enriched} livre{progress.enriched > 1 ? "s" : ""} enrichi{progress.enriched > 1 ? "s" : ""} ✓
+        </p>
+        {uncertainBooks.length > 0 && (
+          <div className="mt-2">
+            <p className="text-[12px] font-body text-[#D4883A] mb-1">
+              {uncertainBooks.length} livre{uncertainBooks.length > 1 ? "s" : ""} incertain{uncertainBooks.length > 1 ? "s" : ""} — vérifie les fiches :
+            </p>
+            <div className="flex flex-wrap gap-1">
+              {uncertainBooks.map(b => (
+                <button
+                  key={b.id}
+                  onClick={() => navigate(`/livre/${b.slug || b.id}`)}
+                  className="text-[11px] font-body text-[#666] underline bg-transparent border-none cursor-pointer hover:text-[#1a1a1a] p-0"
+                >
+                  {b.title}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+        {failedBooks.length > 0 && (
+          <p className="text-[12px] font-body text-[#767676] mt-2 text-center">
+            {failedBooks.length} introuvable{failedBooks.length > 1 ? "s" : ""}
+          </p>
+        )}
+      </div>
+    );
+  }
+
+  if (phase === "enriching") {
+    const pct = progress.total ? Math.round(progress.current / progress.total * 100) : 0;
+    return (
+      <div className="mb-8 p-4 border border-[#eee] rounded-lg">
+        <p className="text-[13px] font-body text-[#666] mb-3 text-center">
+          Enrichissement en cours… {progress.current} / {progress.total}
+        </p>
+        <div className="h-[3px] bg-[#f0ede8] rounded-sm overflow-hidden mb-2">
+          <div className="h-full bg-[#1a1a1a] rounded-sm transition-[width] duration-200" style={{ width: `${pct}%` }} />
+        </div>
+        <div className="flex justify-center gap-4 text-[12px] font-body mt-2">
+          <span className="text-[#1a1a1a]">{progress.enriched} enrichi{progress.enriched > 1 ? "s" : ""}</span>
+          {progress.uncertain > 0 && <span className="text-[#D4883A]">{progress.uncertain} incertain{progress.uncertain > 1 ? "s" : ""}</span>}
+          <span className="text-[#767676]">{progress.failed} non trouvé{progress.failed > 1 ? "s" : ""}</span>
+        </div>
+        {eta != null && (
+          <p className="text-[11px] font-body text-[#767676] text-center mt-2">
+            ~{eta >= 60 ? `${Math.round(eta / 60)} min` : `${eta}s`} restante{eta >= 60 ? (Math.round(eta / 60) > 1 ? "s" : "") : (eta > 1 ? "s" : "")}
+          </p>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div className="mb-8 p-4 border border-[#eee] rounded-lg">
+      <div className="flex items-center justify-between gap-4">
+        <p className="text-[13px] font-body text-[#666]">
+          {incompleteBooks.length} livre{incompleteBooks.length > 1 ? "s" : ""} sans couverture ni description
+        </p>
+        <button
+          onClick={startEnrich}
+          className="px-4 py-2 rounded-[20px] text-[12px] font-medium font-body bg-[#1a1a1a] text-white border-none cursor-pointer hover:bg-[#333] transition-colors duration-150 shrink-0"
+        >
+          ✨ Enrichir avec l'IA
+        </button>
+      </div>
+      <p className="text-[10px] font-body text-[#bbb] mt-2">
+        Utilise Claude Haiku + Open Library · ~0,001$ par livre
+      </p>
+    </div>
+  );
+}
+
+function CoverRepairSection({ user }) {
+  const [books, setBooks] = useState([]);
+  const [phase, setPhase] = useState("idle"); // idle | repairing | done
+  const [progress, setProgress] = useState({ current: 0, total: 0, found: 0, failed: 0 });
+
+  useEffect(() => {
+    if (!user) return;
+    (async () => {
+      const { data: noCover } = await supabase
+        .from("books")
+        .select("id, title, authors, isbn_13")
+        .is("cover_url", null);
+      if (!noCover?.length) return;
+      const ids = noCover.map(b => b.id);
+      const { data: linked } = await supabase
+        .from("reading_status")
+        .select("book_id")
+        .eq("user_id", user.id)
+        .in("book_id", ids);
+      if (!linked?.length) return;
+      const linkedIds = new Set(linked.map(r => r.book_id));
+      setBooks(noCover.filter(b => linkedIds.has(b.id)));
+    })();
   }, [user]);
 
   const startRepair = async () => {
-    setRepairPhase("repairing");
-    abortRepair.current = false;
-    const total = incompleteBooks.length;
-    setRepairProgress({ current: 0, total, fixed: 0, failed: 0 });
-    let fixed = 0, failed = 0;
+    setPhase("repairing");
+    const total = books.length;
+    setProgress({ current: 0, total, found: 0, failed: 0 });
+    let found = 0, failed = 0;
 
-    for (let i = 0; i < incompleteBooks.length; i++) {
-      if (abortRepair.current) break;
-      const book = incompleteBooks[i];
+    for (let i = 0; i < books.length; i++) {
+      const book = books[i];
+      const authorStr = Array.isArray(book.authors) ? book.authors[0] : (book.authors || "");
 
       try {
-        const query = book.isbn_13 || `${book.title} ${book.authors?.[0] || ""}`.trim();
-        const results = await searchBooks(query);
+        console.log("[CoverRepair] calling find_cover with:", { isbn13: book.isbn_13, title: book.title, author: book.authors?.[0] });
+        const res = await supabase.functions.invoke("find_cover", {
+          body: { isbn13: book.isbn_13, title: book.title, author: authorStr },
+        });
 
-        if (results?.length) {
-          const r = results[0];
-          const patch = {};
-          if (r.coverUrl) patch.cover_url = r.coverUrl;
-          if (r.description) patch.description = r.description;
-          if (r.pageCount) patch.page_count = r.pageCount;
-          if (r.publisher) patch.publisher = r.publisher;
-          if (r.publishedDate) patch.publication_date = r.publishedDate;
+        console.log("[CoverRepair] response:", res.data);
+        let parsed = res.data;
+        if (typeof parsed === "string") {
+          try { parsed = JSON.parse(parsed); } catch { parsed = null; }
+        }
 
-          if (Object.keys(patch).length) {
-            await supabase.from("books").update(patch).eq("id", book.id);
-            fixed++;
-          } else {
-            failed++;
-          }
+        if (parsed?.cover_url) {
+          const { error: updateError } = await supabase.from("books").update({ cover_url: parsed.cover_url }).eq("id", book.id);
+          console.log("[findCover] UPDATE result:", { bookId: book.id, coverUrl: parsed.cover_url, error: updateError });
+          found++;
         } else {
           failed++;
         }
@@ -105,52 +301,51 @@ function RepairSection({ user }) {
         failed++;
       }
 
-      setRepairProgress({ current: i + 1, total, fixed, failed });
+      setProgress({ current: i + 1, total, found, failed });
     }
-    setRepairPhase("done");
+    setPhase("done");
   };
 
-  if (!incompleteBooks.length || repairPhase === "done") {
-    if (repairPhase === "done") {
-      return (
-        <div className="mb-8 p-4 border border-[#eee] rounded-lg text-center">
-          <p className="text-[13px] font-body text-[#1a1a1a]">
-            {repairProgress.fixed} livre{repairProgress.fixed > 1 ? "s" : ""} réparé{repairProgress.fixed > 1 ? "s" : ""} · {repairProgress.failed} non trouvé{repairProgress.failed > 1 ? "s" : ""}
-          </p>
-        </div>
-      );
-    }
-    return null;
+  if (!books.length && phase !== "done") return null;
+
+  if (phase === "done") {
+    return (
+      <div className="mb-6 p-4 border border-[#eee] rounded-lg text-center">
+        <p className="text-[13px] font-body text-[#1a1a1a]">
+          {progress.found} couverture{progress.found > 1 ? "s" : ""} trouvée{progress.found > 1 ? "s" : ""} · {progress.failed} introuvable{progress.failed > 1 ? "s" : ""}
+        </p>
+      </div>
+    );
   }
 
-  if (repairPhase === "repairing") {
-    const pct = repairProgress.total ? Math.round(repairProgress.current / repairProgress.total * 100) : 0;
+  if (phase === "repairing") {
+    const pct = progress.total ? Math.round(progress.current / progress.total * 100) : 0;
     return (
-      <div className="mb-8 p-4 border border-[#eee] rounded-lg">
+      <div className="mb-6 p-4 border border-[#eee] rounded-lg">
         <p className="text-[13px] font-body text-[#666] mb-3 text-center">
-          Réparation en cours… {repairProgress.current} / {repairProgress.total}
+          Recherche de couvertures… {progress.current} / {progress.total}
         </p>
         <div className="h-[3px] bg-[#f0ede8] rounded-sm overflow-hidden mb-2">
           <div className="h-full bg-[#1a1a1a] rounded-sm transition-[width] duration-200" style={{ width: `${pct}%` }} />
         </div>
         <div className="flex justify-center gap-4 text-[12px] font-body mt-2">
-          <span className="text-[#1a1a1a]">{repairProgress.fixed} réparé{repairProgress.fixed > 1 ? "s" : ""}</span>
-          <span className="text-[#767676]">{repairProgress.failed} non trouvé{repairProgress.failed > 1 ? "s" : ""}</span>
+          <span className="text-[#1a1a1a]">{progress.found} trouvée{progress.found > 1 ? "s" : ""}</span>
+          <span className="text-[#767676]">{progress.failed} introuvable{progress.failed > 1 ? "s" : ""}</span>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="mb-8 p-4 border border-[#eee] rounded-lg flex items-center justify-between gap-4">
+    <div className="mb-6 p-4 border border-[#eee] rounded-lg flex items-center justify-between gap-4">
       <p className="text-[13px] font-body text-[#666]">
-        {incompleteBooks.length} livre{incompleteBooks.length > 1 ? "s" : ""} importé{incompleteBooks.length > 1 ? "s" : ""} sans métadonnées complètes
+        {books.length} livre{books.length > 1 ? "s" : ""} sans couverture
       </p>
       <button
         onClick={startRepair}
-        className="px-4 py-2 rounded-[16px] text-[12px] font-medium font-body bg-[#1a1a1a] text-white border-none cursor-pointer hover:bg-[#333] transition-colors duration-150 shrink-0"
+        className="px-4 py-2 rounded-[20px] text-[12px] font-medium font-body bg-[#1a1a1a] text-white border-none cursor-pointer hover:bg-[#333] transition-colors duration-150 shrink-0"
       >
-        Réparer
+        🖼 Réparer les couvertures
       </button>
     </div>
   );
@@ -268,8 +463,11 @@ export default function BackfillPage() {
       {/* CSV Import */}
       <CSVImport />
 
-      {/* Réparer les livres incomplets */}
-      <RepairSection user={user} />
+      {/* Réparer les couvertures manquantes */}
+      <CoverRepairSection user={user} />
+
+      {/* Enrichissement IA */}
+      <EnrichSection user={user} />
 
       {/* Séparateur */}
       <div className="flex items-center gap-3 mb-8">
