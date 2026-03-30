@@ -9,17 +9,22 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     let initialised = false;
+    let wasLoggedIn = false;
 
     supabase.auth.getSession().then(({ data: { session } }) => {
+      wasLoggedIn = !!session;
       setUser(session?.user ?? null);
       setLoading(false);
       initialised = true;
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      const prevLoggedIn = wasLoggedIn;
+      wasLoggedIn = !!session;
       setUser(session?.user ?? null);
-      // Only redirect after an explicit login, not on session restore at page load
-      if (event === "SIGNED_IN" && session && initialised) {
+      // Only redirect on a genuine login (transition from logged-out to logged-in).
+      // Ignore SIGNED_IN fired by token refreshes (tab focus, silent re-auth).
+      if (event === "SIGNED_IN" && session && initialised && !prevLoggedIn) {
         window.dispatchEvent(new Event("reliure:signed-in"));
       }
     });
