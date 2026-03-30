@@ -55,6 +55,7 @@ export default function Search({ open, onClose, go, initialQuery = "" }) {
   const timer = useRef(null);
   const inputRef = useRef(null);
   const multiAddMode = useRef(false);
+  const [headerBottom, setHeaderBottom] = useState(52);
 
   const atMode = q.startsWith("@");
   const atQuery = q.slice(1);
@@ -75,6 +76,8 @@ export default function Search({ open, onClose, go, initialQuery = "" }) {
 
   useEffect(() => {
     if (open) {
+      const h = document.querySelector("header");
+      if (h) setHeaderBottom(h.getBoundingClientRect().bottom);
       setQ(initialQuery);
       requestAnimationFrame(() => setVisible(true));
       setTimeout(() => inputRef.current?.focus(), 50);
@@ -370,7 +373,7 @@ export default function Search({ open, onClose, go, initialQuery = "" }) {
       <div
         style={{
           position: "fixed",
-          top: 52,
+          top: headerBottom,
           left: 0,
           right: 0,
           zIndex: 9999,
