@@ -83,7 +83,9 @@ export default function Header({ onSearch, initials = "?", username, avatarUrl, 
               className="cursor-pointer"
             >
               {avatarUrl
-                ? <img src={avatarUrl} alt="" width={28} height={28} style={{ borderRadius: "50%", objectFit: "cover", border: "1.5px solid #eee", display: "block" }} />
+                ? <div style={{ width: 28, height: 28, borderRadius: "50%", overflow: "hidden", flexShrink: 0, border: "1.5px solid #eee" }}>
+                    <img src={avatarUrl} alt="" style={{ width: 28, height: 28, objectFit: "cover", display: "block", flexShrink: 0 }} />
+                  </div>
                 : <Avatar i={initials} s={28} />
               }
             </div>
