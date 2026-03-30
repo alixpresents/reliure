@@ -258,8 +258,13 @@ Toutes les couleurs UI sont gérées via CSS custom properties dans `src/index.c
 
 **Convention** : pour les nouvelles couleurs, toujours utiliser `var(--xxx)` en inline style ou la classe Tailwind correspondante (ex: `bg-cover-fallback`). Ne jamais hardcoder de hex pour les couleurs UI.
 
+**Bouton inversé** (CTA principal) : `style={{ backgroundColor: "var(--text-primary)", color: "var(--bg-primary)" }}` + `hover:opacity-80`. Jamais de `bg-[#1a1a1a] text-white`.
+
+**Track de barre de progression** : utiliser `bg-[var(--border-default)]` pour le fond vide — `bg-avatar-bg` est invisible en dark mode (même teinte que le fond de surface).
+
 ### Dark mode
 
+- Migration complète : zéro hex hardcodé dans tous les fichiers JSX. Toutes les couleurs passent par `var(--xxx)` ou une classe Tailwind mappée.
 - Toggle manuel via `useTheme()` (`src/hooks/useTheme.js`)
 - Persisté dans `localStorage` sous `reliure-theme`
 - Applique `data-theme="light|dark"` sur `<html>`
@@ -270,12 +275,12 @@ Toutes les couleurs UI sont gérées via CSS custom properties dans `src/index.c
 ### Layout
 - Max-width contenu : `760px` (single column, optimal pour lecture longue)
 - Header sticky avec backdrop-filter blur
-- Séparateurs : `1px solid #f0f0f0`
-- Couvertures : ratio 2:3, `border-radius: 3px`, ombre `0 1px 3px rgba(0,0,0,0.08)`
+- Séparateurs : `1px solid var(--border-subtle)`
+- Couvertures : ratio 2:3, `border-radius: 3px`, ombre `var(--shadow-cover)`
 - Carousels horizontaux pour les sections "Populaires" et "Trending"
 
 ### Composants clés
-- **WipBanner** : bandeau fond #faf6f0 / texte #8B6914 / border #e8dfd2 — affiché en haut des pages "Aperçu" (La Revue, Défis). Pill "Aperçu" également visible dans la nav du Header sur ces deux liens.
+- **WipBanner** : bandeau fond `var(--color-wip-bg)` / texte `var(--color-wip-text)` / border `var(--color-wip-border)` — affiché en haut des pages "Aperçu" (La Revue, Défis). Pill "Aperçu" également visible dans la nav du Header sur ces deux liens.
 - **Img** : couverture avec fallback Instrument Serif italic centré, max 2 lignes, `clamp(9px, 12%, 13px)`, fond `#e8e4de`, couleur `#999` — affiché quand `cover_url` est null ou si l'image échoue. `alt=""` pour éviter le texte alt navigateur. Hover lift + shadow quand cliquable.
 - **Stars** : étoiles de notation read-only (couleur `#D4883A`)
 - **InteractiveStars** : étoiles cliquables avec hover scale, pop animation, accessibilité (role, tabIndex, aria-label)

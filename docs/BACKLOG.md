@@ -63,21 +63,21 @@ Page challenge — Vue participant (inscrit)
 Direction esthétique : journal de bord en timeline. Le participant voit sa progression personnelle et son historique de soumissions comme un carnet de lecture dédié au challenge.
 Header :
 
-Flex row : progression circulaire SVG à gauche (cercle 80px, stroke #f0ede8 en fond, stroke #1a1a1a en remplissage proportionnel, nombre d'items complétés au centre en 20px bold, total en 9px muted en dessous)
-À droite du cercle : titre du challenge en Instrument Serif italic 24px, puis "Objectif : [palier visé]" avec le palier en doré (#8B6914 font-weight 500), "Palier actuel : [palier atteint]" en font-weight 500, puis "Par [créateur] · X participants · dates" en 12px muted
+Flex row : progression circulaire SVG à gauche (cercle 80px, stroke var(--avatar-bg) en fond, stroke var(--text-primary) en remplissage proportionnel, nombre d'items complétés au centre en 20px bold, total en 9px muted en dessous)
+À droite du cercle : titre du challenge en Instrument Serif italic 24px, puis "Objectif : [palier visé]" avec le palier en doré (var(--color-warn-text) font-weight 500), "Palier actuel : [palier atteint]" en font-weight 500, puis "Par [créateur] · X participants · dates" en 12px muted
 
 Filtres :
 
-Rangée de pills horizontales scrollables : "Tous (100)" (pill active : fond #1a1a1a, texte blanc), "Complétés (34)", "À faire (66)", "Classement" (pills inactives : fond surface, texte muted)
+Rangée de pills horizontales scrollables : "Tous (100)" (pill active : fond var(--text-primary), texte var(--bg-primary)), "Complétés (34)", "À faire (66)", "Classement" (pills inactives : fond surface, texte muted)
 Font-size 11px, padding 5px 14px, border-radius 14px
 
 Timeline des items :
 
-Ligne verticale continue à gauche : border-left 2px solid #f0ede8, padding-left 20px, margin-left 8px
+Ligne verticale continue à gauche : border-left 2px solid var(--border-subtle), padding-left 20px, margin-left 8px
 Chaque item est un noeud sur la timeline :
 
-Point rempli noir (12px, border-radius 50%, background #1a1a1a) pour les items complétés
-Point vide (12px, border-radius 50%, background #f0ede8, border 2px solid #ddd) pour les items à faire
+Point rempli (12px, border-radius 50%, background var(--text-primary)) pour les items complétés
+Point vide (12px, border-radius 50%, background var(--avatar-bg), border 2px solid var(--star-empty)) pour les items à faire
 Le point est positionné en absolute à left: -27px du bord gauche de la timeline
 
 
@@ -114,7 +114,7 @@ Chaque stat : chiffre en 22px bold, label en 11px muted, text-align center, gap 
 
 CTA :
 
-Bouton "Rejoindre ce challenge" centré : fond #1a1a1a, texte blanc, padding 10px 28px, border-radius 20px, font-size 13px, font-weight 500
+Bouton "Rejoindre ce challenge" centré : fond var(--text-primary), texte var(--bg-primary), padding 10px 28px, border-radius 20px, font-size 13px, font-weight 500
 
 Séparateur, puis section "Paliers" :
 
@@ -1220,7 +1220,7 @@ a:focus-visible,
 input:focus-visible,
 textarea:focus-visible,
 select:focus-visible {
-  outline: 2px solid #1a1a1a;
+  outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
   border-radius: 4px;
 }
@@ -1241,7 +1241,7 @@ L'outline s'affiche à la navigation clavier, invisible au clic souris (UI propr
 Feedback minimaliste quand une mutation réseau échoue (like, follow, création liste, publication citation).
 
 **Architecture :**
-- `src/components/Toast.jsx` — notification fixe centrée en bas, z-10000 (au-dessus des modals), fond `#1a1a1a`, texte blanc, animation slide-up 180ms, auto-dismiss 3s
+- `src/components/Toast.jsx` — notification fixe centrée en bas, z-10000 (au-dessus des modals), fond `var(--text-primary)`, texte `var(--bg-primary)`, animation slide-up 180ms, auto-dismiss 3s
 - `src/hooks/useToast.js` — hook `{ toast, showToast }`, timeout géré par ref (safe vis-à-vis des re-renders)
 - `src/hooks/useLikes.js` — `toggle(targetId, onError?)` — paramètre optionnel
 - `src/hooks/useFollow.js` — `follow(onError?)` / `unfollow(onError?)` — paramètre optionnel
@@ -1353,15 +1353,15 @@ Le contenu passe par un état très pâle pendant 2-3 secondes avant d'être ple
 
 ## 26. Dark mode
 
-**Statut :** Partiellement implémenté · Migration Tailwind en cours
+**Statut :** ✅ Complet — implémenté le 31 mars 2026
 **Portée :** Toute l'app (index.css, composants, pages)
 
 ### Ce qui est implémenté
 
 **Architecture CSS custom properties** (`src/index.css`) :
-- `:root` définit 17 variables light (--bg-primary, --bg-surface, --bg-elevated, --text-primary, --text-secondary, --text-tertiary, --text-muted, --border-subtle, --border-default, --header-bg, --avatar-bg, --cover-fallback, --tag-bg, --tag-border, --tag-text, --focus-ring)
-- `[data-theme="dark"]` override ces 17 variables avec les valeurs sombres
-- Les variables `@theme` Tailwind (--color-surface, --color-cover-fallback, --color-avatar-bg, --color-tag-bg, --color-border-light) pointent vers les CSS vars → les classes utilitaires (`bg-surface`, `bg-cover-fallback`, etc.) switchent automatiquement
+- `:root` définit les variables light, `[data-theme="dark"]` les override toutes
+- Variables complètes : --bg-primary, --bg-surface, --bg-elevated, --text-primary, --text-secondary, --text-tertiary, --text-muted, --border-subtle, --border-default, --header-bg, --avatar-bg, --cover-fallback, --tag-bg, --tag-border, --tag-text, --focus-ring, --star-empty, --shadow-cover + toutes les variables sémantiques (--color-star, --color-spoiler, --color-success/bg, --color-error/bg/border, --color-warn-*/--color-wip-*)
+- Les variables `@theme` Tailwind pointent vers les CSS vars → les classes utilitaires (`bg-surface`, `bg-cover-fallback`, etc.) switchent automatiquement
 
 **Hook `useTheme()`** (`src/hooks/useTheme.js`) :
 - `useState` initialisé depuis `localStorage('reliure-theme')`, défaut `'light'`
@@ -1375,46 +1375,24 @@ Le contenu passe par un état très pâle pendant 2-3 secondes avant d'être ple
 - `color: var(--text-tertiary)`, hover opacity 0.7
 - `aria-label` : "Mode sombre" / "Mode clair"
 
-**Composants migrés vers CSS vars** (inline styles) :
-- `App.jsx` : conteneurs principaux (bg-primary, text-primary)
-- `Header.jsx` : header-bg, border-default, bg-elevated (dropdown menu), text-primary (logo)
-- `Search.jsx` : bg-primary, border-default, border-subtle
-- `BookPage.jsx` : bg-primary (modals LoginModal, EnrichModal), text-primary/bg-primary (toast)
-- `CitationsPage.jsx` : bg-primary (modal), border-subtle
-- `ProfilePage.jsx` : bg-elevated + border-default (card backfill), border-subtle, border-default
-- `Img.jsx` : cover-fallback
-- `RoleBadge.jsx` : text-primary, bg-primary (admin), avatar-bg (moderator)
-- `CSVImport.jsx` : text-secondary
-- `Skeleton.jsx` : bg-elevated (fond), border-subtle (shimmer)
+**Migration complète — tous les fichiers JSX** :
+Zéro hex hardcodé dans l'ensemble des composants et pages. Tous les fichiers utilisent `var(--xxx)` en inline style ou une classe Tailwind mappée sur une CSS var.
 
-### Migration restante — classes Tailwind hardcodées
+### Conventions établies
 
-Les classes Tailwind avec hex hardcodé (`text-[#xxx]`, `bg-[#xxx]`, `border-[#xxx]`) ne switchent pas en dark mode. C'est le gros de la migration restante.
+**Bouton inversé (CTA principal)** : `style={{ backgroundColor: "var(--text-primary)", color: "var(--bg-primary)" }}` + `hover:opacity-80`. Jamais de `bg-[#1a1a1a] text-white`.
 
-**Fichiers concernés (non exhaustif) :**
-- `Header.jsx` : `text-[#1a1a1a]`, `text-[#767676]`, `text-[#888]`
-- `ExplorePage.jsx` : `text-[#1a1a1a]`, `text-[#767676]`, `text-[#999]`, `border-[#f0f0f0]`, `hover:bg-[#fafaf8]`
-- `ProfilePage.jsx` : `text-[#1a1a1a]`, `text-[#767676]`, `text-[#ccc]`, `border-[#eee]`, `bg-white`
-- `BookPage.jsx` : `text-[#1a1a1a]`, `text-[#767676]`, `text-[#999]`, `border-[#eee]`, `bg-white`
-- `CitationsPage.jsx`, `FeedPage.jsx` : `text-[#1a1a1a]`, `text-[#767676]`, `border-[#f0f0f0]`
-- `BackfillPage.jsx`, `ChallengesPage.jsx`, `JournalPage.jsx`, `ArticlePage.jsx` : `bg-white`, `text-[#1a1a1a]`
-- `OnboardingPage.jsx`, `LoginPage.jsx`, `SettingsPage.jsx` : `bg-white`
-- `Search.jsx`, `LikeButton.jsx`, `ContentMenu.jsx`, `Avatar.jsx`, `Tag.jsx`, `Pill.jsx`
+**Track de barre de progression** : `bg-[var(--border-default)]` pour le fond vide — `bg-avatar-bg` est invisible en dark mode (même teinte que le fond de surface).
 
-**Stratégie recommandée :**
-Ajouter dans `@theme` des mappings qui pointent vers les CSS vars (comme déjà fait pour `--color-surface` → `var(--bg-surface)`), puis remplacer `text-[#1a1a1a]` par `text-primary`, `bg-white` par `bg-primary`, etc. Cela permet de garder le flow Tailwind tout en supportant le dark mode.
-
-**Éléments sémantiques non migrés** (intentionnel) :
-- Couleurs de statut : `#D4883A` (étoiles), `#e25555` (spoiler), `#2E7D32`/`#16a34a` (succès), `#c00` (erreur)
-- Badges : `#8B6914`/`#faf6f0`/`#e8dfd2` (Aperçu/WIP)
-- Gradient étagère : `#c4a882` → `#a08462`
-- `JoinBanner` et `AnnouncementBanner` (fond `#1a1a1a` — contraste inversé en dark, à designer)
+**Éléments intentionnellement stables** (pas de switch light/dark) :
+- Couleurs de statut : `--color-star` (#D4883A), `--color-spoiler` (#e25555)
+- Gradient étagère : `#c4a882` → `#a08462` (teinte bois, contexte décoratif)
+- `JoinBanner` et `AnnouncementBanner` (fond `var(--text-primary)` — contraste inversé intentionnel)
 
 ### Ce qu'on ne fait PAS en v1
 - Pas de `prefers-color-scheme` (toggle manuel uniquement pour la beta)
 - Pas de thème par page ou par profil (toggle global uniquement)
-- Pas de redesign des couleurs sémantiques pour le dark mode
 
 ---
 
-*Dernière mise à jour : 30 mars 2026*
+*Dernière mise à jour : 31 mars 2026*
