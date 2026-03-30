@@ -23,27 +23,28 @@ export default function AnnouncementBanner({
       className="relative flex items-center justify-center px-10 font-body"
       style={{ height: 36, background: "#1a1a1a", color: "#fff" }}
     >
-      <div className="flex items-center gap-2.5 text-[12px]">
+      <div className="flex items-center gap-3 text-[12px]">
         <span
-          className="uppercase tracking-wide text-[11px] px-2 py-0.5 rounded-full"
+          className="uppercase tracking-widest text-[10px] px-2 py-[3px] rounded-full"
           style={{
-            background: "rgba(255,255,255,0.12)",
-            border: "1px solid rgba(255,255,255,0.18)",
-            color: "rgba(255,255,255,0.75)",
+            background: "rgba(255,255,255,0.1)",
+            border: "1px solid rgba(255,255,255,0.15)",
+            color: "rgba(255,255,255,0.6)",
+            letterSpacing: "0.1em",
           }}
         >
           {pill}
         </span>
-        <span style={{ color: "rgba(255,255,255,0.85)" }}>
-          <em className="font-display not-italic" style={{ fontStyle: "italic", fontFamily: "'Instrument Serif', serif" }}>Reliure</em>
+        <span style={{ color: "rgba(255,255,255,0.75)" }}>
+          <span className="font-semibold" style={{ color: "#fff" }}>Reliure</span>
           {" "}{message}
         </span>
         <a
           href={ctaHref}
-          className="underline underline-offset-2 font-medium transition-opacity duration-150 hover:opacity-75"
+          className="font-medium transition-opacity duration-150 hover:opacity-60 flex items-center gap-1"
           style={{ color: "#fff" }}
         >
-          {ctaLabel}
+          {ctaLabel} <span aria-hidden>→</span>
         </a>
       </div>
 
