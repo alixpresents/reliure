@@ -322,7 +322,7 @@ Chaque onglet a sa propre URL (`/:username/critiques`, etc.).
 - Données réelles via `useProfileData` (allStatuses, diaryBooks, allReadBooks, reviews, stats, chronologie, topRated)
 - Quatre favoris : drag & drop + touch mobile, swap via SearchOverlay, mini-note (max 24 chars), suppression — persistés via `useFavorites`
 - En cours de lecture : progression interactive, édition inline de page, complétion
-- **Édition inline du header** (isOwnProfile) : avatar uploadable (bucket `avatars`, compression canvas 400×400 JPEG 0.85, max 1 Mo), nom cliquable → input inline, bio cliquable → textarea 160 chars ; lien "⚙ Paramètres" discret → `/parametres`
+- **Édition inline du header** (isOwnProfile) : avatar uploadable (bucket `avatars`, compression canvas 400×400 JPEG 0.85, max 1 Mo), nom cliquable → input inline avec icône crayon ✎ au hover, bio cliquable → textarea 160 chars avec icône crayon ✎ au hover. Pas de bouton Paramètres sur le profil.
 - Onglet Bibliothèque : 3 modes grille/liste/étagère, ratings réels
   - Grille : `grid-cols-5 sm:grid-cols-8`, ratio 2:3, fallback Img
   - Étagère : 5 livres/rangée mobile, 8 desktop, covers 80×120px, rotation alternée ±1.5°/1°, planche bois, fallback Img
@@ -458,7 +458,7 @@ Variable `isOwnProfile = user?.id === viewedProfile?.id` contrôle l'affichage c
 - **Avatar** : hover → overlay appareil photo SVG. Clic → file picker (jpg/png/webp, max 1 Mo). Compression canvas côté client (max 400×400px, JPEG 0.85). Upload vers Supabase Storage bucket `avatars` (`${user.id}/avatar.jpg`, upsert). `avatar_url` mis à jour via UPDATE `users` + optimistic local state. Cache-bust via `?t=timestamp`.
 - **Nom affiché** : clic → input inline, même taille/style, bordure bottom 1px uniquement. Entrée ou blur → UPDATE `users.display_name` (max 50 chars). Escape annule.
 - **Bio** : si null → placeholder italic "Ajoute une bio..." cliquable. Clic → textarea avec compteur /160. Cmd+Entrée ou blur → UPDATE `users.bio` (max 160 chars). Escape annule.
-- **Lien Paramètres** : bouton "⚙ Paramètres" 11px #767676 sous les stats → `/parametres` (pour email, mot de passe, suppression compte).
+- **Paramètres** : page `/parametres` accessible directement par URL. Aucun bouton ou lien Paramètres affiché sur la page profil — l'édition inline suffit pour avatar/nom/bio.
 
 **Quatre favoris** : section masquée pour les visiteurs si `favorites.some(f => f.book)` est faux.
 

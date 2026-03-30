@@ -3,7 +3,7 @@ import { NavLink, Link, useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 import Avatar from "./Avatar";
 
-export default function Header({ onSearch, initials = "?", username, isLoggedIn = true }) {
+export default function Header({ onSearch, initials = "?", username, avatarUrl, isLoggedIn = true }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const navigate = useNavigate();
 
@@ -82,7 +82,10 @@ export default function Header({ onSearch, initials = "?", username, isLoggedIn 
               onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setMenuOpen(!menuOpen); } }}
               className="cursor-pointer"
             >
-              <Avatar i={initials} s={28} />
+              {avatarUrl
+                ? <img src={avatarUrl} alt="" width={28} height={28} style={{ borderRadius: "50%", objectFit: "cover", border: "1.5px solid #eee", display: "block" }} />
+                : <Avatar i={initials} s={28} />
+              }
             </div>
             {menuOpen && (
               <>

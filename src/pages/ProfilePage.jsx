@@ -686,10 +686,11 @@ export default function ProfilePage({ viewedProfile, initialTab }) {
               />
             ) : (
               <div
-                className={`text-[22px] font-normal font-display italic ${isOwnProfile ? "cursor-pointer hover:opacity-70 transition-opacity duration-150" : ""}`}
+                className={`flex items-center gap-1.5 ${isOwnProfile ? "cursor-pointer group/name" : ""}`}
                 onClick={isOwnProfile ? startEditName : undefined}
               >
-                {displayName || profile.username}
+                <span className="text-[22px] font-normal font-display italic">{displayName || profile.username}</span>
+                {isOwnProfile && <span className="text-[#ccc] text-[15px] select-none opacity-0 group-hover/name:opacity-100 transition-opacity duration-150">✎</span>}
               </div>
             )}
             <div className="text-xs text-[#767676] font-body">@{profile.username}</div>
@@ -732,12 +733,13 @@ export default function ProfilePage({ viewedProfile, initialTab }) {
               <div className="text-[10px] text-[#767676] font-body text-right mt-1">{bioDraft.length}/160</div>
             </div>
           ) : bio ? (
-            <p
-              className="text-[13px] text-[#666] leading-relaxed max-w-[480px] m-0 mb-3 font-body cursor-pointer hover:opacity-70 transition-opacity duration-150"
+            <div
+              className="flex items-start gap-1.5 max-w-[480px] mb-3 cursor-pointer group/bio"
               onClick={startEditBio}
             >
-              {bio}
-            </p>
+              <p className="text-[13px] text-[#666] leading-relaxed m-0 font-body">{bio}</p>
+              <span className="text-[#ccc] text-[13px] select-none shrink-0 mt-px opacity-0 group-hover/bio:opacity-100 transition-opacity duration-150">✎</span>
+            </div>
           ) : (
             <p
               className="text-[14px] italic text-[#767676] max-w-[480px] m-0 mb-3 font-body cursor-pointer hover:text-[#767676] transition-colors duration-150"
@@ -751,15 +753,6 @@ export default function ProfilePage({ viewedProfile, initialTab }) {
             {profile.bio}
           </p>
         ) : null}
-        {/* Paramètres link — own profile only */}
-        {isOwnProfile && (
-          <button
-            onClick={() => navigate("/parametres")}
-            className="text-[11px] text-[#767676] font-body bg-transparent border-none cursor-pointer hover:text-[#1a1a1a] transition-colors duration-150 p-0 mt-1"
-          >
-            ⚙ Paramètres
-          </button>
-        )}
         {/* Avatar error toast */}
         {avatarError && (
           <div className="mt-3 px-3 py-2 rounded-lg bg-[#fff3f3] border border-[#fdd] text-[12px] text-[#c00] font-body max-w-[360px]">

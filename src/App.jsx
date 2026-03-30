@@ -82,6 +82,7 @@ export default function App() {
         onSearch={() => { setSearchCb(null); setSearch(!search); }}
         initials={initials}
         username={profile?.username}
+        avatarUrl={profile?.avatar_url}
         isLoggedIn={isLoggedIn}
       />
       <Search open={search} onClose={closeSearch} go={searchGo} />
