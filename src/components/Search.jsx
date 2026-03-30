@@ -406,7 +406,7 @@ export default function Search({ open, onClose, go, initialQuery = "" }) {
         backgroundColor: "#fff",
         border: "0.5px solid #eee",
         borderRadius: 12,
-        boxShadow: "0 4px 16px rgba(0,0,0,0.08)",
+        boxShadow: "0 4px 20px rgba(0,0,0,0.07)",
         maxHeight: 440,
         overflow: "hidden",
         opacity: visible ? 1 : 0,
@@ -417,8 +417,8 @@ export default function Search({ open, onClose, go, initialQuery = "" }) {
       }}
     >
       {/* Input row */}
-      <div className="flex items-center gap-2.5 px-4 py-3">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#999" strokeWidth="2" className="shrink-0">
+      <div className="flex items-center gap-2 px-3" style={{ height: 44, borderBottom: "0.5px solid #f0f0f0" }}>
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#ccc" strokeWidth="2" className="shrink-0">
           <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
         </svg>
 
@@ -438,7 +438,7 @@ export default function Search({ open, onClose, go, initialQuery = "" }) {
             onChange={e => setQ(e.target.value)}
             onKeyDown={handleInputKeyDown}
             placeholder={placeholder}
-            className="w-full border-none outline-none text-[#1a1a1a] font-body placeholder:text-[#999]"
+            className="w-full border-none outline-none text-[#1a1a1a] font-body placeholder:text-[#bbb]"
             style={{ background: "transparent", fontSize: 15 }}
           />
           {ghost && (
@@ -473,19 +473,20 @@ export default function Search({ open, onClose, go, initialQuery = "" }) {
       </div>
 
       {/* Filter chips */}
-      <div className="flex gap-1.5 px-4 pb-2.5 border-b" style={{ borderColor: "#f0f0f0" }}>
+      <div className="flex gap-1.5 border-b" style={{ borderColor: "#f0f0f0", padding: "8px 12px" }}>
         {FILTERS.map(f => (
           <button
             key={f.key}
             onClick={() => setFilter(f.key)}
-            className="border-none cursor-pointer font-body transition-all duration-100"
+            className="cursor-pointer font-body transition-all duration-100"
             style={{
-              fontSize: 11,
+              fontSize: 12,
               fontWeight: 500,
-              padding: "4px 10px",
+              padding: "4px 12px",
               borderRadius: 20,
               background: filter === f.key ? "#1a1a1a" : "transparent",
-              color: filter === f.key ? "#fff" : "#767676",
+              border: filter === f.key ? "0.5px solid #1a1a1a" : "0.5px solid #e0e0e0",
+              color: filter === f.key ? "#fff" : "#888",
             }}
           >
             {f.label}
