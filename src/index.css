@@ -12,6 +12,44 @@
   --color-border-light: #f0f0f0;
 }
 
+:root {
+  --bg-primary: #fff;
+  --bg-surface: #fafaf8;
+  --bg-elevated: #fff;
+  --text-primary: #1a1a1a;
+  --text-secondary: #666;
+  --text-tertiary: #767676;
+  --text-muted: #ccc;
+  --border-subtle: #f0f0f0;
+  --border-default: #eee;
+  --header-bg: rgba(255,255,255,0.92);
+  --avatar-bg: #f0ede8;
+  --cover-fallback: #e8e4de;
+  --tag-bg: #f5f3f0;
+  --tag-border: #eee;
+  --tag-text: #777;
+  --focus-ring: #1a1a1a;
+}
+
+[data-theme="dark"] {
+  --bg-primary: #141618;
+  --bg-surface: #1a1e22;
+  --bg-elevated: #1e2226;
+  --text-primary: #e8eaec;
+  --text-secondary: #8a9aa8;
+  --text-tertiary: #5a6068;
+  --text-muted: #2e3438;
+  --border-subtle: #252a2e;
+  --border-default: #252a2e;
+  --header-bg: rgba(20,22,24,0.95);
+  --avatar-bg: #1e2226;
+  --cover-fallback: #1e2226;
+  --tag-bg: #1a1e22;
+  --tag-border: #252a2e;
+  --tag-text: #6a7888;
+  --focus-ring: #e8eaec;
+}
+
 @layer base {
   * { box-sizing: border-box; margin: 0; }
 }
@@ -47,7 +85,7 @@ a:focus-visible,
 input:focus-visible,
 textarea:focus-visible,
 select:focus-visible {
-  outline: 2px solid #1a1a1a;
+  outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
   border-radius: 4px;
 }
