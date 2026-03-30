@@ -138,7 +138,7 @@ export default function App() {
       <div className={`max-w-[760px] mx-auto px-4 sm:px-6 ${isLoggedIn ? "pb-20" : "pb-32"}`}>
         <Routes>
           <Route path="/" element={<Navigate to="/explorer" replace />} />
-          <Route path="/explorer" element={<ExplorePage onSearch={(q) => { setSearchInitialQuery(q || ""); setSearch(true); }} searchOpen={search} />} />
+          <Route path="/explorer" element={<ExplorePage />} />
           <Route path="/explorer/theme/:tag" element={<TagPage />} />
           <Route path="/citations" element={<CitationsPage />} />
           <Route path="/fil" element={<ProtectedRoute><FeedPage /></ProtectedRoute>} />
