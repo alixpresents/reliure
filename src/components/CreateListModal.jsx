@@ -47,8 +47,16 @@ export default function CreateListModal({ open, onClose, onCreate }) {
       >
         <div
           onClick={e => e.stopPropagation()}
-          className="bg-white rounded-xl shadow-[0_8px_32px_rgba(0,0,0,0.12)] w-full max-w-[400px] p-6"
+          className="relative bg-white rounded-xl shadow-[0_8px_32px_rgba(0,0,0,0.12)] w-full max-w-[400px] p-6"
         >
+          <button
+            type="button"
+            onClick={onClose}
+            className="absolute top-3 right-3 w-6 h-6 flex items-center justify-center text-[#767676] hover:text-[#1a1a1a] bg-transparent border-none cursor-pointer rounded transition-colors duration-150"
+            aria-label="Fermer"
+          >
+            ×
+          </button>
           <h2 className="text-[18px] font-normal font-display italic m-0 mb-5">Nouvelle liste</h2>
 
           <form onSubmit={handleSubmit}>

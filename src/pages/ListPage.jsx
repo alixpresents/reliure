@@ -326,7 +326,10 @@ export default function ListPage() {
                       value={noteDraft}
                       onChange={e => setNoteDraft(e.target.value)}
                       onBlur={() => commitNote(item.id)}
-                      onKeyDown={e => { if (e.key === "Escape") setEditingNote(null); }}
+                      onKeyDown={e => {
+                        if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); commitNote(item.id); }
+                        if (e.key === "Escape") setEditingNote(null);
+                      }}
                       placeholder="Pourquoi ce livre est dans cette liste..."
                       maxLength={200}
                       rows={2}
