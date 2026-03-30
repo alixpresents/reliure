@@ -41,9 +41,17 @@ async function fetchUsers(query, limit = 5) {
   return users.map(u => ({ ...u, readCount: countMap[u.id] || 0 }));
 }
 
+const FILTERS = [
+  { key: "all", label: "Tout" },
+  { key: "books", label: "Livres" },
+  { key: "authors", label: "Auteurs" },
+  { key: "users", label: "Lecteurs" },
+];
+
 export default function Search({ open, onClose, go, initialQuery = "" }) {
   const navigate = useNavigate();
   const [q, setQ] = useState("");
+  const [filter, setFilter] = useState("all");
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
   const [importing, setImporting] = useState(null);
@@ -54,8 +62,8 @@ export default function Search({ open, onClose, go, initialQuery = "" }) {
   const [ghostDismissed, setGhostDismissed] = useState(false);
   const timer = useRef(null);
   const inputRef = useRef(null);
+  const dropdownRef = useRef(null);
   const multiAddMode = useRef(false);
-  const [headerBottom, setHeaderBottom] = useState(52);
 
   const atMode = q.startsWith("@");
   const atQuery = q.slice(1);
@@ -76,9 +84,8 @@ export default function Search({ open, onClose, go, initialQuery = "" }) {
 
   useEffect(() => {
     if (open) {
-      const h = document.querySelector("header");
-      if (h) setHeaderBottom(h.getBoundingClientRect().bottom);
       setQ(initialQuery);
+      setFilter("all");
       requestAnimationFrame(() => setVisible(true));
       setTimeout(() => inputRef.current?.focus(), 50);
       multiAddMode.current = false;
@@ -89,11 +96,24 @@ export default function Search({ open, onClose, go, initialQuery = "" }) {
     }
   }, [open]); // initialQuery lu à l'ouverture via closure, pas besoin dans les deps
 
+  // Close on Escape
   useEffect(() => {
     if (!open) return;
     const handler = e => { if (e.key === "Escape") handleClose(); };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
+  }, [open]);
+
+  // Close on click outside
+  useEffect(() => {
+    if (!open) return;
+    const handler = e => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        handleClose();
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
   }, [open]);
 
   useEffect(() => {
@@ -303,7 +323,6 @@ export default function Search({ open, onClose, go, initialQuery = "" }) {
     }
 
     // 2. Fallback : importer directement depuis les données IA
-    // importBook gère : check ISBN existant → edge function → insert minimal
     const book = await importBook({
       title: aiBook.title,
       authors: aiBook.author ? [aiBook.author] : [],
@@ -357,275 +376,290 @@ export default function Search({ open, onClose, go, initialQuery = "" }) {
     ab => !displayResults.some(cr => normalize(cr.title) === normalize(ab.title))
   );
 
+  // Filtered views
+  const showBooks = filter === "all" || filter === "books" || filter === "authors";
+  const showUsers = filter === "all" || filter === "users";
+  const showAI = filter === "all" || filter === "books";
+
+  // For "authors" filter: group books by first author
+  const authorGroups = useMemo(() => {
+    if (filter !== "authors") return null;
+    const groups = new Map();
+    for (const gb of displayResults) {
+      const author = gb.authors?.[0] || "Auteur inconnu";
+      if (!groups.has(author)) groups.set(author, []);
+      groups.get(author).push(gb);
+    }
+    return groups;
+  }, [filter, displayResults]);
+
   return (
-    <>
-      <div
-        onClick={handleClose}
-        style={{
-          position: "fixed",
-          inset: 0,
-          zIndex: 9998,
-          backgroundColor: visible ? "rgba(0,0,0,0.3)" : "rgba(0,0,0,0)",
-          transition: "background-color 150ms ease-out",
-        }}
-      />
+    <div
+      ref={dropdownRef}
+      style={{
+        position: "absolute",
+        top: "100%",
+        right: 0,
+        width: 420,
+        maxWidth: "calc(100vw - 32px)",
+        zIndex: 200,
+        backgroundColor: "#fff",
+        border: "0.5px solid #eee",
+        borderRadius: 12,
+        boxShadow: "0 4px 16px rgba(0,0,0,0.08)",
+        maxHeight: 440,
+        overflow: "hidden",
+        opacity: visible ? 1 : 0,
+        transform: visible ? "translateY(4px)" : "translateY(-2px)",
+        transition: "opacity 120ms ease-out, transform 120ms ease-out",
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
+      {/* Input row */}
+      <div className="flex items-center gap-2.5 px-4 py-3">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#999" strokeWidth="2" className="shrink-0">
+          <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
+        </svg>
 
-      <div
-        style={{
-          position: "fixed",
-          top: headerBottom,
-          left: 0,
-          right: 0,
-          zIndex: 9999,
-          display: "flex",
-          justifyContent: "center",
-          pointerEvents: "none",
-        }}
-      >
-        <div
-          onClick={e => e.stopPropagation()}
-          style={{
-            width: "100%",
-            maxWidth: 560,
-            backgroundColor: "#fff",
-            borderRadius: "0 0 12px 12px",
-            boxShadow: "0 8px 32px rgba(0,0,0,0.12)",
-            maxHeight: "60vh",
-            overflow: "hidden",
-            opacity: visible ? 1 : 0,
-            transform: visible ? "translateY(0)" : "translateY(-8px)",
-            transition: "opacity 150ms ease-out, transform 150ms ease-out",
-            pointerEvents: "auto",
-            display: "flex",
-            flexDirection: "column",
-          }}
-        >
-          {/* Input */}
-          <div className="flex items-center gap-3 px-5 py-4 border-b border-[#eee]">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f0f0f0" strokeWidth="2" className="shrink-0">
-              <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
-            </svg>
-
-            {/* Input with ghost text overlay */}
-            <div className="relative flex-1 min-w-0">
-              {ghost && (
-                <div
-                  className="absolute inset-0 pointer-events-none flex items-center overflow-hidden whitespace-nowrap"
-                  style={{ fontFamily: "Instrument Serif, serif", fontStyle: "italic", fontSize: "1rem" }}
-                >
-                  <span style={{ visibility: "hidden" }}>{q}</span>
-                  <span className="text-[#767676]">{ghost}</span>
-                </div>
-              )}
-              <input
-                ref={inputRef}
-                value={q}
-                onChange={e => setQ(e.target.value)}
-                onKeyDown={handleInputKeyDown}
-                placeholder={placeholder}
-                className="w-full text-base border-none outline-none text-[#1a1a1a] font-display italic placeholder:text-[#767676] placeholder:font-display placeholder:italic"
-                style={{ background: "transparent" }}
-              />
-              {/* Mobile ghost accept button */}
-              {ghost && (
-                <button
-                  onClick={acceptGhost}
-                  className="absolute right-0 top-1/2 -translate-y-1/2 z-20 text-[10px] text-[#767676] bg-[#f0ede8] rounded px-1.5 py-0.5 md:hidden border-none cursor-pointer font-body"
-                  aria-label="Accepter la suggestion"
-                >
-                  Tab
-                </button>
-              )}
-            </div>
-
-            {q && (
-              <button
-                onClick={() => { setQ(""); setResults([]); setUserResults([]); inputRef.current?.focus(); }}
-                className="text-[#767676] hover:text-[#1a1a1a] bg-transparent border-none cursor-pointer p-2 shrink-0 transition-colors duration-150"
-                aria-label="Effacer"
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
-                </svg>
-              </button>
-            )}
-            <button
-              onClick={handleClose}
-              className="sm:hidden shrink-0 bg-transparent border-none cursor-pointer text-[14px] text-[#767676] font-body py-1"
+        <div className="relative flex-1 min-w-0">
+          {ghost && (
+            <div
+              className="absolute inset-0 pointer-events-none flex items-center overflow-hidden whitespace-nowrap"
+              style={{ fontSize: 15 }}
             >
-              Annuler
+              <span style={{ visibility: "hidden" }}>{q}</span>
+              <span className="text-[#999]">{ghost}</span>
+            </div>
+          )}
+          <input
+            ref={inputRef}
+            value={q}
+            onChange={e => setQ(e.target.value)}
+            onKeyDown={handleInputKeyDown}
+            placeholder={placeholder}
+            className="w-full border-none outline-none text-[#1a1a1a] font-body placeholder:text-[#999]"
+            style={{ background: "transparent", fontSize: 15 }}
+          />
+          {ghost && (
+            <button
+              onClick={acceptGhost}
+              className="absolute right-0 top-1/2 -translate-y-1/2 z-20 text-[10px] text-[#767676] bg-[#f0ede8] rounded px-1.5 py-0.5 md:hidden border-none cursor-pointer font-body"
+              aria-label="Accepter la suggestion"
+            >
+              Tab
             </button>
-          </div>
+          )}
+        </div>
 
-          {/* Résultats */}
-          <div className="overflow-y-auto flex-1">
-            {loading && (
-              <div className="py-8 text-center text-[13px] text-[#767676] font-body">Recherche...</div>
-            )}
+        {q && (
+          <button
+            onClick={() => { setQ(""); setResults([]); setUserResults([]); inputRef.current?.focus(); }}
+            className="text-[#999] hover:text-[#1a1a1a] bg-transparent border-none cursor-pointer p-1 shrink-0 transition-colors duration-150"
+            aria-label="Effacer"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        )}
 
-            {/* @ mode */}
-            {!loading && atMode && (
+        <kbd
+          className="hidden sm:inline-block text-[10px] text-[#999] font-body border border-[#eee] rounded px-1.5 py-0.5 shrink-0 leading-none"
+          style={{ fontFamily: "inherit" }}
+        >
+          esc
+        </kbd>
+      </div>
+
+      {/* Filter chips */}
+      <div className="flex gap-1.5 px-4 pb-2.5 border-b" style={{ borderColor: "#f0f0f0" }}>
+        {FILTERS.map(f => (
+          <button
+            key={f.key}
+            onClick={() => setFilter(f.key)}
+            className="border-none cursor-pointer font-body transition-all duration-100"
+            style={{
+              fontSize: 11,
+              fontWeight: 500,
+              padding: "4px 10px",
+              borderRadius: 20,
+              background: filter === f.key ? "#1a1a1a" : "transparent",
+              color: filter === f.key ? "#fff" : "#767676",
+            }}
+          >
+            {f.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Résultats */}
+      <div className="overflow-y-auto flex-1" style={{ maxHeight: 360 }}>
+        {loading && (
+          <div className="py-6 text-center text-[13px] text-[#999] font-body">Recherche...</div>
+        )}
+
+        {/* @ mode */}
+        {!loading && atMode && (
+          <>
+            {userResults.length > 0 ? (
               <>
-                {userResults.length > 0 ? (
-                  <>
-                    <div className="px-5 pt-3 pb-1 text-[11px] uppercase tracking-[1.5px] text-[#767676] font-body">
-                      {userSuggestionLabel}
-                    </div>
-                    {userResults.map(u => <UserRow key={u.id} u={u} onSelect={handleSelectUser} />)}
-                  </>
-                ) : (
-                  atQuery.length > 0 && (
-                    <div className="py-8 text-center text-[13px] text-[#767676] font-body">
-                      Aucun lecteur trouvé pour @{atQuery}
-                    </div>
-                  )
-                )}
+                <div className="px-4 pt-2.5 pb-1 text-[10px] uppercase tracking-[1.5px] text-[#999] font-body font-medium">
+                  {userSuggestionLabel}
+                </div>
+                {userResults.map(u => <UserRow key={u.id} u={u} onSelect={handleSelectUser} />)}
               </>
+            ) : (
+              atQuery.length > 0 && (
+                <div className="py-6 text-center text-[13px] text-[#999] font-body">
+                  Aucun lecteur trouvé pour @{atQuery}
+                </div>
+              )
+            )}
+          </>
+        )}
+
+        {/* Normal mode */}
+        {!loading && !atMode && (
+          <>
+            {q.length >= 2 && displayResults.length === 0 && userResults.length === 0 && !aiLoading && filteredAIBooks.length === 0 && (
+              <div className="py-6 text-center text-[13px] text-[#999] font-body">Aucun résultat pour cette recherche.</div>
             )}
 
-            {/* Normal mode */}
-            {!loading && !atMode && (
+            {/* Lecteurs */}
+            {showUsers && userResults.length > 0 && (
               <>
-                {q.length >= 2 && displayResults.length === 0 && userResults.length === 0 && !aiLoading && filteredAIBooks.length === 0 && (
-                  <div className="py-8 text-center text-[13px] text-[#767676] font-body">Aucun résultat pour cette recherche.</div>
-                )}
-
-                {/* Lecteurs en secondaire */}
-                {userResults.length > 0 && (
-                  <>
-                    <div className="px-5 pt-3 pb-1 text-[11px] uppercase tracking-[1.5px] text-[#767676] font-body">Lecteurs</div>
-                    {userResults.map(u => <UserRow key={u.id} u={u} onSelect={handleSelectUser} />)}
-                    {displayResults.length > 0 && (
-                      <div className="px-5 pt-3 pb-1 text-[11px] uppercase tracking-[1.5px] text-[#767676] font-body">
-                        Livres {displayResults.length > 0 && <span className="normal-case tracking-normal text-[#767676]">({displayResults.length})</span>}
-                      </div>
-                    )}
-                  </>
-                )}
-
-                {/* Classic book results */}
-                {displayResults.map(gb => {
-                  const isDb = gb._source === "db";
-                  const isBnF = gb._source === "bnf";
-                  const itemKey = gb.googleId ?? (isDb ? `db:${gb.dbId}` : `bnf:${gb.isbn13 ?? gb.title}`);
-                  const added = addedGoogleIds.has(itemKey);
-                  const isImporting = importing === itemKey;
-
-                  const handleClick = async () => {
-                    if (isImporting || added) return;
-                    if (isDb) {
-                      const normalized = {
-                        id: gb.dbId,
-                        slug: gb.slug ?? gb.dbId,
-                        t: gb.title,
-                        a: Array.isArray(gb.authors) ? gb.authors.join(", ") : (gb.authors || ""),
-                        c: gb.coverUrl,
-                      };
-                      const result = await go(normalized);
-                      if (!(result && result.keepOpen)) {
-                        handleClose();
-                        setQ("");
-                        setResults([]);
-                      }
-                    } else if (isBnF) {
-                      handleBnFSelect(gb);
-                    } else {
-                      handleSelect(gb);
-                    }
-                  };
-
-                  return (
-                    <div
-                      key={itemKey}
-                      onClick={handleClick}
-                      className={`flex gap-3 py-2.5 px-5 min-h-[44px] items-center transition-colors duration-100 ${
-                        added ? "bg-[#fafaf8]" : isImporting ? "opacity-50" : "cursor-pointer hover:bg-[#fafaf8]"
-                      }`}
-                    >
-                      {isImporting ? (
-                        <Skeleton.Cover w={36} h={52} className="rounded-sm" />
-                      ) : gb.coverUrl ? (
-                        <img src={gb.coverUrl} alt="" className="w-9 h-[52px] object-cover rounded-sm shrink-0 bg-cover-fallback" />
-                      ) : (
-                        <div className="w-9 h-[52px] rounded-sm bg-cover-fallback shrink-0" />
-                      )}
-                      <div className="flex-1 min-w-0">
-                        <div className="text-[14px] font-medium font-body truncate">{gb.title}</div>
-                        <div className="text-xs text-[#767676] font-body truncate">
-                          {gb.authors.join(", ")}
-                        </div>
-                      </div>
-                      {added && (
-                        <span className="text-[13px] text-[#1a1a1a] font-medium font-body self-center shrink-0">✓</span>
-                      )}
-                    </div>
-                  );
-                })}
-
-                {/* AI results — below classic results */}
-                {filteredAIBooks.length > 0 && (
-                  <>
-                    {displayResults.length > 0 && (
-                      <div className="flex items-center gap-2 px-5 py-3">
-                        <div className="flex-1 h-px bg-[#f0f0f0]" />
-                        <span className="text-[10px] uppercase tracking-widest text-[#767676] font-medium font-body">
-                          {interpretedAs ? `\u00AB ${interpretedAs} \u00BB` : "Suggestions"}
-                        </span>
-                        <span className="text-[10px]">✨</span>
-                        <div className="flex-1 h-px bg-[#f0f0f0]" />
-                      </div>
-                    )}
-                    {displayResults.length === 0 && interpretedAs && (
-                      <div className="px-5 py-2 text-xs text-[#767676] font-body">
-                        Compris : « {interpretedAs} »
-                      </div>
-                    )}
-                    {filteredAIBooks.map((aiBook, i) => (
-                      <div
-                        key={`ai-${i}`}
-                        onClick={() => handleAIBookClick(aiBook)}
-                        className="flex gap-3 py-2.5 px-5 min-h-[44px] items-center cursor-pointer hover:bg-[#fafaf8] transition-colors duration-100"
-                      >
-                        <div className="w-9 h-[52px] rounded-sm bg-[#f0ede8] flex items-center justify-center text-[10px] text-[#767676] shrink-0">✨</div>
-                        <div className="flex-1 min-w-0">
-                          <div className="text-[14px] font-medium font-body truncate">{aiBook.title}</div>
-                          <div className="text-xs text-[#767676] font-body truncate">{aiBook.author}</div>
-                          {aiBook.why && (
-                            <div className="text-[11px] text-[#767676] font-body mt-0.5">→ {aiBook.why}</div>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </>
-                )}
-
-                {/* AI loading indicator (subtle) */}
-                {aiLoading && displayResults.length > 0 && (
-                  <div className="text-center py-3 text-[11px] text-[#767676] font-body">
-                    Recherche approfondie…
+                <div className="px-4 pt-2.5 pb-1 text-[10px] uppercase tracking-[1.5px] text-[#999] font-body font-medium">Lecteurs</div>
+                {userResults.map(u => <UserRow key={u.id} u={u} onSelect={handleSelectUser} />)}
+                {showBooks && displayResults.length > 0 && (
+                  <div className="px-4 pt-2.5 pb-1 text-[10px] uppercase tracking-[1.5px] text-[#999] font-body font-medium">
+                    Livres
                   </div>
                 )}
               </>
             )}
-          </div>
 
-          {/* Footer "Terminé" in multi-add mode */}
-          {multiAddMode.current && addedCount > 0 && (
-            <div className="border-t border-[#eee] px-5 py-3 flex items-center justify-between shrink-0">
-              <span className="text-[12px] text-[#767676] font-body">
-                {addedCount} livre{addedCount > 1 ? "s" : ""} ajouté{addedCount > 1 ? "s" : ""}
-              </span>
-              <button
-                onClick={handleClose}
-                className="px-4 py-2 rounded-[16px] text-[12px] font-medium font-body bg-[#1a1a1a] text-white border-none cursor-pointer hover:bg-[#333] transition-colors duration-150"
-              >
-                Terminé
-              </button>
-            </div>
-          )}
-        </div>
+            {/* Classic book results */}
+            {showBooks && displayResults.map(gb => {
+              const isDb = gb._source === "db";
+              const isBnF = gb._source === "bnf";
+              const itemKey = gb.googleId ?? (isDb ? `db:${gb.dbId}` : `bnf:${gb.isbn13 ?? gb.title}`);
+              const added = addedGoogleIds.has(itemKey);
+              const isImporting = importing === itemKey;
+
+              const handleClick = async () => {
+                if (isImporting || added) return;
+                if (isDb) {
+                  const normalized = {
+                    id: gb.dbId,
+                    slug: gb.slug ?? gb.dbId,
+                    t: gb.title,
+                    a: Array.isArray(gb.authors) ? gb.authors.join(", ") : (gb.authors || ""),
+                    c: gb.coverUrl,
+                  };
+                  const result = await go(normalized);
+                  if (!(result && result.keepOpen)) {
+                    handleClose();
+                    setQ("");
+                    setResults([]);
+                  }
+                } else if (isBnF) {
+                  handleBnFSelect(gb);
+                } else {
+                  handleSelect(gb);
+                }
+              };
+
+              return (
+                <div
+                  key={itemKey}
+                  onClick={handleClick}
+                  className={`flex gap-2.5 py-2 px-4 items-center transition-colors duration-100 ${
+                    added ? "bg-[#fafaf8]" : isImporting ? "opacity-50" : "cursor-pointer hover:bg-[#fafaf8]"
+                  }`}
+                >
+                  {isImporting ? (
+                    <Skeleton.Cover w={24} h={36} className="rounded-sm" />
+                  ) : gb.coverUrl ? (
+                    <img src={gb.coverUrl} alt="" className="object-cover rounded-sm shrink-0 bg-cover-fallback" style={{ width: 24, height: 36 }} />
+                  ) : (
+                    <div className="rounded-sm bg-cover-fallback shrink-0" style={{ width: 24, height: 36 }} />
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <div className="text-[13px] font-medium font-body truncate">{gb.title}</div>
+                    <div className="text-[11px] text-[#999] font-body truncate">
+                      {gb.authors.join(", ")}{gb.publishedDate ? ` · ${gb.publishedDate.slice(0, 4)}` : ""}
+                    </div>
+                  </div>
+                  {added && (
+                    <span className="text-[13px] text-[#1a1a1a] font-medium font-body self-center shrink-0">✓</span>
+                  )}
+                </div>
+              );
+            })}
+
+            {/* AI results — below classic results */}
+            {showAI && filteredAIBooks.length > 0 && (
+              <>
+                {displayResults.length > 0 && (
+                  <div className="flex items-center gap-2 px-4 py-2.5">
+                    <div className="flex-1 h-px bg-[#f0f0f0]" />
+                    <span className="text-[10px] uppercase tracking-widest text-[#999] font-medium font-body">
+                      {interpretedAs ? `\u00AB ${interpretedAs} \u00BB` : "Suggestions"}
+                    </span>
+                    <span className="text-[10px]">✨</span>
+                    <div className="flex-1 h-px bg-[#f0f0f0]" />
+                  </div>
+                )}
+                {displayResults.length === 0 && interpretedAs && (
+                  <div className="px-4 py-2 text-xs text-[#999] font-body">
+                    Compris : « {interpretedAs} »
+                  </div>
+                )}
+                {filteredAIBooks.map((aiBook, i) => (
+                  <div
+                    key={`ai-${i}`}
+                    onClick={() => handleAIBookClick(aiBook)}
+                    className="flex gap-2.5 py-2 px-4 items-center cursor-pointer hover:bg-[#fafaf8] transition-colors duration-100"
+                  >
+                    <div className="rounded-sm bg-[#f0ede8] flex items-center justify-center text-[10px] text-[#999] shrink-0" style={{ width: 24, height: 36 }}>✨</div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-[13px] font-medium font-body truncate">{aiBook.title}</div>
+                      <div className="text-[11px] text-[#999] font-body truncate">{aiBook.author}</div>
+                      {aiBook.why && (
+                        <div className="text-[11px] text-[#999] font-body mt-0.5">→ {aiBook.why}</div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </>
+            )}
+
+            {/* AI loading indicator (subtle) */}
+            {aiLoading && displayResults.length > 0 && (
+              <div className="text-center py-2.5 text-[11px] text-[#999] font-body">
+                Recherche approfondie…
+              </div>
+            )}
+          </>
+        )}
       </div>
-    </>
+
+      {/* Footer "Terminé" in multi-add mode */}
+      {multiAddMode.current && addedCount > 0 && (
+        <div className="border-t border-[#eee] px-4 py-2.5 flex items-center justify-between shrink-0">
+          <span className="text-[12px] text-[#999] font-body">
+            {addedCount} livre{addedCount > 1 ? "s" : ""} ajouté{addedCount > 1 ? "s" : ""}
+          </span>
+          <button
+            onClick={handleClose}
+            className="px-4 py-1.5 rounded-[16px] text-[12px] font-medium font-body bg-[#1a1a1a] text-white border-none cursor-pointer hover:bg-[#333] transition-colors duration-150"
+          >
+            Terminé
+          </button>
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -635,12 +669,12 @@ function UserRow({ u, onSelect }) {
   return (
     <div
       onClick={() => onSelect(u)}
-      className="flex items-center gap-3 py-2.5 px-5 cursor-pointer hover:bg-[#fafaf8] transition-colors duration-100"
+      className="flex items-center gap-2.5 py-2 px-4 cursor-pointer hover:bg-[#fafaf8] transition-colors duration-100"
     >
-      <Avatar i={initials} s={32} src={u.avatar_url} />
+      <Avatar i={initials} s={28} src={u.avatar_url} />
       <div className="flex-1 min-w-0">
-        <div className="text-[14px] font-medium font-body truncate">{name}</div>
-        <div className="text-xs text-[#767676] font-body">
+        <div className="text-[13px] font-medium font-body truncate">{name}</div>
+        <div className="text-[11px] text-[#999] font-body">
           @{u.username}{u.readCount > 0 ? ` · ${u.readCount} livre${u.readCount > 1 ? "s" : ""} lu${u.readCount > 1 ? "s" : ""}` : ""}
         </div>
       </div>

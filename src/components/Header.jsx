@@ -2,8 +2,9 @@ import { useState } from "react";
 import { NavLink, Link, useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 import Avatar from "./Avatar";
+import Search from "./Search";
 
-export default function Header({ onSearch, initials = "?", username, avatarUrl, isLoggedIn = true }) {
+export default function Header({ onSearch, onClose, searchOpen, searchGo, searchInitialQuery = "", initials = "?", username, avatarUrl, isLoggedIn = true }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const navigate = useNavigate();
 
@@ -28,7 +29,7 @@ export default function Header({ onSearch, initials = "?", username, avatarUrl, 
 
   return (
     <header className="sticky top-0 z-50 bg-white/92 backdrop-blur-[12px] border-b border-[#eee]">
-      <div className="max-w-[1060px] mx-auto flex items-center h-[52px] px-3 sm:px-6 gap-2 sm:gap-3">
+      <div className="max-w-[1060px] mx-auto flex items-center h-[52px] px-3 sm:px-6 gap-2 sm:gap-3 relative">
         <Link to="/explorer" className="flex items-center gap-1.5 mr-2 no-underline">
           <span className="text-[17px] font-bold tracking-tight font-body text-[#1a1a1a]">reliure</span>
           <span className="text-[8px] font-semibold text-white bg-[#1a1a1a] rounded-[3px] px-[5px] py-[2px] font-body">
@@ -68,12 +69,35 @@ export default function Header({ onSearch, initials = "?", username, avatarUrl, 
             <span className="text-[9px] font-body not-italic font-medium px-1 py-px rounded border" style={{ background: "#faf6f0", borderColor: "#e8dfd2", color: "#8B6914", lineHeight: "1.4" }}>Aperçu</span>
           </NavLink>
         </nav>
-        <div role="button" tabIndex={0} onClick={onSearch} onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onSearch(); } }} aria-label="Rechercher" data-onboarding="search" className="cursor-pointer text-[#767676] hover:text-[#1a1a1a] transition-colors duration-150 p-1">
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-            <circle cx="11" cy="11" r="8" />
-            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+
+        {/* Search trigger */}
+        <button
+          onClick={onSearch}
+          data-onboarding="search"
+          className="hidden sm:flex items-center gap-1.5 bg-transparent cursor-pointer font-body transition-colors duration-150 text-[#888] hover:text-[#1a1a1a] hover:border-[#ccc] shrink-0"
+          style={{
+            padding: "5px 10px",
+            border: "0.5px solid #e0e0e0",
+            borderRadius: 6,
+            fontSize: 13,
+          }}
+        >
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="shrink-0">
+            <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
           </svg>
-        </div>
+          Rechercher
+        </button>
+        {/* Mobile: icon only */}
+        <button
+          onClick={onSearch}
+          data-onboarding="search"
+          className="sm:hidden cursor-pointer text-[#767676] hover:text-[#1a1a1a] transition-colors duration-150 p-1 bg-transparent border-none shrink-0"
+          aria-label="Rechercher"
+        >
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+            <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
+          </svg>
+        </button>
 
         {/* Avatar + dropdown (logged in) / Se connecter (logged out) */}
         {isLoggedIn ? (
@@ -114,6 +138,9 @@ export default function Header({ onSearch, initials = "?", username, avatarUrl, 
             Se connecter
           </Link>
         )}
+
+        {/* Search dropdown — positioned relative to header bar */}
+        <Search open={searchOpen} onClose={onClose} go={searchGo} initialQuery={searchInitialQuery} />
       </div>
     </header>
   );

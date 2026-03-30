@@ -5,7 +5,7 @@ import { useAuth } from "./lib/AuthContext";
 import { useProfile } from "./hooks/useProfile";
 import Header from "./components/Header";
 import AnnouncementBanner from "./components/AnnouncementBanner";
-import Search from "./components/Search";
+
 import ScrollToTop from "./components/ScrollToTop";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { NavigationProvider } from "./lib/NavigationContext";
@@ -125,12 +125,15 @@ export default function App() {
       />
       <Header
         onSearch={() => { setSearchCb(null); setSearch(!search); }}
+        onClose={closeSearch}
+        searchOpen={search}
+        searchGo={searchGo}
+        searchInitialQuery={searchInitialQuery}
         initials={initials}
         username={profile?.username}
         avatarUrl={profile?.avatar_url}
         isLoggedIn={isLoggedIn}
       />
-      <Search open={search} onClose={closeSearch} go={searchGo} initialQuery={searchInitialQuery} />
       <NavigationProvider openSearchFor={openSearchFor}>
       <div className={`max-w-[760px] mx-auto px-4 sm:px-6 ${isLoggedIn ? "pb-20" : "pb-32"}`}>
         <Routes>
