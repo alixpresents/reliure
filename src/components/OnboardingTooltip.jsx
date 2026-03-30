@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 
-const TOTAL_STEPS = 13; // 3 onboarding + 10 walkthrough
+const TOTAL_STEPS = 12; // 3 onboarding + 9 walkthrough
 
 const STEPS = [
   {
@@ -8,19 +8,9 @@ const STEPS = [
     selector: '[data-onboarding="favorites"]',
     emoji: "⭐",
     title: "Tes 4 livres de chevet",
-    text: "Ces 4 livres, c'est toi. Le mode édition est activé — clique sur un cadre vide pour ajouter ton premier coup de cœur.",
+    text: "Ces 4 livres, c'est toi. Clique sur un cadre vide pour ajouter ton premier coup de cœur.",
     interactive: true,
     skipLabel: "Je le fais après",
-  },
-  {
-    key: "favorites-done",
-    selector: '[data-onboarding="favorites-done"]',
-    emoji: "✓",
-    title: "Parfait !",
-    text: "Clique sur « Terminer » pour valider tes favoris.",
-    auto: 1500,
-    noActions: true,
-    interactive: true,
   },
   {
     key: "tab-journal",
@@ -162,11 +152,6 @@ export default function OnboardingTooltip({ onComplete, showToast }) {
     if (!visible) return;
     let cancelled = false;
 
-    // Dispatch edit activation for step 4 (favorites)
-    if (step.key === "favorites") {
-      window.dispatchEvent(new Event("reliure:activate-favorites-edit"));
-    }
-
     findElement(step.selector, (el) => {
       if (cancelled || !el) {
         // Element not found — skip to next step
@@ -246,18 +231,6 @@ export default function OnboardingTooltip({ onComplete, showToast }) {
     };
     window.addEventListener("reliure:favorite-added", handler);
     return () => window.removeEventListener("reliure:favorite-added", handler);
-  }, [step.key]);
-
-  // Listen for "Terminer" click on favorites-done step
-  useEffect(() => {
-    if (step.key !== "favorites-done") return;
-    const handler = () => {
-      clearTimeout(autoTimerRef.current);
-      advanceStep();
-    };
-    // The "Terminer" button dispatches this when edit mode is toggled off
-    window.addEventListener("reliure:favorites-edit-done", handler);
-    return () => window.removeEventListener("reliure:favorites-edit-done", handler);
   }, [step.key]);
 
   // Auto-advance for timed steps

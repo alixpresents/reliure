@@ -1,4 +1,4 @@
-export default function OnboardingProgress({ current, total = 13 }) {
+export default function OnboardingProgress({ current, total = 12 }) {
   return (
     <div className="fixed top-0 left-0 right-0 z-[60] flex gap-[3px] h-[3px] px-4">
       {Array.from({ length: total }, (_, i) => (
