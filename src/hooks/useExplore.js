@@ -54,7 +54,7 @@ export function usePopularReviews() {
   const fetch = useCallback(async () => {
     const { data } = await supabase
       .from("reviews")
-      .select("*, books(id, title, cover_url, authors, publication_date), users(username, display_name)")
+      .select("*, books(id, title, cover_url, authors, publication_date, slug), users(username, display_name)")
       .not("body", "is", null)
       .neq("body", "")
       .order("likes_count", { ascending: false })
@@ -75,7 +75,7 @@ export function usePopularQuotes() {
   const fetch = useCallback(async () => {
     const { data } = await supabase
       .from("quotes")
-      .select("*, books(id, title, cover_url, authors), users(username, display_name)")
+      .select("*, books(id, title, cover_url, authors, slug), users(username, display_name)")
       .order("likes_count", { ascending: false })
       .limit(3);
     setQuotes(data ?? []);

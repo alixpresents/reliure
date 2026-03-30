@@ -34,7 +34,27 @@ export function useFeed() {
       seen.add(key);
       return true;
     });
-    setItems(deduped);
+
+    // Filet de sécurité : vérifier que le contenu référencé existe encore
+    const reviewIds = deduped.filter(i => i.target_type === "review").map(i => i.target_id);
+    const quoteIds  = deduped.filter(i => i.target_type === "quote").map(i => i.target_id);
+    const listIds   = deduped.filter(i => i.target_type === "list").map(i => i.target_id);
+    const [{ data: existingReviews }, { data: existingQuotes }, { data: existingLists }] = await Promise.all([
+      reviewIds.length ? supabase.from("reviews").select("id").in("id", reviewIds) : Promise.resolve({ data: [] }),
+      quoteIds.length  ? supabase.from("quotes").select("id").in("id", quoteIds)   : Promise.resolve({ data: [] }),
+      listIds.length   ? supabase.from("lists").select("id").in("id", listIds)     : Promise.resolve({ data: [] }),
+    ]);
+    const reviewSet = new Set((existingReviews ?? []).map(r => r.id));
+    const quoteSet  = new Set((existingQuotes  ?? []).map(q => q.id));
+    const listSet   = new Set((existingLists   ?? []).map(l => l.id));
+    const filtered = deduped.filter(it => {
+      if (it.target_type === "review") return reviewSet.has(it.target_id);
+      if (it.target_type === "quote")  return quoteSet.has(it.target_id);
+      if (it.target_type === "list")   return listSet.has(it.target_id);
+      return true; // reading_status — pas de contenu séparé à vérifier
+    });
+
+    setItems(filtered);
     setLoading(false);
   }, []);
 

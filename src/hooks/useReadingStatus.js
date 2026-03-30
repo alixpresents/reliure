@@ -115,6 +115,7 @@ export function useUserRating(bookId) {
         .maybeSingle();
       if (data && !data.body) {
         await supabase.from("reviews").delete().eq("id", data.id);
+        await supabase.from("activity").delete().eq("target_id", data.id).eq("target_type", "review");
       }
       // Ensure state is 0 even if DB had no row
       setRatingState(0);
