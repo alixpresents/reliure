@@ -90,7 +90,7 @@ function ReadingItem({ book, go, onFinish, initialPage = 0, statusId = null, isO
         <div className="flex-1">
           <div className="text-sm font-medium font-body">{book.t}</div>
           <div className="text-[11px] font-body" style={{ color: "var(--text-tertiary)" }}>{book.a}</div>
-          <div className="w-full h-[3px] bg-avatar-bg rounded-sm mt-1.5 overflow-hidden">
+          <div className="w-full h-[3px] bg-[var(--border-default)] rounded-sm mt-1.5 overflow-hidden">
             <div className="h-full rounded-sm transition-all duration-400" style={{ width: `${pct}%`, backgroundColor: "var(--text-primary)" }} />
           </div>
         </div>
