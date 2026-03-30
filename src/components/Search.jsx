@@ -418,7 +418,7 @@ export default function Search({ open, onClose, go, initialQuery = "" }) {
     >
       {/* Input row */}
       <div className="flex items-center gap-2 px-3" style={{ height: 44, borderBottom: "0.5px solid var(--border-subtle)" }}>
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#ccc" strokeWidth="2" className="shrink-0">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="2" className="shrink-0">
           <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
         </svg>
 
@@ -429,7 +429,7 @@ export default function Search({ open, onClose, go, initialQuery = "" }) {
               style={{ fontSize: 15 }}
             >
               <span style={{ visibility: "hidden" }}>{q}</span>
-              <span className="text-[#999]">{ghost}</span>
+              <span style={{ color: "var(--text-tertiary)" }}>{ghost}</span>
             </div>
           )}
           <input
@@ -438,13 +438,14 @@ export default function Search({ open, onClose, go, initialQuery = "" }) {
             onChange={e => setQ(e.target.value)}
             onKeyDown={handleInputKeyDown}
             placeholder={placeholder}
-            className="w-full border-none outline-none text-[#1a1a1a] font-body placeholder:text-[#bbb]"
-            style={{ background: "transparent", fontSize: 15 }}
+            className="w-full border-none outline-none font-body placeholder-[var(--text-muted)]"
+            style={{ background: "transparent", fontSize: 15, color: "var(--text-primary)" }}
           />
           {ghost && (
             <button
               onClick={acceptGhost}
-              className="absolute right-0 top-1/2 -translate-y-1/2 z-20 text-[10px] text-[#767676] bg-[#f0ede8] rounded px-1.5 py-0.5 md:hidden border-none cursor-pointer font-body"
+              className="absolute right-0 top-1/2 -translate-y-1/2 z-20 text-[10px] bg-avatar-bg rounded px-1.5 py-0.5 md:hidden border-none cursor-pointer font-body"
+              style={{ color: "var(--text-tertiary)" }}
               aria-label="Accepter la suggestion"
             >
               Tab
@@ -455,7 +456,8 @@ export default function Search({ open, onClose, go, initialQuery = "" }) {
         {q && (
           <button
             onClick={() => { setQ(""); setResults([]); setUserResults([]); inputRef.current?.focus(); }}
-            className="text-[#999] hover:text-[#1a1a1a] bg-transparent border-none cursor-pointer p-1 shrink-0 transition-colors duration-150"
+            className="bg-transparent border-none cursor-pointer p-1 shrink-0 transition-colors duration-150 hover:opacity-80"
+            style={{ color: "var(--text-tertiary)" }}
             aria-label="Effacer"
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -465,8 +467,8 @@ export default function Search({ open, onClose, go, initialQuery = "" }) {
         )}
 
         <kbd
-          className="hidden sm:inline-block text-[10px] text-[#999] font-body border border-[#eee] rounded px-1.5 py-0.5 shrink-0 leading-none"
-          style={{ fontFamily: "inherit" }}
+          className="hidden sm:inline-block text-[10px] font-body rounded px-1.5 py-0.5 shrink-0 leading-none"
+          style={{ fontFamily: "inherit", color: "var(--text-tertiary)", border: "1px solid var(--border-default)" }}
         >
           esc
         </kbd>
@@ -484,9 +486,9 @@ export default function Search({ open, onClose, go, initialQuery = "" }) {
               fontWeight: 500,
               padding: "4px 12px",
               borderRadius: 20,
-              background: filter === f.key ? "#1a1a1a" : "transparent",
-              border: filter === f.key ? "0.5px solid #1a1a1a" : "0.5px solid #e0e0e0",
-              color: filter === f.key ? "#fff" : "#888",
+              background: filter === f.key ? "var(--text-primary)" : "transparent",
+              border: filter === f.key ? "0.5px solid var(--text-primary)" : "0.5px solid var(--border-default)",
+              color: filter === f.key ? "var(--bg-primary)" : "var(--text-tertiary)",
             }}
           >
             {f.label}
@@ -497,7 +499,7 @@ export default function Search({ open, onClose, go, initialQuery = "" }) {
       {/* Résultats */}
       <div className="overflow-y-auto flex-1" style={{ maxHeight: 360 }}>
         {loading && (
-          <div className="py-6 text-center text-[13px] text-[#999] font-body">Recherche...</div>
+          <div className="py-6 text-center text-[13px] font-body" style={{ color: "var(--text-tertiary)" }}>Recherche...</div>
         )}
 
         {/* @ mode */}
@@ -505,14 +507,14 @@ export default function Search({ open, onClose, go, initialQuery = "" }) {
           <>
             {userResults.length > 0 ? (
               <>
-                <div className="px-4 pt-2.5 pb-1 text-[10px] uppercase tracking-[1.5px] text-[#999] font-body font-medium">
+                <div className="px-4 pt-2.5 pb-1 text-[10px] uppercase tracking-[1.5px] font-body font-medium" style={{ color: "var(--text-tertiary)" }}>
                   {userSuggestionLabel}
                 </div>
                 {userResults.map(u => <UserRow key={u.id} u={u} onSelect={handleSelectUser} />)}
               </>
             ) : (
               atQuery.length > 0 && (
-                <div className="py-6 text-center text-[13px] text-[#999] font-body">
+                <div className="py-6 text-center text-[13px] font-body" style={{ color: "var(--text-tertiary)" }}>
                   Aucun lecteur trouvé pour @{atQuery}
                 </div>
               )
@@ -524,16 +526,16 @@ export default function Search({ open, onClose, go, initialQuery = "" }) {
         {!loading && !atMode && (
           <>
             {q.length >= 2 && displayResults.length === 0 && userResults.length === 0 && !aiLoading && filteredAIBooks.length === 0 && (
-              <div className="py-6 text-center text-[13px] text-[#999] font-body">Aucun résultat pour cette recherche.</div>
+              <div className="py-6 text-center text-[13px] font-body" style={{ color: "var(--text-tertiary)" }}>Aucun résultat pour cette recherche.</div>
             )}
 
             {/* Lecteurs */}
             {showUsers && userResults.length > 0 && (
               <>
-                <div className="px-4 pt-2.5 pb-1 text-[10px] uppercase tracking-[1.5px] text-[#999] font-body font-medium">Lecteurs</div>
+                <div className="px-4 pt-2.5 pb-1 text-[10px] uppercase tracking-[1.5px] font-body font-medium" style={{ color: "var(--text-tertiary)" }}>Lecteurs</div>
                 {userResults.map(u => <UserRow key={u.id} u={u} onSelect={handleSelectUser} />)}
                 {showBooks && displayResults.length > 0 && (
-                  <div className="px-4 pt-2.5 pb-1 text-[10px] uppercase tracking-[1.5px] text-[#999] font-body font-medium">
+                  <div className="px-4 pt-2.5 pb-1 text-[10px] uppercase tracking-[1.5px] font-body font-medium" style={{ color: "var(--text-tertiary)" }}>
                     Livres
                   </div>
                 )}
@@ -576,7 +578,7 @@ export default function Search({ open, onClose, go, initialQuery = "" }) {
                   key={itemKey}
                   onClick={handleClick}
                   className={`flex gap-2.5 py-2 px-4 items-center transition-colors duration-100 ${
-                    added ? "bg-[#fafaf8]" : isImporting ? "opacity-50" : "cursor-pointer hover:bg-[#fafaf8]"
+                    added ? "bg-surface" : isImporting ? "opacity-50" : "cursor-pointer hover:bg-surface"
                   }`}
                 >
                   {isImporting ? (
@@ -588,12 +590,12 @@ export default function Search({ open, onClose, go, initialQuery = "" }) {
                   )}
                   <div className="flex-1 min-w-0">
                     <div className="text-[13px] font-medium font-body truncate">{gb.title}</div>
-                    <div className="text-[11px] text-[#999] font-body truncate">
+                    <div className="text-[11px] font-body truncate" style={{ color: "var(--text-tertiary)" }}>
                       {gb.authors.join(", ")}{gb.publishedDate ? ` · ${gb.publishedDate.slice(0, 4)}` : ""}
                     </div>
                   </div>
                   {added && (
-                    <span className="text-[13px] text-[#1a1a1a] font-medium font-body self-center shrink-0">✓</span>
+                    <span className="text-[13px] font-medium font-body self-center shrink-0" style={{ color: "var(--text-primary)" }}>✓</span>
                   )}
                 </div>
               );
@@ -604,16 +606,16 @@ export default function Search({ open, onClose, go, initialQuery = "" }) {
               <>
                 {displayResults.length > 0 && (
                   <div className="flex items-center gap-2 px-4 py-2.5">
-                    <div className="flex-1 h-px bg-[#f0f0f0]" />
-                    <span className="text-[10px] uppercase tracking-widest text-[#999] font-medium font-body">
+                    <div className="flex-1 h-px" style={{ backgroundColor: "var(--border-subtle)" }} />
+                    <span className="text-[10px] uppercase tracking-widest font-medium font-body" style={{ color: "var(--text-tertiary)" }}>
                       {interpretedAs ? `\u00AB ${interpretedAs} \u00BB` : "Suggestions"}
                     </span>
                     <span className="text-[10px]">✨</span>
-                    <div className="flex-1 h-px bg-[#f0f0f0]" />
+                    <div className="flex-1 h-px" style={{ backgroundColor: "var(--border-subtle)" }} />
                   </div>
                 )}
                 {displayResults.length === 0 && interpretedAs && (
-                  <div className="px-4 py-2 text-xs text-[#999] font-body">
+                  <div className="px-4 py-2 text-xs font-body" style={{ color: "var(--text-tertiary)" }}>
                     Compris : « {interpretedAs} »
                   </div>
                 )}
@@ -621,14 +623,14 @@ export default function Search({ open, onClose, go, initialQuery = "" }) {
                   <div
                     key={`ai-${i}`}
                     onClick={() => handleAIBookClick(aiBook)}
-                    className="flex gap-2.5 py-2 px-4 items-center cursor-pointer hover:bg-[#fafaf8] transition-colors duration-100"
+                    className="flex gap-2.5 py-2 px-4 items-center cursor-pointer hover:bg-surface transition-colors duration-100"
                   >
-                    <div className="rounded-sm bg-[#f0ede8] flex items-center justify-center text-[10px] text-[#999] shrink-0" style={{ width: 24, height: 36 }}>✨</div>
+                    <div className="rounded-sm bg-avatar-bg flex items-center justify-center text-[10px] shrink-0" style={{ width: 24, height: 36, color: "var(--text-tertiary)" }}>✨</div>
                     <div className="flex-1 min-w-0">
                       <div className="text-[13px] font-medium font-body truncate">{aiBook.title}</div>
-                      <div className="text-[11px] text-[#999] font-body truncate">{aiBook.author}</div>
+                      <div className="text-[11px] font-body truncate" style={{ color: "var(--text-tertiary)" }}>{aiBook.author}</div>
                       {aiBook.why && (
-                        <div className="text-[11px] text-[#999] font-body mt-0.5">→ {aiBook.why}</div>
+                        <div className="text-[11px] font-body mt-0.5" style={{ color: "var(--text-tertiary)" }}>→ {aiBook.why}</div>
                       )}
                     </div>
                   </div>
@@ -638,7 +640,7 @@ export default function Search({ open, onClose, go, initialQuery = "" }) {
 
             {/* AI loading indicator (subtle) */}
             {aiLoading && displayResults.length > 0 && (
-              <div className="text-center py-2.5 text-[11px] text-[#999] font-body">
+              <div className="text-center py-2.5 text-[11px] font-body" style={{ color: "var(--text-tertiary)" }}>
                 Recherche approfondie…
               </div>
             )}
@@ -648,13 +650,14 @@ export default function Search({ open, onClose, go, initialQuery = "" }) {
 
       {/* Footer "Terminé" in multi-add mode */}
       {multiAddMode.current && addedCount > 0 && (
-        <div className="border-t border-[#eee] px-4 py-2.5 flex items-center justify-between shrink-0">
-          <span className="text-[12px] text-[#999] font-body">
+        <div className="border-t px-4 py-2.5 flex items-center justify-between shrink-0" style={{ borderColor: "var(--border-default)" }}>
+          <span className="text-[12px] font-body" style={{ color: "var(--text-tertiary)" }}>
             {addedCount} livre{addedCount > 1 ? "s" : ""} ajouté{addedCount > 1 ? "s" : ""}
           </span>
           <button
             onClick={handleClose}
-            className="px-4 py-1.5 rounded-[16px] text-[12px] font-medium font-body bg-[#1a1a1a] text-white border-none cursor-pointer hover:bg-[#333] transition-colors duration-150"
+            className="px-4 py-1.5 rounded-[16px] text-[12px] font-medium font-body border-none cursor-pointer hover:opacity-80 transition-colors duration-150"
+            style={{ backgroundColor: "var(--text-primary)", color: "var(--bg-primary)" }}
           >
             Terminé
           </button>
@@ -670,12 +673,12 @@ function UserRow({ u, onSelect }) {
   return (
     <div
       onClick={() => onSelect(u)}
-      className="flex items-center gap-2.5 py-2 px-4 cursor-pointer hover:bg-[#fafaf8] transition-colors duration-100"
+      className="flex items-center gap-2.5 py-2 px-4 cursor-pointer hover:bg-surface transition-colors duration-100"
     >
       <Avatar i={initials} s={28} src={u.avatar_url} />
       <div className="flex-1 min-w-0">
         <div className="text-[13px] font-medium font-body truncate">{name}</div>
-        <div className="text-[11px] text-[#999] font-body">
+        <div className="text-[11px] font-body" style={{ color: "var(--text-tertiary)" }}>
           @{u.username}{u.readCount > 0 ? ` · ${u.readCount} livre${u.readCount > 1 ? "s" : ""} lu${u.readCount > 1 ? "s" : ""}` : ""}
         </div>
       </div>

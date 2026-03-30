@@ -45,7 +45,7 @@ function MiniCover({ url, title, onClick }) {
       className="w-9 h-[54px] rounded-sm bg-cover-fallback flex items-center justify-center cursor-pointer shrink-0"
       onClick={onClick}
     >
-      <span className="text-[6px] text-[#767676] font-body text-center leading-tight px-0.5 overflow-hidden">{title || ""}</span>
+      <span className="text-[6px] font-body text-center leading-tight px-0.5 overflow-hidden" style={{ color: "var(--text-tertiary)" }}>{title || ""}</span>
     </div>
   );
 }
@@ -128,7 +128,7 @@ export default function FeedPage() {
                   <p className="text-[13px] leading-normal font-body m-0">
                     <UserName user={it.users} className="text-[13px]" />
                     {" "}
-                    <span className="text-[#767676]">{actionLabel(it.action_type, meta)}</span>
+                    <span style={{ color: "var(--text-tertiary)" }}>{actionLabel(it.action_type, meta)}</span>
                     {" "}
                     {it.action_type !== "list" && (
                       <>
@@ -138,7 +138,7 @@ export default function FeedPage() {
                         >
                           {bookTitle}
                         </span>
-                        {bookAuthor && <span className="text-[#767676]"> de {bookAuthor}</span>}
+                        {bookAuthor && <span style={{ color: "var(--text-tertiary)" }}> de {bookAuthor}</span>}
                         {meta.rating > 0 && (
                           <span className="inline-flex align-middle ml-1.5"><Stars r={meta.rating} s={11} /></span>
                         )}
@@ -170,12 +170,12 @@ export default function FeedPage() {
                                 <img key={i} src={url} alt="" className="w-[38px] h-[57px] object-cover rounded-[2px] shrink-0 bg-cover-fallback" />
                               ))}
                               {extra > 0 && (
-                                <div className="w-[38px] h-[57px] rounded-[2px] shrink-0 bg-[#f0ede8] flex items-center justify-center text-[11px] text-[#767676] font-body">
+                                <div className="w-[38px] h-[57px] rounded-[2px] shrink-0 bg-avatar-bg flex items-center justify-center text-[11px] font-body" style={{ color: "var(--text-tertiary)" }}>
                                   +{extra}
                                 </div>
                               )}
                             </div>
-                            <div className="text-[11px] text-[#767676] font-body mt-1">
+                            <div className="text-[11px] font-body mt-1" style={{ color: "var(--text-tertiary)" }}>
                               {count} livre{count !== 1 ? "s" : ""}
                             </div>
                           </div>
@@ -195,14 +195,14 @@ export default function FeedPage() {
                       ) : (
                         <p className="text-[13px] leading-relaxed font-body m-0" style={{ color: "var(--text-body)" }}>{meta.review_body}</p>
                       )}
-                      <div className="flex items-center gap-4 mt-1.5 text-[11px] text-[#767676] font-body">
+                      <div className="flex items-center gap-4 mt-1.5 text-[11px] font-body" style={{ color: "var(--text-tertiary)" }}>
                         <LikeButton
                           count={meta.likes_count || 0}
                           liked={likedReviews.has(it.target_id)}
                           initialLiked={initLikedReviews.has(it.target_id)}
                           onToggle={() => toggleReviewLike(it.target_id, () => showToast("Une erreur est survenue"))}
                         />
-                        <span className="cursor-pointer hover:text-[#1a1a1a] transition-colors duration-150">Répondre</span>
+                        <span className="cursor-pointer hover:opacity-80 transition-colors duration-150">Répondre</span>
                         <ContentMenu type="review" item={{ id: it.target_id, user_id: it.user_id, body: meta.review_body, rating: meta.rating, contains_spoilers: meta.contains_spoilers }} onDelete={() => refetchFeed()} onEdit={() => refetchFeed()} />
                       </div>
                     </div>
@@ -212,7 +212,7 @@ export default function FeedPage() {
                   {it.action_type === "quote" && meta.quote_body && (
                     <div className="mt-2">
                       <div className="border-l-[3px] border-l-cover-fallback pl-3">
-                        <span className="text-sm italic leading-relaxed font-display text-[#1a1a1a]">« {meta.quote_body} »</span>
+                        <span className="text-sm italic leading-relaxed font-display" style={{ color: "var(--text-primary)" }}>« {meta.quote_body} »</span>
                       </div>
                       <div className="flex items-center gap-2 mt-1.5 text-[11px] font-body">
                         <LikeButton
@@ -227,7 +227,7 @@ export default function FeedPage() {
                   )}
 
                   {/* Timestamp */}
-                  <div className={`text-[11px] text-[#767676] font-body ${hasContent ? "mt-1.5" : "mt-1"}`}>
+                  <div className={`text-[11px] font-body ${hasContent ? "mt-1.5" : "mt-1"}`} style={{ color: "var(--text-tertiary)" }}>
                     {formatRelativeTime(it.created_at)}
                   </div>
                 </div>
@@ -242,8 +242,8 @@ export default function FeedPage() {
         })}</div>
       ) : (
         <div className="py-12 text-center font-body">
-          <div className="text-sm text-[#767676]">Suis des lecteurs pour voir leur activité ici.</div>
-          <button onClick={() => nav("/explorer")} className="mt-4 px-5 py-2.5 rounded-[20px] text-[13px] font-medium bg-[#1a1a1a] text-white border-none cursor-pointer hover:bg-[#333] transition-colors duration-150">Explorer</button>
+          <div className="text-sm" style={{ color: "var(--text-tertiary)" }}>Suis des lecteurs pour voir leur activité ici.</div>
+          <button onClick={() => nav("/explorer")} className="mt-4 px-5 py-2.5 rounded-[20px] text-[13px] font-medium border-none cursor-pointer hover:opacity-80 transition-colors duration-150" style={{ backgroundColor: "var(--text-primary)", color: "var(--bg-primary)" }}>Explorer</button>
         </div>
       )}
     </div>

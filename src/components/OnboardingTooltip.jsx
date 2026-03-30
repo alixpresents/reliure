@@ -316,8 +316,10 @@ export default function OnboardingTooltip({ onComplete, showToast }) {
 
       {/* Tooltip */}
       <div
-        className="fixed z-[202] bg-white border border-[#eee] font-body"
+        className="fixed z-[202] border font-body"
         style={{
+          backgroundColor: "var(--bg-elevated)",
+          borderColor: "var(--border-default)",
           top,
           left,
           width: TOOLTIP_WIDTH,
@@ -334,25 +336,25 @@ export default function OnboardingTooltip({ onComplete, showToast }) {
         {/* Arrow */}
         {above ? (
           <div
-            className="absolute -bottom-[7px] w-[14px] h-[14px] bg-white border-r border-b border-[#eee]"
-            style={{ left: arrowLeft - 7, transform: "rotate(45deg)" }}
+            className="absolute -bottom-[7px] w-[14px] h-[14px] border-r border-b"
+            style={{ backgroundColor: "var(--bg-elevated)", borderColor: "var(--border-default)", left: arrowLeft - 7, transform: "rotate(45deg)" }}
           />
         ) : (
           <div
-            className="absolute -top-[7px] w-[14px] h-[14px] bg-white border-l border-t border-[#eee]"
-            style={{ left: arrowLeft - 7, transform: "rotate(45deg)" }}
+            className="absolute -top-[7px] w-[14px] h-[14px] border-l border-t"
+            style={{ backgroundColor: "var(--bg-elevated)", borderColor: "var(--border-default)", left: arrowLeft - 7, transform: "rotate(45deg)" }}
           />
         )}
 
         {/* Step counter + mini progress */}
         <div className="flex items-center gap-2 mb-3">
-          <span className="text-[11px] text-[#767676]">{globalStep} / {TOTAL_STEPS}</span>
+          <span className="text-[11px]" style={{ color: "var(--text-tertiary)" }}>{globalStep} / {TOTAL_STEPS}</span>
           <div className="flex-1 flex gap-[2px] h-[2px]">
             {Array.from({ length: TOTAL_STEPS }, (_, i) => (
               <div
                 key={i}
                 className="flex-1 rounded-full"
-                style={{ background: i < globalStep ? "#1a1a1a" : "#f0f0f0" }}
+                style={{ background: i < globalStep ? "var(--text-primary)" : "var(--border-subtle)" }}
               />
             ))}
           </div>
@@ -362,12 +364,12 @@ export default function OnboardingTooltip({ onComplete, showToast }) {
         <div className="text-2xl text-center mb-2">{step.emoji}</div>
 
         {/* Title */}
-        <div className="text-[15px] text-[#1a1a1a] font-semibold text-center mb-1.5">
+        <div className="text-[15px] font-semibold text-center mb-1.5" style={{ color: "var(--text-primary)" }}>
           {step.title}
         </div>
 
         {/* Body */}
-        <div className="text-[13px] text-[#555] text-center leading-[1.6] mb-4">
+        <div className="text-[13px] text-center leading-[1.6] mb-4" style={{ color: "var(--text-body)" }}>
           {step.text}
         </div>
 
@@ -376,7 +378,8 @@ export default function OnboardingTooltip({ onComplete, showToast }) {
           <div className="flex items-center justify-between">
             <button
               onClick={handleSkip}
-              className="text-[11px] text-[#767676] bg-transparent border-none cursor-pointer hover:text-[#333] transition-colors duration-150"
+              className="text-[11px] bg-transparent border-none cursor-pointer hover:opacity-80 transition-colors duration-150"
+              style={{ color: "var(--text-tertiary)" }}
             >
               Passer
             </button>
@@ -384,14 +387,16 @@ export default function OnboardingTooltip({ onComplete, showToast }) {
             {step.interactive ? (
               <button
                 onClick={handleNext}
-                className="text-[11px] text-[#767676] bg-transparent border-none cursor-pointer hover:text-[#333] transition-colors duration-150"
+                className="text-[11px] bg-transparent border-none cursor-pointer hover:opacity-80 transition-colors duration-150"
+                style={{ color: "var(--text-tertiary)" }}
               >
                 {step.skipLabel || "Suivant"}
               </button>
             ) : (
               <button
                 onClick={handleNext}
-                className="bg-[#1a1a1a] text-white text-[13px] font-medium px-4 py-2 rounded-lg border-none cursor-pointer hover:bg-[#333] transition-colors duration-150"
+                className="text-[13px] font-medium px-4 py-2 rounded-lg border-none cursor-pointer hover:opacity-80 transition-colors duration-150"
+                style={{ backgroundColor: "var(--text-primary)", color: "var(--bg-primary)" }}
               >
                 {step.isLast ? "C'est parti ! 🎉" : (step.buttonLabel || "Suivant →")}
               </button>

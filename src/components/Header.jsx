@@ -32,7 +32,7 @@ export default function Header({ onSearch, onClose, searchOpen, searchGo, search
       <div className="max-w-[1060px] mx-auto flex items-center h-[52px] px-3 sm:px-6 gap-2 sm:gap-3 relative">
         <Link to="/explorer" className="flex items-center gap-1.5 mr-2 no-underline">
           <span className="text-[17px] font-bold tracking-tight font-body" style={{ color: "var(--text-primary)" }}>reliure</span>
-          <span className="text-[8px] font-semibold text-white bg-[#1a1a1a] rounded-[3px] px-[5px] py-[2px] font-body">
+          <span className="text-[8px] font-semibold rounded-[3px] px-[5px] py-[2px] font-body" style={{ backgroundColor: "var(--text-primary)", color: "var(--bg-primary)" }}>
             BETA
           </span>
         </Link>
@@ -46,9 +46,10 @@ export default function Header({ onSearch, onClose, searchOpen, searchGo, search
               }
               className={({ isActive }) =>
                 `no-underline rounded-md px-2 py-1.5 sm:px-[11px] sm:py-[7px] text-[13px] font-body shrink-0 flex items-center gap-1 ${
-                  isActive ? "text-[#1a1a1a] font-semibold" : "text-[#767676] font-normal"
+                  isActive ? "font-semibold" : "font-normal"
                 }`
               }
+              style={({ isActive }) => ({ color: isActive ? "var(--text-primary)" : "var(--text-tertiary)" })}
             >
               {label}
               {label === "Défis" && (
@@ -61,9 +62,10 @@ export default function Header({ onSearch, onClose, searchOpen, searchGo, search
             to="/la-revue"
             className={({ isActive }) =>
               `no-underline rounded-md px-2 py-1.5 sm:px-[11px] sm:py-[7px] text-[13px] font-display italic shrink-0 flex items-center gap-1 ${
-                isActive ? "text-[#1a1a1a] font-semibold" : "text-[#767676] font-normal"
+                isActive ? "font-semibold" : "font-normal"
               }`
             }
+            style={({ isActive }) => ({ color: isActive ? "var(--text-primary)" : "var(--text-tertiary)" })}
           >
             La Revue
             <span className="text-[9px] font-body not-italic font-medium px-1 py-px rounded border" style={{ background: "var(--color-wip-bg)", borderColor: "var(--color-wip-border)", color: "var(--color-wip-text)", lineHeight: "1.4" }}>Aperçu</span>
@@ -74,12 +76,13 @@ export default function Header({ onSearch, onClose, searchOpen, searchGo, search
         <button
           onClick={onSearch}
           data-onboarding="search"
-          className="hidden sm:flex items-center gap-1.5 bg-transparent cursor-pointer font-body transition-colors duration-150 text-[#888] hover:text-[#1a1a1a] hover:border-[#ccc] shrink-0"
+          className="hidden sm:flex items-center gap-1.5 bg-transparent cursor-pointer font-body transition-colors duration-150 hover:opacity-80 shrink-0"
           style={{
             padding: "5px 10px",
             border: "0.5px solid var(--border-default)",
             borderRadius: 6,
             fontSize: 13,
+            color: "var(--text-tertiary)",
           }}
         >
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="shrink-0">
@@ -91,7 +94,8 @@ export default function Header({ onSearch, onClose, searchOpen, searchGo, search
         <button
           onClick={onSearch}
           data-onboarding="search"
-          className="sm:hidden cursor-pointer text-[#767676] hover:text-[#1a1a1a] transition-colors duration-150 p-1 bg-transparent border-none shrink-0"
+          className="sm:hidden cursor-pointer transition-colors duration-150 p-1 bg-transparent border-none shrink-0 hover:opacity-80"
+          style={{ color: "var(--text-tertiary)" }}
           aria-label="Rechercher"
         >
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
@@ -159,7 +163,8 @@ export default function Header({ onSearch, onClose, searchOpen, searchGo, search
         ) : (
           <Link
             to="/login"
-            className="text-[13px] font-medium font-body text-[#1a1a1a] no-underline px-3 py-1.5 rounded-full border border-[#eee] hover:border-[#eee] transition-colors duration-150 shrink-0"
+            className="text-[13px] font-medium font-body no-underline px-3 py-1.5 rounded-full transition-colors duration-150 shrink-0"
+            style={{ color: "var(--text-primary)", border: "1px solid var(--border-default)" }}
           >
             Se connecter
           </Link>

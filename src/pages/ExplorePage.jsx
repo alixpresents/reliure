@@ -133,16 +133,17 @@ export default function ExplorePage() {
       {toast.visible && <Toast message={toast.message} />}
       {/* Hero — visiteurs non connectés uniquement */}
       {!user && (
-        <div className="pt-8 pb-6 border-b border-[#f0f0f0] mb-2">
-          <h1 className="font-display italic text-[22px] sm:text-[26px] font-normal text-[#1a1a1a] leading-snug mb-2">
+        <div className="pt-8 pb-6 mb-2" style={{ borderBottom: "1px solid var(--border-subtle)" }}>
+          <h1 className="font-display italic text-[22px] sm:text-[26px] font-normal leading-snug mb-2" style={{ color: "var(--text-primary)" }}>
             La bibliothèque personnelle des lecteurs francophones.
           </h1>
-          <p className="text-[14px] text-[#767676] font-body mb-5">
+          <p className="text-[14px] font-body mb-5" style={{ color: "var(--text-tertiary)" }}>
             Garde une trace de tes lectures, découvre celles de tes amis.
           </p>
           <Link
             to="/login"
-            className="inline-block px-5 py-2.5 rounded-full bg-[#1a1a1a] text-white text-[13px] font-medium font-body no-underline hover:bg-[#333] transition-colors duration-150"
+            className="inline-block px-5 py-2.5 rounded-full text-[13px] font-medium font-body no-underline hover:opacity-80 transition-colors duration-150"
+            style={{ backgroundColor: "var(--text-primary)", color: "var(--bg-primary)" }}
           >
             Créer mon profil gratuit
           </Link>
@@ -153,7 +154,7 @@ export default function ExplorePage() {
       <div className="py-6 pb-5">
         <div ref={wrapperRef} className="relative">
           <div className="rounded-lg py-[11px] px-4 flex items-center gap-2.5 transition-[border] duration-150" style={{ backgroundColor: "var(--bg-surface)", border: "1px solid var(--border-default)" }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ccc" strokeWidth="2" className="shrink-0">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="2" className="shrink-0">
               <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
             </svg>
             <input
@@ -163,13 +164,14 @@ export default function ExplorePage() {
               onFocus={() => { if (query.length >= 2) setShowResults(true); }}
               placeholder="Chercher des livres, auteurs, thèmes..."
               aria-label="Rechercher"
-              className="flex-1 bg-transparent border-none outline-none font-body text-[#1a1a1a] placeholder:text-[#767676] min-w-0"
-              style={{ fontSize: 16 }}
+              className="flex-1 bg-transparent border-none outline-none font-body placeholder:text-[var(--text-tertiary)] min-w-0"
+              style={{ fontSize: 16, color: "var(--text-primary)" }}
             />
             {query && (
               <button
                 onClick={() => { setQuery(""); setSearchResults([]); setShowResults(false); inputRef.current?.focus(); }}
-                className="text-[#999] hover:text-[#1a1a1a] bg-transparent border-none cursor-pointer p-0.5 shrink-0 transition-colors duration-150"
+                className="bg-transparent border-none cursor-pointer p-0.5 shrink-0 transition-colors duration-150"
+                style={{ color: "var(--text-tertiary)" }}
                 aria-label="Effacer"
               >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -195,10 +197,10 @@ export default function ExplorePage() {
               }}
             >
               {searchLoading && searchResults.length === 0 && (
-                <div className="py-5 text-center text-[13px] text-[#999] font-body">Recherche...</div>
+                <div className="py-5 text-center text-[13px] font-body" style={{ color: "var(--text-tertiary)" }}>Recherche...</div>
               )}
               {!searchLoading && query.length >= 2 && searchResults.length === 0 && (
-                <div className="py-5 text-center text-[13px] text-[#999] font-body">Aucun résultat.</div>
+                <div className="py-5 text-center text-[13px] font-body" style={{ color: "var(--text-tertiary)" }}>Aucun résultat.</div>
               )}
               {searchResults.map(gb => {
                 const itemKey = gb.googleId ?? (gb._source === "db" ? `db:${gb.dbId}` : `bnf:${gb.isbn13 ?? gb.title}`);
@@ -207,7 +209,7 @@ export default function ExplorePage() {
                   <div
                     key={itemKey}
                     onClick={() => handleResultClick(gb)}
-                    className={`flex gap-3 py-2.5 px-4 items-center transition-colors duration-100 ${isImporting ? "opacity-50" : "cursor-pointer hover:bg-[#fafaf8]"}`}
+                    className={`flex gap-3 py-2.5 px-4 items-center transition-colors duration-100 ${isImporting ? "opacity-50" : "cursor-pointer hover:bg-surface"}`}
                   >
                     {gb.coverUrl ? (
                       <img src={gb.coverUrl} alt="" className="object-cover rounded-sm shrink-0 bg-cover-fallback" style={{ width: 28, height: 42 }} />
@@ -216,7 +218,7 @@ export default function ExplorePage() {
                     )}
                     <div className="flex-1 min-w-0">
                       <div className="text-[14px] font-medium font-body truncate">{gb.title}</div>
-                      <div className="text-[12px] text-[#999] font-body truncate">
+                      <div className="text-[12px] font-body truncate" style={{ color: "var(--text-tertiary)" }}>
                         {gb.authors?.join(", ")}{gb.publishedDate ? ` · ${gb.publishedDate.slice(0, 4)}` : ""}
                       </div>
                     </div>
@@ -239,13 +241,14 @@ export default function ExplorePage() {
       {/* Empty state */}
       {allEmpty && (
         <div className="py-16 text-center">
-          <div className="text-[15px] text-[#767676] font-body leading-relaxed">
+          <div className="text-[15px] font-body leading-relaxed" style={{ color: "var(--text-tertiary)" }}>
             Reliure se remplit au fil des lectures.<br />
             Ajoute ton premier livre pour commencer.
           </div>
           <button
             onClick={() => inputRef.current?.focus()}
-            className="mt-5 px-5 py-2.5 rounded-[20px] text-[13px] font-medium font-body bg-[#1a1a1a] text-white border-none cursor-pointer hover:bg-[#333] transition-colors duration-150"
+            className="mt-5 px-5 py-2.5 rounded-[20px] text-[13px] font-medium font-body border-none cursor-pointer hover:opacity-80 transition-colors duration-150"
+            style={{ backgroundColor: "var(--text-primary)", color: "var(--bg-primary)" }}
           >
             Chercher un livre
           </button>
@@ -280,7 +283,7 @@ export default function ExplorePage() {
                   </div>
                 </div>
                 <div className="text-xs font-medium mt-2 overflow-hidden text-ellipsis whitespace-nowrap max-w-[130px] font-body">{book.t}</div>
-                <div className="text-[11px] text-[#767676] mt-[1px] font-body">{book.a.split(" ").pop()}</div>
+                <div className="text-[11px] mt-[1px] font-body" style={{ color: "var(--text-tertiary)" }}>{book.a.split(" ").pop()}</div>
               </div>
             ))}
           </HScroll>
@@ -292,7 +295,7 @@ export default function ExplorePage() {
         <div className="border-t border-border-light py-6">
           <Heading>Critiques populaires</Heading>
           {[1, 2, 3].map(i => (
-            <div key={i} className="flex gap-3.5 py-5 border-b border-[#f3f3f3]">
+            <div key={i} className="flex gap-3.5 py-5 border-b border-[var(--border-subtle)]">
               <Skeleton.Cover w={72} h={108} />
               <div className="flex-1 flex flex-col gap-2 pt-0.5">
                 <Skeleton.Text width="60%" height={14} />
@@ -315,13 +318,13 @@ export default function ExplorePage() {
               slug: rv.books.slug, _supabase: rv.books,
             } : null;
             return (
-              <div key={rv.id} className="group flex gap-3.5 py-5 border-b border-[#f3f3f3] relative">
+              <div key={rv.id} className="group flex gap-3.5 py-5 border-b border-[var(--border-subtle)] relative">
                 {bookObj && <Img book={bookObj} w={72} h={108} onClick={() => go(bookObj)} className="shrink-0" />}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start justify-between gap-2">
                     <div>
                       {bookObj && <div className="text-[15px] font-medium font-body">{bookObj.t}</div>}
-                      {bookObj && <div className="text-xs text-[#767676] font-body mt-0.5">{bookObj.a}{bookObj.y ? `, ${bookObj.y}` : ""}</div>}
+                      {bookObj && <div className="text-xs font-body mt-0.5" style={{ color: "var(--text-tertiary)" }}>{bookObj.a}{bookObj.y ? `, ${bookObj.y}` : ""}</div>}
                     </div>
                     <ContentMenu type="review" item={rv} onDelete={refetchReviews} onEdit={refetchReviews} />
                   </div>
@@ -336,7 +339,7 @@ export default function ExplorePage() {
                       <p className="text-[14px] leading-[1.65] font-body m-0" style={{ color: "var(--text-body)", display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{rv.body}</p>
                     )}
                   </div>
-                  <div className="flex items-center gap-1 mt-2 text-xs text-[#767676] font-body">
+                  <div className="flex items-center gap-1 mt-2 text-xs font-body" style={{ color: "var(--text-tertiary)" }}>
                     <UserName user={rv.users} className="text-xs" />
                     <span>·</span>
                     <LikeButton
@@ -376,15 +379,15 @@ export default function ExplorePage() {
             return (
               <div key={q.id} className="group py-4 border-b border-border-light relative">
                 <div className="flex items-start justify-between gap-2">
-                  <div className="text-[15px] italic text-[#1a1a1a] leading-[1.7] border-l-[3px] border-l-cover-fallback pl-3.5 mb-2.5 font-display flex-1">
+                  <div className="text-[15px] italic leading-[1.7] border-l-[3px] border-l-cover-fallback pl-3.5 mb-2.5 font-display flex-1" style={{ color: "var(--text-primary)" }}>
                     « {q.text} »
                   </div>
                   <ContentMenu type="quote" item={q} onDelete={refetchQuotes} onEdit={refetchQuotes} />
                 </div>
                 <div className="flex items-center gap-2">
                   {bookObj && <Img book={bookObj} w={24} h={34} onClick={() => go(bookObj)} />}
-                  {bookObj && <span className="text-xs text-[#767676] font-body">{bookObj.t}</span>}
-                  <span className="text-[11px] text-[#767676] font-body">· <UserName user={q.users} className="text-[11px]" /></span>
+                  {bookObj && <span className="text-xs font-body" style={{ color: "var(--text-tertiary)" }}>{bookObj.t}</span>}
+                  <span className="text-[11px] font-body" style={{ color: "var(--text-tertiary)" }}>· <UserName user={q.users} className="text-[11px]" /></span>
                   <LikeButton
                     count={q.likes_count || 0}
                     liked={likedSet.has(q.id)}
@@ -426,26 +429,26 @@ export default function ExplorePage() {
                 tabIndex={0}
                 onClick={() => navigate(listUrl)}
                 onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); navigate(listUrl); } }}
-                className="py-5 border-b border-border-light cursor-pointer hover:bg-[#fafafa] transition-colors duration-100"
+                className="py-5 border-b border-border-light cursor-pointer hover:bg-surface transition-colors duration-100"
               >
                 <div className="flex gap-2 mb-3.5 p-3.5 px-4 bg-surface rounded-lg overflow-x-auto">
                   {l.previewBooks.map(b => <Img key={b.id} book={b} w={68} h={102} />)}
                   {l.bookCount > 4 && (
-                    <div className="w-[68px] h-[102px] rounded-[3px] bg-avatar-bg flex items-center justify-center text-xs text-[#767676] shrink-0 font-body">
+                    <div className="w-[68px] h-[102px] rounded-[3px] bg-avatar-bg flex items-center justify-center text-xs shrink-0 font-body" style={{ color: "var(--text-tertiary)" }}>
                       +{l.bookCount - 4}
                     </div>
                   )}
                 </div>
                 <div className="text-base font-medium font-body">{l.title}</div>
                 {l.description && (
-                  <div className="text-[13px] text-[#666] font-body mt-1 leading-snug">
+                  <div className="text-[13px] font-body mt-1 leading-snug" style={{ color: "var(--text-secondary)" }}>
                     {l.description.length > 80 ? l.description.slice(0, 80) + "…" : l.description}
                   </div>
                 )}
                 <div className="flex items-center gap-2 mt-[5px]">
                   <Avatar i={(l.userName || "?").split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2)} s={20} />
                   <UserName user={l.users} className="text-xs" />
-                  <span className="text-xs text-[#767676] font-body">· {l.bookCount} livres</span>
+                  <span className="text-xs font-body" style={{ color: "var(--text-tertiary)" }}>· {l.bookCount} livres</span>
                   <span className="text-xs font-body" onClick={e => e.stopPropagation()}>
                     <LikeButton
                       count={l.likes_count || 0}

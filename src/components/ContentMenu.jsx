@@ -70,16 +70,17 @@ export default function ContentMenu({ type, item, onDelete, onEdit }) {
   // Edit modal
   if (editing) {
     return (
-      <div className="mt-3 p-4 bg-surface rounded-lg border border-[#eee]" ref={menuRef}>
+      <div className="mt-3 p-4 bg-surface rounded-lg border" style={{ borderColor: "var(--border-default)" }} ref={menuRef}>
         <textarea
           value={editBody}
           onChange={e => setEditBody(e.target.value)}
-          className={`w-full min-h-[80px] p-3 bg-white border border-[#eee] rounded-lg outline-none text-[15px] text-[#1a1a1a] leading-[1.7] resize-y placeholder:text-[#767676] focus:border-[#767676] transition-[border] duration-150 ${type === "quote" ? "font-display italic" : "font-body"}`}
+          className={`w-full min-h-[80px] p-3 border rounded-lg outline-none text-[15px] leading-[1.7] resize-y transition-[border] duration-150 ${type === "quote" ? "font-display italic" : "font-body"}`}
+          style={{ backgroundColor: "var(--bg-elevated)", borderColor: "var(--border-default)", color: "var(--text-primary)" }}
         />
         {type === "review" && (
           <div className="flex items-center gap-3 mt-3">
             <InteractiveStars value={editRating} onChange={setEditRating} />
-            <label className="flex items-center gap-1.5 text-[12px] text-[#767676] font-body cursor-pointer select-none">
+            <label className="flex items-center gap-1.5 text-[12px] font-body cursor-pointer select-none" style={{ color: "var(--text-tertiary)" }}>
               <input
                 type="checkbox"
                 checked={editSpoiler}
@@ -94,13 +95,15 @@ export default function ContentMenu({ type, item, onDelete, onEdit }) {
           <button
             onClick={handleSave}
             disabled={saving || !editBody.trim()}
-            className="px-4 py-2 text-[13px] font-medium font-body rounded-full bg-[#1a1a1a] text-white border-none cursor-pointer hover:bg-[#333] transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-4 py-2 text-[13px] font-medium font-body rounded-full border-none cursor-pointer hover:opacity-80 transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
+            style={{ backgroundColor: "var(--text-primary)", color: "var(--bg-primary)" }}
           >
             {saving ? "Enregistrement..." : "Enregistrer"}
           </button>
           <button
             onClick={() => setEditing(false)}
-            className="px-4 py-2 text-[13px] text-[#767676] font-body bg-transparent border-none cursor-pointer hover:text-[#1a1a1a] transition-colors duration-150"
+            className="px-4 py-2 text-[13px] font-body bg-transparent border-none cursor-pointer hover:opacity-80 transition-colors duration-150"
+            style={{ color: "var(--text-tertiary)" }}
           >
             Annuler
           </button>
@@ -113,27 +116,28 @@ export default function ContentMenu({ type, item, onDelete, onEdit }) {
     <div className="relative inline-block" ref={menuRef}>
       <button
         onClick={e => { e.stopPropagation(); setOpen(!open); setConfirm(false); }}
-        className="text-[14px] text-[#767676] font-body bg-transparent border-none cursor-pointer px-2 py-1 rounded hover:bg-[#f5f3f0] transition-colors duration-100 opacity-0 group-hover:opacity-100 sm:group-hover:opacity-100 max-sm:opacity-100"
+        className="text-[14px] font-body bg-transparent border-none cursor-pointer px-2 py-1 rounded hover:bg-tag-bg transition-colors duration-100 opacity-0 group-hover:opacity-100 sm:group-hover:opacity-100 max-sm:opacity-100"
+        style={{ color: "var(--text-tertiary)" }}
         aria-label="Options"
       >
         ···
       </button>
       {open && (
         <div
-          className="absolute right-0 top-full mt-1 bg-white border border-[#f0f0f0] rounded-lg z-10 min-w-[140px] py-1"
-          style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.08)" }}
+          className="absolute right-0 top-full mt-1 border rounded-lg z-10 min-w-[140px] py-1"
+          style={{ backgroundColor: "var(--bg-elevated)", borderColor: "var(--border-subtle)", boxShadow: "0 2px 8px rgba(0,0,0,0.08)" }}
         >
           {!confirm ? (
             <>
               <button
                 onClick={openEdit}
-                className="w-full text-left px-3 py-2 text-[13px] font-body bg-transparent border-none cursor-pointer hover:bg-[#faf8f5] transition-colors duration-100"
+                className="w-full text-left px-3 py-2 text-[13px] font-body bg-transparent border-none cursor-pointer hover:bg-surface transition-colors duration-100"
               >
                 ✏️ Modifier
               </button>
               <button
                 onClick={() => setConfirm(true)}
-                className="w-full text-left px-3 py-2 text-[13px] font-body bg-transparent border-none cursor-pointer hover:bg-[#faf8f5] transition-colors duration-100"
+                className="w-full text-left px-3 py-2 text-[13px] font-body bg-transparent border-none cursor-pointer hover:bg-surface transition-colors duration-100"
                 style={{ color: "var(--color-spoiler)" }}
               >
                 🗑 Supprimer
@@ -152,7 +156,8 @@ export default function ContentMenu({ type, item, onDelete, onEdit }) {
                 </button>
                 <button
                   onClick={() => { setConfirm(false); setOpen(false); }}
-                  className="px-3 py-1.5 text-[12px] font-body text-[#767676] bg-transparent border-none cursor-pointer hover:text-[#1a1a1a] transition-colors duration-150"
+                  className="px-3 py-1.5 text-[12px] font-body bg-transparent border-none cursor-pointer hover:opacity-80 transition-colors duration-150"
+                  style={{ color: "var(--text-tertiary)" }}
                 >
                   Annuler
                 </button>

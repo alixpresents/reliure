@@ -12,8 +12,8 @@ function MiniProgress({ completed, total, size = 40 }) {
   return (
     <div className="relative shrink-0" style={{ width: size, height: size }}>
       <svg width={size} height={size} className="-rotate-90">
-        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="#f0ede8" strokeWidth="3" />
-        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="#1a1a1a" strokeWidth="3" strokeLinecap="round" strokeDasharray={circ} strokeDashoffset={offset} />
+        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="var(--avatar-bg)" strokeWidth="3" />
+        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="var(--text-primary)" strokeWidth="3" strokeLinecap="round" strokeDasharray={circ} strokeDashoffset={offset} />
       </svg>
       <div className="absolute inset-0 flex items-center justify-center">
         <span className="text-xs font-bold font-body leading-none">{completed}</span>
@@ -29,12 +29,12 @@ function ProgressCircle({ completed, total, size = 80 }) {
   return (
     <div className="relative shrink-0" style={{ width: size, height: size }}>
       <svg width={size} height={size} className="-rotate-90">
-        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="#f0ede8" strokeWidth="4" />
-        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="#1a1a1a" strokeWidth="4" strokeLinecap="round" strokeDasharray={circ} strokeDashoffset={offset} className="transition-all duration-500" />
+        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="var(--avatar-bg)" strokeWidth="4" />
+        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="var(--text-primary)" strokeWidth="4" strokeLinecap="round" strokeDasharray={circ} strokeDashoffset={offset} className="transition-all duration-500" />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
         <span className="text-xl font-bold font-body leading-none">{completed}</span>
-        <span className="text-[9px] text-[#767676] font-body">/{total}</span>
+        <span className="text-[9px] font-body" style={{ color: "var(--text-tertiary)" }}>/{total}</span>
       </div>
     </div>
   );
@@ -49,7 +49,7 @@ function ChallengesIndex({ onSelect, enrolled, onJoin }) {
   return (
     <div className="pt-5">
       <h1 className="font-display italic text-[26px] font-normal m-0 leading-tight">Défis</h1>
-      <p className="text-[13px] text-[#767676] font-body mt-1 mb-6">Rejoins un défi de lecture et découvre de nouveaux livres.</p>
+      <p className="text-[13px] font-body mt-1 mb-6" style={{ color: "var(--text-tertiary)" }}>Rejoins un défi de lecture et découvre de nouveaux livres.</p>
 
       {mine.length > 0 && (
         <div className="mb-6">
@@ -62,18 +62,18 @@ function ChallengesIndex({ onSelect, enrolled, onJoin }) {
                 tabIndex={0}
                 onClick={() => onSelect(c.id, "progression")}
                 onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onSelect(c.id, "progression"); } }}
-                className="flex items-center gap-4 p-4 bg-surface rounded-[10px] cursor-pointer hover:bg-[#f5f2ed] transition-colors duration-150"
+                className="flex items-center gap-4 p-4 bg-surface rounded-[10px] cursor-pointer hover:bg-surface transition-colors duration-150"
               >
                 <div className="w-11 h-11 rounded-[10px] flex items-center justify-center shrink-0" style={{ backgroundColor: "var(--color-wip-bg)", border: "1.5px solid var(--color-wip-border)" }}>
                   <span className="text-[18px] text-star">{c.icon}</span>
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="text-[15px] font-medium font-body truncate">{c.title}</div>
-                  <div className="text-xs text-[#767676] font-body">Par {c.creator} · {c.participants} participants</div>
+                  <div className="text-xs font-body" style={{ color: "var(--text-tertiary)" }}>Par {c.creator} · {c.participants} participants</div>
                 </div>
                 <div className="flex flex-col items-center shrink-0">
                   <MiniProgress completed={c.progress} total={c.target} />
-                  <span className="text-[9px] text-[#767676] font-body mt-0.5">{c.progress}/{c.target}</span>
+                  <span className="text-[9px] font-body mt-0.5" style={{ color: "var(--text-tertiary)" }}>{c.progress}/{c.target}</span>
                 </div>
               </div>
             ))}
@@ -91,18 +91,19 @@ function ChallengesIndex({ onSelect, enrolled, onJoin }) {
               tabIndex={0}
               onClick={() => onSelect(c.id, "publique")}
               onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onSelect(c.id, "publique"); } }}
-              className="flex items-center gap-4 p-4 bg-surface rounded-[10px] cursor-pointer hover:bg-[#f5f2ed] transition-colors duration-150"
+              className="flex items-center gap-4 p-4 bg-surface rounded-[10px] cursor-pointer hover:bg-surface transition-colors duration-150"
             >
               <div className="w-11 h-11 rounded-[10px] flex items-center justify-center shrink-0" style={{ backgroundColor: "var(--color-wip-bg)", border: "1.5px solid var(--color-wip-border)" }}>
                 <span className="text-[18px] text-star">{c.icon}</span>
               </div>
               <div className="flex-1 min-w-0">
                 <div className="text-[15px] font-medium font-body truncate">{c.title}</div>
-                <div className="text-xs text-[#767676] font-body">Par {c.creator} · {c.participants} participants</div>
+                <div className="text-xs font-body" style={{ color: "var(--text-tertiary)" }}>Par {c.creator} · {c.participants} participants</div>
               </div>
               <button
                 onClick={e => { e.stopPropagation(); onJoin(c.id); }}
-                className="px-3 py-[5px] rounded-[14px] text-[11px] font-medium font-body bg-transparent border-[1.5px] border-[#eee] text-[#767676] cursor-pointer hover:border-[#767676] hover:text-[#1a1a1a] transition-colors duration-150 shrink-0"
+                className="px-3 py-[5px] rounded-[14px] text-[11px] font-medium font-body bg-transparent border-[1.5px] cursor-pointer transition-colors duration-150 shrink-0 hover:opacity-80"
+                style={{ borderColor: "var(--border-default)", color: "var(--text-tertiary)" }}
               >
                 Rejoindre
               </button>
@@ -135,7 +136,7 @@ function ParticipantView() {
           <div className="text-[13px] font-body">
             Palier actuel : <span className="font-medium">{c.currentTier}</span>
           </div>
-          <div className="text-xs text-[#767676] font-body mt-1">
+          <div className="text-xs font-body mt-1" style={{ color: "var(--text-tertiary)" }}>
             Par {c.creator} · {c.participants} participants · Jan — Déc 2026
           </div>
         </div>
@@ -151,8 +152,9 @@ function ParticipantView() {
             key={k}
             onClick={() => setFilter(k)}
             className={`shrink-0 px-3.5 py-[5px] rounded-[14px] text-[11px] font-medium font-body border-none cursor-pointer transition-all duration-150 ${
-              filter === k ? "bg-[#1a1a1a] text-white" : "bg-surface text-[#767676] hover:text-[#1a1a1a]"
+              filter === k ? "" : "bg-surface hover:opacity-80"
             }`}
+            style={filter === k ? { backgroundColor: "var(--text-primary)", color: "var(--bg-primary)" } : { color: "var(--text-tertiary)" }}
           >{l}</button>
         ))}
       </div>
@@ -160,31 +162,31 @@ function ParticipantView() {
       <div className="border-l-2 border-avatar-bg pl-5 ml-2">
         {filtered.map(item => (
           <div key={item.id} className="relative pb-7 last:pb-0">
-            <div className={`absolute -left-[27px] top-[2px] w-3 h-3 rounded-full ${item.completed ? "bg-[#1a1a1a]" : "bg-avatar-bg border-2 border-[#eee]"}`} />
+            <div className={`absolute -left-[27px] top-[2px] w-3 h-3 rounded-full ${item.completed ? "" : "bg-avatar-bg border-2"}`} style={item.completed ? { backgroundColor: "var(--text-primary)" } : { borderColor: "var(--border-default)" }} />
             <div className="flex items-center gap-2 mb-1">
-              <span className={`text-[11px] font-semibold font-body ${item.completed ? "text-[#1a1a1a]" : "text-[#767676]"}`}>{item.code}</span>
+              <span className="text-[11px] font-semibold font-body" style={{ color: item.completed ? "var(--text-primary)" : "var(--text-tertiary)" }}>{item.code}</span>
               {item.completed && <span className="text-[9px] font-medium px-1.5 py-[2px] rounded-lg font-body" style={{ backgroundColor: "var(--color-success-bg)", color: "var(--color-success)" }}>Complété</span>}
               {item.difficulty === "Difficile" && <span className="text-[9px] font-medium px-1.5 py-[2px] rounded-lg font-body" style={{ backgroundColor: "var(--color-wip-bg)", border: "1px solid var(--color-wip-border)", color: "var(--color-wip-text)" }}>Difficile</span>}
             </div>
-            <div className="text-[13px] text-[#1a1a1a] font-body mb-1.5">{item.title}</div>
+            <div className="text-[13px] font-body mb-1.5" style={{ color: "var(--text-primary)" }}>{item.title}</div>
             {item.completed && item.myBook ? (
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
                   <div className="w-8 h-12 rounded-sm bg-cover-fallback shrink-0" />
                   <div>
-                    <div className="text-[11px] font-display italic text-[#1a1a1a]">{item.myBook.title}</div>
-                    <div className="text-[10px] text-[#767676] font-body flex items-center gap-1">{item.myBook.date} · <Stars r={item.myBook.rating} s={10} /></div>
+                    <div className="text-[11px] font-display italic" style={{ color: "var(--text-primary)" }}>{item.myBook.title}</div>
+                    <div className="text-[10px] font-body flex items-center gap-1" style={{ color: "var(--text-tertiary)" }}>{item.myBook.date} · <Stars r={item.myBook.rating} s={10} /></div>
                   </div>
                 </div>
                 <div className="flex items-center gap-0.5">
-                  {[1, 2, 3].map(i => <div key={i} className="w-6 h-9 rounded-sm bg-[#d8d0c8]" />)}
-                  <span className="text-[9px] text-[#767676] font-body ml-1">+{item.responses - 4}</span>
+                  {[1, 2, 3].map(i => <div key={i} className="w-6 h-9 rounded-sm bg-cover-fallback" />)}
+                  <span className="text-[9px] font-body ml-1" style={{ color: "var(--text-tertiary)" }}>+{item.responses - 4}</span>
                 </div>
               </div>
             ) : (
               <div className="flex items-center justify-between">
-                <div className="text-[11px] text-[#767676] font-body">Mod. : {item.mod} · {item.responses} réponses</div>
-                <button className="px-3 py-[5px] rounded-[14px] text-[11px] font-body bg-transparent border-[1.5px] border-dashed border-[#eee] text-[#767676] cursor-pointer hover:border-[#767676] hover:text-[#1a1a1a] transition-colors duration-150">+ Soumettre</button>
+                <div className="text-[11px] font-body" style={{ color: "var(--text-tertiary)" }}>Mod. : {item.mod} · {item.responses} réponses</div>
+                <button className="px-3 py-[5px] rounded-[14px] text-[11px] font-body bg-transparent border-[1.5px] border-dashed cursor-pointer hover:opacity-80 transition-colors duration-150" style={{ borderColor: "var(--border-default)", color: "var(--text-tertiary)" }}>+ Soumettre</button>
               </div>
             )}
           </div>
@@ -206,21 +208,21 @@ function PublicView() {
           </div>
         </div>
         <h1 className="font-display italic text-[24px] sm:text-[28px] font-normal m-0 leading-tight">{c.title}</h1>
-        <p className="text-sm text-[#767676] leading-relaxed max-w-[400px] mx-auto mt-2 font-body">{c.description}</p>
-        <div className="text-xs text-[#767676] font-body mt-2">Par {c.creator} · {c.startDate} — {c.endDate}</div>
+        <p className="text-sm leading-relaxed max-w-[400px] mx-auto mt-2 font-body" style={{ color: "var(--text-tertiary)" }}>{c.description}</p>
+        <div className="text-xs font-body mt-2" style={{ color: "var(--text-tertiary)" }}>Par {c.creator} · {c.startDate} — {c.endDate}</div>
       </div>
 
       <div className="flex justify-center gap-6 sm:gap-10 mb-8">
         {[[String(c.participants), "participants"], [`~${c.totalItems}`, "items"], [String(c.tiers.length), "paliers"]].map(([v, l]) => (
           <div key={l} className="text-center">
             <div className="text-[22px] font-bold font-body">{v}</div>
-            <div className="text-[11px] text-[#767676] font-body">{l}</div>
+            <div className="text-[11px] font-body" style={{ color: "var(--text-tertiary)" }}>{l}</div>
           </div>
         ))}
       </div>
 
       <div className="flex justify-center mb-8">
-        <button className="px-7 py-2.5 rounded-[20px] text-[13px] font-medium font-body bg-[#1a1a1a] text-white border-none cursor-pointer hover:bg-[#333] transition-colors duration-150">Rejoindre ce challenge</button>
+        <button className="px-7 py-2.5 rounded-[20px] text-[13px] font-medium font-body border-none cursor-pointer hover:opacity-80 transition-colors duration-150" style={{ backgroundColor: "var(--text-primary)", color: "var(--bg-primary)" }}>Rejoindre ce challenge</button>
       </div>
 
       <div className="border-t border-border-light pt-6 mb-6">
@@ -229,7 +231,7 @@ function PublicView() {
           {c.tiers.map(t => {
             const isTop = t.name === "Rossignol";
             return (
-              <span key={t.name} className={`px-3 py-1 rounded-xl text-[11px] font-body ${isTop ? "font-medium" : "bg-surface text-[#767676]"}`} style={isTop ? { backgroundColor: "var(--color-wip-bg)", border: "1px solid var(--color-wip-border)", color: "var(--color-wip-text)" } : undefined}>
+              <span key={t.name} className={`px-3 py-1 rounded-xl text-[11px] font-body ${isTop ? "font-medium" : "bg-surface"}`} style={isTop ? { backgroundColor: "var(--color-wip-bg)", border: "1px solid var(--color-wip-border)", color: "var(--color-wip-text)" } : { color: "var(--text-tertiary)" }}>
                 {isTop && <span className="text-star mr-0.5">★</span>}{t.name} · {t.required}
               </span>
             );
@@ -240,13 +242,13 @@ function PublicView() {
       <div className="border-t border-border-light pt-6 mb-6">
         <Label>Aperçu des items</Label>
         {c.items.slice(0, 5).map(item => (
-          <div key={item.id} className="py-3" style={{ borderBottom: "0.5px solid #f0f0f0" }}>
-            <div className="text-[11px] font-body"><span className="font-semibold text-[#1a1a1a]">{item.code}</span><span className="text-[#767676]"> · {item.responses} réponses</span></div>
-            <div className="text-[13px] text-[#1a1a1a] font-body mt-0.5">{item.title}</div>
+          <div key={item.id} className="py-3" style={{ borderBottom: "0.5px solid var(--border-subtle)" }}>
+            <div className="text-[11px] font-body"><span className="font-semibold" style={{ color: "var(--text-primary)" }}>{item.code}</span><span style={{ color: "var(--text-tertiary)" }}> · {item.responses} réponses</span></div>
+            <div className="text-[13px] font-body mt-0.5" style={{ color: "var(--text-primary)" }}>{item.title}</div>
           </div>
         ))}
         <div className="text-center mt-3">
-          <span className="text-[13px] text-[#767676] font-body cursor-pointer hover:text-[#1a1a1a] transition-colors duration-150">Voir les {c.totalItems} items ›</span>
+          <span className="text-[13px] font-body cursor-pointer hover:opacity-80 transition-colors duration-150" style={{ color: "var(--text-tertiary)" }}>Voir les {c.totalItems} items ›</span>
         </div>
       </div>
 
@@ -254,9 +256,9 @@ function PublicView() {
         <Label>Participants récents</Label>
         <div className="flex items-center">
           {["ML", "TB", "CD", "SK", "LR"].map((initials, i) => (
-            <div key={initials} className="w-8 h-8 rounded-full bg-avatar-bg flex items-center justify-center text-[10px] font-medium text-[#666] font-body border-2 border-white" style={{ marginLeft: i > 0 ? -8 : 0, zIndex: 5 - i }}>{initials}</div>
+            <div key={initials} className="w-8 h-8 rounded-full bg-avatar-bg flex items-center justify-center text-[10px] font-medium font-body border-2" style={{ marginLeft: i > 0 ? -8 : 0, zIndex: 5 - i, color: "var(--text-secondary)", borderColor: "var(--bg-primary)" }}>{initials}</div>
           ))}
-          <span className="text-[11px] text-[#767676] font-body ml-2">+{c.participants - 5}</span>
+          <span className="text-[11px] font-body ml-2" style={{ color: "var(--text-tertiary)" }}>+{c.participants - 5}</span>
         </div>
       </div>
     </div>
@@ -295,7 +297,7 @@ export default function ChallengesPage() {
       {banner}
       <div className="pt-5">
       {/* Back */}
-      <button onClick={handleBack} className="bg-transparent border-none text-[#767676] cursor-pointer text-[13px] pb-4 font-body">← Défis</button>
+      <button onClick={handleBack} className="bg-transparent border-none cursor-pointer text-[13px] pb-4 font-body" style={{ color: "var(--text-tertiary)" }}>← Défis</button>
 
       {/* Toggle */}
       <div className="flex justify-center mb-6">
@@ -305,8 +307,9 @@ export default function ChallengesPage() {
               key={k}
               onClick={() => setView(k)}
               className={`px-4 py-1.5 rounded-md text-[12px] font-medium font-body border-none cursor-pointer transition-all duration-150 ${
-                view === k ? "bg-white text-[#1a1a1a] shadow-[0_1px_3px_rgba(0,0,0,0.08)]" : "bg-transparent text-[#767676]"
+                view === k ? "shadow-[0_1px_3px_rgba(0,0,0,0.08)]" : "bg-transparent"
               }`}
+              style={view === k ? { backgroundColor: "var(--bg-elevated)", color: "var(--text-primary)" } : { color: "var(--text-tertiary)" }}
             >{l}</button>
           ))}
         </div>

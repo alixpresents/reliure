@@ -55,12 +55,12 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-white flex items-center justify-center px-4">
+    <div className="min-h-screen flex items-center justify-center px-4" style={{ backgroundColor: "var(--bg-primary)" }}>
       <div className="w-full max-w-[400px]">
         {/* Logo */}
         <div className="flex items-center justify-center gap-1.5 mb-8">
           <span className="text-[20px] font-bold tracking-tight font-body">reliure</span>
-          <span className="text-[8px] font-semibold text-white bg-[#1a1a1a] rounded-[3px] px-[5px] py-[2px] font-body">
+          <span className="text-[8px] font-semibold rounded-[3px] px-[5px] py-[2px] font-body" style={{ backgroundColor: "var(--text-primary)", color: "var(--bg-primary)" }}>
             BETA
           </span>
         </div>
@@ -74,9 +74,9 @@ export default function LoginPage() {
                 <path d="M8 12.5l2.5 2.5L16 9.5" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </div>
-            <div className="text-sm font-medium font-body text-[#1a1a1a]">Vérifie ta boîte mail !</div>
-            <div className="text-[13px] text-[#767676] font-body mt-1">
-              Un lien de connexion a été envoyé à <span className="font-medium text-[#1a1a1a]">{email}</span>
+            <div className="text-sm font-medium font-body" style={{ color: "var(--text-primary)" }}>Vérifie ta boîte mail !</div>
+            <div className="text-[13px] font-body mt-1" style={{ color: "var(--text-tertiary)" }}>
+              Un lien de connexion a été envoyé à <span className="font-medium" style={{ color: "var(--text-primary)" }}>{email}</span>
             </div>
           </div>
         ) : (
@@ -87,15 +87,19 @@ export default function LoginPage() {
 
             {/* Mode toggle */}
             <div className="flex justify-center mb-6">
-              <div className="flex bg-[#fafaf8] border border-[#eee] rounded-lg p-0.5 gap-0.5">
+              <div className="flex bg-surface rounded-lg p-0.5 gap-0.5" style={{ borderWidth: 1, borderStyle: "solid", borderColor: "var(--border-default)" }}>
                 <button
                   type="button"
                   onClick={() => switchMode("magic")}
                   className={`px-4 py-1.5 rounded-md text-[13px] font-body transition-all duration-150 ${
                     mode === "magic"
-                      ? "bg-white text-[#1a1a1a] font-medium shadow-sm border border-[#eee]"
-                      : "text-[#767676] hover:text-[#333]"
+                      ? "font-medium shadow-sm"
+                      : "hover:opacity-80"
                   }`}
+                  style={mode === "magic"
+                    ? { backgroundColor: "var(--bg-elevated)", color: "var(--text-primary)", borderWidth: 1, borderStyle: "solid", borderColor: "var(--border-default)" }
+                    : { color: "var(--text-tertiary)" }
+                  }
                 >
                   Lien magique
                 </button>
@@ -104,9 +108,13 @@ export default function LoginPage() {
                   onClick={() => switchMode("password")}
                   className={`px-4 py-1.5 rounded-md text-[13px] font-body transition-all duration-150 ${
                     mode === "password"
-                      ? "bg-white text-[#1a1a1a] font-medium shadow-sm border border-[#eee]"
-                      : "text-[#767676] hover:text-[#333]"
+                      ? "font-medium shadow-sm"
+                      : "hover:opacity-80"
                   }`}
+                  style={mode === "password"
+                    ? { backgroundColor: "var(--bg-elevated)", color: "var(--text-primary)", borderWidth: 1, borderStyle: "solid", borderColor: "var(--border-default)" }
+                    : { color: "var(--text-tertiary)" }
+                  }
                 >
                   Mot de passe
                 </button>
@@ -115,7 +123,7 @@ export default function LoginPage() {
 
             {mode === "magic" ? (
               <form onSubmit={handleMagicLink}>
-                <p className="text-[13px] text-[#767676] text-center mb-6 font-body">
+                <p className="text-[13px] text-center mb-6 font-body" style={{ color: "var(--text-tertiary)" }}>
                   Entre ton email pour recevoir un lien de connexion.
                 </p>
                 <div className="mb-4">
@@ -125,7 +133,10 @@ export default function LoginPage() {
                     onChange={e => setEmail(e.target.value)}
                     placeholder="ton@email.com"
                     autoFocus
-                    className="w-full bg-surface rounded-lg py-3 px-4 border border-[#eee] outline-none text-base md:text-sm text-[#1a1a1a] font-body placeholder:text-[#767676] focus:border-[#767676] transition-[border] duration-150"
+                    className="w-full bg-surface rounded-lg py-3 px-4 outline-none text-base md:text-sm font-body transition-[border] duration-150"
+                    style={{ borderWidth: 1, borderStyle: "solid", borderColor: "var(--border-default)", color: "var(--text-primary)" }}
+                    onFocus={e => e.target.style.borderColor = "var(--text-tertiary)"}
+                    onBlur={e => e.target.style.borderColor = "var(--border-default)"}
                   />
                 </div>
 
@@ -138,16 +149,20 @@ export default function LoginPage() {
                   disabled={!email || loading}
                   className={`w-full py-3.5 rounded-lg text-[15px] font-medium font-body border-none transition-all duration-200 ${
                     email && !loading
-                      ? "bg-[#1a1a1a] text-white cursor-pointer hover:bg-[#333]"
-                      : "bg-avatar-bg text-[#767676] cursor-not-allowed"
+                      ? "cursor-pointer hover:opacity-80"
+                      : "bg-avatar-bg cursor-not-allowed"
                   }`}
+                  style={email && !loading
+                    ? { backgroundColor: "var(--text-primary)", color: "var(--bg-primary)" }
+                    : { color: "var(--text-tertiary)" }
+                  }
                 >
                   {loading ? "Envoi en cours..." : "Envoyer le lien"}
                 </button>
               </form>
             ) : (
               <form onSubmit={handlePassword}>
-                <p className="text-[13px] text-[#767676] text-center mb-6 font-body">
+                <p className="text-[13px] text-center mb-6 font-body" style={{ color: "var(--text-tertiary)" }}>
                   Connecte-toi avec tes identifiants bêta.
                 </p>
                 <div className="mb-3">
@@ -157,7 +172,10 @@ export default function LoginPage() {
                     onChange={e => setEmail(e.target.value)}
                     placeholder="ton@email.com"
                     autoFocus
-                    className="w-full bg-surface rounded-lg py-3 px-4 border border-[#eee] outline-none text-base md:text-sm text-[#1a1a1a] font-body placeholder:text-[#767676] focus:border-[#767676] transition-[border] duration-150"
+                    className="w-full bg-surface rounded-lg py-3 px-4 outline-none text-base md:text-sm font-body transition-[border] duration-150"
+                    style={{ borderWidth: 1, borderStyle: "solid", borderColor: "var(--border-default)", color: "var(--text-primary)" }}
+                    onFocus={e => e.target.style.borderColor = "var(--text-tertiary)"}
+                    onBlur={e => e.target.style.borderColor = "var(--border-default)"}
                   />
                 </div>
                 <div className="mb-4">
@@ -166,7 +184,10 @@ export default function LoginPage() {
                     value={password}
                     onChange={e => setPassword(e.target.value)}
                     placeholder="Mot de passe"
-                    className="w-full bg-surface rounded-lg py-3 px-4 border border-[#eee] outline-none text-base md:text-sm text-[#1a1a1a] font-body placeholder:text-[#767676] focus:border-[#767676] transition-[border] duration-150"
+                    className="w-full bg-surface rounded-lg py-3 px-4 outline-none text-base md:text-sm font-body transition-[border] duration-150"
+                    style={{ borderWidth: 1, borderStyle: "solid", borderColor: "var(--border-default)", color: "var(--text-primary)" }}
+                    onFocus={e => e.target.style.borderColor = "var(--text-tertiary)"}
+                    onBlur={e => e.target.style.borderColor = "var(--border-default)"}
                   />
                 </div>
 
@@ -179,9 +200,13 @@ export default function LoginPage() {
                   disabled={!email || !password || loading}
                   className={`w-full py-3.5 rounded-lg text-[15px] font-medium font-body border-none transition-all duration-200 ${
                     email && password && !loading
-                      ? "bg-[#1a1a1a] text-white cursor-pointer hover:bg-[#333]"
-                      : "bg-avatar-bg text-[#767676] cursor-not-allowed"
+                      ? "cursor-pointer hover:opacity-80"
+                      : "bg-avatar-bg cursor-not-allowed"
                   }`}
+                  style={email && password && !loading
+                    ? { backgroundColor: "var(--text-primary)", color: "var(--bg-primary)" }
+                    : { color: "var(--text-tertiary)" }
+                  }
                 >
                   {loading ? "Connexion..." : "Se connecter"}
                 </button>

@@ -89,15 +89,15 @@ function ReadingItem({ book, go, onFinish, initialPage = 0, statusId = null, isO
         <Img book={book} w={44} h={66} onClick={() => go(book)} />
         <div className="flex-1">
           <div className="text-sm font-medium font-body">{book.t}</div>
-          <div className="text-[11px] text-[#767676] font-body">{book.a}</div>
+          <div className="text-[11px] font-body" style={{ color: "var(--text-tertiary)" }}>{book.a}</div>
           <div className="w-full h-[3px] bg-avatar-bg rounded-sm mt-1.5 overflow-hidden">
-            <div className="h-full bg-[#1a1a1a] rounded-sm transition-all duration-400" style={{ width: `${pct}%` }} />
+            <div className="h-full rounded-sm transition-all duration-400" style={{ width: `${pct}%`, backgroundColor: "var(--text-primary)" }} />
           </div>
         </div>
         {!isOwner ? (
-          <span className="text-[11px] text-[#767676] font-body">p. {currentPage}/{book.p}</span>
+          <span className="text-[11px] font-body" style={{ color: "var(--text-tertiary)" }}>p. {currentPage}/{book.p}</span>
         ) : editing ? (
-          <div className="flex items-center text-[11px] text-[#767676] font-body">
+          <div className="flex items-center text-[11px] font-body" style={{ color: "var(--text-tertiary)" }}>
             <span>p.&nbsp;</span>
             <input
               ref={inputRef}
@@ -108,17 +108,19 @@ function ReadingItem({ book, go, onFinish, initialPage = 0, statusId = null, isO
               onChange={e => setDraft(e.target.value)}
               onBlur={commitEdit}
               onKeyDown={handleKey}
-              className="w-10 text-base md:text-[11px] text-[#1a1a1a] font-body bg-transparent border-b border-[#1a1a1a] outline-none text-center py-0 px-0 appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+              className="w-10 text-base md:text-[11px] font-body bg-transparent outline-none text-center py-0 px-0 appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+              style={{ color: "var(--text-primary)", borderBottom: "1px solid var(--text-primary)" }}
             />
             <span>/{book.p}</span>
           </div>
         ) : (
           <div role="button" tabIndex={0} className="flex items-center gap-1.5" onClick={startEdit} onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); startEdit(); } }} aria-label="Modifier la page">
-            <span className="text-[11px] text-[#767676] font-body cursor-pointer">
+            <span className="text-[11px] font-body cursor-pointer" style={{ color: "var(--text-tertiary)" }}>
               p. {currentPage}/{book.p}
             </span>
             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-              className="text-[#767676] cursor-pointer opacity-0 group-hover/row:opacity-100 transition-opacity duration-150 shrink-0"
+              className="cursor-pointer opacity-0 group-hover/row:opacity-100 transition-opacity duration-150 shrink-0"
+              style={{ color: "var(--text-tertiary)" }}
             >
               <path d="M17 3a2.83 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
               <path d="m15 5 4 4" />
@@ -130,11 +132,12 @@ function ReadingItem({ book, go, onFinish, initialPage = 0, statusId = null, isO
       {/* Completion banner */}
       <div className={`overflow-hidden transition-all duration-300 ${isOwner && finished && isComplete ? "max-h-[60px] opacity-100 mt-2" : "max-h-0 opacity-0"}`}>
         <div className="flex items-center gap-3 py-2 px-3 bg-surface rounded-lg ml-[58px]">
-          <span className="text-[12px] font-medium font-body text-[#1a1a1a]">Tu l'as terminé !</span>
+          <span className="text-[12px] font-medium font-body" style={{ color: "var(--text-primary)" }}>Tu l'as terminé !</span>
           <InteractiveStars value={finRating} onChange={setFinRating} size="text-xs" />
           <button
             onClick={markRead}
-            className="ml-auto text-[11px] font-medium text-white bg-[#1a1a1a] rounded-md px-2.5 py-1 border-none cursor-pointer hover:bg-[#333] transition-colors duration-150 font-body"
+            className="ml-auto text-[11px] font-medium rounded-md px-2.5 py-1 border-none cursor-pointer hover:opacity-80 transition-colors duration-150 font-body"
+            style={{ backgroundColor: "var(--text-primary)", color: "var(--bg-primary)" }}
           >
             Marquer comme lu
           </button>
@@ -161,17 +164,18 @@ function FavNote({ note, isOwner, onSave }) {
   if (editing) {
     return (
       <div className="flex justify-center -mt-1.5 relative z-1">
-        <div className="inline-flex items-center gap-1 bg-white border border-[#eee] rounded-[10px] px-2.5 py-[2px] shadow-[0_1px_4px_rgba(0,0,0,0.06)]">
+        <div className="inline-flex items-center gap-1 rounded-[10px] px-2.5 py-[2px] shadow-[0_1px_4px_rgba(0,0,0,0.06)]" style={{ backgroundColor: "var(--bg-elevated)", border: "1px solid var(--border-default)" }}>
           <input
             ref={inputRef}
             value={draft}
             onChange={e => setDraft(e.target.value.slice(0, 24))}
             onBlur={commit}
             onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); commit(); } if (e.key === "Escape") { setEditing(false); setDraft(note); } }}
-            className="bg-transparent border-none outline-none text-[11px] text-[#666] font-body w-[100px] text-center"
+            className="bg-transparent border-none outline-none text-[11px] font-body w-[100px] text-center"
+            style={{ color: "var(--text-secondary)" }}
             maxLength={24}
           />
-          <span className="text-[9px] text-[#767676] font-body shrink-0">{draft.length}/24</span>
+          <span className="text-[9px] font-body shrink-0" style={{ color: "var(--text-tertiary)" }}>{draft.length}/24</span>
         </div>
       </div>
     );
@@ -183,9 +187,10 @@ function FavNote({ note, isOwner, onSave }) {
         <div
           onClick={isOwner ? (e) => { e.stopPropagation(); setEditing(true); setDraft(note); } : undefined}
           onAnimationEnd={() => setPopping(false)}
-          className={`inline-block bg-white border border-[#eee] rounded-[10px] px-2.5 py-[2px] shadow-[0_1px_4px_rgba(0,0,0,0.06)] whitespace-nowrap ${isOwner ? "cursor-text" : ""} ${popping ? "animate-confirm-pop" : ""}`}
+          className={`inline-block rounded-[10px] px-2.5 py-[2px] shadow-[0_1px_4px_rgba(0,0,0,0.06)] whitespace-nowrap ${isOwner ? "cursor-text" : ""} ${popping ? "animate-confirm-pop" : ""}`}
+          style={{ backgroundColor: "var(--bg-elevated)", border: "1px solid var(--border-default)" }}
         >
-          <span className="text-[11px] text-[#666] font-body">{note}</span>
+          <span className="text-[11px] font-body" style={{ color: "var(--text-secondary)" }}>{note}</span>
         </div>
       </div>
     );
@@ -196,9 +201,10 @@ function FavNote({ note, isOwner, onSave }) {
       <div className="flex justify-center -mt-1.5 relative z-1">
         <div
           onClick={e => { e.stopPropagation(); setEditing(true); setDraft(""); }}
-          className="inline-block bg-white border border-[#eee] rounded-[10px] px-1.5 py-[1px] shadow-[0_1px_4px_rgba(0,0,0,0.06)] cursor-pointer opacity-100 sm:opacity-0 sm:group-hover/fav:opacity-100 transition-opacity duration-150"
+          className="inline-block rounded-[10px] px-1.5 py-[1px] shadow-[0_1px_4px_rgba(0,0,0,0.06)] cursor-pointer opacity-100 sm:opacity-0 sm:group-hover/fav:opacity-100 transition-opacity duration-150"
+          style={{ backgroundColor: "var(--bg-elevated)", border: "1px solid var(--border-default)" }}
         >
-          <span className="text-[11px] text-[#767676]">+</span>
+          <span className="text-[11px]" style={{ color: "var(--text-tertiary)" }}>+</span>
         </div>
       </div>
     );
@@ -247,7 +253,7 @@ function FavoritesSection({ favorites, isOwner, go, onAdd, onRemove, onSwap, onU
   return (
     <div className="border-t border-border-light py-6" data-onboarding="favorites">
       <div className="mb-3">
-        <div className="text-[10px] font-semibold uppercase tracking-[2px] text-[#767676] font-body">Quatre favoris</div>
+        <div className="text-[10px] font-semibold uppercase tracking-[2px] font-body" style={{ color: "var(--text-tertiary)" }}>Quatre favoris</div>
       </div>
       <div className="grid grid-cols-4 gap-4">
         {[1, 2, 3, 4].map(pos => {
@@ -268,7 +274,7 @@ function FavoritesSection({ favorites, isOwner, go, onAdd, onRemove, onSwap, onU
                     opacity: isDragging ? 0.6 : 1,
                     boxShadow: isDragging ? "0 8px 24px rgba(0,0,0,0.15)" : "none",
                     borderRadius: 3,
-                    outline: isDropTarget ? "2px dashed #eee" : "none",
+                    outline: isDropTarget ? "2px dashed var(--border-default)" : "none",
                     outlineOffset: isDropTarget ? 2 : 0,
                     transition: "opacity 150ms, box-shadow 150ms",
                   }}
@@ -300,7 +306,7 @@ function FavoritesSection({ favorites, isOwner, go, onAdd, onRemove, onSwap, onU
                       className="absolute bottom-1.5 right-1.5 flex items-center justify-center cursor-pointer border-none bg-transparent opacity-0 group-hover/fav:opacity-100 transition-opacity duration-150 p-0"
                       aria-label="Remplacer le favori"
                     >
-                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" style={{ filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.4))" }}>
+                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--bg-primary)" strokeWidth="2.5" strokeLinecap="round" style={{ filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.4))" }}>
                         <path d="M17 1l4 4-4 4" /><path d="M3 11V9a4 4 0 0 1 4-4h14" /><path d="M7 23l-4-4 4-4" /><path d="M21 13v2a4 4 0 0 1-4 4H3" />
                       </svg>
                     </button>
@@ -310,7 +316,7 @@ function FavoritesSection({ favorites, isOwner, go, onAdd, onRemove, onSwap, onU
                 <FavNote note={fav.note} isOwner={isOwner} onSave={text => onUpdateNote(pos, text)} />
 
                 <div className={`text-xs font-medium font-body ${fav.note ? "mt-1.5" : "mt-2"}`}>{fav.book.t}</div>
-                <div className="text-[11px] text-[#767676] font-body">{fav.book.a.split(" ").pop()}{fav.book.y ? `, ${fav.book.y}` : ""}</div>
+                <div className="text-[11px] font-body" style={{ color: "var(--text-tertiary)" }}>{fav.book.a.split(" ").pop()}{fav.book.y ? `, ${fav.book.y}` : ""}</div>
               </div>
             );
           }
@@ -328,10 +334,10 @@ function FavoritesSection({ favorites, isOwner, go, onAdd, onRemove, onSwap, onU
                 tabIndex={0}
                 onClick={() => { if (!dragFrom) onAdd(pos); }}
                 onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onAdd(pos); } }}
-                className="w-full aspect-[2/3] border-[1.5px] border-dashed border-[#eee] rounded-[3px] flex items-center justify-center cursor-pointer hover:border-[#767676] transition-colors duration-150"
+                className="w-full aspect-[2/3] border-[1.5px] border-dashed border-[var(--border-default)] rounded-[3px] flex items-center justify-center cursor-pointer hover:border-[var(--text-tertiary)] transition-colors duration-150"
                 style={isDropTarget ? { borderColor: "var(--border-default)", borderWidth: 2 } : undefined}
               >
-                <span className="text-[16px] text-[#ccc] group-hover/fav:text-[#999] transition-colors duration-150">+</span>
+                <span className="text-[16px] transition-colors duration-150" style={{ color: "var(--text-muted)" }}>+</span>
               </div>
             </div>
           );
@@ -612,8 +618,8 @@ export default function ProfilePage({ viewedProfile, initialTab }) {
                 onBlur={commitName}
                 onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); commitName(); } if (e.key === "Escape") setEditingName(false); }}
                 maxLength={50}
-                className="text-[22px] font-normal font-display italic bg-transparent border-none border-b border-b-[#1a1a1a] outline-none w-full py-0 px-0"
-                style={{ borderBottom: "1px solid #1a1a1a" }}
+                className="text-[22px] font-normal font-display italic bg-transparent border-none outline-none w-full py-0 px-0"
+                style={{ borderBottom: "1px solid var(--text-primary)" }}
               />
             ) : (
               <div
@@ -621,17 +627,17 @@ export default function ProfilePage({ viewedProfile, initialTab }) {
                 onClick={isOwnProfile ? startEditName : undefined}
               >
                 <span className="text-[22px] font-normal font-display italic">{displayName || profile.username}</span>
-                {isOwnProfile && <span className="text-[#ccc] text-[15px] select-none opacity-0 group-hover/name:opacity-100 transition-opacity duration-150">✎</span>}
+                {isOwnProfile && <span className="text-[15px] select-none opacity-0 group-hover/name:opacity-100 transition-opacity duration-150" style={{ color: "var(--text-muted)" }}>✎</span>}
               </div>
             )}
             <div className="flex items-center gap-2">
-              <span className="text-xs text-[#767676] font-body">@{profile.username}</span>
+              <span className="text-xs font-body" style={{ color: "var(--text-tertiary)" }}>@{profile.username}</span>
               {role && <RoleBadge role={role} />}
             </div>
           </div>
-          <div className="flex gap-5 text-xs text-[#767676] font-body w-full sm:w-auto mt-2 sm:mt-0">
+          <div className="flex gap-5 text-xs font-body w-full sm:w-auto mt-2 sm:mt-0" style={{ color: "var(--text-tertiary)" }}>
             {[[totalBooks, totalBooks < 2 ? "livre" : "livres"], [booksThisYear, "cette année"], [followers, followers < 2 ? "abonné" : "abonnés"], [followingCount, followingCount < 2 ? "abonnement" : "abonnements"]].map(([n, l]) => (
-              <span key={l}><strong className="text-[#1a1a1a] font-semibold">{n}</strong> {l}</span>
+              <span key={l}><strong className="font-semibold" style={{ color: "var(--text-primary)" }}>{n}</strong> {l}</span>
             ))}
           </div>
           {!isOwnProfile && (
@@ -641,11 +647,11 @@ export default function ProfilePage({ viewedProfile, initialTab }) {
                 const action = isFollowing ? unfollow : follow;
                 action(() => showToast("Une erreur est survenue")).then(() => refetchCounts());
               }}
-              className={`shrink-0 px-4 py-1.5 rounded-full text-[13px] font-medium font-body border transition-colors duration-150 ${
-                isFollowing
-                  ? "bg-transparent text-[#767676] border-[#eee] hover:border-[#767676] hover:text-[#1a1a1a]"
-                  : "bg-[#1a1a1a] text-white border-[#1a1a1a] hover:bg-[#333]"
-              }`}
+              className="shrink-0 px-4 py-1.5 rounded-full text-[13px] font-medium font-body border transition-colors duration-150 hover:opacity-80"
+              style={isFollowing
+                ? { backgroundColor: "transparent", color: "var(--text-tertiary)", borderColor: "var(--border-default)" }
+                : { backgroundColor: "var(--text-primary)", color: "var(--bg-primary)", borderColor: "var(--text-primary)" }
+              }
             >
               {isFollowing ? "Abonné·e" : "Suivre"}
             </button>
@@ -663,28 +669,32 @@ export default function ProfilePage({ viewedProfile, initialTab }) {
                 onKeyDown={e => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) { e.preventDefault(); commitBio(); } if (e.key === "Escape") setEditingBio(false); }}
                 rows={3}
                 maxLength={160}
-                className="w-full text-[13px] text-[#666] leading-relaxed font-body bg-transparent border border-[#eee] rounded-lg outline-none p-2.5 resize-none focus:border-[#767676] transition-[border] duration-150"
+                className="w-full text-[13px] leading-relaxed font-body bg-transparent rounded-lg outline-none p-2.5 resize-none transition-[border] duration-150"
+                style={{ color: "var(--text-secondary)", border: "1px solid var(--border-default)" }}
+                onFocus={e => e.target.style.borderColor = "var(--text-tertiary)"}
+                onBlurCapture={e => e.target.style.borderColor = "var(--border-default)"}
               />
-              <div className="text-[10px] text-[#767676] font-body text-right mt-1">{bioDraft.length}/160</div>
+              <div className="text-[10px] font-body text-right mt-1" style={{ color: "var(--text-tertiary)" }}>{bioDraft.length}/160</div>
             </div>
           ) : bio ? (
             <div
               className="flex items-start gap-1.5 max-w-[480px] mb-3 cursor-pointer group/bio"
               onClick={startEditBio}
             >
-              <p className="text-[13px] text-[#666] leading-relaxed m-0 font-body">{bio}</p>
-              <span className="text-[#ccc] text-[13px] select-none shrink-0 mt-px opacity-0 group-hover/bio:opacity-100 transition-opacity duration-150">✎</span>
+              <p className="text-[13px] leading-relaxed m-0 font-body" style={{ color: "var(--text-secondary)" }}>{bio}</p>
+              <span className="text-[13px] select-none shrink-0 mt-px opacity-0 group-hover/bio:opacity-100 transition-opacity duration-150" style={{ color: "var(--text-muted)" }}>✎</span>
             </div>
           ) : (
             <p
-              className="text-[14px] italic text-[#767676] max-w-[480px] m-0 mb-3 font-body cursor-pointer hover:text-[#767676] transition-colors duration-150"
+              className="text-[14px] italic max-w-[480px] m-0 mb-3 font-body cursor-pointer transition-colors duration-150"
+              style={{ color: "var(--text-tertiary)" }}
               onClick={startEditBio}
             >
               Ajoute une bio...
             </p>
           )
         ) : profile.bio ? (
-          <p className="text-[13px] text-[#666] leading-relaxed max-w-[480px] m-0 mb-3 font-body">
+          <p className="text-[13px] leading-relaxed max-w-[480px] m-0 mb-3 font-body" style={{ color: "var(--text-secondary)" }}>
             {profile.bio}
           </p>
         ) : null}
@@ -707,7 +717,7 @@ export default function ProfilePage({ viewedProfile, initialTab }) {
         >
           <div className="flex-1">
             <div className="text-[13px] font-medium font-body">Tu as lu d'autres livres ?</div>
-            <div className="text-xs text-[#767676] font-body">Remplis ta bibliothèque en quelques clics.</div>
+            <div className="text-xs font-body" style={{ color: "var(--text-tertiary)" }}>Remplis ta bibliothèque en quelques clics.</div>
           </div>
           <button className="px-3 py-[6px] rounded-[16px] text-xs font-medium font-body cursor-pointer transition-colors duration-150" style={{ backgroundColor: "var(--bg-primary)", border: "1.5px solid var(--border-default)", color: "var(--text-primary)" }}>
             Ajouter
@@ -746,10 +756,10 @@ export default function ProfilePage({ viewedProfile, initialTab }) {
           ))
         ) : (
           <EmptyState>
-            <div className="text-sm text-[#767676] font-body">Rien en cours.</div>
-            <div className="text-xs text-[#767676] font-body mt-1">
+            <div className="text-sm font-body" style={{ color: "var(--text-tertiary)" }}>Rien en cours.</div>
+            <div className="text-xs font-body mt-1" style={{ color: "var(--text-tertiary)" }}>
               Que lis-tu en ce moment ?{" "}
-              <span role="button" tabIndex={0} onClick={onSearch} onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onSearch(); } }} className="underline cursor-pointer hover:text-[#1a1a1a] transition-colors duration-150">Chercher</span>
+              <span role="button" tabIndex={0} onClick={onSearch} onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onSearch(); } }} className="underline cursor-pointer hover:opacity-80 transition-colors duration-150">Chercher</span>
             </div>
           </EmptyState>
         )}
@@ -771,15 +781,19 @@ export default function ProfilePage({ viewedProfile, initialTab }) {
               key={value}
               data-onboarding={onboardingKey}
               onClick={() => setTab(value)}
-              className={`flex-1 py-3 bg-transparent border-none cursor-pointer font-body ${
+              className={`flex-1 py-3 bg-transparent border-none cursor-pointer font-body border-b-2 ${
                 tab === value
-                  ? "font-semibold text-[#1a1a1a] border-b-2 border-b-[#1a1a1a]"
-                  : "font-normal text-[#767676] border-b-2 border-b-transparent"
+                  ? "font-semibold"
+                  : "font-normal border-b-transparent"
               }`}
+              style={tab === value
+                ? { color: "var(--text-primary)", borderBottomColor: "var(--text-primary)" }
+                : { color: "var(--text-tertiary)" }
+              }
             >
               <div className="text-xs">{label}</div>
               {showHints && tab === value && (
-                <div style={{ opacity: hintsOpacity, transition: "opacity 150ms" }} className="text-[11px] text-[#767676] font-normal mt-0.5 leading-tight">
+                <div style={{ opacity: hintsOpacity, transition: "opacity 150ms", color: "var(--text-tertiary)" }} className="text-[11px] font-normal mt-0.5 leading-tight">
                   {TAB_SUBTITLES[value]}
                 </div>
               )}
@@ -798,7 +812,7 @@ export default function ProfilePage({ viewedProfile, initialTab }) {
           ) : diaryMonths.length > 0 ? (
             diaryMonths.map(([monthLabel, entries]) => (
               <div key={monthLabel} className="mb-6">
-                <div className="text-[11px] font-semibold uppercase tracking-[1.5px] text-[#767676] mb-3 pb-2 border-b border-border-light font-body">
+                <div className="text-[11px] font-semibold uppercase tracking-[1.5px] mb-3 pb-2 border-b border-border-light font-body" style={{ color: "var(--text-tertiary)" }}>
                   {monthLabel}
                 </div>
                 <div className="flex gap-1.5 flex-wrap">
@@ -817,12 +831,12 @@ export default function ProfilePage({ viewedProfile, initialTab }) {
             <EmptyState>
               {isOwnProfile ? (
                 <>
-                  <div className="text-sm text-[#767676] font-body">Ton journal de lecture est vide.</div>
-                  <div className="text-[13px] text-[#767676] font-body mt-1">Ajoute ton premier livre.</div>
-                  <button onClick={onSearch} className="mt-4 px-5 py-2.5 rounded-[20px] text-[13px] font-medium font-body bg-[#1a1a1a] text-white border-none cursor-pointer hover:bg-[#333] transition-colors duration-150">Chercher un livre</button>
+                  <div className="text-sm font-body" style={{ color: "var(--text-tertiary)" }}>Ton journal de lecture est vide.</div>
+                  <div className="text-[13px] font-body mt-1" style={{ color: "var(--text-tertiary)" }}>Ajoute ton premier livre.</div>
+                  <button onClick={onSearch} className="mt-4 px-5 py-2.5 rounded-[20px] text-[13px] font-medium font-body border-none cursor-pointer hover:opacity-80 transition-colors duration-150" style={{ backgroundColor: "var(--text-primary)", color: "var(--bg-primary)" }}>Chercher un livre</button>
                 </>
               ) : (
-                <div className="text-sm text-[#767676] font-body">Aucune lecture enregistrée pour l'instant.</div>
+                <div className="text-sm font-body" style={{ color: "var(--text-tertiary)" }}>Aucune lecture enregistrée pour l'instant.</div>
               )}
             </EmptyState>
           )}
@@ -841,43 +855,49 @@ export default function ProfilePage({ viewedProfile, initialTab }) {
                   onClick={() => setLibView(k)}
                   className={`px-3 py-1.5 rounded-md text-[11px] font-medium font-body border-none cursor-pointer transition-all duration-150 ${
                     libView === k
-                      ? "bg-white text-[#1a1a1a] shadow-[0_1px_3px_rgba(0,0,0,0.08)]"
-                      : "bg-transparent text-[#767676]"
+                      ? "shadow-[0_1px_3px_rgba(0,0,0,0.08)]"
+                      : "bg-transparent"
                   }`}
+                  style={libView === k
+                    ? { backgroundColor: "var(--bg-elevated)", color: "var(--text-primary)" }
+                    : { color: "var(--text-tertiary)" }
+                  }
                 >
                   {l}
                 </button>
               ))}
             </div>
-            <span className="text-[11px] text-[#767676] font-body">{libraryBooks.length} livres</span>
+            <span className="text-[11px] font-body" style={{ color: "var(--text-tertiary)" }}>{libraryBooks.length} livres</span>
           </div>
 
           {libraryBooks.length === 0 ? (
             isOwnProfile ? (
               <div className="py-14 flex flex-col items-center text-center px-4">
-                <h2 className="font-display italic text-[22px] font-normal text-[#1a1a1a] mb-3">
+                <h2 className="font-display italic text-[22px] font-normal mb-3" style={{ color: "var(--text-primary)" }}>
                   Ta bibliothèque t'attend.
                 </h2>
-                <p className="text-[14px] text-[#666] font-body leading-relaxed mb-7" style={{ maxWidth: 360 }}>
+                <p className="text-[14px] font-body leading-relaxed mb-7" style={{ maxWidth: 360, color: "var(--text-secondary)" }}>
                   Reliure garde la trace de tout ce que tu lis — tes critiques, tes citations, tes coups de cœur. Commence par importer ta bibliothèque Goodreads ou ajoute ton premier livre.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-3 items-center">
                   <button
                     onClick={() => navigate("/backfill")}
-                    className="px-5 py-2.5 rounded-[20px] text-[13px] font-medium font-body bg-[#1a1a1a] text-white border-none cursor-pointer hover:bg-[#333] transition-colors duration-150"
+                    className="px-5 py-2.5 rounded-[20px] text-[13px] font-medium font-body border-none cursor-pointer hover:opacity-80 transition-colors duration-150"
+                    style={{ backgroundColor: "var(--text-primary)", color: "var(--bg-primary)" }}
                   >
                     📥 Importer depuis Goodreads
                   </button>
                   <button
                     onClick={() => navigate("/explorer")}
-                    className="px-5 py-2.5 rounded-[20px] text-[13px] font-medium font-body bg-transparent text-[#1a1a1a] border border-[#eee] cursor-pointer hover:border-[#767676] transition-colors duration-150"
+                    className="px-5 py-2.5 rounded-[20px] text-[13px] font-medium font-body bg-transparent cursor-pointer transition-colors duration-150"
+                    style={{ color: "var(--text-primary)", border: "1px solid var(--border-default)" }}
                   >
                     Parcourir les livres
                   </button>
                 </div>
-                <p className="text-[11px] text-[#767676] font-body mt-5">
+                <p className="text-[11px] font-body mt-5" style={{ color: "var(--text-tertiary)" }}>
                   Tu peux aussi{" "}
-                  <button onClick={() => navigate("/backfill")} className="bg-transparent border-none cursor-pointer text-[11px] text-[#767676] font-body underline p-0 hover:text-[#1a1a1a] transition-colors duration-100">
+                  <button onClick={() => navigate("/backfill")} className="bg-transparent border-none cursor-pointer text-[11px] font-body underline p-0 hover:opacity-80 transition-colors duration-100" style={{ color: "var(--text-tertiary)" }}>
                     importer
                   </button>
                   {" "}depuis Babelio ou Livraddict.
@@ -885,7 +905,7 @@ export default function ProfilePage({ viewedProfile, initialTab }) {
               </div>
             ) : (
               <EmptyState>
-                <div className="text-sm text-[#767676] font-body">Aucun livre dans la bibliothèque.</div>
+                <div className="text-sm font-body" style={{ color: "var(--text-tertiary)" }}>Aucun livre dans la bibliothèque.</div>
               </EmptyState>
             )
           ) : <>
@@ -909,13 +929,13 @@ export default function ProfilePage({ viewedProfile, initialTab }) {
                   tabIndex={0}
                   onClick={() => go(b)}
                   onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); go(b); } }}
-                  className="flex items-center gap-3 py-2.5 cursor-pointer hover:bg-[#fafafa] transition-colors duration-100"
+                  className="flex items-center gap-3 py-2.5 cursor-pointer hover:bg-surface transition-colors duration-100"
                   style={{ borderBottom: "0.5px solid var(--border-subtle)" }}
                 >
                   <Img book={b} w={36} h={54} />
                   <div className="flex-1 min-w-0">
                     <div className="text-sm font-medium font-body truncate">{b.t}</div>
-                    <div className="text-xs text-[#767676] font-body">{b.a} · {b.y}</div>
+                    <div className="text-xs font-body" style={{ color: "var(--text-tertiary)" }}>{b.a} · {b.y}</div>
                   </div>
                   {(b._rating || b.r) > 0 && <Stars r={b._rating || b.r} s={11} />}
                 </div>
@@ -931,7 +951,7 @@ export default function ProfilePage({ viewedProfile, initialTab }) {
               shelves.push(libraryBooks.slice(i, i + shelfSize));
             }
             return (
-              <div className="bg-[#faf8f5] rounded-lg p-3 sm:p-4 flex flex-col gap-0">
+              <div className="bg-surface rounded-lg p-3 sm:p-4 flex flex-col gap-0">
                 {shelves.map((shelf, si) => (
                   <div key={si} className="mb-1">
                     {/* Books */}
@@ -965,13 +985,14 @@ export default function ProfilePage({ viewedProfile, initialTab }) {
         <div className="py-4">
           {wantToReadBooks.length === 0 ? (
             <EmptyState>
-              <div className="text-sm text-[#767676] font-body">
+              <div className="text-sm font-body" style={{ color: "var(--text-tertiary)" }}>
                 {isOwnProfile ? "Ta liste de lecture est vide." : "Aucun livre en liste de lecture."}
               </div>
               {isOwnProfile && (
                 <button
                   onClick={() => navigate("/explorer")}
-                  className="mt-3 px-4 py-2 rounded-[20px] text-[12px] font-medium font-body bg-transparent text-[#1a1a1a] border border-[#eee] cursor-pointer hover:border-[#767676] transition-colors duration-150"
+                  className="mt-3 px-4 py-2 rounded-[20px] text-[12px] font-medium font-body bg-transparent cursor-pointer transition-colors duration-150"
+                  style={{ color: "var(--text-primary)", border: "1px solid var(--border-default)" }}
                 >
                   Parcourir les livres
                 </button>
@@ -1002,7 +1023,7 @@ export default function ProfilePage({ viewedProfile, initialTab }) {
                     <div className="flex items-start justify-between gap-2">
                       <div>
                         <div className="text-base font-medium font-body mb-0.5">{b.title}</div>
-                        <div className="text-xs text-[#767676] mb-2 font-body">{bookObj.a}{bookObj.y ? `, ${bookObj.y}` : ""}</div>
+                        <div className="text-xs mb-2 font-body" style={{ color: "var(--text-tertiary)" }}>{bookObj.a}{bookObj.y ? `, ${bookObj.y}` : ""}</div>
                       </div>
                       <ContentMenu type="review" item={rv} onDelete={() => refetchReviews()} onEdit={() => refetchReviews()} />
                     </div>
@@ -1023,11 +1044,11 @@ export default function ProfilePage({ viewedProfile, initialTab }) {
             <EmptyState>
               {isOwnProfile ? (
                 <>
-                  <div className="text-sm text-[#767676] font-body">Tu n'as pas encore écrit de critique.</div>
-                  <button onClick={() => navigate("/explorer")} className="mt-4 px-5 py-2.5 rounded-[20px] text-[13px] font-medium font-body bg-[#1a1a1a] text-white border-none cursor-pointer hover:bg-[#333] transition-colors duration-150">Explorer des livres</button>
+                  <div className="text-sm font-body" style={{ color: "var(--text-tertiary)" }}>Tu n'as pas encore écrit de critique.</div>
+                  <button onClick={() => navigate("/explorer")} className="mt-4 px-5 py-2.5 rounded-[20px] text-[13px] font-medium font-body border-none cursor-pointer hover:opacity-80 transition-colors duration-150" style={{ backgroundColor: "var(--text-primary)", color: "var(--bg-primary)" }}>Explorer des livres</button>
                 </>
               ) : (
-                <div className="text-sm text-[#767676] font-body">Aucune critique pour l'instant.</div>
+                <div className="text-sm font-body" style={{ color: "var(--text-tertiary)" }}>Aucune critique pour l'instant.</div>
               )}
             </EmptyState>
           )}
@@ -1043,7 +1064,7 @@ export default function ProfilePage({ viewedProfile, initialTab }) {
             return (
               <div key={q.id} className="group py-5 border-b border-border-light relative">
                 <div className="flex items-start justify-between gap-2">
-                  <div className="text-[15px] italic text-[#1a1a1a] leading-[1.7] border-l-[3px] border-l-cover-fallback pl-4 mb-3 font-display flex-1">
+                  <div className="text-[15px] italic leading-[1.7] border-l-[3px] border-l-cover-fallback pl-4 mb-3 font-display flex-1" style={{ color: "var(--text-primary)" }}>
                     « {q.text} »
                   </div>
                   <ContentMenu type="quote" item={q} onDelete={() => refetchQuotes()} onEdit={() => refetchQuotes()} />
@@ -1051,21 +1072,22 @@ export default function ProfilePage({ viewedProfile, initialTab }) {
                 {bookObj && (
                   <div className="flex items-center gap-2.5">
                     <Img book={bookObj} w={28} h={40} onClick={() => go(bookObj)} />
-                    <Link to={`/livre/${bookObj.slug}`} className="text-[13px] font-medium font-body text-[#1a1a1a] no-underline hover:text-[#333] transition-colors duration-100">{bookObj.t}</Link>
-                    <span className="text-xs text-[#767676] font-body">· {bookObj.a}</span>
+                    <Link to={`/livre/${bookObj.slug}`} className="text-[13px] font-medium font-body no-underline hover:opacity-80 transition-colors duration-100" style={{ color: "var(--text-primary)" }}>{bookObj.t}</Link>
+                    <span className="text-xs font-body" style={{ color: "var(--text-tertiary)" }}>· {bookObj.a}</span>
                   </div>
                 )}
               </div>
             );
           }) : (
             <EmptyState>
-              <div className="text-sm text-[#767676] font-body">
+              <div className="text-sm font-body" style={{ color: "var(--text-tertiary)" }}>
                 {isOwnProfile ? "Tu n'as pas encore sauvegardé de citation." : "Aucune citation pour l'instant."}
               </div>
               {isOwnProfile && (
                 <button
                   onClick={() => navigate("/citations")}
-                  className="mt-3 px-4 py-2 rounded-[20px] text-[12px] font-medium font-body bg-transparent text-[#1a1a1a] border border-[#eee] cursor-pointer hover:border-[#767676] transition-colors duration-150"
+                  className="mt-3 px-4 py-2 rounded-[20px] text-[12px] font-medium font-body bg-transparent cursor-pointer transition-colors duration-150"
+                  style={{ color: "var(--text-primary)", border: "1px solid var(--border-default)" }}
                 >
                   Explorer les citations
                 </button>
@@ -1081,18 +1103,19 @@ export default function ProfilePage({ viewedProfile, initialTab }) {
           {isOwnProfile && (
             <button
               onClick={() => setShowCreateList(true)}
-              className="w-full py-3 mb-4 border-[1.5px] border-dashed border-[#eee] rounded-lg text-[13px] text-[#767676] font-body bg-transparent cursor-pointer hover:border-[#767676] hover:text-[#666] transition-colors duration-150"
+              className="w-full py-3 mb-4 border-[1.5px] border-dashed border-[var(--border-default)] rounded-lg text-[13px] font-body bg-transparent cursor-pointer hover:opacity-80 transition-colors duration-150"
+              style={{ color: "var(--text-tertiary)" }}
             >
               + Nouvelle liste
             </button>
           )}
           {myLists.length === 0 && (
             <EmptyState>
-              <div className="text-sm text-[#767676] font-body">
+              <div className="text-sm font-body" style={{ color: "var(--text-tertiary)" }}>
                 {isOwnProfile ? "Tu n'as pas encore créé de liste." : "Aucune liste publique pour l'instant."}
               </div>
               {isOwnProfile && (
-                <button onClick={() => setShowCreateList(true)} className="mt-4 px-5 py-2.5 rounded-[20px] text-[13px] font-medium font-body bg-[#1a1a1a] text-white border-none cursor-pointer hover:bg-[#333] transition-colors duration-150">+ Nouvelle liste</button>
+                <button onClick={() => setShowCreateList(true)} className="mt-4 px-5 py-2.5 rounded-[20px] text-[13px] font-medium font-body border-none cursor-pointer hover:opacity-80 transition-colors duration-150" style={{ backgroundColor: "var(--text-primary)", color: "var(--bg-primary)" }}>+ Nouvelle liste</button>
               )}
             </EmptyState>
           )}
@@ -1107,7 +1130,7 @@ export default function ProfilePage({ viewedProfile, initialTab }) {
                 tabIndex={0}
                 onClick={() => navigate(`/${profile?.username}/listes/${l.slug || l.id}`)}
                 onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); navigate(`/${profile?.username}/listes/${l.slug || l.id}`); } }}
-                className="py-5 border-b border-border-light cursor-pointer hover:bg-[#fafafa] transition-colors duration-100"
+                className="py-5 border-b border-border-light cursor-pointer hover:bg-surface transition-colors duration-100"
               >
                 {covers.length > 0 && (
                   <div className="flex gap-2 mb-3.5 p-3 px-3.5 bg-surface rounded-lg overflow-x-auto">
@@ -1116,14 +1139,14 @@ export default function ProfilePage({ viewedProfile, initialTab }) {
                       return <Img key={b.id} book={bookObj} w={60} h={90} />;
                     })}
                     {totalItems > 4 && (
-                      <div className="w-[60px] h-[90px] rounded-[3px] bg-avatar-bg flex items-center justify-center text-[11px] text-[#767676] shrink-0 font-body">
+                      <div className="w-[60px] h-[90px] rounded-[3px] bg-avatar-bg flex items-center justify-center text-[11px] shrink-0 font-body" style={{ color: "var(--text-tertiary)" }}>
                         +{totalItems - 4}
                       </div>
                     )}
                   </div>
                 )}
                 <div className="text-[15px] font-medium font-body">{l.title}</div>
-                <div className="text-xs text-[#767676] mt-1 font-body flex items-center gap-1.5">
+                <div className="text-xs mt-1 font-body flex items-center gap-1.5" style={{ color: "var(--text-tertiary)" }}>
                   <span>{totalItems} livre{totalItems !== 1 ? "s" : ""}</span>
                   <span>·</span>
                   <span>{l.is_public ? "Publique" : "Privée"}</span>
@@ -1161,7 +1184,7 @@ export default function ProfilePage({ viewedProfile, initialTab }) {
                 <Label>Bilan de l'année</Label>
                 <div className="text-[40px] font-bold tracking-tight font-body">{yr}</div>
               </div>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-px bg-[#eee] rounded-lg overflow-hidden mb-7">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-px rounded-lg overflow-hidden mb-7" style={{ backgroundColor: "var(--border-default)" }}>
                 {[
                   { l: "Livres lus", v: String(s.thisYear) },
                   { l: "Pages tournées", v: s.pagesThisYear?.toLocaleString("fr-FR") || "0" },
@@ -1170,9 +1193,9 @@ export default function ProfilePage({ viewedProfile, initialTab }) {
                   { l: "Citations", v: "0" },
                   { l: "Listes", v: "0" },
                 ].map((st, i) => (
-                  <div key={i} className="bg-white p-5 text-center">
+                  <div key={i} className="p-5 text-center" style={{ backgroundColor: "var(--bg-elevated)" }}>
                     <div className="text-[22px] font-semibold font-body">{st.v}</div>
-                    <div className="text-[10px] text-[#767676] mt-[3px] uppercase tracking-[0.5px] font-body">{st.l}</div>
+                    <div className="text-[10px] mt-[3px] uppercase tracking-[0.5px] font-body" style={{ color: "var(--text-tertiary)" }}>{st.l}</div>
                   </div>
                 ))}
               </div>
@@ -1184,9 +1207,9 @@ export default function ProfilePage({ viewedProfile, initialTab }) {
                   <div className="flex items-end gap-1.5 mt-2 mb-7" style={{ height: barH + 24 }}>
                     {chrono.map((v, i) => (
                       <div key={i} className="flex-1 flex flex-col items-center gap-1">
-                        {v > 0 && <div className="text-[9px] text-[#767676] font-body">{v}</div>}
-                        <div className={`w-full rounded-[3px] ${v ? "bg-[#1a1a1a]" : "bg-avatar-bg"}`} style={{ height: v ? (v / max) * barH : 4 }} />
-                        <span className="text-[9px] text-[#767676] font-body">{["J", "F", "M", "A", "M", "J", "J", "A", "S", "O", "N", "D"][i]}</span>
+                        {v > 0 && <div className="text-[9px] font-body" style={{ color: "var(--text-tertiary)" }}>{v}</div>}
+                        <div className={`w-full rounded-[3px] ${v ? "" : "bg-avatar-bg"}`} style={{ height: v ? (v / max) * barH : 4, ...(v ? { backgroundColor: "var(--text-primary)" } : {}) }} />
+                        <span className="text-[9px] font-body" style={{ color: "var(--text-tertiary)" }}>{["J", "F", "M", "A", "M", "J", "J", "A", "S", "O", "N", "D"][i]}</span>
                       </div>
                     ))}
                   </div>
@@ -1208,20 +1231,21 @@ export default function ProfilePage({ viewedProfile, initialTab }) {
             </>
           ) : (
             <EmptyState>
-              <div className="font-display italic text-[18px] text-[#1a1a1a] mb-5">
+              <div className="font-display italic text-[18px] mb-5" style={{ color: "var(--text-primary)" }}>
                 Encore {5 - (s.thisYear || 0)} livre{(5 - (s.thisYear || 0)) > 1 ? "s" : ""} pour débloquer ton bilan {yr}
               </div>
               <div className="flex justify-center mb-2">
                 <div className="w-[200px] h-1.5 bg-avatar-bg rounded overflow-hidden">
-                  <div className="h-full bg-[#1a1a1a] rounded transition-all duration-400" style={{ width: `${((s.thisYear || 0) / 5) * 100}%` }} />
+                  <div className="h-full rounded transition-all duration-400" style={{ width: `${((s.thisYear || 0) / 5) * 100}%`, backgroundColor: "var(--text-primary)" }} />
                 </div>
               </div>
-              <div className="text-xs text-[#767676] font-body mb-3">{s.thisYear || 0}/5</div>
-              <div className="text-xs text-[#767676] font-body">Seuls les livres marqués Lu avec une date en {yr} comptent.</div>
+              <div className="text-xs font-body mb-3" style={{ color: "var(--text-tertiary)" }}>{s.thisYear || 0}/5</div>
+              <div className="text-xs font-body" style={{ color: "var(--text-tertiary)" }}>Seuls les livres marqués Lu avec une date en {yr} comptent.</div>
               {s.readNoDate > 0 && (
                 <button
                   onClick={() => setTab("bibliothèque")}
-                  className="mt-1.5 text-xs text-[#1a1a1a] font-medium font-body bg-transparent border-none cursor-pointer underline underline-offset-2 hover:text-[#333] transition-colors duration-150"
+                  className="mt-1.5 text-xs font-medium font-body bg-transparent border-none cursor-pointer underline underline-offset-2 hover:opacity-80 transition-colors duration-150"
+                  style={{ color: "var(--text-primary)" }}
                 >
                   Ajouter des dates à tes lectures →
                 </button>

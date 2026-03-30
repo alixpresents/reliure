@@ -122,13 +122,14 @@ function AddQuoteModal({ onClose, onPublished }) {
         >
           {/* Header */}
           <div style={{ padding: "16px 20px 14px", borderBottom: "1px solid var(--border-subtle)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-            <span className="text-[15px] font-semibold font-body text-[#1a1a1a]">
+            <span className="text-[15px] font-semibold font-body" style={{ color: "var(--text-primary)" }}>
               {step === "search" ? "Choisir un livre" : "Ajouter une citation"}
             </span>
             {step === "compose" && (
               <button
                 onClick={() => { setStep("search"); setQuoteText(""); }}
-                className="text-[12px] text-[#767676] font-body bg-transparent border-none cursor-pointer hover:text-[#1a1a1a] transition-colors duration-150"
+                className="text-[12px] font-body bg-transparent border-none cursor-pointer hover:opacity-80 transition-opacity duration-150"
+                style={{ color: "var(--text-tertiary)" }}
               >
                 ← Changer de livre
               </button>
@@ -144,15 +145,16 @@ function AddQuoteModal({ onClose, onPublished }) {
                   value={searchQ}
                   onChange={e => setSearchQ(e.target.value)}
                   placeholder="Titre, auteur…"
-                  className="w-full bg-surface rounded-lg py-[10px] px-4 text-[14px] font-body text-[#1a1a1a] placeholder-[#767676] border border-[#eee] outline-none focus:border-[#767676] transition-[border] duration-150"
+                  className="w-full bg-surface rounded-lg py-[10px] px-4 text-[14px] font-body placeholder-[var(--text-tertiary)] border outline-none focus:border-[var(--text-tertiary)] transition-[border] duration-150"
+                  style={{ color: "var(--text-primary)", borderColor: "var(--border-default)" }}
                 />
               </div>
               <div style={{ maxHeight: 320, overflowY: "auto" }}>
                 {searching && (
-                  <div className="py-6 text-center text-[13px] text-[#767676] font-body">Recherche…</div>
+                  <div className="py-6 text-center text-[13px] font-body" style={{ color: "var(--text-tertiary)" }}>Recherche…</div>
                 )}
                 {!searching && searchQ.length >= 2 && results.length === 0 && (
-                  <div className="py-6 text-center text-[13px] text-[#767676] font-body">Aucun résultat</div>
+                  <div className="py-6 text-center text-[13px] font-body" style={{ color: "var(--text-tertiary)" }}>Aucun résultat</div>
                 )}
                 {!searching && results.map(gb => (
                   <button
@@ -164,13 +166,13 @@ function AddQuoteModal({ onClose, onPublished }) {
                     {gb.cover ? (
                       <img src={gb.cover} alt="" className="w-9 h-[54px] rounded-[3px] object-cover shrink-0" style={{ boxShadow: "var(--shadow-cover)" }} />
                     ) : (
-                      <div className="w-9 h-[54px] rounded-[3px] bg-cover-fallback shrink-0 flex items-center justify-center text-[9px] text-[#767676] font-body text-center px-1 leading-tight">{gb.title}</div>
+                      <div className="w-9 h-[54px] rounded-[3px] bg-cover-fallback shrink-0 flex items-center justify-center text-[9px] font-body text-center px-1 leading-tight" style={{ color: "var(--text-tertiary)" }}>{gb.title}</div>
                     )}
                     <div className="flex-1 min-w-0">
-                      <div className="text-[13px] font-medium font-body text-[#1a1a1a] truncate">
+                      <div className="text-[13px] font-medium font-body truncate" style={{ color: "var(--text-primary)" }}>
                         {importing === gb.googleId ? "Import…" : gb.title}
                       </div>
-                      <div className="text-[11px] text-[#767676] font-body mt-0.5 truncate">{gb.author}</div>
+                      <div className="text-[11px] font-body mt-0.5 truncate" style={{ color: "var(--text-tertiary)" }}>{gb.author}</div>
                     </div>
                   </button>
                 ))}
@@ -179,11 +181,11 @@ function AddQuoteModal({ onClose, onPublished }) {
           ) : (
             <div style={{ padding: "16px 20px 20px" }}>
               {bookObj && (
-                <div className="flex items-center gap-3 mb-4 pb-4 border-b border-[#f0f0f0]">
+                <div className="flex items-center gap-3 mb-4 pb-4 border-b" style={{ borderColor: "var(--border-subtle)" }}>
                   <Img book={bookObj} w={36} h={52} />
                   <div>
-                    <div className="text-[13px] font-medium font-body text-[#1a1a1a]">{bookObj.t}</div>
-                    <div className="text-[11px] text-[#767676] font-body mt-0.5">{bookObj.a}</div>
+                    <div className="text-[13px] font-medium font-body" style={{ color: "var(--text-primary)" }}>{bookObj.t}</div>
+                    <div className="text-[11px] font-body mt-0.5" style={{ color: "var(--text-tertiary)" }}>{bookObj.a}</div>
                   </div>
                 </div>
               )}
@@ -193,13 +195,15 @@ function AddQuoteModal({ onClose, onPublished }) {
                 onChange={e => setQuoteText(e.target.value)}
                 placeholder="La phrase qui t'a marqué…"
                 rows={4}
-                className="w-full bg-surface rounded-lg py-3 px-4 text-[14px] font-display italic text-[#1a1a1a] placeholder-[#767676] border border-[#eee] outline-none focus:border-[#767676] transition-[border] duration-150 resize-none leading-relaxed"
+                className="w-full bg-surface rounded-lg py-3 px-4 text-[14px] font-display italic placeholder-[var(--text-tertiary)] border outline-none focus:border-[var(--text-tertiary)] transition-[border] duration-150 resize-none leading-relaxed"
+                style={{ color: "var(--text-primary)", borderColor: "var(--border-default)" }}
               />
               <div className="flex justify-end mt-3">
                 <button
                   onClick={handlePublish}
                   disabled={!quoteText.trim() || saving}
-                  className="px-5 py-2 rounded-full bg-[#1a1a1a] text-white text-[13px] font-medium font-body border-none cursor-pointer hover:bg-[#333] transition-colors duration-150 disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="px-5 py-2 rounded-full text-[13px] font-medium font-body border-none cursor-pointer hover:opacity-80 transition-opacity duration-150 disabled:opacity-40 disabled:cursor-not-allowed"
+                  style={{ backgroundColor: "var(--text-primary)", color: "var(--bg-primary)" }}
                 >
                   {saving ? "Publication…" : "Publier"}
                 </button>
@@ -237,29 +241,30 @@ export default function CitationsPage() {
         {user && (
           <button
             onClick={() => setModalOpen(true)}
-            className="text-[13px] font-medium font-body text-[#1a1a1a] bg-transparent border-none cursor-pointer hover:opacity-60 transition-opacity duration-150 shrink-0"
+            className="text-[13px] font-medium font-body bg-transparent border-none cursor-pointer hover:opacity-60 transition-opacity duration-150 shrink-0"
+            style={{ color: "var(--text-primary)" }}
           >
             + Ajouter
           </button>
         )}
       </div>
-      <p className="text-sm text-[#767676] mb-5 font-body">Les plus belles phrases, partagées par la communauté.</p>
+      <p className="text-sm mb-5 font-body" style={{ color: "var(--text-tertiary)" }}>Les plus belles phrases, partagées par la communauté.</p>
 
       {showOnboarding && (
-        <p className="text-[13px] text-[#767676] font-body mb-6 leading-relaxed">
+        <p className="text-[13px] font-body mb-6 leading-relaxed" style={{ color: "var(--text-tertiary)" }}>
           Sauvegarde les phrases qui t'ont marqué depuis n'importe quelle fiche livre, ou directement ici.
         </p>
       )}
 
       {loading ? (
-        <div className="py-8 text-center text-[13px] text-[#767676] font-body">Chargement...</div>
+        <div className="py-8 text-center text-[13px] font-body" style={{ color: "var(--text-tertiary)" }}>Chargement...</div>
       ) : useDb ? (
         dbQuotes.map(q => {
           const bookObj = q.books ? { id: q.book_id, t: q.books.title, a: Array.isArray(q.books.authors) ? q.books.authors.join(", ") : "", c: q.books.cover_url, slug: q.books.slug, _supabase: q.books } : null;
           return (
             <div key={q.id} className="group py-[22px] border-b border-border-light relative">
               <div className="flex items-start justify-between gap-2">
-                <div className="text-base italic text-[#1a1a1a] leading-[1.75] border-l-[3px] border-l-cover-fallback pl-[18px] mb-3.5 font-display flex-1">
+                <div className="text-base italic leading-[1.75] border-l-[3px] border-l-cover-fallback pl-[18px] mb-3.5 font-display flex-1" style={{ color: "var(--text-primary)" }}>
                   « {q.text} »
                 </div>
                 <ContentMenu type="quote" item={q} onDelete={() => refetch()} onEdit={() => refetch()} />
@@ -268,11 +273,11 @@ export default function CitationsPage() {
                 {bookObj && <Img book={bookObj} w={36} h={52} onClick={() => go(bookObj)} />}
                 <div className="flex-1">
                   {bookObj && <div className="text-[13px] font-medium font-body">{bookObj.t}</div>}
-                  {bookObj && <div className="text-xs text-[#767676] font-body">{bookObj.a}</div>}
+                  {bookObj && <div className="text-xs font-body" style={{ color: "var(--text-tertiary)" }}>{bookObj.a}</div>}
                 </div>
                 <div className="text-right">
                   <div className="text-xs font-body"><UserName user={q.users} className="text-xs" /></div>
-                  <div className="text-xs text-[#767676] mt-0.5 font-body"><LikeButton count={q.likes_count || 0} liked={likedSet.has(q.id)} initialLiked={initialSet.has(q.id)} onToggle={() => toggle(q.id, () => showToast("Une erreur est survenue"))} /></div>
+                  <div className="text-xs mt-0.5 font-body" style={{ color: "var(--text-tertiary)" }}><LikeButton count={q.likes_count || 0} liked={likedSet.has(q.id)} initialLiked={initialSet.has(q.id)} onToggle={() => toggle(q.id, () => showToast("Une erreur est survenue"))} /></div>
                 </div>
               </div>
             </div>
@@ -281,18 +286,18 @@ export default function CitationsPage() {
       ) : (
         [...QUOTES].sort((a, b) => b.lk - a.lk).map(q => (
           <div key={q.id} className="py-[22px] border-b border-border-light">
-            <div className="text-base italic text-[#1a1a1a] leading-[1.75] border-l-[3px] border-l-cover-fallback pl-[18px] mb-3.5 font-display">
+            <div className="text-base italic leading-[1.75] border-l-[3px] border-l-cover-fallback pl-[18px] mb-3.5 font-display" style={{ color: "var(--text-primary)" }}>
               « {q.txt} »
             </div>
             <div className="flex items-center gap-3">
               <Img book={q.b} w={36} h={52} onClick={() => go(q.b)} />
               <div className="flex-1">
                 <div className="text-[13px] font-medium font-body">{q.b.t}</div>
-                <div className="text-xs text-[#767676] font-body">{q.b.a}</div>
+                <div className="text-xs font-body" style={{ color: "var(--text-tertiary)" }}>{q.b.a}</div>
               </div>
               <div className="text-right">
-                <div className="text-xs text-[#767676] font-body">{q.u}</div>
-                <div className="text-xs text-[#767676] mt-0.5 font-body"><LikeButton count={q.lk} /></div>
+                <div className="text-xs font-body" style={{ color: "var(--text-tertiary)" }}>{q.u}</div>
+                <div className="text-xs mt-0.5 font-body" style={{ color: "var(--text-tertiary)" }}><LikeButton count={q.lk} /></div>
               </div>
             </div>
           </div>

@@ -33,7 +33,7 @@ export default function ArticlePage() {
   if (!article) {
     return (
       <div className="py-16 text-center">
-        <p className="text-[15px] text-[#767676] font-body">Article introuvable.</p>
+        <p className="text-[15px] font-body" style={{ color: "var(--text-tertiary)" }}>Article introuvable.</p>
       </div>
     );
   }
@@ -53,11 +53,12 @@ export default function ArticlePage() {
     <div ref={articleRef}>
       {/* Reading progress bar */}
       <div className="sticky top-[52px] z-50 h-[2px] bg-border-light -mx-4 sm:-mx-6">
-        <div className="h-full bg-[#1a1a1a] will-change-[width]" style={{ width: `${progress}%`, transition: "width 100ms linear" }} />
+        <div className="h-full will-change-[width]" style={{ width: `${progress}%`, transition: "width 100ms linear", backgroundColor: "var(--text-primary)" }} />
       </div>
       <button
         onClick={() => navigate("/la-revue")}
-        className="bg-transparent border-none text-[#767676] cursor-pointer text-[13px] py-4 font-body"
+        className="bg-transparent border-none cursor-pointer text-[13px] py-4 font-body"
+        style={{ color: "var(--text-tertiary)" }}
       >
         ← La Revue
       </button>
@@ -67,13 +68,13 @@ export default function ArticlePage() {
         <div className="mb-3"><Tag>{article.tag}</Tag></div>
         <h1 className="font-display italic text-[24px] sm:text-[28px] font-normal leading-tight mb-3">{article.t}</h1>
         {article.st && (
-          <p className="text-base text-[#666] leading-relaxed mb-4 font-body">{article.st}</p>
+          <p className="text-base leading-relaxed mb-4 font-body" style={{ color: "var(--text-secondary)" }}>{article.st}</p>
         )}
-        <div className="text-[13px] text-[#767676] font-body">
-          <span className="font-medium text-[#1a1a1a]">{article.a}</span>
-          <span className="mx-1.5 text-[#f0f0f0]">·</span>
+        <div className="text-[13px] font-body" style={{ color: "var(--text-tertiary)" }}>
+          <span className="font-medium" style={{ color: "var(--text-primary)" }}>{article.a}</span>
+          <span className="mx-1.5" style={{ color: "var(--border-subtle)" }}>·</span>
           {article.d}
-          <span className="mx-1.5 text-[#f0f0f0]">·</span>
+          <span className="mx-1.5" style={{ color: "var(--border-subtle)" }}>·</span>
           {article.rt} de lecture
         </div>
       </div>
@@ -86,10 +87,11 @@ export default function ArticlePage() {
         <div className="sm:order-2 sm:w-[160px] sm:shrink-0 sm:sticky sm:top-20 sm:self-start flex flex-col items-center sm:items-start">
           <Img book={article.cv} w={160} h={240} onClick={() => go(article.cv)} className="w-[140px] h-[210px] sm:w-[160px] sm:h-[240px]" />
           <div className="text-[13px] font-medium mt-3 font-body text-center sm:text-left">{article.cv.t}</div>
-          <div className="text-xs text-[#767676] font-body text-center sm:text-left">{article.cv.a}</div>
+          <div className="text-xs font-body text-center sm:text-left" style={{ color: "var(--text-tertiary)" }}>{article.cv.a}</div>
           <button
             onClick={() => go(article.cv)}
-            className="mt-3 w-full px-4 py-[6px] rounded-[14px] text-xs font-medium font-body bg-transparent text-[#767676] border-[1.5px] border-[#eee] cursor-pointer hover:border-[#767676] hover:text-[#1a1a1a] transition-colors duration-150 text-center"
+            className="mt-3 w-full px-4 py-[6px] rounded-[14px] text-xs font-medium font-body bg-transparent border-[1.5px] cursor-pointer hover:opacity-80 transition-colors duration-150 text-center"
+            style={{ color: "var(--text-tertiary)", borderColor: "var(--border-default)" }}
           >
             Voir la fiche
           </button>
@@ -126,9 +128,9 @@ export default function ArticlePage() {
             <div className="flex-1">
               <div className="mb-2"><Tag>{a.tag}</Tag></div>
               <h4 className="text-[15px] sm:text-[17px] font-normal mb-1 leading-[1.3] font-display italic">{a.t}</h4>
-              <div className="text-xs text-[#767676] font-body mt-2">
-                <span className="font-medium text-[#666]">{a.a}</span>
-                <span className="mx-1.5 text-[#f0f0f0]">·</span>{a.d}
+              <div className="text-xs font-body mt-2" style={{ color: "var(--text-tertiary)" }}>
+                <span className="font-medium" style={{ color: "var(--text-secondary)" }}>{a.a}</span>
+                <span className="mx-1.5" style={{ color: "var(--border-subtle)" }}>·</span>{a.d}
               </div>
             </div>
             <Img book={a.cv} w={64} h={96} />

@@ -23,7 +23,7 @@ function CoverBackdrop() {
           />
         ))}
       </div>
-      <div className="absolute inset-0 bg-gradient-to-b from-white/40 via-white/90 to-white" />
+      <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, color-mix(in srgb, var(--bg-primary) 40%, transparent), color-mix(in srgb, var(--bg-primary) 90%, transparent), var(--bg-primary))" }} />
     </div>
   );
 }
@@ -35,13 +35,14 @@ function PickedBook({ book, rating, onRate, onRemove }) {
         <Img book={book} w={90} h={135} />
         <button
           onClick={onRemove}
-          className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-white border border-[#eee] text-[#767676] hover:text-[#1a1a1a] hover:border-[#eee] text-xs leading-none flex items-center justify-center cursor-pointer transition-all duration-150 shadow-[0_1px_3px_rgba(0,0,0,0.08)]"
+          className="absolute -top-2 -right-2 w-5 h-5 rounded-full text-xs leading-none flex items-center justify-center cursor-pointer transition-all duration-150 shadow-[0_1px_3px_rgba(0,0,0,0.08)] hover:opacity-80"
+          style={{ backgroundColor: "var(--bg-elevated)", borderWidth: 1, borderStyle: "solid", borderColor: "var(--border-default)", color: "var(--text-tertiary)" }}
         >
           ×
         </button>
       </div>
       <div className="text-[11px] font-medium mt-2 font-body text-center max-w-[90px] truncate">{book.t}</div>
-      <div className="text-[10px] text-[#767676] font-body">{book.a.split(" ").pop()}</div>
+      <div className="text-[10px] font-body" style={{ color: "var(--text-tertiary)" }}>{book.a.split(" ").pop()}</div>
       <div className="mt-1.5">
         <InteractiveStars value={rating} onChange={onRate} size="text-xs" />
       </div>
@@ -55,7 +56,7 @@ function StepWelcome({ onNext }) {
     <div className="text-center">
       <div className="flex items-center justify-center gap-1.5 mb-10">
         <span className="text-[28px] font-bold tracking-tight font-body">reliure</span>
-        <span className="text-[9px] font-semibold text-white bg-[#1a1a1a] rounded-[3px] px-[5px] py-[2px] font-body">
+        <span className="text-[9px] font-semibold rounded-[3px] px-[5px] py-[2px] font-body" style={{ backgroundColor: "var(--text-primary)", color: "var(--bg-primary)" }}>
           BETA
         </span>
       </div>
@@ -63,14 +64,15 @@ function StepWelcome({ onNext }) {
       <h1 className="font-display italic text-[36px] font-normal mb-3 leading-tight">
         Bienvenue sur Reliure.
       </h1>
-      <p className="text-[15px] text-[#666] font-body mb-10 leading-relaxed max-w-[340px] mx-auto">
+      <p className="text-[15px] font-body mb-10 leading-relaxed max-w-[340px] mx-auto" style={{ color: "var(--text-secondary)" }}>
         Ton journal de lecture. Tes coups de c&oelig;ur.<br />
         La communauté qui lit comme toi.
       </p>
 
       <button
         onClick={onNext}
-        className="bg-[#1a1a1a] text-white text-[14px] font-medium font-body px-7 py-3 rounded-lg border-none cursor-pointer hover:bg-[#333] transition-colors duration-200"
+        className="text-[14px] font-medium font-body px-7 py-3 rounded-lg border-none cursor-pointer hover:opacity-80 transition-colors duration-200"
+        style={{ backgroundColor: "var(--text-primary)", color: "var(--bg-primary)" }}
       >
         Commencer →
       </button>
@@ -106,7 +108,7 @@ function StepUsername({ username, setUsername, bio, setBio, onNext, error: exter
 
   const borderColor = status === "available" ? "border-[var(--color-success)]"
     : (status === "taken" || status === "reserved" || status === "invalid") ? "border-spoiler"
-    : "border-[#eee] focus-within:border-[#1a1a1a]";
+    : "border-[var(--border-default)] focus-within:border-[var(--text-primary)]";
 
   const handleNext = async () => {
     setSaving(true);
@@ -119,20 +121,21 @@ function StepUsername({ username, setUsername, bio, setBio, onNext, error: exter
       <h1 className="font-display italic text-[24px] font-normal text-center mb-2 leading-tight">
         Comment on t'appelle ?
       </h1>
-      <p className="text-[13px] text-[#767676] text-center mb-10 font-body">
+      <p className="text-[13px] text-center mb-10 font-body" style={{ color: "var(--text-tertiary)" }}>
         Ton @pseudo est unique. Tu pourras partager ton profil avec ce lien.
       </p>
 
       <div className="mb-6">
-        <label className="text-xs font-medium text-[#767676] mb-1.5 block font-body">Pseudo</label>
+        <label className="text-xs font-medium mb-1.5 block font-body" style={{ color: "var(--text-tertiary)" }}>Pseudo</label>
         <div className={`flex items-center border-b-[1.5px] transition-colors duration-200 ${borderColor}`}>
-          <span className="text-[#767676] text-[17px] font-body">@</span>
+          <span className="text-[17px] font-body" style={{ color: "var(--text-tertiary)" }}>@</span>
           <input
             autoFocus
             value={username}
             onChange={e => setUsername(e.target.value.replace(/\s/g, "").toLowerCase())}
             placeholder="tonpseudo"
-            className="w-full py-3 px-1 text-[17px] bg-transparent border-none outline-none text-[#1a1a1a] font-body"
+            className="w-full py-3 px-1 text-[17px] bg-transparent border-none outline-none font-body"
+            style={{ color: "var(--text-primary)" }}
           />
           {status === "available" && <span className="text-sm font-medium shrink-0" style={{ color: "var(--color-success)" }}>✓</span>}
         </div>
@@ -144,15 +147,18 @@ function StepUsername({ username, setUsername, bio, setBio, onNext, error: exter
       </div>
 
       <div className="mb-10">
-        <label className="text-xs font-medium text-[#767676] mb-1.5 block font-body">
-          Bio <span className="font-normal text-[#767676]">(optionnel)</span>
+        <label className="text-xs font-medium mb-1.5 block font-body" style={{ color: "var(--text-tertiary)" }}>
+          Bio <span className="font-normal" style={{ color: "var(--text-tertiary)" }}>(optionnel)</span>
         </label>
         <input
           value={bio}
           onChange={e => setBio(e.target.value)}
           placeholder="Lecteur compulsif, amateur de poésie..."
           maxLength={120}
-          className="w-full py-3 text-base md:text-[15px] bg-transparent border-none border-b-[1.5px] border-[#eee] outline-none text-[#1a1a1a] font-body focus:border-[#1a1a1a] transition-colors duration-200"
+          className="w-full py-3 text-base md:text-[15px] bg-transparent border-none border-b-[1.5px] outline-none font-body transition-colors duration-200"
+          style={{ borderColor: "var(--border-default)", color: "var(--text-primary)" }}
+          onFocus={e => e.target.style.borderColor = "var(--text-primary)"}
+          onBlur={e => e.target.style.borderColor = "var(--border-default)"}
         />
       </div>
 
@@ -161,9 +167,13 @@ function StepUsername({ username, setUsername, bio, setBio, onNext, error: exter
         disabled={!valid}
         className={`w-full py-3.5 rounded-lg text-[15px] font-medium font-body border-none transition-all duration-200 ${
           valid
-            ? "bg-[#1a1a1a] text-white cursor-pointer hover:bg-[#333]"
-            : "bg-avatar-bg text-[#767676] cursor-not-allowed"
+            ? "cursor-pointer hover:opacity-80"
+            : "bg-avatar-bg cursor-not-allowed"
         }`}
+        style={valid
+          ? { backgroundColor: "var(--text-primary)", color: "var(--bg-primary)" }
+          : { color: "var(--text-tertiary)" }
+        }
       >
         {saving ? "Création..." : "Continuer"}
       </button>
@@ -221,36 +231,38 @@ function StepBooks({ picks, setPicks, onFinish, onSkip }) {
       <h1 className="font-display italic text-[24px] font-normal text-center mb-2 leading-tight">
         Qu'est-ce que tu lis en ce moment ?
       </h1>
-      <p className="text-[13px] text-[#767676] text-center mb-8 font-body">
+      <p className="text-[13px] text-center mb-8 font-body" style={{ color: "var(--text-tertiary)" }}>
         Ajoute 1 à 3 livres. On commence avec ça — tu ajouteras le reste après.
       </p>
 
       {picks.length < 3 && (
         <div className="mb-6 relative">
-          <div className="bg-surface rounded-lg py-[11px] px-4 flex items-center gap-2.5 border border-[#eee] focus-within:border-[#767676] transition-[border] duration-150">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f0f0f0" strokeWidth="2" className="shrink-0">
+          <div className="bg-surface rounded-lg py-[11px] px-4 flex items-center gap-2.5 transition-[border] duration-150" style={{ borderWidth: 1, borderStyle: "solid", borderColor: "var(--border-default)" }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--border-subtle)" strokeWidth="2" className="shrink-0">
               <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
             </svg>
             <input
               value={q}
               onChange={e => setQ(e.target.value)}
               placeholder="Chercher un livre..."
-              className="bg-transparent border-none outline-none text-[#1a1a1a] text-base md:text-sm w-full font-body placeholder:text-[#767676]"
+              className="bg-transparent border-none outline-none text-base md:text-sm w-full font-body"
+              style={{ color: "var(--text-primary)" }}
             />
             {q && (
               <button
                 onClick={() => setQ("")}
-                className="text-[#767676] hover:text-[#1a1a1a] bg-transparent border-none cursor-pointer text-sm"
+                className="bg-transparent border-none cursor-pointer text-sm hover:opacity-80"
+                style={{ color: "var(--text-tertiary)" }}
               >
                 ×
               </button>
             )}
           </div>
           {searching && (
-            <div className="absolute left-0 right-0 mt-1 py-3 text-center text-[13px] text-[#767676] font-body">Recherche...</div>
+            <div className="absolute left-0 right-0 mt-1 py-3 text-center text-[13px] font-body" style={{ color: "var(--text-tertiary)" }}>Recherche...</div>
           )}
           {!searching && results.length > 0 && (
-            <div className="absolute left-0 right-0 border border-[#eee] rounded-lg mt-1 overflow-hidden bg-white z-10 shadow-[0_4px_16px_rgba(0,0,0,0.06)]">
+            <div className="absolute left-0 right-0 rounded-lg mt-1 overflow-hidden z-10 shadow-[0_4px_16px_rgba(0,0,0,0.06)]" style={{ borderWidth: 1, borderStyle: "solid", borderColor: "var(--border-default)", backgroundColor: "var(--bg-elevated)" }}>
               {results.slice(0, 5).map(gb => (
                 <div
                   key={gb.googleId}
@@ -264,7 +276,7 @@ function StepBooks({ picks, setPicks, onFinish, onSkip }) {
                   )}
                   <div className="min-w-0">
                     <div className="text-sm font-medium font-body truncate">{gb.title}</div>
-                    <div className="text-xs text-[#767676] font-body">{gb.authors.join(", ")}{gb.publishedDate ? ` · ${gb.publishedDate.slice(0, 4)}` : ""}</div>
+                    <div className="text-xs font-body" style={{ color: "var(--text-tertiary)" }}>{gb.authors.join(", ")}{gb.publishedDate ? ` · ${gb.publishedDate.slice(0, 4)}` : ""}</div>
                   </div>
                 </div>
               ))}
@@ -276,8 +288,8 @@ function StepBooks({ picks, setPicks, onFinish, onSkip }) {
       {hasBooks && (
         <div className="mb-6">
           <div className="flex items-center justify-between mb-4">
-            <span className="text-xs font-medium text-[#767676] font-body">Tes livres</span>
-            <span className="text-xs text-[#767676] font-body">{picks.length}/3</span>
+            <span className="text-xs font-medium font-body" style={{ color: "var(--text-tertiary)" }}>Tes livres</span>
+            <span className="text-xs font-body" style={{ color: "var(--text-tertiary)" }}>{picks.length}/3</span>
           </div>
           <div className="flex justify-center gap-6">
             {picks.map(p => (
@@ -298,16 +310,21 @@ function StepBooks({ picks, setPicks, onFinish, onSkip }) {
         disabled={!hasBooks || saving}
         className={`w-full py-3.5 rounded-lg text-[15px] font-medium font-body border-none transition-all duration-200 mt-6 ${
           hasBooks && !saving
-            ? "bg-[#1a1a1a] text-white cursor-pointer hover:bg-[#333]"
-            : "bg-avatar-bg text-[#767676] cursor-not-allowed"
+            ? "cursor-pointer hover:opacity-80"
+            : "bg-avatar-bg cursor-not-allowed"
         }`}
+        style={hasBooks && !saving
+          ? { backgroundColor: "var(--text-primary)", color: "var(--bg-primary)" }
+          : { color: "var(--text-tertiary)" }
+        }
       >
         {saving ? "Ajout en cours..." : "Continuer"}
       </button>
 
       <button
         onClick={onSkip}
-        className="w-full mt-3 py-2 bg-transparent border-none text-[13px] text-[#767676] cursor-pointer font-body hover:text-[#1a1a1a] transition-colors duration-150"
+        className="w-full mt-3 py-2 bg-transparent border-none text-[13px] cursor-pointer font-body hover:opacity-80 transition-colors duration-150"
+        style={{ color: "var(--text-tertiary)" }}
       >
         Passer cette étape
       </button>
@@ -388,7 +405,7 @@ export default function OnboardingPage({ onComplete }) {
   const globalStep = step + 1;
 
   return (
-    <div className="min-h-screen bg-white flex flex-col items-center justify-center px-4 relative">
+    <div className="min-h-screen flex flex-col items-center justify-center px-4 relative" style={{ backgroundColor: "var(--bg-primary)" }}>
       <OnboardingProgress current={globalStep} />
       <CoverBackdrop />
 
@@ -397,7 +414,7 @@ export default function OnboardingPage({ onComplete }) {
         {step > 0 && (
           <div className="flex items-center justify-center gap-1.5 mb-8">
             <span className="text-[20px] font-bold tracking-tight font-body">reliure</span>
-            <span className="text-[8px] font-semibold text-white bg-[#1a1a1a] rounded-[3px] px-[5px] py-[2px] font-body">
+            <span className="text-[8px] font-semibold rounded-[3px] px-[5px] py-[2px] font-body" style={{ backgroundColor: "var(--text-primary)", color: "var(--bg-primary)" }}>
               BETA
             </span>
           </div>

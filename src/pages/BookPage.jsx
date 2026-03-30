@@ -46,21 +46,23 @@ function LoginModal({ book, onClose, onNavigate }) {
               />
             </div>
           )}
-          <div className="text-[17px] font-semibold font-body text-[#1a1a1a] mb-1.5 leading-snug">
+          <div className="text-[17px] font-semibold font-body mb-1.5 leading-snug" style={{ color: "var(--text-primary)" }}>
             Garde une trace de cette lecture
           </div>
-          <div className="text-[13px] text-[#767676] font-body mb-6 leading-relaxed">
+          <div className="text-[13px] font-body mb-6 leading-relaxed" style={{ color: "var(--text-tertiary)" }}>
             Crée ton profil gratuit en 30 secondes.
           </div>
           <button
             onClick={() => onNavigate("/login")}
-            className="w-full py-3 rounded-full bg-[#1a1a1a] text-white text-[14px] font-medium font-body border-none cursor-pointer hover:bg-[#333] transition-colors duration-150 mb-3"
+            className="w-full py-3 rounded-full text-[14px] font-medium font-body border-none cursor-pointer hover:opacity-80 transition-colors duration-150 mb-3"
+            style={{ backgroundColor: "var(--text-primary)", color: "var(--bg-primary)" }}
           >
             Créer mon profil
           </button>
           <button
             onClick={() => onNavigate("/login")}
-            className="w-full bg-transparent border-none cursor-pointer text-[13px] text-[#767676] font-body hover:text-[#1a1a1a] transition-colors duration-150"
+            className="w-full bg-transparent border-none cursor-pointer text-[13px] font-body transition-colors duration-150"
+            style={{ color: "var(--text-tertiary)" }}
           >
             Déjà un compte ? Se connecter
           </button>
@@ -143,29 +145,29 @@ function EnrichModal({ bookId, onClose, onSaved, initialDescription, initialPage
       <div style={{ position: "fixed", inset: 0, zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 16px" }}>
         <div onClick={e => e.stopPropagation()} style={{ width: "100%", maxWidth: 440, background: "var(--bg-primary)", borderRadius: 16, boxShadow: "0 12px 48px rgba(0,0,0,0.16)", padding: "28px 24px 24px", maxHeight: "90vh", overflowY: "auto" }}>
           <h2 className="font-display italic text-[20px] font-normal m-0 mb-1">Compléter cette fiche</h2>
-          <div className="text-[11px] text-[#767676] font-body mb-5">Les modifications sont appliquées immédiatement.</div>
+          <div className="text-[11px] font-body mb-5" style={{ color: "var(--text-tertiary)" }}>Les modifications sont appliquées immédiatement.</div>
 
           {/* Couverture */}
           <div className="mb-4">
-            <div className="text-[12px] text-[#767676] font-body mb-2">Couverture</div>
+            <div className="text-[12px] font-body mb-2" style={{ color: "var(--text-tertiary)" }}>Couverture</div>
             {coverPreview ? (
               <div className="flex items-start gap-3">
                 <img src={coverPreview} alt="" style={{ width: 40, height: 60, objectFit: "cover", borderRadius: 3 }} />
-                <button onClick={() => { setCoverFile(null); setCoverPreview(null); }} className="text-[12px] text-[#767676] font-body bg-transparent border-none cursor-pointer hover:text-[#1a1a1a] transition-colors duration-150 mt-1">Supprimer</button>
+                <button onClick={() => { setCoverFile(null); setCoverPreview(null); }} className="text-[12px] font-body bg-transparent border-none cursor-pointer transition-colors duration-150 mt-1" style={{ color: "var(--text-tertiary)" }}>Supprimer</button>
               </div>
             ) : initialCoverUrl ? (
               <div className="flex items-center gap-3">
                 <img src={initialCoverUrl} alt="" style={{ width: 40, height: 60, objectFit: "cover", borderRadius: 3 }} />
                 <label className="flex items-center gap-2 cursor-pointer">
-                  <span className="px-3 py-1.5 rounded-md text-[12px] font-body bg-[#fafaf8] border border-[#eee] text-[#1a1a1a] hover:bg-[#f5f3f0] transition-colors duration-150">Remplacer</span>
-                  <span className="text-[11px] text-[#767676] font-body">jpg/png, max 2 Mo</span>
+                  <span className="px-3 py-1.5 rounded-md text-[12px] font-body bg-surface hover:bg-tag-bg transition-colors duration-150" style={{ color: "var(--text-primary)", borderWidth: 1, borderStyle: "solid", borderColor: "var(--border-default)" }}>Remplacer</span>
+                  <span className="text-[11px] font-body" style={{ color: "var(--text-tertiary)" }}>jpg/png, max 2 Mo</span>
                   <input type="file" accept="image/jpeg,image/png" onChange={handleFileChange} className="hidden" />
                 </label>
               </div>
             ) : (
               <label className="flex items-center gap-2 cursor-pointer">
-                <span className="px-3 py-1.5 rounded-md text-[12px] font-body bg-[#fafaf8] border border-[#eee] text-[#1a1a1a] hover:bg-[#f5f3f0] transition-colors duration-150">Choisir une image</span>
-                <span className="text-[11px] text-[#767676] font-body">jpg/png, max 2 Mo</span>
+                <span className="px-3 py-1.5 rounded-md text-[12px] font-body bg-surface hover:bg-tag-bg transition-colors duration-150" style={{ color: "var(--text-primary)", borderWidth: 1, borderStyle: "solid", borderColor: "var(--border-default)" }}>Choisir une image</span>
+                <span className="text-[11px] font-body" style={{ color: "var(--text-tertiary)" }}>jpg/png, max 2 Mo</span>
                 <input type="file" accept="image/jpeg,image/png" onChange={handleFileChange} className="hidden" />
               </label>
             )}
@@ -174,41 +176,43 @@ function EnrichModal({ bookId, onClose, onSaved, initialDescription, initialPage
 
           {/* Résumé */}
           <div className="mb-4">
-            <div className="text-[12px] text-[#767676] font-body mb-2">Résumé</div>
+            <div className="text-[12px] font-body mb-2" style={{ color: "var(--text-tertiary)" }}>Résumé</div>
             <textarea
               value={description}
               onChange={e => setDescription(e.target.value)}
               maxLength={1000}
               placeholder="Résumé du livre..."
-              className="w-full min-h-[100px] p-3 bg-[#fafaf8] border border-[#eee] rounded-lg outline-none text-[13px] text-[#1a1a1a] font-body leading-[1.7] resize-y placeholder:text-[#767676] focus:border-[#767676] transition-[border] duration-150"
+              className="w-full min-h-[100px] p-3 bg-surface border rounded-lg outline-none text-[13px] font-body leading-[1.7] resize-y placeholder:text-[var(--text-tertiary)] focus:border-[var(--text-tertiary)] transition-[border] duration-150"
+              style={{ color: "var(--text-primary)", borderColor: "var(--border-default)" }}
             />
-            <div className="text-[11px] text-[#767676] font-body text-right mt-0.5">{description.length}/1000</div>
+            <div className="text-[11px] font-body text-right mt-0.5" style={{ color: "var(--text-tertiary)" }}>{description.length}/1000</div>
           </div>
 
           {/* Nombre de pages */}
           <div className="mb-4">
-            <div className="text-[12px] text-[#767676] font-body mb-2">Nombre de pages</div>
-            <input type="number" value={pages} onChange={e => setPages(e.target.value)} min={1} placeholder="ex. 320" className="w-full py-2 px-3 bg-[#fafaf8] border border-[#eee] rounded-lg outline-none text-[13px] text-[#1a1a1a] font-body placeholder:text-[#767676] focus:border-[#767676] transition-[border] duration-150" />
+            <div className="text-[12px] font-body mb-2" style={{ color: "var(--text-tertiary)" }}>Nombre de pages</div>
+            <input type="number" value={pages} onChange={e => setPages(e.target.value)} min={1} placeholder="ex. 320" className="w-full py-2 px-3 bg-surface border rounded-lg outline-none text-[13px] font-body placeholder:text-[var(--text-tertiary)] focus:border-[var(--text-tertiary)] transition-[border] duration-150" style={{ color: "var(--text-primary)", borderColor: "var(--border-default)" }} />
           </div>
 
           {/* Éditeur */}
           <div className="mb-4">
-            <div className="text-[12px] text-[#767676] font-body mb-2">Éditeur</div>
-            <input type="text" value={publisher} onChange={e => setPublisher(e.target.value)} placeholder="ex. Gallimard" className="w-full py-2 px-3 bg-[#fafaf8] border border-[#eee] rounded-lg outline-none text-[13px] text-[#1a1a1a] font-body placeholder:text-[#767676] focus:border-[#767676] transition-[border] duration-150" />
+            <div className="text-[12px] font-body mb-2" style={{ color: "var(--text-tertiary)" }}>Éditeur</div>
+            <input type="text" value={publisher} onChange={e => setPublisher(e.target.value)} placeholder="ex. Gallimard" className="w-full py-2 px-3 bg-surface border rounded-lg outline-none text-[13px] font-body placeholder:text-[var(--text-tertiary)] focus:border-[var(--text-tertiary)] transition-[border] duration-150" style={{ color: "var(--text-primary)", borderColor: "var(--border-default)" }} />
           </div>
 
           {/* Date de publication */}
           <div className="mb-6">
-            <div className="text-[12px] text-[#767676] font-body mb-2">Date de publication</div>
-            <input type="text" value={pubDate} onChange={e => setPubDate(e.target.value)} placeholder='ex. 2024 ou "15 mars 2024"' className="w-full py-2 px-3 bg-[#fafaf8] border border-[#eee] rounded-lg outline-none text-[13px] text-[#1a1a1a] font-body placeholder:text-[#767676] focus:border-[#767676] transition-[border] duration-150" />
+            <div className="text-[12px] font-body mb-2" style={{ color: "var(--text-tertiary)" }}>Date de publication</div>
+            <input type="text" value={pubDate} onChange={e => setPubDate(e.target.value)} placeholder='ex. 2024 ou "15 mars 2024"' className="w-full py-2 px-3 bg-surface border rounded-lg outline-none text-[13px] font-body placeholder:text-[var(--text-tertiary)] focus:border-[var(--text-tertiary)] transition-[border] duration-150" style={{ color: "var(--text-primary)", borderColor: "var(--border-default)" }} />
           </div>
 
           <div className="flex gap-2 justify-end">
-            <button onClick={onClose} className="px-4 py-2 text-[13px] text-[#767676] font-body bg-transparent border-none cursor-pointer hover:text-[#1a1a1a] transition-colors duration-150">Annuler</button>
+            <button onClick={onClose} className="px-4 py-2 text-[13px] font-body bg-transparent border-none cursor-pointer transition-colors duration-150" style={{ color: "var(--text-tertiary)" }}>Annuler</button>
             <button
               onClick={handleSubmit}
               disabled={!hasContent || saving}
-              className={`px-5 py-2 rounded-lg text-[13px] font-medium font-body border-none transition-all duration-150 ${hasContent && !saving ? "bg-[#1a1a1a] text-white cursor-pointer hover:bg-[#333]" : "bg-[#f0ede8] text-[#767676] cursor-not-allowed"}`}
+              className={`px-5 py-2 rounded-lg text-[13px] font-medium font-body border-none transition-all duration-150 ${hasContent && !saving ? "cursor-pointer hover:opacity-80" : "bg-avatar-bg cursor-not-allowed"}`}
+              style={hasContent && !saving ? { backgroundColor: "var(--text-primary)", color: "var(--bg-primary)" } : { color: "var(--text-tertiary)" }}
             >
               {saving ? "Enregistrement..." : "Enregistrer"}
             </button>
@@ -492,7 +496,7 @@ export default function BookPage({ book }) {
         </div>
       )}
 
-      <button onClick={() => navigate(-1)} className="bg-transparent border-none text-[#767676] cursor-pointer text-[13px] py-4 font-body">
+      <button onClick={() => navigate(-1)} className="bg-transparent border-none cursor-pointer text-[13px] py-4 font-body" style={{ color: "var(--text-tertiary)" }}>
         ← Retour
       </button>
 
@@ -508,8 +512,8 @@ export default function BookPage({ book }) {
         </div>
         <div className="flex-1 pt-1">
           <h1 className="m-0 text-[26px] font-normal leading-tight font-display italic">{book.t}</h1>
-          <div className="text-[15px] text-[#767676] mt-1.5 font-body">{book.a}</div>
-          <div className="text-[13px] text-[#767676] mt-1 font-body">{book.y || book.publication_date}{(book.p || book.page_count) ? ` · ${book.p || book.page_count} pages` : ""}</div>
+          <div className="text-[15px] mt-1.5 font-body" style={{ color: "var(--text-tertiary)" }}>{book.a}</div>
+          <div className="text-[13px] mt-1 font-body" style={{ color: "var(--text-tertiary)" }}>{book.y || book.publication_date}{(book.p || book.page_count) ? ` · ${book.p || book.page_count} pages` : ""}</div>
 
           {/* Modifier la fiche */}
           {user && isUuid && (
@@ -531,7 +535,7 @@ export default function BookPage({ book }) {
               <span className="text-[32px] font-bold font-body">{avgRating}</span>
               <div>
                 <Stars r={avgRating} s={14} />
-                <div className="text-[11px] text-[#767676] mt-0.5 font-body">{ratingCount?.toLocaleString("fr-FR")} évaluation{ratingCount > 1 ? "s" : ""}</div>
+                <div className="text-[11px] mt-0.5 font-body" style={{ color: "var(--text-tertiary)" }}>{ratingCount?.toLocaleString("fr-FR")} évaluation{ratingCount > 1 ? "s" : ""}</div>
               </div>
             </div>
           )}
@@ -548,8 +552,8 @@ export default function BookPage({ book }) {
             <div className="flex flex-wrap gap-1.5 items-center">
               {/* Date pill */}
               {finDate && !noDate ? (
-                <span className="inline-flex items-center gap-1.5 pl-2.5 pr-1.5 py-[5px] rounded-2xl text-xs bg-tag-bg border border-[#eee] text-[#1a1a1a] font-body">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="shrink-0 text-[#767676]">
+                <span className="inline-flex items-center gap-1.5 pl-2.5 pr-1.5 py-[5px] rounded-2xl text-xs bg-tag-bg border font-body" style={{ color: "var(--text-primary)", borderColor: "var(--border-default)" }}>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="shrink-0" style={{ color: "var(--text-tertiary)" }}>
                     <rect x="3" y="4" width="18" height="18" rx="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" />
                   </svg>
                   <span className="cursor-pointer" onClick={() => dateRef.current?.showPicker()}>{finDate}</span>
@@ -564,7 +568,7 @@ export default function BookPage({ book }) {
                       setDateError(false); setFinDate(dateToLabel(e.target.value)); dbUpdateFields({ finished_at: e.target.value });
                     }}
                   />
-                  <button onClick={() => { setFinDate(null); setNoDate(true); dbUpdateFields({ finished_at: null }); }} className="bg-transparent border-none cursor-pointer text-[#767676] hover:text-[#1a1a1a] text-[11px] leading-none p-0 ml-0.5 transition-colors duration-150">×</button>
+                  <button onClick={() => { setFinDate(null); setNoDate(true); dbUpdateFields({ finished_at: null }); }} className="bg-transparent border-none cursor-pointer text-[11px] leading-none p-0 ml-0.5 transition-colors duration-150" style={{ color: "var(--text-tertiary)" }}>×</button>
                 </span>
               ) : noDate && st === "Lu" ? (
                 <>
@@ -585,7 +589,8 @@ export default function BookPage({ book }) {
                     tabIndex={0}
                     onClick={() => dateRef.current?.showPicker()}
                     onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); dateRef.current?.showPicker(); } }}
-                    className="text-[12px] text-[#767676] font-body cursor-pointer hover:text-[#1a1a1a] transition-colors duration-150"
+                    className="text-[12px] font-body cursor-pointer transition-colors duration-150"
+                    style={{ color: "var(--text-tertiary)" }}
                   >
                     Ajouter une date
                   </span>
@@ -595,14 +600,15 @@ export default function BookPage({ book }) {
               {/* Reread pill */}
               {alreadyRead && st === "Lu" && (
                 isReread ? (
-                  <span className="inline-flex items-center gap-1.5 pl-2.5 pr-1.5 py-[5px] rounded-2xl text-xs bg-tag-bg border border-[#eee] text-[#1a1a1a] font-body">
+                  <span className="inline-flex items-center gap-1.5 pl-2.5 pr-1.5 py-[5px] rounded-2xl text-xs bg-tag-bg border font-body" style={{ color: "var(--text-primary)", borderColor: "var(--border-default)" }}>
                     Relecture
-                    <button onClick={() => { setIsReread(false); dbUpdateFields({ is_reread: false }); }} className="bg-transparent border-none cursor-pointer text-[#767676] hover:text-[#1a1a1a] text-[11px] leading-none p-0 ml-0.5 transition-colors duration-150">×</button>
+                    <button onClick={() => { setIsReread(false); dbUpdateFields({ is_reread: false }); }} className="bg-transparent border-none cursor-pointer text-[11px] leading-none p-0 ml-0.5 transition-colors duration-150" style={{ color: "var(--text-tertiary)" }}>×</button>
                   </span>
                 ) : (
                   <button
                     onClick={() => { setIsReread(true); dbUpdateFields({ is_reread: true }); }}
-                    className="inline-flex items-center px-2.5 py-[5px] rounded-2xl text-xs bg-transparent border-[1.5px] border-dashed border-[#eee] text-[#767676] font-body cursor-pointer hover:border-[#767676] hover:text-[#1a1a1a] transition-colors duration-150"
+                    className="inline-flex items-center px-2.5 py-[5px] rounded-2xl text-xs bg-transparent border-[1.5px] border-dashed font-body cursor-pointer hover:border-[var(--text-tertiary)] transition-colors duration-150"
+                    style={{ borderColor: "var(--border-default)", color: "var(--text-tertiary)" }}
                   >
                     + Relecture
                   </button>
@@ -614,21 +620,22 @@ export default function BookPage({ book }) {
 
           {/* User rating */}
           <div className="mt-[18px]">
-            <div className="text-xs text-[#767676] mb-1.5 font-body">Votre note</div>
+            <div className="text-xs mb-1.5 font-body" style={{ color: "var(--text-tertiary)" }}>Votre note</div>
             <InteractiveStars value={ur} onChange={handleRating} />
           </div>
 
           {/* Personal tags */}
           <div className="mt-[18px]">
-            <div className="text-xs text-[#767676] mb-1.5 font-body">Tags personnels</div>
+            <div className="text-xs mb-1.5 font-body" style={{ color: "var(--text-tertiary)" }}>Tags personnels</div>
             {tags.length > 0 && (
               <div className="flex flex-wrap gap-1.5 mb-2">
                 {tags.map(t => (
-                  <span key={t} className="inline-flex items-center gap-1 pl-2.5 pr-1.5 py-[5px] rounded-2xl text-xs bg-tag-bg border border-[#eee] text-[#1a1a1a] font-body">
+                  <span key={t} className="inline-flex items-center gap-1 pl-2.5 pr-1.5 py-[5px] rounded-2xl text-xs bg-tag-bg border font-body" style={{ color: "var(--text-primary)", borderColor: "var(--border-default)" }}>
                     {t}
                     <button
                       onClick={() => setTags(tags.filter(x => x !== t))}
-                      className="bg-transparent border-none cursor-pointer text-[#767676] hover:text-[#1a1a1a] text-[11px] leading-none p-0 ml-0.5 transition-colors duration-150"
+                      className="bg-transparent border-none cursor-pointer text-[11px] leading-none p-0 ml-0.5 transition-colors duration-150"
+                      style={{ color: "var(--text-tertiary)" }}
                     >
                       ×
                     </button>
@@ -645,15 +652,17 @@ export default function BookPage({ book }) {
                   onFocus={() => setTagFocused(true)}
                   onBlur={() => setTimeout(() => setTagFocused(false), 150)}
                   placeholder="en vacances, recommandé par Margaux..."
-                  className="w-full py-2 text-base md:text-[13px] bg-transparent border-b border-[#eee] outline-none text-[#1a1a1a] font-body focus:border-[#1a1a1a] transition-colors duration-200"
+                  className="w-full py-2 text-base md:text-[13px] bg-transparent border-b outline-none font-body focus:border-[var(--text-primary)] transition-colors duration-200"
+                  style={{ color: "var(--text-primary)", borderColor: "var(--border-default)" }}
                 />
                 {tagFocused && tagSuggestions.length > 0 && (
-                  <div className="absolute left-0 right-0 mt-1 bg-white border border-[#eee] rounded-lg overflow-hidden z-10 shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
+                  <div className="absolute left-0 right-0 mt-1 border rounded-lg overflow-hidden z-10 shadow-[0_2px_8px_rgba(0,0,0,0.06)]" style={{ backgroundColor: "var(--bg-elevated)", borderColor: "var(--border-default)" }}>
                     {tagSuggestions.map(s => (
                       <div
                         key={s}
                         onMouseDown={e => { e.preventDefault(); addTag(s); }}
-                        className="px-3 py-2 text-[13px] text-[#1a1a1a] font-body cursor-pointer hover:bg-surface transition-colors duration-100"
+                        className="px-3 py-2 text-[13px] font-body cursor-pointer hover:bg-surface transition-colors duration-100"
+                        style={{ color: "var(--text-primary)" }}
                       >
                         {s}
                       </div>
@@ -662,7 +671,7 @@ export default function BookPage({ book }) {
                 )}
               </div>
             )}
-            <div className="text-[11px] text-[#767676] mt-1.5 font-body">Visibles uniquement par toi</div>
+            <div className="text-[11px] mt-1.5 font-body" style={{ color: "var(--text-tertiary)" }}>Visibles uniquement par toi</div>
           </div>
         </div>
       </div>
@@ -677,7 +686,8 @@ export default function BookPage({ book }) {
         <div className="pb-5">
           <button
             onClick={() => setShowEnrichModal(true)}
-            className="text-[12px] text-[#767676] font-body bg-transparent border-none cursor-pointer hover:text-[#1a1a1a] transition-colors duration-150 p-0"
+            className="text-[12px] font-body bg-transparent border-none cursor-pointer transition-colors duration-150 p-0"
+            style={{ color: "var(--text-tertiary)" }}
           >
             + Suggérer des thèmes
           </button>
@@ -692,7 +702,8 @@ export default function BookPage({ book }) {
           ) : (
             <button
               onClick={() => setShowEnrichModal(true)}
-              className="text-[13px] text-[#767676] font-body bg-transparent border-none cursor-pointer hover:text-[#1a1a1a] transition-colors duration-150 p-0"
+              className="text-[13px] font-body bg-transparent border-none cursor-pointer transition-colors duration-150 p-0"
+              style={{ color: "var(--text-tertiary)" }}
             >
               + Suggérer un résumé
             </button>
@@ -705,13 +716,13 @@ export default function BookPage({ book }) {
         <Label>Où lire</Label>
         <div className="flex gap-2 items-center">
           {["Fnac", "Amazon"].map(s => (
-            <span key={s} className="text-[11px] py-1.5 px-3 rounded-md bg-surface text-[#666] cursor-pointer border border-[#eee] font-body">
+            <span key={s} className="text-[11px] py-1.5 px-3 rounded-md bg-surface cursor-pointer border font-body" style={{ color: "var(--text-secondary)", borderColor: "var(--border-default)" }}>
               {s}
             </span>
           ))}
-          <div className="w-px h-5 bg-[#eee] mx-1" />
+          <div className="w-px h-5 mx-1" style={{ backgroundColor: "var(--border-default)" }} />
           {["Bibliothèque", "Kindle", "Audible"].map(s => (
-            <span key={s} className="text-[11px] py-1.5 px-3 rounded-md bg-surface text-[#666] cursor-pointer border border-[#eee] font-body">
+            <span key={s} className="text-[11px] py-1.5 px-3 rounded-md bg-surface cursor-pointer border font-body" style={{ color: "var(--text-secondary)", borderColor: "var(--border-default)" }}>
               {s}
             </span>
           ))}
@@ -729,7 +740,7 @@ export default function BookPage({ book }) {
                 className="min-w-[155px] cursor-pointer group"
                 onClick={() => navigate(`/${l.users?.username}/listes/${l.slug}`)}
               >
-                <div className="flex gap-1 p-2 bg-surface rounded-lg mb-2 group-hover:bg-[#f3f0eb] transition-colors duration-150">
+                <div className="flex gap-1 p-2 bg-surface rounded-lg mb-2 group-hover:bg-tag-bg transition-colors duration-150">
                   {l.previewCovers.map((url, i) => (
                     <img key={i} src={url} alt="" className="w-[43px] h-[64px] object-cover rounded-[2px] shrink-0 bg-cover-fallback" />
                   ))}
@@ -738,7 +749,7 @@ export default function BookPage({ book }) {
                   ))}
                 </div>
                 <div className="text-[13px] font-medium font-body leading-snug overflow-hidden text-ellipsis whitespace-nowrap max-w-[155px]">{l.title}</div>
-                <div className="text-[11px] text-[#767676] font-body mt-0.5">@{l.users?.username} · {l.bookCount} livre{l.bookCount !== 1 ? "s" : ""}</div>
+                <div className="text-[11px] font-body mt-0.5" style={{ color: "var(--text-tertiary)" }}>@{l.users?.username} · {l.bookCount} livre{l.bookCount !== 1 ? "s" : ""}</div>
               </div>
             ))}
           </HScroll>
@@ -762,16 +773,17 @@ export default function BookPage({ book }) {
                 }}
                 className={`w-full py-3 bg-transparent border-none cursor-pointer text-xs capitalize font-body ${
                   bt === t
-                    ? "font-semibold text-[#1a1a1a] border-b-2 border-b-[#1a1a1a]"
-                    : "font-normal text-[#767676] border-b-2 border-b-transparent"
+                    ? "font-semibold border-b-2"
+                    : "font-normal border-b-2 border-b-transparent"
                 }`}
+                style={bt === t ? { color: "var(--text-primary)", borderBottomColor: "var(--text-primary)" } : { color: "var(--text-tertiary)" }}
               >
                 {t}{t === "citations" && dbQuotes.length > 0 ? ` (${dbQuotes.length})` : ""}
               </button>
               {t === "citations" && showCitationTooltip && (
-                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 whitespace-nowrap bg-[#1a1a1a] text-white text-[11px] font-body px-2.5 py-1.5 rounded-md pointer-events-none" style={{ zIndex: 50 }}>
+                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 whitespace-nowrap text-[11px] font-body px-2.5 py-1.5 rounded-md pointer-events-none" style={{ zIndex: 50, backgroundColor: "var(--text-primary)", color: "var(--bg-primary)" }}>
                   Sauvegarde tes phrases préférées
-                  <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-[#1a1a1a]" />
+                  <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent" style={{ borderTopColor: "var(--text-primary)" }} />
                 </div>
               )}
             </div>
@@ -793,7 +805,8 @@ export default function BookPage({ book }) {
                   }
                   setShowReviewForm(true);
                 }}
-                className="w-full mb-4 py-2.5 rounded-lg border-[1.5px] border-dashed border-[#eee] bg-transparent cursor-pointer text-[13px] text-[#767676] font-body transition-colors duration-200 hover:border-[#767676] hover:text-[#1a1a1a]"
+                className="w-full mb-4 py-2.5 rounded-lg border-[1.5px] border-dashed bg-transparent cursor-pointer text-[13px] font-body transition-colors duration-200 hover:border-[var(--text-tertiary)]"
+                style={{ borderColor: "var(--border-default)", color: "var(--text-tertiary)" }}
               >
                 {userReview ? "Modifier ma critique" : "+ Écrire une critique"}
               </button>
@@ -803,11 +816,12 @@ export default function BookPage({ book }) {
                   value={reviewText}
                   onChange={e => setReviewText(e.target.value)}
                   placeholder="Qu'avez-vous pensé de ce livre ?"
-                  className="w-full min-h-[120px] p-3 bg-white border border-[#eee] rounded-lg outline-none text-base md:text-sm text-[#1a1a1a] font-body leading-[1.7] resize-y placeholder:text-[#767676] focus:border-[#767676] transition-[border] duration-150"
+                  className="w-full min-h-[120px] p-3 border rounded-lg outline-none text-base md:text-sm font-body leading-[1.7] resize-y placeholder:text-[var(--text-tertiary)] focus:border-[var(--text-tertiary)] transition-[border] duration-150"
+                  style={{ backgroundColor: "var(--bg-elevated)", color: "var(--text-primary)", borderColor: "var(--border-default)" }}
                 />
                 <label className="flex items-center gap-2 mt-3 cursor-pointer">
-                  <input type="checkbox" checked={reviewSpoiler} onChange={e => setReviewSpoiler(e.target.checked)} className="accent-[#1a1a1a]" />
-                  <span className="text-xs text-[#767676] font-body">Cette critique contient des spoilers</span>
+                  <input type="checkbox" checked={reviewSpoiler} onChange={e => setReviewSpoiler(e.target.checked)} className="accent-[var(--text-primary)]" />
+                  <span className="text-xs font-body" style={{ color: "var(--text-tertiary)" }}>Cette critique contient des spoilers</span>
                 </label>
                 <div className="flex gap-2 mt-3">
                   <button
@@ -815,15 +829,17 @@ export default function BookPage({ book }) {
                     disabled={!reviewText.trim() || reviewSaving}
                     className={`px-4 py-2 rounded-lg text-[13px] font-medium font-body border-none transition-all duration-150 ${
                       reviewText.trim() && !reviewSaving
-                        ? "bg-[#1a1a1a] text-white cursor-pointer hover:bg-[#333]"
-                        : "bg-avatar-bg text-[#767676] cursor-not-allowed"
+                        ? "cursor-pointer hover:opacity-80"
+                        : "bg-avatar-bg cursor-not-allowed"
                     }`}
+                    style={reviewText.trim() && !reviewSaving ? { backgroundColor: "var(--text-primary)", color: "var(--bg-primary)" } : { color: "var(--text-tertiary)" }}
                   >
                     {reviewSaving ? "Publication..." : "Publier"}
                   </button>
                   <button
                     onClick={() => { setShowReviewForm(false); setReviewText(""); setReviewSpoiler(false); }}
-                    className="px-4 py-2 text-[13px] text-[#767676] font-body bg-transparent border-none cursor-pointer hover:text-[#1a1a1a] transition-colors duration-150"
+                    className="px-4 py-2 text-[13px] font-body bg-transparent border-none cursor-pointer transition-colors duration-150"
+                    style={{ color: "var(--text-tertiary)" }}
                   >
                     Annuler
                   </button>
@@ -835,7 +851,8 @@ export default function BookPage({ book }) {
               <div className="text-center mb-4 -mt-1">
                 <button
                   onClick={() => setBt("citations")}
-                  className="text-[12px] text-[#767676] font-body bg-transparent border-none cursor-pointer hover:text-[#767676] transition-colors duration-150"
+                  className="text-[12px] font-body bg-transparent border-none cursor-pointer transition-colors duration-150"
+                  style={{ color: "var(--text-tertiary)" }}
                 >
                   Tu as une phrase marquante ? → Ajouter une citation
                 </button>
@@ -844,7 +861,7 @@ export default function BookPage({ book }) {
 
             {/* Reviews list */}
             {reviewsLoading ? (
-              <div className="py-6 text-center text-[13px] text-[#767676] font-body">Chargement...</div>
+              <div className="py-6 text-center text-[13px] font-body" style={{ color: "var(--text-tertiary)" }}>Chargement...</div>
             ) : dbReviews.length > 0 ? (
               dbReviews.map((rv, i) => {
                 const displayName = rv.users?.display_name || rv.users?.username || "?";
@@ -880,7 +897,7 @@ export default function BookPage({ book }) {
                 );
               })
             ) : (
-              <div className="py-6 text-center text-[13px] text-[#767676] font-body">Pas encore de critiques. Soyez le premier !</div>
+              <div className="py-6 text-center text-[13px] font-body" style={{ color: "var(--text-tertiary)" }}>Pas encore de critiques. Soyez le premier !</div>
             )}
           </div>
         )}
@@ -891,7 +908,8 @@ export default function BookPage({ book }) {
             {!showQuoteForm ? (
               <button
                 onClick={() => setShowQuoteForm(true)}
-                className="w-full mb-4 py-2.5 rounded-lg border-[1.5px] border-dashed border-[#eee] bg-transparent cursor-pointer text-[13px] text-[#767676] font-body transition-colors duration-200 hover:border-[#767676] hover:text-[#1a1a1a]"
+                className="w-full mb-4 py-2.5 rounded-lg border-[1.5px] border-dashed bg-transparent cursor-pointer text-[13px] font-body transition-colors duration-200 hover:border-[var(--text-tertiary)]"
+                style={{ borderColor: "var(--border-default)", color: "var(--text-tertiary)" }}
               >
                 + Ajouter une citation
               </button>
@@ -901,7 +919,8 @@ export default function BookPage({ book }) {
                   value={quoteText}
                   onChange={e => setQuoteText(e.target.value)}
                   placeholder="Copiez un passage du livre..."
-                  className="w-full min-h-[80px] p-3 bg-white border border-[#eee] rounded-lg outline-none text-base md:text-[15px] text-[#1a1a1a] font-display italic leading-[1.7] resize-y placeholder:text-[#767676] placeholder:not-italic placeholder:font-body focus:border-[#767676] transition-[border] duration-150"
+                  className="w-full min-h-[80px] p-3 border rounded-lg outline-none text-base md:text-[15px] font-display italic leading-[1.7] resize-y placeholder:text-[var(--text-tertiary)] placeholder:not-italic placeholder:font-body focus:border-[var(--text-tertiary)] transition-[border] duration-150"
+                  style={{ backgroundColor: "var(--bg-elevated)", color: "var(--text-primary)", borderColor: "var(--border-default)" }}
                 />
                 <div className="flex gap-2 mt-3">
                   <button
@@ -909,15 +928,17 @@ export default function BookPage({ book }) {
                     disabled={!quoteText.trim() || quoteSaving}
                     className={`px-4 py-2 rounded-lg text-[13px] font-medium font-body border-none transition-all duration-150 ${
                       quoteText.trim() && !quoteSaving
-                        ? "bg-[#1a1a1a] text-white cursor-pointer hover:bg-[#333]"
-                        : "bg-avatar-bg text-[#767676] cursor-not-allowed"
+                        ? "cursor-pointer hover:opacity-80"
+                        : "bg-avatar-bg cursor-not-allowed"
                     }`}
+                    style={quoteText.trim() && !quoteSaving ? { backgroundColor: "var(--text-primary)", color: "var(--bg-primary)" } : { color: "var(--text-tertiary)" }}
                   >
                     {quoteSaving ? "Publication..." : "Publier"}
                   </button>
                   <button
                     onClick={() => { setShowQuoteForm(false); setQuoteText(""); }}
-                    className="px-4 py-2 text-[13px] text-[#767676] font-body bg-transparent border-none cursor-pointer hover:text-[#1a1a1a] transition-colors duration-150"
+                    className="px-4 py-2 text-[13px] font-body bg-transparent border-none cursor-pointer transition-colors duration-150"
+                    style={{ color: "var(--text-tertiary)" }}
                   >
                     Annuler
                   </button>
@@ -927,13 +948,13 @@ export default function BookPage({ book }) {
 
             {/* Quotes list */}
             {quotesLoading ? (
-              <div className="py-6 text-center text-[13px] text-[#767676] font-body">Chargement...</div>
+              <div className="py-6 text-center text-[13px] font-body" style={{ color: "var(--text-tertiary)" }}>Chargement...</div>
             ) : dbQuotes.length > 0 ? (
               dbQuotes.map((q, i) => {
                 const isOwn = q.user_id === user?.id;
                 return (
                   <div key={q.id} ref={isOwn && i === dbQuotes.findIndex(qt => qt.user_id === user?.id) ? newQuoteRef : undefined} className="group py-[18px] border-b border-border-light relative">
-                    <div className="text-[15px] italic text-[#1a1a1a] leading-[1.7] border-l-[3px] border-l-cover-fallback pl-4 font-display">
+                    <div className="text-[15px] italic leading-[1.7] border-l-[3px] border-l-cover-fallback pl-4 font-display" style={{ color: "var(--text-primary)" }}>
                       « {q.text} »
                     </div>
                     <div className="flex items-center gap-2 mt-2.5">
@@ -953,12 +974,13 @@ export default function BookPage({ book }) {
               })
             ) : (
               <div className="py-8 text-center">
-                <div className="text-[14px] text-[#767676] font-body mb-1">Aucune citation pour ce livre.</div>
-                <div className="text-[13px] text-[#767676] font-body mb-4">Tu as une phrase marquante à partager ?</div>
+                <div className="text-[14px] font-body mb-1" style={{ color: "var(--text-tertiary)" }}>Aucune citation pour ce livre.</div>
+                <div className="text-[13px] font-body mb-4" style={{ color: "var(--text-tertiary)" }}>Tu as une phrase marquante à partager ?</div>
                 {user && !showQuoteForm && (
                   <button
                     onClick={() => setShowQuoteForm(true)}
-                    className="px-5 py-2 rounded-full bg-[#1a1a1a] text-white text-[13px] font-medium font-body border-none cursor-pointer hover:bg-[#333] transition-colors duration-150"
+                    className="px-5 py-2 rounded-full text-[13px] font-medium font-body border-none cursor-pointer hover:opacity-80 transition-colors duration-150"
+                    style={{ backgroundColor: "var(--text-primary)", color: "var(--bg-primary)" }}
                   >
                     + Ajouter une citation
                   </button>
@@ -971,9 +993,9 @@ export default function BookPage({ book }) {
         {bt === "éditions" && (
           <div className="flex gap-2.5">
             {[{ l: "Poche", p: "Folio", y: "2008" }, { l: "Relié", p: "Gallimard", y: "2004" }, { l: "Audio", p: "Audible", y: "2019" }].map((e, i) => (
-              <div key={i} className="p-3.5 px-4 bg-surface rounded-lg flex-1 cursor-pointer hover:bg-[#f3f0eb]">
+              <div key={i} className="p-3.5 px-4 bg-surface rounded-lg flex-1 cursor-pointer hover:bg-tag-bg">
                 <div className="text-[13px] font-semibold font-body">{e.l}</div>
-                <div className="text-xs text-[#767676] mt-[3px] font-body">{e.p} · {e.y}</div>
+                <div className="text-xs mt-[3px] font-body" style={{ color: "var(--text-tertiary)" }}>{e.p} · {e.y}</div>
               </div>
             ))}
           </div>

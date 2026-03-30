@@ -17,13 +17,14 @@ function BackfillBook({ book, rating, onRate, onRemove, isNew }) {
         <Img book={book} w={60} h={90} />
         <button
           onClick={onRemove}
-          className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-white border border-[#eee] text-[#767676] hover:text-[#1a1a1a] hover:border-[#eee] text-xs leading-none flex items-center justify-center cursor-pointer transition-all duration-150 shadow-[0_1px_3px_rgba(0,0,0,0.08)]"
+          className="absolute -top-2 -right-2 w-5 h-5 rounded-full border text-xs leading-none flex items-center justify-center cursor-pointer transition-all duration-150 hover:opacity-80"
+          style={{ backgroundColor: "var(--bg-elevated)", borderColor: "var(--border-default)", color: "var(--text-tertiary)", boxShadow: "var(--shadow-cover)" }}
         >
           ×
         </button>
       </div>
       <div className="text-[11px] font-medium mt-2 font-body text-center max-w-[60px] truncate">{book.t}</div>
-      <div className="text-[10px] text-[#767676] font-body">{book.a.split(" ").pop()}</div>
+      <div className="text-[10px] font-body" style={{ color: "var(--text-tertiary)" }}>{book.a.split(" ").pop()}</div>
       <div className="mt-1">
         <InteractiveStars value={rating} onChange={onRate} size="text-[10px]" />
       </div>
@@ -34,12 +35,12 @@ function BackfillBook({ book, rating, onRate, onRemove, isNew }) {
 function StatusPill({ label, active, variant, onClick }) {
   const base = "px-2.5 py-[5px] rounded-2xl text-[11px] font-medium font-body cursor-pointer transition-all duration-200 border inline-flex items-center gap-1";
   if (active && variant === "lu") {
-    return <button onClick={onClick} className={`${base} bg-[#1a1a1a] text-white border-[#1a1a1a]`}>✓ {label}</button>;
+    return <button onClick={onClick} className={`${base} border-transparent`} style={{ backgroundColor: "var(--text-primary)", color: "var(--bg-primary)", borderColor: "var(--text-primary)" }}>✓ {label}</button>;
   }
   if (active && variant === "alire") {
-    return <button onClick={onClick} className={`${base} bg-tag-bg text-[#1a1a1a] border-[#eee]`}>✓ {label}</button>;
+    return <button onClick={onClick} className={`${base} bg-tag-bg`} style={{ color: "var(--text-primary)", borderColor: "var(--border-default)" }}>✓ {label}</button>;
   }
-  return <button onClick={onClick} className={`${base} bg-transparent text-[#767676] border-[#eee] hover:border-[#767676]`}>{label}</button>;
+  return <button onClick={onClick} className={`${base} bg-transparent hover:opacity-80`} style={{ color: "var(--text-tertiary)", borderColor: "var(--border-default)" }}>{label}</button>;
 }
 
 function EnrichSection({ user }) {
@@ -165,8 +166,8 @@ function EnrichSection({ user }) {
 
   if (phase === "done") {
     return (
-      <div className="mb-8 p-4 border border-[#eee] rounded-lg">
-        <p className="text-[13px] font-body text-[#1a1a1a] text-center mb-2">
+      <div className="mb-8 p-4 border rounded-lg" style={{ borderColor: "var(--border-default)" }}>
+        <p className="text-[13px] font-body text-center mb-2" style={{ color: "var(--text-primary)" }}>
           {progress.enriched} livre{progress.enriched > 1 ? "s" : ""} enrichi{progress.enriched > 1 ? "s" : ""} ✓
         </p>
         {uncertainBooks.length > 0 && (
@@ -179,7 +180,8 @@ function EnrichSection({ user }) {
                 <button
                   key={b.id}
                   onClick={() => navigate(`/livre/${b.slug || b.id}`)}
-                  className="text-[11px] font-body text-[#666] underline bg-transparent border-none cursor-pointer hover:text-[#1a1a1a] p-0"
+                  className="text-[11px] font-body underline bg-transparent border-none cursor-pointer hover:opacity-80 p-0"
+                  style={{ color: "var(--text-secondary)" }}
                 >
                   {b.title}
                 </button>
@@ -188,7 +190,7 @@ function EnrichSection({ user }) {
           </div>
         )}
         {failedBooks.length > 0 && (
-          <p className="text-[12px] font-body text-[#767676] mt-2 text-center">
+          <p className="text-[12px] font-body mt-2 text-center" style={{ color: "var(--text-tertiary)" }}>
             {failedBooks.length} introuvable{failedBooks.length > 1 ? "s" : ""}
           </p>
         )}
@@ -199,20 +201,20 @@ function EnrichSection({ user }) {
   if (phase === "enriching") {
     const pct = progress.total ? Math.round(progress.current / progress.total * 100) : 0;
     return (
-      <div className="mb-8 p-4 border border-[#eee] rounded-lg">
-        <p className="text-[13px] font-body text-[#666] mb-3 text-center">
+      <div className="mb-8 p-4 border rounded-lg" style={{ borderColor: "var(--border-default)" }}>
+        <p className="text-[13px] font-body mb-3 text-center" style={{ color: "var(--text-secondary)" }}>
           Enrichissement en cours… {progress.current} / {progress.total}
         </p>
-        <div className="h-[3px] bg-[#f0ede8] rounded-sm overflow-hidden mb-2">
-          <div className="h-full bg-[#1a1a1a] rounded-sm transition-[width] duration-200" style={{ width: `${pct}%` }} />
+        <div className="h-[3px] bg-avatar-bg rounded-sm overflow-hidden mb-2">
+          <div className="h-full rounded-sm transition-[width] duration-200" style={{ width: `${pct}%`, backgroundColor: "var(--text-primary)" }} />
         </div>
         <div className="flex justify-center gap-4 text-[12px] font-body mt-2">
-          <span className="text-[#1a1a1a]">{progress.enriched} enrichi{progress.enriched > 1 ? "s" : ""}</span>
+          <span style={{ color: "var(--text-primary)" }}>{progress.enriched} enrichi{progress.enriched > 1 ? "s" : ""}</span>
           {progress.uncertain > 0 && <span style={{ color: "var(--color-star)" }}>{progress.uncertain} incertain{progress.uncertain > 1 ? "s" : ""}</span>}
-          <span className="text-[#767676]">{progress.failed} non trouvé{progress.failed > 1 ? "s" : ""}</span>
+          <span style={{ color: "var(--text-tertiary)" }}>{progress.failed} non trouvé{progress.failed > 1 ? "s" : ""}</span>
         </div>
         {eta != null && (
-          <p className="text-[11px] font-body text-[#767676] text-center mt-2">
+          <p className="text-[11px] font-body text-center mt-2" style={{ color: "var(--text-tertiary)" }}>
             ~{eta >= 60 ? `${Math.round(eta / 60)} min` : `${eta}s`} restante{eta >= 60 ? (Math.round(eta / 60) > 1 ? "s" : "") : (eta > 1 ? "s" : "")}
           </p>
         )}
@@ -221,19 +223,20 @@ function EnrichSection({ user }) {
   }
 
   return (
-    <div className="mb-8 p-4 border border-[#eee] rounded-lg">
+    <div className="mb-8 p-4 border rounded-lg" style={{ borderColor: "var(--border-default)" }}>
       <div className="flex items-center justify-between gap-4">
-        <p className="text-[13px] font-body text-[#666]">
+        <p className="text-[13px] font-body" style={{ color: "var(--text-secondary)" }}>
           {incompleteBooks.length} livre{incompleteBooks.length > 1 ? "s" : ""} sans couverture ni description
         </p>
         <button
           onClick={startEnrich}
-          className="px-4 py-2 rounded-[20px] text-[12px] font-medium font-body bg-[#1a1a1a] text-white border-none cursor-pointer hover:bg-[#333] transition-colors duration-150 shrink-0"
+          className="px-4 py-2 rounded-[20px] text-[12px] font-medium font-body border-none cursor-pointer hover:opacity-80 transition-colors duration-150 shrink-0"
+          style={{ backgroundColor: "var(--text-primary)", color: "var(--bg-primary)" }}
         >
           ✨ Enrichir avec l'IA
         </button>
       </div>
-      <p className="text-[10px] font-body text-[#767676] mt-2">
+      <p className="text-[10px] font-body mt-2" style={{ color: "var(--text-tertiary)" }}>
         Utilise Claude Haiku + Open Library · ~0,001$ par livre
       </p>
     </div>
@@ -304,8 +307,8 @@ function CoverRepairSection({ user }) {
 
   if (phase === "done") {
     return (
-      <div className="mb-6 p-4 border border-[#eee] rounded-lg text-center">
-        <p className="text-[13px] font-body text-[#1a1a1a]">
+      <div className="mb-6 p-4 border rounded-lg text-center" style={{ borderColor: "var(--border-default)" }}>
+        <p className="text-[13px] font-body" style={{ color: "var(--text-primary)" }}>
           {progress.found} couverture{progress.found > 1 ? "s" : ""} trouvée{progress.found > 1 ? "s" : ""} · {progress.failed} introuvable{progress.failed > 1 ? "s" : ""}
         </p>
       </div>
@@ -315,29 +318,30 @@ function CoverRepairSection({ user }) {
   if (phase === "repairing") {
     const pct = progress.total ? Math.round(progress.current / progress.total * 100) : 0;
     return (
-      <div className="mb-6 p-4 border border-[#eee] rounded-lg">
-        <p className="text-[13px] font-body text-[#666] mb-3 text-center">
+      <div className="mb-6 p-4 border rounded-lg" style={{ borderColor: "var(--border-default)" }}>
+        <p className="text-[13px] font-body mb-3 text-center" style={{ color: "var(--text-secondary)" }}>
           Recherche de couvertures… {progress.current} / {progress.total}
         </p>
-        <div className="h-[3px] bg-[#f0ede8] rounded-sm overflow-hidden mb-2">
-          <div className="h-full bg-[#1a1a1a] rounded-sm transition-[width] duration-200" style={{ width: `${pct}%` }} />
+        <div className="h-[3px] bg-avatar-bg rounded-sm overflow-hidden mb-2">
+          <div className="h-full rounded-sm transition-[width] duration-200" style={{ width: `${pct}%`, backgroundColor: "var(--text-primary)" }} />
         </div>
         <div className="flex justify-center gap-4 text-[12px] font-body mt-2">
-          <span className="text-[#1a1a1a]">{progress.found} trouvée{progress.found > 1 ? "s" : ""}</span>
-          <span className="text-[#767676]">{progress.failed} introuvable{progress.failed > 1 ? "s" : ""}</span>
+          <span style={{ color: "var(--text-primary)" }}>{progress.found} trouvée{progress.found > 1 ? "s" : ""}</span>
+          <span style={{ color: "var(--text-tertiary)" }}>{progress.failed} introuvable{progress.failed > 1 ? "s" : ""}</span>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="mb-6 p-4 border border-[#eee] rounded-lg flex items-center justify-between gap-4">
-      <p className="text-[13px] font-body text-[#666]">
+    <div className="mb-6 p-4 border rounded-lg flex items-center justify-between gap-4" style={{ borderColor: "var(--border-default)" }}>
+      <p className="text-[13px] font-body" style={{ color: "var(--text-secondary)" }}>
         {books.length} livre{books.length > 1 ? "s" : ""} sans couverture
       </p>
       <button
         onClick={startRepair}
-        className="px-4 py-2 rounded-[20px] text-[12px] font-medium font-body bg-[#1a1a1a] text-white border-none cursor-pointer hover:bg-[#333] transition-colors duration-150 shrink-0"
+        className="px-4 py-2 rounded-[20px] text-[12px] font-medium font-body border-none cursor-pointer hover:opacity-80 transition-colors duration-150 shrink-0"
+        style={{ backgroundColor: "var(--text-primary)", color: "var(--bg-primary)" }}
       >
         🖼 Réparer les couvertures
       </button>
@@ -449,7 +453,8 @@ export default function BackfillPage() {
     <div className="max-w-[500px] mx-auto">
       <button
         onClick={onBack}
-        className="bg-transparent border-none text-[#767676] cursor-pointer text-[13px] py-4 font-body"
+        className="bg-transparent border-none cursor-pointer text-[13px] py-4 font-body"
+        style={{ color: "var(--text-tertiary)" }}
       >
         ← Retour au profil
       </button>
@@ -465,9 +470,9 @@ export default function BackfillPage() {
 
       {/* Séparateur */}
       <div className="flex items-center gap-3 mb-8">
-        <div className="flex-1 h-px bg-[#f0f0f0]" />
-        <span className="text-[11px] uppercase tracking-widest text-[#767676] font-body">ou ajoute manuellement</span>
-        <div className="flex-1 h-px bg-[#f0f0f0]" />
+        <div className="flex-1 h-px" style={{ backgroundColor: "var(--border-subtle)" }} />
+        <span className="text-[11px] uppercase tracking-widest font-body" style={{ color: "var(--text-tertiary)" }}>ou ajoute manuellement</span>
+        <div className="flex-1 h-px" style={{ backgroundColor: "var(--border-subtle)" }} />
       </div>
 
       {/* Header */}
@@ -475,29 +480,30 @@ export default function BackfillPage() {
         <h1 className="font-display italic text-xl font-normal mb-1 leading-tight">
           Qu'as-tu lu récemment ?
         </h1>
-        <p className="text-[13px] text-[#767676] font-body">
+        <p className="text-[13px] font-body" style={{ color: "var(--text-tertiary)" }}>
           Tape un titre ou un auteur.
         </p>
       </div>
 
       {/* Search */}
       <div className="relative mb-8">
-        <div className="bg-surface rounded-lg py-[11px] px-4 flex items-center gap-2.5 border border-[#eee] focus-within:border-[#767676] transition-[border] duration-150">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f0f0f0" strokeWidth="2" className="shrink-0">
+        <div className="bg-surface rounded-lg py-[11px] px-4 flex items-center gap-2.5 border focus-within:border-[#767676] transition-[border] duration-150" style={{ borderColor: "var(--border-default)" }}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--border-subtle)" strokeWidth="2" className="shrink-0">
             <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
           </svg>
           <input
             value={q}
             onChange={e => setQ(e.target.value)}
             placeholder="Chercher un livre, un auteur..."
-            className="bg-transparent border-none outline-none text-[#1a1a1a] text-base md:text-sm w-full font-body placeholder:text-[#767676]"
+            className="bg-transparent border-none outline-none text-base md:text-sm w-full font-body"
+            style={{ color: "var(--text-primary)", "--tw-placeholder-opacity": 1 }}
           />
         </div>
         {searching && (
-          <div className="mt-2 py-3 text-center text-[13px] text-[#767676] font-body">Recherche...</div>
+          <div className="mt-2 py-3 text-center text-[13px] font-body" style={{ color: "var(--text-tertiary)" }}>Recherche...</div>
         )}
         {!searching && searchResults.length > 0 && (
-          <div className="absolute left-0 right-0 mt-1 bg-white border border-[#eee] rounded-lg overflow-hidden z-10 shadow-[0_4px_16px_rgba(0,0,0,0.06)]">
+          <div className="absolute left-0 right-0 mt-1 border rounded-lg overflow-hidden z-10 shadow-[0_4px_16px_rgba(0,0,0,0.06)]" style={{ backgroundColor: "var(--bg-elevated)", borderColor: "var(--border-default)" }}>
             {searchResults.slice(0, 6).map(gb => (
               <div
                 key={gb.googleId}
@@ -511,14 +517,14 @@ export default function BackfillPage() {
                 )}
                 <div className="min-w-0 flex-1">
                   <div className="text-sm font-medium font-body truncate">{gb.title}</div>
-                  <div className="text-xs text-[#767676] font-body">{gb.authors.join(", ")}{gb.publishedDate ? ` · ${gb.publishedDate.slice(0, 4)}` : ""}</div>
+                  <div className="text-xs font-body" style={{ color: "var(--text-tertiary)" }}>{gb.authors.join(", ")}{gb.publishedDate ? ` · ${gb.publishedDate.slice(0, 4)}` : ""}</div>
                 </div>
               </div>
             ))}
           </div>
         )}
         {!searching && q.length >= 2 && searchResults.length === 0 && (
-          <div className="mt-2 py-3 text-center text-[13px] text-[#767676] font-body">Aucun résultat.</div>
+          <div className="mt-2 py-3 text-center text-[13px] font-body" style={{ color: "var(--text-tertiary)" }}>Aucun résultat.</div>
         )}
       </div>
 
@@ -534,7 +540,7 @@ export default function BackfillPage() {
                 <Img book={book} w={44} h={66} />
                 <div className="flex-1 min-w-0">
                   <div className="text-sm font-medium font-body truncate">{book.t}</div>
-                  <div className="text-xs text-[#767676] font-body">{book.a}</div>
+                  <div className="text-xs font-body" style={{ color: "var(--text-tertiary)" }}>{book.a}</div>
                 </div>
                 <div className="flex gap-1.5 shrink-0">
                   <StatusPill label="Lu" active={st === "lu"} variant="lu" onClick={() => toggleStatus(book, "lu")} />
@@ -550,8 +556,8 @@ export default function BackfillPage() {
       {picks.length > 0 && (
         <div className={`transition-all duration-400 ${confirming ? "opacity-0 scale-95" : "opacity-100 scale-100"}`}>
           <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-medium text-[#767676] font-body">Ta sélection</span>
-            <span className="text-xs text-[#767676] font-body">{picks.length} livre{picks.length > 1 ? "s" : ""}</span>
+            <span className="text-xs font-medium font-body" style={{ color: "var(--text-tertiary)" }}>Ta sélection</span>
+            <span className="text-xs font-body" style={{ color: "var(--text-tertiary)" }}>{picks.length} livre{picks.length > 1 ? "s" : ""}</span>
           </div>
           <div className="flex flex-wrap gap-3 mb-24">
             {picks.map(p => (
@@ -571,23 +577,27 @@ export default function BackfillPage() {
       {/* Confirm message */}
       {confirmMsg && (
         <div className="fixed inset-x-0 bottom-24 flex justify-center z-20 animate-[fadeIn_300ms_ease]">
-          <div className="bg-[#1a1a1a] text-white text-sm font-medium font-body px-5 py-3 rounded-full shadow-[0_4px_16px_rgba(0,0,0,0.15)]">
+          <div className="text-sm font-medium font-body px-5 py-3 rounded-full shadow-[0_4px_16px_rgba(0,0,0,0.15)]" style={{ backgroundColor: "var(--text-primary)", color: "var(--bg-primary)" }}>
             {confirmMsg}
           </div>
         </div>
       )}
 
       {/* Sticky button */}
-      <div className="fixed bottom-0 left-0 right-0 z-10 pb-6 pt-4 bg-gradient-to-t from-white via-white to-white/0 pointer-events-none">
+      <div className="fixed bottom-0 left-0 right-0 z-10 pb-6 pt-4 pointer-events-none" style={{ background: "linear-gradient(to top, var(--bg-primary), var(--bg-primary) 60%, transparent)" }}>
         <div className="max-w-[500px] mx-auto px-4 pointer-events-auto">
           <button
             onClick={handleConfirm}
             disabled={picks.length === 0}
             className={`w-full py-3.5 rounded-[20px] text-[15px] font-medium font-body border-none transition-all duration-200 ${
               picks.length > 0
-                ? "bg-[#1a1a1a] text-white cursor-pointer hover:bg-[#333]"
-                : "bg-avatar-bg text-[#767676] cursor-not-allowed"
+                ? "cursor-pointer hover:opacity-80"
+                : "bg-avatar-bg cursor-not-allowed"
             }`}
+            style={picks.length > 0
+              ? { backgroundColor: "var(--text-primary)", color: "var(--bg-primary)" }
+              : { color: "var(--text-tertiary)" }
+            }
           >
             {picks.length > 0
               ? `Ajouter ${picks.length} livre${picks.length > 1 ? "s" : ""} à ma bibliothèque`

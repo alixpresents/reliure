@@ -34,14 +34,14 @@ function ProfileSkeleton() {
       <Skeleton.Text width="72%" height={12} className="mb-1.5" />
       <Skeleton.Text width="52%" height={12} className="mb-6" />
       {/* Quatre favoris */}
-      <div className="border-t border-[#f0f0f0] py-6">
+      <div className="border-t border-border-light py-6">
         <Skeleton.Text width={88} height={10} className="mb-3" />
         <div className="grid grid-cols-4 gap-4">
           {[1, 2, 3, 4].map(i => <Skeleton.Cover key={i} />)}
         </div>
       </div>
       {/* Journal */}
-      <div className="border-t border-[#f0f0f0] py-4">
+      <div className="border-t border-border-light py-4">
         <Skeleton.Text width={80} height={10} className="mb-3" />
         <div className="flex gap-1.5 flex-wrap">
           {[1, 2, 3, 4, 5].map(i => <Skeleton.Cover key={i} w={80} h={120} />)}

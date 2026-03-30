@@ -5,7 +5,7 @@ export default function OnboardingProgress({ current, total = 12 }) {
         <div
           key={i}
           className="flex-1 rounded-full transition-colors duration-200"
-          style={{ background: i < current ? "#1a1a1a" : "#f0f0f0" }}
+          style={{ background: i < current ? "var(--text-primary)" : "var(--border-subtle)" }}
         />
       ))}
     </div>

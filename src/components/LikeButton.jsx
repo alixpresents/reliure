@@ -32,7 +32,8 @@ export default function LikeButton({ count = 0, liked = false, initialLiked = fa
       onClick={e => { e.stopPropagation(); toggle(); }}
       onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggle(); } }}
       aria-label={liked ? "Retirer le like" : "Liker"}
-      className={`cursor-pointer select-none inline-flex items-center gap-[3px] transition-colors duration-200 ${liked ? "text-spoiler" : "text-[#767676]"} ${className}`}
+      className={`cursor-pointer select-none inline-flex items-center gap-[3px] transition-colors duration-200 ${liked ? "text-spoiler" : ""} ${className}`}
+      style={liked ? undefined : { color: "var(--text-tertiary)" }}
     >
       <span className={`inline-block transition-transform duration-200 ease-out ${pop ? "scale-[1.2]" : "scale-100"}`}>♥</span>
       {displayCount > 0 && <span>{displayCount}</span>}

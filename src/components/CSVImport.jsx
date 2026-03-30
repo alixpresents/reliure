@@ -278,7 +278,7 @@ export default function CSVImport() {
       <div className="mb-10">
         <div className="text-center mb-4">
           <h2 className="font-display italic text-xl font-normal mb-1">Importer depuis un fichier</h2>
-          <p className="text-[13px] text-[#666] font-body">
+          <p className="text-[13px] font-body" style={{ color: "var(--text-secondary)" }}>
             Exporte ta bibliothèque depuis Goodreads ou Babelio, puis dépose le CSV ici.
           </p>
         </div>
@@ -288,14 +288,18 @@ export default function CSVImport() {
           onDragLeave={() => setDragOver(false)}
           onDrop={onDrop}
           onClick={() => fileRef.current?.click()}
-          className={`border-[1.5px] border-dashed rounded-lg py-10 px-6 text-center cursor-pointer transition-colors duration-150 ${
-            dragOver ? "border-[#767676] bg-[#f5f3f0]" : "border-[#eee] bg-[#fafaf8] hover:bg-[#f5f3f0]"
-          }`}
+          className="border-[1.5px] border-dashed rounded-lg py-10 px-6 text-center cursor-pointer transition-colors duration-150"
+          style={{
+            borderColor: dragOver ? "var(--text-tertiary)" : "var(--border-default)",
+            backgroundColor: dragOver ? "var(--tag-bg)" : "var(--bg-surface)",
+          }}
+          onMouseEnter={e => { if (!dragOver) e.currentTarget.style.backgroundColor = "var(--tag-bg)"; }}
+          onMouseLeave={e => { if (!dragOver) e.currentTarget.style.backgroundColor = "var(--bg-surface)"; }}
         >
-          <div className="text-[15px] text-[#1a1a1a] font-body font-medium mb-1">
+          <div className="text-[15px] font-body font-medium mb-1" style={{ color: "var(--text-primary)" }}>
             Dépose un fichier CSV ici
           </div>
-          <div className="text-[13px] text-[#767676] font-body">
+          <div className="text-[13px] font-body" style={{ color: "var(--text-tertiary)" }}>
             ou clique pour choisir un fichier
           </div>
           <input
@@ -326,23 +330,23 @@ export default function CSVImport() {
         </div>
 
         {/* Preview table */}
-        <div className="border border-[#eee] rounded-lg overflow-hidden mb-4">
+        <div className="rounded-lg overflow-hidden mb-4" style={{ border: "1px solid var(--border-default)" }}>
           {preview.map((r, i) => (
-            <div key={i} className={`flex items-center gap-3 px-4 py-2.5 ${i < preview.length - 1 ? "border-b border-[#f0f0f0]" : ""}`}>
+            <div key={i} className="flex items-center gap-3 px-4 py-2.5" style={i < preview.length - 1 ? { borderBottom: "1px solid var(--border-subtle)" } : undefined}>
               <div className="flex-1 min-w-0">
                 <div className="text-[14px] font-medium font-body truncate">{r.title}</div>
-                <div className="text-xs text-[#666] font-body truncate">{r.author}</div>
+                <div className="text-xs font-body truncate" style={{ color: "var(--text-secondary)" }}>{r.author}</div>
               </div>
-              <span className="px-2 py-0.5 rounded-xl text-[10px] font-medium font-body bg-[#f5f3f0] text-[#666] border border-[#eee] shrink-0">
+              <span className="px-2 py-0.5 rounded-xl text-[10px] font-medium font-body shrink-0" style={{ backgroundColor: "var(--tag-bg)", color: "var(--text-secondary)", border: "1px solid var(--border-default)" }}>
                 {STATUS_LABELS[r.status] || r.status}
               </span>
-              <span className="text-[12px] text-[#767676] font-body w-6 text-right shrink-0">
+              <span className="text-[12px] font-body w-6 text-right shrink-0" style={{ color: "var(--text-tertiary)" }}>
                 {r.rating > 0 ? r.rating : "—"}
               </span>
             </div>
           ))}
           {rows.length > 5 && (
-            <div className="px-4 py-2 text-[12px] text-[#767676] font-body text-center bg-[#fafaf8]">
+            <div className="px-4 py-2 text-[12px] font-body text-center" style={{ color: "var(--text-tertiary)", backgroundColor: "var(--bg-surface)" }}>
               … et {rows.length - 5} autre{rows.length - 5 > 1 ? "s" : ""}
             </div>
           )}
@@ -357,13 +361,15 @@ export default function CSVImport() {
         <div className="flex justify-center gap-3">
           <button
             onClick={reset}
-            className="px-5 py-2.5 rounded-[20px] text-[13px] font-medium font-body bg-transparent text-[#767676] border border-[#eee] cursor-pointer hover:border-[#767676] transition-colors duration-150"
+            className="px-5 py-2.5 rounded-[20px] text-[13px] font-medium font-body bg-transparent cursor-pointer transition-colors duration-150"
+            style={{ color: "var(--text-tertiary)", border: "1px solid var(--border-default)" }}
           >
             Annuler
           </button>
           <button
             onClick={startImport}
-            className="px-6 py-2.5 rounded-[20px] text-[13px] font-medium font-body bg-[#1a1a1a] text-white border-none cursor-pointer hover:bg-[#333] transition-colors duration-150"
+            className="px-6 py-2.5 rounded-[20px] text-[13px] font-medium font-body border-none cursor-pointer hover:opacity-80 transition-colors duration-150"
+            style={{ backgroundColor: "var(--text-primary)", color: "var(--bg-primary)" }}
           >
             Importer {rows.length} livre{rows.length > 1 ? "s" : ""}
           </button>
@@ -379,15 +385,15 @@ export default function CSVImport() {
       <div className="mb-10">
         <div className="text-center mb-5">
           <h2 className="font-display italic text-xl font-normal mb-1">Import en cours…</h2>
-          <p className="text-[13px] text-[#666] font-body">
+          <p className="text-[13px] font-body" style={{ color: "var(--text-secondary)" }}>
             {progress.current} / {progress.total}
           </p>
         </div>
 
         {/* Tab warning */}
         <div
-          className="text-[12px] font-body text-[#666] px-3 py-2 rounded-md mb-4"
-          style={{ background: "var(--color-warn-bg)", border: "1px solid var(--color-warn-border)" }}
+          className="text-[12px] font-body px-3 py-2 rounded-md mb-4"
+          style={{ background: "var(--color-warn-bg)", border: "1px solid var(--color-warn-border)", color: "var(--color-warn-text)" }}
         >
           {paused
             ? "Import en pause — reviens sur cet onglet pour continuer."
@@ -395,24 +401,25 @@ export default function CSVImport() {
         </div>
 
         {/* Progress bar */}
-        <div className="h-[3px] bg-[#f0ede8] rounded-sm overflow-hidden mb-4">
+        <div className="h-[3px] rounded-sm overflow-hidden mb-4" style={{ backgroundColor: "var(--avatar-bg)" }}>
           <div
-            className="h-full bg-[#1a1a1a] rounded-sm transition-[width] duration-200"
-            style={{ width: `${pct}%` }}
+            className="h-full rounded-sm transition-[width] duration-200"
+            style={{ width: `${pct}%`, backgroundColor: "var(--text-primary)" }}
           />
         </div>
 
         {/* Counters */}
         <div className="flex justify-center gap-4 text-[12px] font-body mb-6">
-          <span className="text-[#1a1a1a]">{progress.imported} importé{progress.imported > 1 ? "s" : ""}</span>
-          <span className="text-[#767676]">{progress.skipped} déjà présent{progress.skipped > 1 ? "s" : ""}</span>
+          <span style={{ color: "var(--text-primary)" }}>{progress.imported} importé{progress.imported > 1 ? "s" : ""}</span>
+          <span style={{ color: "var(--text-tertiary)" }}>{progress.skipped} déjà présent{progress.skipped > 1 ? "s" : ""}</span>
           <span style={{ color: "var(--color-error)" }}>{progress.failed} non trouvé{progress.failed > 1 ? "s" : ""}</span>
         </div>
 
         <div className="flex justify-center">
           <button
             onClick={() => { abortRef.current = true; }}
-            className="px-5 py-2.5 rounded-[20px] text-[13px] font-medium font-body bg-transparent text-[#767676] border border-[#eee] cursor-pointer hover:border-[#767676] transition-colors duration-150"
+            className="px-5 py-2.5 rounded-[20px] text-[13px] font-medium font-body bg-transparent cursor-pointer transition-colors duration-150"
+            style={{ color: "var(--text-tertiary)", border: "1px solid var(--border-default)" }}
           >
             Arrêter l'import
           </button>
@@ -439,19 +446,19 @@ export default function CSVImport() {
             Ils apparaissent maintenant dans ta bibliothèque.
           </p>
           {progress.skipped > 0 && (
-            <p className="font-body" style={{ fontSize: 12, color: "#999", margin: "4px 0 0 0" }}>
+            <p className="font-body" style={{ fontSize: 12, color: "var(--text-tertiary)", margin: "4px 0 0 0" }}>
               {progress.skipped} déjà présent{progress.skipped > 1 ? "s" : ""} · {progress.failed} non trouvé{progress.failed > 1 ? "s" : ""}
             </p>
           )}
         </div>
 
         {failedTitles.length > 0 && (
-          <div className="border border-[#eee] rounded-lg p-4 mb-5">
-            <div className="text-[12px] text-[#767676] font-body font-medium mb-2">
+          <div className="rounded-lg p-4 mb-5" style={{ border: "1px solid var(--border-default)" }}>
+            <div className="text-[12px] font-body font-medium mb-2" style={{ color: "var(--text-tertiary)" }}>
               Titres non trouvés — tu peux les chercher manuellement :
             </div>
             {failedTitles.map((t, i) => (
-              <div key={i} className="text-[13px] text-[#666] font-body py-1">{t}</div>
+              <div key={i} className="text-[13px] font-body py-1" style={{ color: "var(--text-secondary)" }}>{t}</div>
             ))}
           </div>
         )}
@@ -459,7 +466,8 @@ export default function CSVImport() {
         <div className="flex justify-center">
           <button
             onClick={reset}
-            className="px-6 py-2.5 rounded-[20px] text-[13px] font-medium font-body bg-[#1a1a1a] text-white border-none cursor-pointer hover:bg-[#333] transition-colors duration-150"
+            className="px-6 py-2.5 rounded-[20px] text-[13px] font-medium font-body border-none cursor-pointer hover:opacity-80 transition-colors duration-150"
+            style={{ backgroundColor: "var(--text-primary)", color: "var(--bg-primary)" }}
           >
             Terminé
           </button>

@@ -91,8 +91,8 @@ export default function ListPage() {
     });
   }, [rawItems, sortBy, readingDates]);
 
-  if (loading) return <div className="py-8 text-center text-[13px] text-[#767676] font-body">Chargement...</div>;
-  if (!list) return <div className="py-8 text-center text-[13px] text-[#767676] font-body">Liste introuvable.</div>;
+  if (loading) return <div className="py-8 text-center text-[13px] font-body" style={{ color: "var(--text-tertiary)" }}>Chargement...</div>;
+  if (!list) return <div className="py-8 text-center text-[13px] font-body" style={{ color: "var(--text-tertiary)" }}>Liste introuvable.</div>;
 
   const isOwner = user?.id === list.user_id;
   const items = sortedItems;
@@ -156,7 +156,8 @@ export default function ListPage() {
                 onChange={e => setTitleDraft(e.target.value)}
                 onBlur={commitTitle}
                 onKeyDown={e => { if (e.key === "Enter") commitTitle(); if (e.key === "Escape") setEditingTitle(false); }}
-                className="text-[22px] font-normal font-display italic w-full bg-transparent border-none outline-none border-b border-[#eee] pb-1"
+                className="text-[22px] font-normal font-display italic w-full bg-transparent border-none outline-none border-b pb-1"
+                style={{ borderColor: "var(--border-default)" }}
               />
             ) : (
               <h1
@@ -175,14 +176,16 @@ export default function ListPage() {
                 onBlur={commitDesc}
                 onKeyDown={e => { if (e.key === "Escape") setEditingDesc(false); }}
                 rows={2}
-                className="w-full text-[13px] text-[#666] font-body bg-transparent border-none outline-none border-b border-[#eee] mt-2 resize-none"
+                className="w-full text-[13px] font-body bg-transparent border-none outline-none border-b mt-2 resize-none"
+                style={{ color: "var(--text-secondary)", borderColor: "var(--border-default)" }}
               />
             ) : (
               <div
-                className={`text-[13px] text-[#666] font-body mt-1.5 ${isOwner ? "cursor-text" : ""}`}
+                className={`text-[13px] font-body mt-1.5 ${isOwner ? "cursor-text" : ""}`}
+                style={{ color: "var(--text-secondary)" }}
                 onClick={isOwner ? () => { setDescDraft(list.description || ""); setEditingDesc(true); } : undefined}
               >
-                {list.description || (isOwner ? <span className="text-[#767676]">Ajouter une description...</span> : null)}
+                {list.description || (isOwner ? <span style={{ color: "var(--text-tertiary)" }}>Ajouter une description...</span> : null)}
               </div>
             )}
           </div>
@@ -191,7 +194,8 @@ export default function ListPage() {
             <div className="flex items-center gap-2 shrink-0 mt-1">
               <button
                 onClick={() => setEditing(!editing)}
-                className={`text-[12px] font-body bg-transparent border-none cursor-pointer transition-colors duration-150 ${editing ? "text-[#1a1a1a] font-medium" : "text-[#767676] hover:text-[#1a1a1a]"}`}
+                className={`text-[12px] font-body bg-transparent border-none cursor-pointer transition-colors duration-150 ${editing ? "font-medium hover:opacity-80" : "hover:opacity-80"}`}
+                style={{ color: editing ? "var(--text-primary)" : "var(--text-tertiary)" }}
               >
                 {editing ? "Terminé" : "Modifier"}
               </button>
@@ -200,7 +204,7 @@ export default function ListPage() {
         </div>
 
         {/* Meta row */}
-        <div className="flex items-center gap-2 mt-3 text-xs text-[#767676] font-body">
+        <div className="flex items-center gap-2 mt-3 text-xs font-body" style={{ color: "var(--text-tertiary)" }}>
           <span
             className="hover:underline cursor-pointer"
             onClick={() => navigate(`/${username}`)}
@@ -223,7 +227,8 @@ export default function ListPage() {
               <span>·</span>
               <button
                 onClick={() => updateList({ is_public: !list.is_public })}
-                className="text-xs text-[#767676] bg-transparent border-none cursor-pointer hover:text-[#1a1a1a] font-body transition-colors duration-150"
+                className="text-xs bg-transparent border-none cursor-pointer hover:opacity-80 font-body transition-colors duration-150"
+                style={{ color: "var(--text-tertiary)" }}
               >
                 Rendre {list.is_public ? "privée" : "publique"}
               </button>
@@ -241,9 +246,13 @@ export default function ListPage() {
               onClick={() => setSortBy(opt.key)}
               className={`px-3 py-1 rounded-full text-[11px] font-body border transition-colors duration-150 ${
                 sortBy === opt.key
-                  ? "bg-[#1a1a1a] text-white border-[#1a1a1a]"
-                  : "bg-transparent text-[#767676] border-[#eee] hover:border-[#767676] hover:text-[#333]"
+                  ? "border-transparent"
+                  : "bg-transparent hover:opacity-80"
               }`}
+              style={sortBy === opt.key
+                ? { backgroundColor: "var(--text-primary)", color: "var(--bg-primary)", borderColor: "var(--text-primary)" }
+                : { color: "var(--text-tertiary)", borderColor: "var(--border-default)" }
+              }
             >
               {opt.label}
             </button>
@@ -255,7 +264,8 @@ export default function ListPage() {
       {isOwner && editing && (
         <button
           onClick={handleAddBook}
-          className="w-full py-3 mb-4 border-[1.5px] border-dashed border-[#eee] rounded-lg text-[13px] text-[#767676] font-body bg-transparent cursor-pointer hover:border-[#eee] hover:text-[#666] transition-colors duration-150"
+          className="w-full py-3 mb-4 border-[1.5px] border-dashed rounded-lg text-[13px] font-body bg-transparent cursor-pointer hover:opacity-80 transition-colors duration-150"
+          style={{ borderColor: "var(--border-default)", color: "var(--text-tertiary)" }}
         >
           + Ajouter des livres
         </button>
@@ -273,9 +283,9 @@ export default function ListPage() {
           return (
             <div
               key={item.id}
-              className={`flex items-start gap-3.5 py-3 transition-colors duration-100 ${isOver ? "bg-[#fafaf8]" : ""}`}
+              className={`flex items-start gap-3.5 py-3 transition-colors duration-100 ${isOver ? "bg-surface" : ""}`}
               style={{
-                borderBottom: "0.5px solid #f0f0f0",
+                borderBottom: "0.5px solid var(--border-subtle)",
                 opacity: isDragging ? 0.5 : 1,
               }}
               draggable={canDrag}
@@ -292,12 +302,12 @@ export default function ListPage() {
             >
               {/* Position number for ranked lists */}
               {list.is_ranked && sortBy === "manual" && (
-                <span className="text-[13px] text-[#767676] font-body w-5 text-right shrink-0 mt-[14px]">{idx + 1}</span>
+                <span className="text-[13px] font-body w-5 text-right shrink-0 mt-[14px]" style={{ color: "var(--text-tertiary)" }}>{idx + 1}</span>
               )}
 
               {/* Drag handle */}
               {canDrag && (
-                <div className="cursor-grab active:cursor-grabbing shrink-0 text-[#767676] hover:text-[#767676] transition-colors duration-150 mt-[14px]">
+                <div className="cursor-grab active:cursor-grabbing shrink-0 transition-colors duration-150 mt-[14px]" style={{ color: "var(--text-tertiary)" }}>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
                     <circle cx="9" cy="6" r="1.5" /><circle cx="15" cy="6" r="1.5" />
                     <circle cx="9" cy="12" r="1.5" /><circle cx="15" cy="12" r="1.5" />
@@ -315,7 +325,7 @@ export default function ListPage() {
                 >
                   {book.t}
                 </div>
-                <div className="text-[11px] text-[#767676] font-body truncate">{book.a}</div>
+                <div className="text-[11px] font-body truncate" style={{ color: "var(--text-tertiary)" }}>{book.a}</div>
 
                 {/* Item note */}
                 {editingNote === item.id ? (
@@ -333,22 +343,25 @@ export default function ListPage() {
                       placeholder="Pourquoi ce livre est dans cette liste..."
                       maxLength={200}
                       rows={2}
-                      className="text-[12px] text-[#666] font-body bg-transparent border-none outline-none border-b border-[#eee] w-full resize-none leading-relaxed"
+                      className="text-[12px] font-body bg-transparent border-none outline-none border-b w-full resize-none leading-relaxed"
+                      style={{ color: "var(--text-secondary)", borderColor: "var(--border-default)" }}
                     />
-                    <div className="text-[10px] text-[#767676] font-body text-right mt-0.5">
+                    <div className="text-[10px] font-body text-right mt-0.5" style={{ color: "var(--text-tertiary)" }}>
                       {noteDraft.length}/200
                     </div>
                   </div>
                 ) : item.note ? (
                   <div
-                    className={`text-[12px] text-[#666] font-display italic mt-1 leading-relaxed ${isOwner && editing ? "cursor-text" : ""}`}
+                    className={`text-[12px] font-display italic mt-1 leading-relaxed ${isOwner && editing ? "cursor-text" : ""}`}
+                    style={{ color: "var(--text-secondary)" }}
                     onClick={isOwner && editing ? () => { setEditingNote(item.id); setNoteDraft(item.note || ""); } : undefined}
                   >
                     {item.note}
                   </div>
                 ) : isOwner && editing ? (
                   <div
-                    className="text-[11px] text-[#767676] font-body mt-0.5 cursor-text"
+                    className="text-[11px] font-body mt-0.5 cursor-text"
+                    style={{ color: "var(--text-tertiary)" }}
                     onClick={() => { setEditingNote(item.id); setNoteDraft(""); }}
                   >
                     + note
@@ -360,10 +373,11 @@ export default function ListPage() {
               {editing && (
                 <button
                   onClick={() => removeBook(item.id)}
-                  className="shrink-0 w-7 h-7 rounded-full flex items-center justify-center bg-transparent border-[1.5px] border-[#eee] cursor-pointer hover:border-[#eee] transition-colors duration-150 mt-[6px]"
+                  className="shrink-0 w-7 h-7 rounded-full flex items-center justify-center bg-transparent border-[1.5px] cursor-pointer transition-colors duration-150 mt-[6px]"
+                  style={{ borderColor: "var(--border-default)", color: "var(--text-tertiary)" }}
                   aria-label="Retirer de la liste"
                 >
-                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#767676" strokeWidth="2.5">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                     <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
                   </svg>
                 </button>
@@ -375,12 +389,13 @@ export default function ListPage() {
 
       {rawItems.length === 0 && (
         <div className="py-10 text-center">
-          <div className="text-sm text-[#767676] font-body">Cette liste est vide.</div>
-          <div className="text-[13px] text-[#767676] font-body mt-1">Ajoute des livres pour commencer.</div>
+          <div className="text-sm font-body" style={{ color: "var(--text-tertiary)" }}>Cette liste est vide.</div>
+          <div className="text-[13px] font-body mt-1" style={{ color: "var(--text-tertiary)" }}>Ajoute des livres pour commencer.</div>
           {isOwner && (
             <button
               onClick={handleAddBook}
-              className="mt-4 px-5 py-2.5 rounded-[20px] text-[13px] font-medium font-body bg-[#1a1a1a] text-white border-none cursor-pointer hover:bg-[#333] transition-colors duration-150"
+              className="mt-4 px-5 py-2.5 rounded-[20px] text-[13px] font-medium font-body border-none cursor-pointer hover:opacity-80 transition-colors duration-150"
+              style={{ backgroundColor: "var(--text-primary)", color: "var(--bg-primary)" }}
             >
               + Ajouter des livres
             </button>
@@ -393,7 +408,7 @@ export default function ListPage() {
         <div className="mt-8 pt-6 border-t border-border-light">
           {confirmDelete ? (
             <div className="flex items-center gap-3">
-              <span className="text-[13px] text-[#666] font-body">Supprimer cette liste ?</span>
+              <span className="text-[13px] font-body" style={{ color: "var(--text-secondary)" }}>Supprimer cette liste ?</span>
               <button
                 onClick={handleDelete}
                 className="px-4 py-2 rounded-[16px] text-[12px] font-medium font-body bg-spoiler text-white border-none cursor-pointer hover:opacity-90 transition-opacity duration-150"
@@ -402,7 +417,8 @@ export default function ListPage() {
               </button>
               <button
                 onClick={() => setConfirmDelete(false)}
-                className="px-4 py-2 rounded-[16px] text-[12px] font-body bg-transparent text-[#666] border-[1.5px] border-[#eee] cursor-pointer hover:border-[#767676] transition-colors duration-150"
+                className="px-4 py-2 rounded-[16px] text-[12px] font-body bg-transparent border-[1.5px] cursor-pointer hover:opacity-80 transition-colors duration-150"
+                style={{ color: "var(--text-secondary)", borderColor: "var(--border-default)" }}
               >
                 Annuler
               </button>
@@ -410,7 +426,8 @@ export default function ListPage() {
           ) : (
             <button
               onClick={() => setConfirmDelete(true)}
-              className="text-[12px] text-[#767676] font-body bg-transparent border-none cursor-pointer hover:text-spoiler transition-colors duration-150"
+              className="text-[12px] font-body bg-transparent border-none cursor-pointer hover:text-spoiler transition-colors duration-150"
+              style={{ color: "var(--text-tertiary)" }}
             >
               Supprimer la liste
             </button>
