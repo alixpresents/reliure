@@ -64,17 +64,19 @@ export default function App() {
 
   // Auto-set onboarding_done for existing users (already have a profile)
   useEffect(() => {
+    if (authLoading) return;
     if (profile && !localStorage.getItem("reliure_onboarding_done") && !localStorage.getItem("reliure_walkthrough_pending")) {
       localStorage.setItem("reliure_onboarding_done", "true");
     }
-  }, [profile]);
+  }, [authLoading, profile]);
 
   // Resume walkthrough after page refresh
   useEffect(() => {
+    if (authLoading) return;
     if (profile && localStorage.getItem("reliure_walkthrough_pending") && !localStorage.getItem("reliure_onboarding_done")) {
       setWalkthroughActive(true);
     }
-  }, [profile]);
+  }, [authLoading, profile]);
 
   const searchGo = searchCb || goToBook;
 
@@ -90,7 +92,7 @@ export default function App() {
 
   // Not logged in — show public pages with header, login for protected
   const isLoggedIn = !!user;
-  const needsOnboarding = isLoggedIn && !profile;
+  const needsOnboarding = isLoggedIn && !profile && !localStorage.getItem("reliure_onboarding_done");
 
   if (needsOnboarding) {
     return (

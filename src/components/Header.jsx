@@ -38,7 +38,7 @@ export default function Header({ onSearch, initials = "?", username, avatarUrl, 
         <nav className="flex gap-0 sm:gap-0.5 flex-1 overflow-x-auto whitespace-nowrap items-center" style={{ scrollbarWidth: "none" }}>
           {navItems.map(([to, label]) => (
             <NavLink
-              key={to}
+              key={label}
               to={to}
               data-onboarding={
                 label === "Explorer" ? "explorer" : label === "Citations" ? "citations" : undefined

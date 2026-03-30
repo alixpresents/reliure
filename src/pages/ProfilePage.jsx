@@ -22,7 +22,9 @@ import { safeMutation, unwrapSupabase } from "../lib/safeMutation";
 import CreateListModal from "../components/CreateListModal";
 import Skeleton from "../components/Skeleton";
 import Toast from "../components/Toast";
+import RoleBadge from "../components/RoleBadge";
 import { useToast } from "../hooks/useToast";
+import { useUserRole } from "../hooks/useUserRole";
 
 function ReadingItem({ book, go, onFinish, initialPage = 0, statusId = null, isOwner = true }) {
   const [currentPage, setCurrentPage] = useState(initialPage);
@@ -355,6 +357,7 @@ export default function ProfilePage({ viewedProfile, initialTab }) {
   const { user } = useAuth();
   const profile = viewedProfile;
   const profileId = viewedProfile?.id;
+  const { role } = useUserRole(profileId);
 
   // Inline profile editing state
   const [editingName, setEditingName] = useState(false);
@@ -598,7 +601,10 @@ export default function ProfilePage({ viewedProfile, initialTab }) {
                 {isOwnProfile && <span className="text-[#ccc] text-[15px] select-none opacity-0 group-hover/name:opacity-100 transition-opacity duration-150">✎</span>}
               </div>
             )}
-            <div className="text-xs text-[#767676] font-body">@{profile.username}</div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-[#767676] font-body">@{profile.username}</span>
+              {role && <RoleBadge role={role} />}
+            </div>
           </div>
           <div className="flex gap-5 text-xs text-[#767676] font-body w-full sm:w-auto mt-2 sm:mt-0">
             {[[String(totalBooks), "livres"], [String(booksThisYear), "cette année"], [String(followers), "abonnés"], [String(followingCount), "abonnements"]].map(([n, l]) => (

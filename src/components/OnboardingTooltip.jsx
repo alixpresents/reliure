@@ -102,13 +102,19 @@ function getClipPath(rect) {
   )`;
 }
 
+const TOOLTIP_HEIGHT_ESTIMATE = 300;
+
 function getTooltipPosition(rect) {
-  if (!rect) return { top: 0, left: 0, arrowLeft: 0 };
-  const top = rect.bottom + PAD + 12;
+  if (!rect) return { top: 0, left: 0, arrowLeft: 0, above: false };
   const centerX = rect.left + rect.width / 2;
   const left = Math.max(16, Math.min(centerX - TOOLTIP_WIDTH / 2, window.innerWidth - TOOLTIP_WIDTH - 16));
   const arrowLeft = Math.max(20, Math.min(centerX - left, TOOLTIP_WIDTH - 20));
-  return { top, left, arrowLeft };
+
+  const belowTop = rect.bottom + PAD + 12;
+  const aboveTop = rect.top - PAD - 12 - TOOLTIP_HEIGHT_ESTIMATE;
+  const above = belowTop + TOOLTIP_HEIGHT_ESTIMATE > window.innerHeight || rect.top > window.innerHeight / 2;
+
+  return { top: above ? Math.max(8, aboveTop) : belowTop, left, arrowLeft, above };
 }
 
 // Try to find an element, with one retry after 300ms
@@ -223,10 +229,11 @@ export default function OnboardingTooltip({ onComplete, showToast }) {
     };
   }, [visible, stepIndex, step.selector]);
 
-  // Listen for favorite-added event (step 4 — favorites)
+  // Listen for favorite-added event (step 4 — favorites), once only
   useEffect(() => {
     if (step.key !== "favorites") return;
     const handler = () => {
+      window.removeEventListener("reliure:favorite-added", handler);
       setTimeout(() => advanceStep(), 600);
     };
     window.addEventListener("reliure:favorite-added", handler);
@@ -283,7 +290,7 @@ export default function OnboardingTooltip({ onComplete, showToast }) {
 
   if (!visible || !targetRect) return null;
 
-  const { top, left, arrowLeft } = getTooltipPosition(targetRect);
+  const { top, left, arrowLeft, above } = getTooltipPosition(targetRect);
 
   return (
     <>
@@ -314,6 +321,8 @@ export default function OnboardingTooltip({ onComplete, showToast }) {
           top,
           left,
           width: TOOLTIP_WIDTH,
+          maxHeight: "calc(100vh - 40px)",
+          overflowY: "auto",
           borderRadius: 10,
           padding: 20,
           boxShadow: "0 8px 32px rgba(0,0,0,0.12)",
@@ -323,10 +332,17 @@ export default function OnboardingTooltip({ onComplete, showToast }) {
         }}
       >
         {/* Arrow */}
-        <div
-          className="absolute -top-[7px] w-[14px] h-[14px] bg-white border-l border-t border-[#eee]"
-          style={{ left: arrowLeft - 7, transform: "rotate(45deg)" }}
-        />
+        {above ? (
+          <div
+            className="absolute -bottom-[7px] w-[14px] h-[14px] bg-white border-r border-b border-[#eee]"
+            style={{ left: arrowLeft - 7, transform: "rotate(45deg)" }}
+          />
+        ) : (
+          <div
+            className="absolute -top-[7px] w-[14px] h-[14px] bg-white border-l border-t border-[#eee]"
+            style={{ left: arrowLeft - 7, transform: "rotate(45deg)" }}
+          />
+        )}
 
         {/* Step counter + mini progress */}
         <div className="flex items-center gap-2 mb-3">
