@@ -26,10 +26,25 @@ details > summary::-webkit-details-marker { display: none; }
 }
 .animate-page-in { animation: pageIn 200ms ease both; }
 
+@keyframes toastIn {
+  from { opacity: 0; transform: translate(-50%, 8px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
+}
+.animate-toast-in { animation: toastIn 180ms ease both; }
+
+/* Focus visible — accessibilité clavier (WCAG 2.4.7) */
 [role="button"]:focus-visible,
 button:focus-visible,
-input:focus-visible {
+a:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
   outline: 2px solid #1a1a1a;
   outline-offset: 2px;
   border-radius: 4px;
+}
+
+/* Supprimer l'outline par défaut au clic (souris) pour garder l'UI clean */
+:focus:not(:focus-visible) {
+  outline: none;
 }

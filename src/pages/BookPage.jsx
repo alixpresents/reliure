@@ -21,6 +21,8 @@ import { useNavigate, Link } from "react-router-dom";
 import { useNav } from "../lib/NavigationContext";
 import { useBookLists } from "../hooks/useBookLists";
 import ContentMenu from "../components/ContentMenu";
+import Toast from "../components/Toast";
+import { useToast } from "../hooks/useToast";
 
 function LoginModal({ book, onClose, onNavigate }) {
   useEffect(() => {
@@ -101,17 +103,14 @@ function EnrichModal({ bookId, onClose, onSaved, initialDescription, initialPage
       if (coverFile) {
         const ext = coverFile.name.split(".").pop();
         const filePath = `${bookId}/${Date.now()}.${ext}`;
-        console.log('[Cover upload] file path:', filePath);
         const { error: uploadError } = await supabase.storage
           .from("book-covers")
           .upload(filePath, coverFile, { contentType: coverFile.type, upsert: true });
         if (!uploadError) {
           const { data } = supabase.storage.from("book-covers").getPublicUrl(filePath);
           const publicUrl = data.publicUrl;
-          console.log('[Cover upload] public url:', publicUrl);
           if (publicUrl) {
-            const { error } = await supabase.from("books").update({ cover_url: publicUrl }).eq("id", bookId);
-            console.log('[Cover upload] update result:', error);
+            await supabase.from("books").update({ cover_url: publicUrl }).eq("id", bookId);
             updates.cover_url = publicUrl;
           }
         }
@@ -181,7 +180,7 @@ function EnrichModal({ bookId, onClose, onSaved, initialDescription, initialPage
               onChange={e => setDescription(e.target.value)}
               maxLength={1000}
               placeholder="Résumé du livre..."
-              className="w-full min-h-[100px] p-3 bg-[#fafaf8] border border-[#eee] rounded-lg outline-none text-[13px] text-[#1a1a1a] font-body leading-[1.7] resize-y placeholder:text-[#aaa] focus:border-[#ccc] transition-[border] duration-150"
+              className="w-full min-h-[100px] p-3 bg-[#fafaf8] border border-[#eee] rounded-lg outline-none text-[13px] text-[#1a1a1a] font-body leading-[1.7] resize-y placeholder:text-[#767676] focus:border-[#767676] transition-[border] duration-150"
             />
             <div className="text-[11px] text-[#767676] font-body text-right mt-0.5">{description.length}/1000</div>
           </div>
@@ -189,19 +188,19 @@ function EnrichModal({ bookId, onClose, onSaved, initialDescription, initialPage
           {/* Nombre de pages */}
           <div className="mb-4">
             <div className="text-[12px] text-[#767676] font-body mb-2">Nombre de pages</div>
-            <input type="number" value={pages} onChange={e => setPages(e.target.value)} min={1} placeholder="ex. 320" className="w-full py-2 px-3 bg-[#fafaf8] border border-[#eee] rounded-lg outline-none text-[13px] text-[#1a1a1a] font-body placeholder:text-[#aaa] focus:border-[#ccc] transition-[border] duration-150" />
+            <input type="number" value={pages} onChange={e => setPages(e.target.value)} min={1} placeholder="ex. 320" className="w-full py-2 px-3 bg-[#fafaf8] border border-[#eee] rounded-lg outline-none text-[13px] text-[#1a1a1a] font-body placeholder:text-[#767676] focus:border-[#767676] transition-[border] duration-150" />
           </div>
 
           {/* Éditeur */}
           <div className="mb-4">
             <div className="text-[12px] text-[#767676] font-body mb-2">Éditeur</div>
-            <input type="text" value={publisher} onChange={e => setPublisher(e.target.value)} placeholder="ex. Gallimard" className="w-full py-2 px-3 bg-[#fafaf8] border border-[#eee] rounded-lg outline-none text-[13px] text-[#1a1a1a] font-body placeholder:text-[#aaa] focus:border-[#ccc] transition-[border] duration-150" />
+            <input type="text" value={publisher} onChange={e => setPublisher(e.target.value)} placeholder="ex. Gallimard" className="w-full py-2 px-3 bg-[#fafaf8] border border-[#eee] rounded-lg outline-none text-[13px] text-[#1a1a1a] font-body placeholder:text-[#767676] focus:border-[#767676] transition-[border] duration-150" />
           </div>
 
           {/* Date de publication */}
           <div className="mb-6">
             <div className="text-[12px] text-[#767676] font-body mb-2">Date de publication</div>
-            <input type="text" value={pubDate} onChange={e => setPubDate(e.target.value)} placeholder='ex. 2024 ou "15 mars 2024"' className="w-full py-2 px-3 bg-[#fafaf8] border border-[#eee] rounded-lg outline-none text-[13px] text-[#1a1a1a] font-body placeholder:text-[#aaa] focus:border-[#ccc] transition-[border] duration-150" />
+            <input type="text" value={pubDate} onChange={e => setPubDate(e.target.value)} placeholder='ex. 2024 ou "15 mars 2024"' className="w-full py-2 px-3 bg-[#fafaf8] border border-[#eee] rounded-lg outline-none text-[13px] text-[#1a1a1a] font-body placeholder:text-[#767676] focus:border-[#767676] transition-[border] duration-150" />
           </div>
 
           <div className="flex gap-2 justify-end">
@@ -232,6 +231,7 @@ export default function BookPage({ book }) {
   const { likedSet: likedReviews, initialSet: initLikedReviews, toggle: toggleReviewLike } = useLikes(dbReviews.map(r => r.id), "review");
   const { likedSet: likedQuotes, initialSet: initLikedQuotes, toggle: toggleQuoteLike } = useLikes(dbQuotes.map(q => q.id), "quote");
   const userReview = dbReviews.find(rv => rv.user_id === user?.id && rv.body);
+  const { toast, showToast } = useToast();
 
   // Live book data from Supabase
   const isUuid = typeof bookId === "string" && bookId.includes("-");
@@ -462,6 +462,7 @@ export default function BookPage({ book }) {
 
   return (
     <div>
+      {toast.visible && <Toast message={toast.message} />}
       {/* Modal connexion requise */}
       {loginModal && <LoginModal book={book} onClose={() => setLoginModal(false)} onNavigate={path => { setLoginModal(false); navigate(path); }} />}
 
@@ -491,7 +492,7 @@ export default function BookPage({ book }) {
         </div>
       )}
 
-      <button onClick={() => navigate(-1)} className="bg-transparent border-none text-[#737373] cursor-pointer text-[13px] py-4 font-body">
+      <button onClick={() => navigate(-1)} className="bg-transparent border-none text-[#767676] cursor-pointer text-[13px] py-4 font-body">
         ← Retour
       </button>
 
@@ -507,7 +508,7 @@ export default function BookPage({ book }) {
         </div>
         <div className="flex-1 pt-1">
           <h1 className="m-0 text-[26px] font-normal leading-tight font-display italic">{book.t}</h1>
-          <div className="text-[15px] text-[#737373] mt-1.5 font-body">{book.a}</div>
+          <div className="text-[15px] text-[#767676] mt-1.5 font-body">{book.a}</div>
           <div className="text-[13px] text-[#767676] mt-1 font-body">{book.y || book.publication_date}{(book.p || book.page_count) ? ` · ${book.p || book.page_count} pages` : ""}</div>
 
           {/* Modifier la fiche */}
@@ -547,7 +548,7 @@ export default function BookPage({ book }) {
               {/* Date pill */}
               {finDate && !noDate ? (
                 <span className="inline-flex items-center gap-1.5 pl-2.5 pr-1.5 py-[5px] rounded-2xl text-xs bg-tag-bg border border-[#eee] text-[#1a1a1a] font-body">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="shrink-0 text-[#737373]">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="shrink-0 text-[#767676]">
                     <rect x="3" y="4" width="18" height="18" rx="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" />
                   </svg>
                   <span className="cursor-pointer" onClick={() => dateRef.current?.showPicker()}>{finDate}</span>
@@ -583,7 +584,7 @@ export default function BookPage({ book }) {
                     tabIndex={0}
                     onClick={() => dateRef.current?.showPicker()}
                     onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); dateRef.current?.showPicker(); } }}
-                    className="text-[12px] text-[#999] font-body cursor-pointer hover:text-[#1a1a1a] transition-colors duration-150"
+                    className="text-[12px] text-[#767676] font-body cursor-pointer hover:text-[#1a1a1a] transition-colors duration-150"
                   >
                     Ajouter une date
                   </span>
@@ -600,7 +601,7 @@ export default function BookPage({ book }) {
                 ) : (
                   <button
                     onClick={() => { setIsReread(true); dbUpdateFields({ is_reread: true }); }}
-                    className="inline-flex items-center px-2.5 py-[5px] rounded-2xl text-xs bg-transparent border-[1.5px] border-dashed border-[#ddd] text-[#767676] font-body cursor-pointer hover:border-[#767676] hover:text-[#1a1a1a] transition-colors duration-150"
+                    className="inline-flex items-center px-2.5 py-[5px] rounded-2xl text-xs bg-transparent border-[1.5px] border-dashed border-[#eee] text-[#767676] font-body cursor-pointer hover:border-[#767676] hover:text-[#1a1a1a] transition-colors duration-150"
                   >
                     + Relecture
                   </button>
@@ -612,13 +613,13 @@ export default function BookPage({ book }) {
 
           {/* User rating */}
           <div className="mt-[18px]">
-            <div className="text-xs text-[#737373] mb-1.5 font-body">Votre note</div>
+            <div className="text-xs text-[#767676] mb-1.5 font-body">Votre note</div>
             <InteractiveStars value={ur} onChange={handleRating} />
           </div>
 
           {/* Personal tags */}
           <div className="mt-[18px]">
-            <div className="text-xs text-[#737373] mb-1.5 font-body">Tags personnels</div>
+            <div className="text-xs text-[#767676] mb-1.5 font-body">Tags personnels</div>
             {tags.length > 0 && (
               <div className="flex flex-wrap gap-1.5 mb-2">
                 {tags.map(t => (
@@ -681,7 +682,7 @@ export default function BookPage({ book }) {
           ) : (
             <button
               onClick={() => setShowEnrichModal(true)}
-              className="text-[13px] text-[#999] font-body bg-transparent border-none cursor-pointer hover:text-[#1a1a1a] transition-colors duration-150 p-0"
+              className="text-[13px] text-[#767676] font-body bg-transparent border-none cursor-pointer hover:text-[#1a1a1a] transition-colors duration-150 p-0"
             >
               + Suggérer un résumé
             </button>
@@ -752,7 +753,7 @@ export default function BookPage({ book }) {
                 className={`w-full py-3 bg-transparent border-none cursor-pointer text-xs capitalize font-body ${
                   bt === t
                     ? "font-semibold text-[#1a1a1a] border-b-2 border-b-[#1a1a1a]"
-                    : "font-normal text-[#737373] border-b-2 border-b-transparent"
+                    : "font-normal text-[#767676] border-b-2 border-b-transparent"
                 }`}
               >
                 {t}{t === "citations" && dbQuotes.length > 0 ? ` (${dbQuotes.length})` : ""}
@@ -782,7 +783,7 @@ export default function BookPage({ book }) {
                   }
                   setShowReviewForm(true);
                 }}
-                className="w-full mb-4 py-2.5 rounded-lg border-[1.5px] border-dashed border-[#ddd] bg-transparent cursor-pointer text-[13px] text-[#767676] font-body transition-colors duration-200 hover:border-[#767676] hover:text-[#1a1a1a]"
+                className="w-full mb-4 py-2.5 rounded-lg border-[1.5px] border-dashed border-[#eee] bg-transparent cursor-pointer text-[13px] text-[#767676] font-body transition-colors duration-200 hover:border-[#767676] hover:text-[#1a1a1a]"
               >
                 {userReview ? "Modifier ma critique" : "+ Écrire une critique"}
               </button>
@@ -792,11 +793,11 @@ export default function BookPage({ book }) {
                   value={reviewText}
                   onChange={e => setReviewText(e.target.value)}
                   placeholder="Qu'avez-vous pensé de ce livre ?"
-                  className="w-full min-h-[120px] p-3 bg-white border border-[#eee] rounded-lg outline-none text-base md:text-sm text-[#1a1a1a] font-body leading-[1.7] resize-y placeholder:text-[#767676] focus:border-[#ccc] transition-[border] duration-150"
+                  className="w-full min-h-[120px] p-3 bg-white border border-[#eee] rounded-lg outline-none text-base md:text-sm text-[#1a1a1a] font-body leading-[1.7] resize-y placeholder:text-[#767676] focus:border-[#767676] transition-[border] duration-150"
                 />
                 <label className="flex items-center gap-2 mt-3 cursor-pointer">
                   <input type="checkbox" checked={reviewSpoiler} onChange={e => setReviewSpoiler(e.target.checked)} className="accent-[#1a1a1a]" />
-                  <span className="text-xs text-[#737373] font-body">Cette critique contient des spoilers</span>
+                  <span className="text-xs text-[#767676] font-body">Cette critique contient des spoilers</span>
                 </label>
                 <div className="flex gap-2 mt-3">
                   <button
@@ -824,7 +825,7 @@ export default function BookPage({ book }) {
               <div className="text-center mb-4 -mt-1">
                 <button
                   onClick={() => setBt("citations")}
-                  className="text-[12px] text-[#bbb] font-body bg-transparent border-none cursor-pointer hover:text-[#767676] transition-colors duration-150"
+                  className="text-[12px] text-[#767676] font-body bg-transparent border-none cursor-pointer hover:text-[#767676] transition-colors duration-150"
                 >
                   Tu as une phrase marquante ? → Ajouter une citation
                 </button>
@@ -862,7 +863,7 @@ export default function BookPage({ book }) {
                         count={rv.likes_count || 0}
                         liked={likedReviews.has(rv.id)}
                         initialLiked={initLikedReviews.has(rv.id)}
-                        onToggle={() => toggleReviewLike(rv.id)}
+                        onToggle={() => toggleReviewLike(rv.id, () => showToast("Une erreur est survenue"))}
                       />
                     </div>
                   </div>
@@ -880,7 +881,7 @@ export default function BookPage({ book }) {
             {!showQuoteForm ? (
               <button
                 onClick={() => setShowQuoteForm(true)}
-                className="w-full mb-4 py-2.5 rounded-lg border-[1.5px] border-dashed border-[#ddd] bg-transparent cursor-pointer text-[13px] text-[#767676] font-body transition-colors duration-200 hover:border-[#767676] hover:text-[#1a1a1a]"
+                className="w-full mb-4 py-2.5 rounded-lg border-[1.5px] border-dashed border-[#eee] bg-transparent cursor-pointer text-[13px] text-[#767676] font-body transition-colors duration-200 hover:border-[#767676] hover:text-[#1a1a1a]"
               >
                 + Ajouter une citation
               </button>
@@ -890,7 +891,7 @@ export default function BookPage({ book }) {
                   value={quoteText}
                   onChange={e => setQuoteText(e.target.value)}
                   placeholder="Copiez un passage du livre..."
-                  className="w-full min-h-[80px] p-3 bg-white border border-[#eee] rounded-lg outline-none text-base md:text-[15px] text-[#1a1a1a] font-display italic leading-[1.7] resize-y placeholder:text-[#767676] placeholder:not-italic placeholder:font-body focus:border-[#ccc] transition-[border] duration-150"
+                  className="w-full min-h-[80px] p-3 bg-white border border-[#eee] rounded-lg outline-none text-base md:text-[15px] text-[#1a1a1a] font-display italic leading-[1.7] resize-y placeholder:text-[#767676] placeholder:not-italic placeholder:font-body focus:border-[#767676] transition-[border] duration-150"
                 />
                 <div className="flex gap-2 mt-3">
                   <button
@@ -932,7 +933,7 @@ export default function BookPage({ book }) {
                           count={q.likes_count || 0}
                           liked={likedQuotes.has(q.id)}
                           initialLiked={initLikedQuotes.has(q.id)}
-                          onToggle={() => toggleQuoteLike(q.id)}
+                          onToggle={() => toggleQuoteLike(q.id, () => showToast("Une erreur est survenue"))}
                         />
                       </span>
                       <div className="ml-auto"><ContentMenu type="quote" item={q} onDelete={() => refetchQuotes()} onEdit={() => refetchQuotes()} /></div>
@@ -942,8 +943,8 @@ export default function BookPage({ book }) {
               })
             ) : (
               <div className="py-8 text-center">
-                <div className="text-[14px] text-[#737373] font-body mb-1">Aucune citation pour ce livre.</div>
-                <div className="text-[13px] text-[#999] font-body mb-4">Tu as une phrase marquante à partager ?</div>
+                <div className="text-[14px] text-[#767676] font-body mb-1">Aucune citation pour ce livre.</div>
+                <div className="text-[13px] text-[#767676] font-body mb-4">Tu as une phrase marquante à partager ?</div>
                 {user && !showQuoteForm && (
                   <button
                     onClick={() => setShowQuoteForm(true)}
@@ -962,7 +963,7 @@ export default function BookPage({ book }) {
             {[{ l: "Poche", p: "Folio", y: "2008" }, { l: "Relié", p: "Gallimard", y: "2004" }, { l: "Audio", p: "Audible", y: "2019" }].map((e, i) => (
               <div key={i} className="p-3.5 px-4 bg-surface rounded-lg flex-1 cursor-pointer hover:bg-[#f3f0eb]">
                 <div className="text-[13px] font-semibold font-body">{e.l}</div>
-                <div className="text-xs text-[#737373] mt-[3px] font-body">{e.p} · {e.y}</div>
+                <div className="text-xs text-[#767676] mt-[3px] font-body">{e.p} · {e.y}</div>
               </div>
             ))}
           </div>

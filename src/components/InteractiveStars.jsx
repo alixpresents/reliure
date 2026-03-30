@@ -1,15 +1,19 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 
 export default function InteractiveStars({ value = 0, onChange, size = "text-xl" }) {
   const [hv, setHv] = useState(0);
   const [pop, setPop] = useState(0);
+  const popTimer = useRef(null);
+
+  useEffect(() => () => clearTimeout(popTimer.current), []);
 
   const handleClick = n => {
     const next = n === value ? 0 : n;
     onChange(next);
     setHv(0);
     setPop(n);
-    setTimeout(() => setPop(0), 200);
+    clearTimeout(popTimer.current);
+    popTimer.current = setTimeout(() => setPop(0), 200);
   };
 
   return (
@@ -25,7 +29,7 @@ export default function InteractiveStars({ value = 0, onChange, size = "text-xl"
           onClick={() => handleClick(n)}
           onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); handleClick(n); } }}
           className={`cursor-pointer ${size} transition-all duration-200 inline-block ${n <= (hv || 0) ? "scale-110" : "scale-100"} ${pop === n ? "scale-125" : ""}`}
-          style={{ color: n <= (hv || value) ? "#D4883A" : "#ddd" }}
+          style={{ color: n <= (hv || value) ? "#D4883A" : "#eee" }}
         >
           ★
         </span>

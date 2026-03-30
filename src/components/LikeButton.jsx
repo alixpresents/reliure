@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 
 /**
  * @param {number} count - likes_count from DB (stale, not updated optimistically)
@@ -8,6 +8,9 @@ import { useState } from "react";
  */
 export default function LikeButton({ count = 0, liked = false, initialLiked = false, onToggle, className = "" }) {
   const [pop, setPop] = useState(false);
+  const popTimer = useRef(null);
+
+  useEffect(() => () => clearTimeout(popTimer.current), []);
 
   // Compute optimistic count: adjust DB count based on local toggle vs initial state
   let displayCount = count;
@@ -18,7 +21,8 @@ export default function LikeButton({ count = 0, liked = false, initialLiked = fa
     if (!onToggle) return;
     onToggle();
     setPop(true);
-    setTimeout(() => setPop(false), 200);
+    clearTimeout(popTimer.current);
+    popTimer.current = setTimeout(() => setPop(false), 200);
   };
 
   return (
@@ -28,7 +32,7 @@ export default function LikeButton({ count = 0, liked = false, initialLiked = fa
       onClick={e => { e.stopPropagation(); toggle(); }}
       onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggle(); } }}
       aria-label={liked ? "Retirer le like" : "Liker"}
-      className={`cursor-pointer select-none inline-flex items-center gap-[3px] transition-colors duration-200 ${liked ? "text-spoiler" : "text-[#ccc]"} ${className}`}
+      className={`cursor-pointer select-none inline-flex items-center gap-[3px] transition-colors duration-200 ${liked ? "text-spoiler" : "text-[#767676]"} ${className}`}
     >
       <span className={`inline-block transition-transform duration-200 ease-out ${pop ? "scale-[1.2]" : "scale-100"}`}>♥</span>
       {displayCount > 0 && <span>{displayCount}</span>}

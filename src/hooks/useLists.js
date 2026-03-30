@@ -22,7 +22,7 @@ export function useMyLists(profileUserId) {
       .order("created_at", { ascending: false });
     // Visitors only see public lists (RLS also enforces this, but be explicit)
     if (!isOwner) query = query.eq("is_public", true);
-    const { data } = await query;
+    const { data } = await query.limit(30);
     setLists(data ?? []);
     setLoading(false);
   }, [targetId, isOwner]);

@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useListBySlug, deleteList } from "../hooks/useLists";
 import { useLikes } from "../hooks/useLikes";
@@ -65,30 +65,37 @@ export default function ListPage() {
       });
   }, [list?.id, list?.user_id, list?.list_items?.length]);
 
+  const rawItems = useMemo(
+    () => [...(list?.list_items || [])].sort((a, b) => a.position - b.position),
+    [list?.list_items]
+  );
+
+  const sortedItems = useMemo(() => {
+    if (sortBy === "manual") return rawItems;
+    return [...rawItems].sort((a, b) => {
+      const ba = a.books, bb = b.books;
+      if (!ba || !bb) return 0;
+      if (sortBy === "rating") return (bb.avg_rating || 0) - (ba.avg_rating || 0);
+      if (sortBy === "date") {
+        const da = readingDates[a.book_id] || "";
+        const db = readingDates[b.book_id] || "";
+        return db.localeCompare(da);
+      }
+      if (sortBy === "author") {
+        const aa = Array.isArray(ba.authors) ? ba.authors[0] || "" : "";
+        const ab = Array.isArray(bb.authors) ? bb.authors[0] || "" : "";
+        return aa.localeCompare(ab, "fr");
+      }
+      if (sortBy === "title") return ba.title.localeCompare(bb.title, "fr");
+      return 0;
+    });
+  }, [rawItems, sortBy, readingDates]);
+
   if (loading) return <div className="py-8 text-center text-[13px] text-[#767676] font-body">Chargement...</div>;
   if (!list) return <div className="py-8 text-center text-[13px] text-[#767676] font-body">Liste introuvable.</div>;
 
   const isOwner = user?.id === list.user_id;
-  const rawItems = [...(list.list_items || [])].sort((a, b) => a.position - b.position);
-
-  // Sorted items
-  const items = sortBy === "manual" ? rawItems : [...rawItems].sort((a, b) => {
-    const ba = a.books, bb = b.books;
-    if (!ba || !bb) return 0;
-    if (sortBy === "rating") return (bb.avg_rating || 0) - (ba.avg_rating || 0);
-    if (sortBy === "date") {
-      const da = readingDates[a.book_id] || "";
-      const db = readingDates[b.book_id] || "";
-      return db.localeCompare(da);
-    }
-    if (sortBy === "author") {
-      const aa = Array.isArray(ba.authors) ? ba.authors[0] || "" : "";
-      const ab = Array.isArray(bb.authors) ? bb.authors[0] || "" : "";
-      return aa.localeCompare(ab, "fr");
-    }
-    if (sortBy === "title") return ba.title.localeCompare(bb.title, "fr");
-    return 0;
-  });
+  const items = sortedItems;
 
   const username = list.users?.username || "";
 
@@ -149,7 +156,7 @@ export default function ListPage() {
                 onChange={e => setTitleDraft(e.target.value)}
                 onBlur={commitTitle}
                 onKeyDown={e => { if (e.key === "Enter") commitTitle(); if (e.key === "Escape") setEditingTitle(false); }}
-                className="text-[22px] font-normal font-display italic w-full bg-transparent border-none outline-none border-b border-[#ddd] pb-1"
+                className="text-[22px] font-normal font-display italic w-full bg-transparent border-none outline-none border-b border-[#eee] pb-1"
               />
             ) : (
               <h1
@@ -168,14 +175,14 @@ export default function ListPage() {
                 onBlur={commitDesc}
                 onKeyDown={e => { if (e.key === "Escape") setEditingDesc(false); }}
                 rows={2}
-                className="w-full text-[13px] text-[#666] font-body bg-transparent border-none outline-none border-b border-[#ddd] mt-2 resize-none"
+                className="w-full text-[13px] text-[#666] font-body bg-transparent border-none outline-none border-b border-[#eee] mt-2 resize-none"
               />
             ) : (
               <div
                 className={`text-[13px] text-[#666] font-body mt-1.5 ${isOwner ? "cursor-text" : ""}`}
                 onClick={isOwner ? () => { setDescDraft(list.description || ""); setEditingDesc(true); } : undefined}
               >
-                {list.description || (isOwner ? <span className="text-[#bbb]">Ajouter une description...</span> : null)}
+                {list.description || (isOwner ? <span className="text-[#767676]">Ajouter une description...</span> : null)}
               </div>
             )}
           </div>
@@ -184,7 +191,7 @@ export default function ListPage() {
             <div className="flex items-center gap-2 shrink-0 mt-1">
               <button
                 onClick={() => setEditing(!editing)}
-                className={`text-[12px] font-body bg-transparent border-none cursor-pointer transition-colors duration-150 ${editing ? "text-[#1a1a1a] font-medium" : "text-[#999] hover:text-[#1a1a1a]"}`}
+                className={`text-[12px] font-body bg-transparent border-none cursor-pointer transition-colors duration-150 ${editing ? "text-[#1a1a1a] font-medium" : "text-[#767676] hover:text-[#1a1a1a]"}`}
               >
                 {editing ? "Terminé" : "Modifier"}
               </button>
@@ -193,7 +200,7 @@ export default function ListPage() {
         </div>
 
         {/* Meta row */}
-        <div className="flex items-center gap-2 mt-3 text-xs text-[#737373] font-body">
+        <div className="flex items-center gap-2 mt-3 text-xs text-[#767676] font-body">
           <span
             className="hover:underline cursor-pointer"
             onClick={() => navigate(`/${username}`)}
@@ -216,7 +223,7 @@ export default function ListPage() {
               <span>·</span>
               <button
                 onClick={() => updateList({ is_public: !list.is_public })}
-                className="text-xs text-[#999] bg-transparent border-none cursor-pointer hover:text-[#1a1a1a] font-body transition-colors duration-150"
+                className="text-xs text-[#767676] bg-transparent border-none cursor-pointer hover:text-[#1a1a1a] font-body transition-colors duration-150"
               >
                 Rendre {list.is_public ? "privée" : "publique"}
               </button>
@@ -235,7 +242,7 @@ export default function ListPage() {
               className={`px-3 py-1 rounded-full text-[11px] font-body border transition-colors duration-150 ${
                 sortBy === opt.key
                   ? "bg-[#1a1a1a] text-white border-[#1a1a1a]"
-                  : "bg-transparent text-[#767676] border-[#eee] hover:border-[#ccc] hover:text-[#444]"
+                  : "bg-transparent text-[#767676] border-[#eee] hover:border-[#767676] hover:text-[#333]"
               }`}
             >
               {opt.label}
@@ -248,7 +255,7 @@ export default function ListPage() {
       {isOwner && editing && (
         <button
           onClick={handleAddBook}
-          className="w-full py-3 mb-4 border-[1.5px] border-dashed border-[#ddd] rounded-lg text-[13px] text-[#999] font-body bg-transparent cursor-pointer hover:border-[#bbb] hover:text-[#666] transition-colors duration-150"
+          className="w-full py-3 mb-4 border-[1.5px] border-dashed border-[#eee] rounded-lg text-[13px] text-[#767676] font-body bg-transparent cursor-pointer hover:border-[#eee] hover:text-[#666] transition-colors duration-150"
         >
           + Ajouter des livres
         </button>
@@ -285,12 +292,12 @@ export default function ListPage() {
             >
               {/* Position number for ranked lists */}
               {list.is_ranked && sortBy === "manual" && (
-                <span className="text-[13px] text-[#bbb] font-body w-5 text-right shrink-0 mt-[14px]">{idx + 1}</span>
+                <span className="text-[13px] text-[#767676] font-body w-5 text-right shrink-0 mt-[14px]">{idx + 1}</span>
               )}
 
               {/* Drag handle */}
               {canDrag && (
-                <div className="cursor-grab active:cursor-grabbing shrink-0 text-[#ccc] hover:text-[#999] transition-colors duration-150 mt-[14px]">
+                <div className="cursor-grab active:cursor-grabbing shrink-0 text-[#767676] hover:text-[#767676] transition-colors duration-150 mt-[14px]">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
                     <circle cx="9" cy="6" r="1.5" /><circle cx="15" cy="6" r="1.5" />
                     <circle cx="9" cy="12" r="1.5" /><circle cx="15" cy="12" r="1.5" />
@@ -323,9 +330,9 @@ export default function ListPage() {
                       placeholder="Pourquoi ce livre est dans cette liste..."
                       maxLength={200}
                       rows={2}
-                      className="text-[12px] text-[#555] font-body bg-transparent border-none outline-none border-b border-[#ddd] w-full resize-none leading-relaxed"
+                      className="text-[12px] text-[#666] font-body bg-transparent border-none outline-none border-b border-[#eee] w-full resize-none leading-relaxed"
                     />
-                    <div className="text-[10px] text-[#bbb] font-body text-right mt-0.5">
+                    <div className="text-[10px] text-[#767676] font-body text-right mt-0.5">
                       {noteDraft.length}/200
                     </div>
                   </div>
@@ -338,7 +345,7 @@ export default function ListPage() {
                   </div>
                 ) : isOwner && editing ? (
                   <div
-                    className="text-[11px] text-[#ccc] font-body mt-0.5 cursor-text"
+                    className="text-[11px] text-[#767676] font-body mt-0.5 cursor-text"
                     onClick={() => { setEditingNote(item.id); setNoteDraft(""); }}
                   >
                     + note
@@ -350,10 +357,10 @@ export default function ListPage() {
               {editing && (
                 <button
                   onClick={() => removeBook(item.id)}
-                  className="shrink-0 w-7 h-7 rounded-full flex items-center justify-center bg-transparent border-[1.5px] border-[#eee] cursor-pointer hover:border-[#ccc] transition-colors duration-150 mt-[6px]"
+                  className="shrink-0 w-7 h-7 rounded-full flex items-center justify-center bg-transparent border-[1.5px] border-[#eee] cursor-pointer hover:border-[#eee] transition-colors duration-150 mt-[6px]"
                   aria-label="Retirer de la liste"
                 >
-                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#999" strokeWidth="2.5">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#767676" strokeWidth="2.5">
                     <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
                   </svg>
                 </button>
@@ -365,8 +372,8 @@ export default function ListPage() {
 
       {rawItems.length === 0 && (
         <div className="py-10 text-center">
-          <div className="text-sm text-[#999] font-body">Cette liste est vide.</div>
-          <div className="text-[13px] text-[#bbb] font-body mt-1">Ajoute des livres pour commencer.</div>
+          <div className="text-sm text-[#767676] font-body">Cette liste est vide.</div>
+          <div className="text-[13px] text-[#767676] font-body mt-1">Ajoute des livres pour commencer.</div>
           {isOwner && (
             <button
               onClick={handleAddBook}
@@ -392,7 +399,7 @@ export default function ListPage() {
               </button>
               <button
                 onClick={() => setConfirmDelete(false)}
-                className="px-4 py-2 rounded-[16px] text-[12px] font-body bg-transparent text-[#666] border-[1.5px] border-[#ddd] cursor-pointer hover:border-[#999] transition-colors duration-150"
+                className="px-4 py-2 rounded-[16px] text-[12px] font-body bg-transparent text-[#666] border-[1.5px] border-[#eee] cursor-pointer hover:border-[#767676] transition-colors duration-150"
               >
                 Annuler
               </button>
@@ -400,7 +407,7 @@ export default function ListPage() {
           ) : (
             <button
               onClick={() => setConfirmDelete(true)}
-              className="text-[12px] text-[#999] font-body bg-transparent border-none cursor-pointer hover:text-spoiler transition-colors duration-150"
+              className="text-[12px] text-[#767676] font-body bg-transparent border-none cursor-pointer hover:text-spoiler transition-colors duration-150"
             >
               Supprimer la liste
             </button>

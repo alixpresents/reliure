@@ -227,6 +227,11 @@ Reliure regroupe les éditions par oeuvre (comme Letterboxd : un film = une fich
 - Fond couverture fallback : `#e8e4de`
 - Bordures : `#f0f0f0` (séparateurs fins), `#eee` (bordures de composants)
 - Fond tags : `#f5f3f0` avec bordure `#eee`
+- Succès (check) : `#2E7D32`
+- Erreur texte : `#c00`, fond `#fff3f3`, bordure `#fdd`
+- Warning/info : texte `#8B6914`, fond `#fef9e7`, bordure `#f0e68c`
+- Badge Aperçu/WIP : texte `#8B6914`, fond `#faf6f0`, bordure `#e8dfd2`
+- Skeleton / progress bars : `#f0ede8`
 
 ### Layout
 - Max-width contenu : `760px` (single column, optimal pour lecture longue)
@@ -237,10 +242,10 @@ Reliure regroupe les éditions par oeuvre (comme Letterboxd : un film = une fich
 
 ### Composants clés
 - **WipBanner** : bandeau fond #faf6f0 / texte #8B6914 / border #e8dfd2 — affiché en haut des pages "Aperçu" (La Revue, Défis). Pill "Aperçu" également visible dans la nav du Header sur ces deux liens.
-- **Img** : couverture avec placeholder titre + auteur (fond `#e8e4de`, Instrument Serif italic `#999`, Geist 10px `#bbb`) quand `coverUrl` est null ou si l'image échoue (`onError`). Hover lift + shadow quand cliquable.
+- **Img** : couverture avec fallback Instrument Serif italic centré, max 2 lignes, `clamp(9px, 12%, 13px)`, fond `#e8e4de`, couleur `#999` — affiché quand `cover_url` est null ou si l'image échoue. `alt=""` pour éviter le texte alt navigateur. Hover lift + shadow quand cliquable.
 - **Stars** : étoiles de notation read-only (couleur `#D4883A`)
 - **InteractiveStars** : étoiles cliquables avec hover scale, pop animation, accessibilité (role, tabIndex, aria-label)
-- **Avatar** : avatar initiales circulaire (fond `#f0ede8`)
+- **Avatar** : avatar initiales circulaire (fond `#f0ede8`). Taille via prop `s` (px). Src via prop `src` (fallback sur initiales). Styles inline : `borderRadius: "50%"`, `overflow: "hidden"` sur le conteneur ; `objectFit: "cover"`, `objectPosition: "center"` sur l'img.
 - **Tag** : pill cliquable avec hover state pour les thèmes descriptifs
 - **Pill** : bouton de statut (En cours / Lu / À lire / Abandonné) avec active:scale-95
 - **Heading** : heading de section en Instrument Serif italic avec lien optionnel à droite
@@ -248,6 +253,8 @@ Reliure regroupe les éditions par oeuvre (comme Letterboxd : un film = une fich
 - **HScroll** : conteneur de scroll horizontal sans scrollbar
 - **LikeButton** : coeur toggle avec animation scale, compteur, couleur spoiler quand liked
 - **Search** : overlay de recherche plein écran avec champ + résultats filtrés
+- **ContentMenu** : menu "···" édition/suppression pour critiques et citations. Visible uniquement si `user.id === item.user_id`. Desktop : opacity 0 → 1 au hover du parent (`group`/`group-hover`). Mobile : toujours visible. Menu contextuel (blanc, border, shadow) avec "✏️ Modifier" (modal inline) et "🗑 Supprimer" (confirmation "Oui/Annuler"). Modal d'édition : textarea pré-rempli + InteractiveStars + checkbox spoilers pour les critiques. Intégré dans BookPage, ProfilePage, ExplorePage, FeedPage, CitationsPage.
+- **Toast** : notification d'erreur fixe, centrée en bas (z-10000), fond `#1a1a1a`, texte blanc, animation slide-up 180ms, auto-dismiss 3s. Hook `useToast()` → `{ toast, showToast }` (src/hooks/useToast.js). Déclenché sur les erreurs de mutation (likes, follows, création de liste, publication de citation). Intégré dans BookPage, ProfilePage, ExplorePage, FeedPage, CitationsPage, CreateListModal.
 
 ## Conventions
 
@@ -308,20 +315,30 @@ Chaque onglet a sa propre URL (`/:username/critiques`, etc.).
 - Tags personnels avec autocomplétion accent-insensitive (max 5)
 - Likes sur critiques et citations — persistés via `useLikes`
 - Navigation vers les livres par slug (`/livre/:slug`)
+- **Modifier la fiche** (EnrichModal) : bouton pill dans le hero sous les métadonnées, visible pour tous les users connectés sur les livres à UUID. Modal avec couverture (upload Supabase Storage bucket `book-covers`), description, pages, éditeur, date de publication. UPDATE immédiat en base, refetch post-save, toast confirmation.
+- **ContentMenu** sur les critiques et citations : édition/suppression inline, refetch après modification
 
 #### Profil
 - Données réelles via `useProfileData` (allStatuses, diaryBooks, allReadBooks, reviews, stats, chronologie, topRated)
 - Quatre favoris : drag & drop + touch mobile, swap via SearchOverlay, mini-note (max 24 chars), suppression — persistés via `useFavorites`
 - En cours de lecture : progression interactive, édition inline de page, complétion
+- **Édition inline du header** (isOwnProfile) : avatar uploadable (bucket `avatars`, compression canvas 400×400 JPEG 0.85, max 1 Mo), nom cliquable → input inline, bio cliquable → textarea 160 chars ; lien "⚙ Paramètres" discret → `/parametres`
 - Onglet Bibliothèque : 3 modes grille/liste/étagère, ratings réels
+  - Grille : `grid-cols-5 sm:grid-cols-8`, ratio 2:3, fallback Img
+  - Étagère : 5 livres/rangée mobile, 8 desktop, covers 80×120px, rotation alternée ±1.5°/1°, planche bois, fallback Img
+  - État vide (`isOwnProfile`) : titre Instrument Serif italic, accroche, bouton "📥 Importer depuis Goodreads" → /backfill, bouton "Parcourir les livres" → /explorer, mention Babelio/Livraddict
 - Onglet Journal : diary (lectures avec date), calendrier visuel
+- Onglet Mes citations : titre du livre cliquable → `/livre/:slug`
 - Onglet Bilan : stats réelles (total, année, pages, note moy), chronologie, top noté
 - Navigation profil par `/:username/:tab`
+- **ContentMenu** sur les critiques et citations (onglets Mes critiques, Mes citations)
 
 #### Explorer
 - Livres populaires via RPC `popular_books_week` (fallback rating_count)
 - Critiques populaires, citations populaires, listes populaires — données réelles
-- Filtrage par genre (`useBooksByGenre`)
+- Filtrage par genre (`useBooksByGenre`) — filtre JSONB via `.filter("genres", "cs", `["${genre}"]`)` (opérateur PostgREST `cs`)
+- Thèmes : liste curatée statique `THEMES_PRINCIPAUX` (20 thèmes hardcodés, pas de fetch dynamique)
+- **ContentMenu** sur les critiques et citations de l'Explorer
 
 #### Listes
 - Création (titre, description, publique/privée, classement) avec tooltips sur les options
@@ -339,6 +356,8 @@ Chaque onglet a sa propre URL (`/:username/critiques`, etc.).
 - Branché sur table `activity`, dédoublonnage, types : reading_status, review, quote, list
 - Affichage cover, relecture badge, notation
 - Type `list` : logged à la création (si publique) et au passage privé→publique, supprimé avec la liste ; card avec titre italic cliquable + mosaïque des 3 premières couvertures
+- **ContentMenu** sur les critiques et citations du fil
+- `useFeed` sélectionne `users(username, display_name, avatar_url)` — le champ `avatar_url` est requis pour afficher le bon avatar dans le fil
 
 ### Frontend (UI complète, données mock ou partiellement branchées)
 
@@ -429,11 +448,17 @@ Variable `isOwnProfile = user?.id === viewedProfile?.id` contrôle l'affichage c
 
 **Visible uniquement si `isOwnProfile`**
 - Bandeau backfill ("Tu as lu d'autres livres ?")
-- Bouton "Modifier le profil" (→ `/parametres`)
+- Édition inline du profil (pas de bouton "Modifier le profil" — voir ci-dessous)
 - Bouton "+ Nouvelle liste" + CTA dans l'état vide listes
 - Drag & drop sur les quatre favoris (prop `isOwner` de `FavoritesSection`)
 - Édition inline de la progression de lecture + bannière de complétion (`ReadingItem` prop `isOwner`)
 - Tous les CTAs d'action dans les états vides (chercher, ajouter, créer)
+
+**Édition inline du profil (isOwnProfile)**
+- **Avatar** : hover → overlay appareil photo SVG. Clic → file picker (jpg/png/webp, max 1 Mo). Compression canvas côté client (max 400×400px, JPEG 0.85). Upload vers Supabase Storage bucket `avatars` (`${user.id}/avatar.jpg`, upsert). `avatar_url` mis à jour via UPDATE `users` + optimistic local state. Cache-bust via `?t=timestamp`.
+- **Nom affiché** : clic → input inline, même taille/style, bordure bottom 1px uniquement. Entrée ou blur → UPDATE `users.display_name` (max 50 chars). Escape annule.
+- **Bio** : si null → placeholder italic "Ajoute une bio..." cliquable. Clic → textarea avec compteur /160. Cmd+Entrée ou blur → UPDATE `users.bio` (max 160 chars). Escape annule.
+- **Lien Paramètres** : bouton "⚙ Paramètres" 11px #767676 sous les stats → `/parametres` (pour email, mot de passe, suppression compte).
 
 **Quatre favoris** : section masquée pour les visiteurs si `favorites.some(f => f.book)` est faux.
 
@@ -441,7 +466,7 @@ Variable `isOwnProfile = user?.id === viewedProfile?.id` contrôle l'affichage c
 | Onglet | isOwnProfile | !isOwnProfile |
 |--------|-------------|----------------|
 | Journal | "Ton journal de lecture est vide. Ajoute ton premier livre." + Chercher | "Aucune lecture enregistrée pour l'instant." |
-| Bibliothèque | "Ta bibliothèque est vide. Commence par ajouter des lectures passées." + Ajouter | "Aucun livre dans la bibliothèque." |
+| Bibliothèque | Titre Instrument Serif "Ta bibliothèque t'attend." + accroche + deux CTAs ("📥 Importer depuis Goodreads" → /backfill, "Parcourir les livres" → /explorer) + note Babelio/Livraddict | "Aucun livre dans la bibliothèque." |
 | Critiques | "Tu n'as pas encore écrit de critique." + Explorer | "Aucune critique pour l'instant." |
 | Citations | "Tu n'as pas encore sauvegardé de citation." | "Aucune citation pour l'instant." |
 | Listes | "Tu n'as pas encore créé de liste." + Nouvelle liste | "Aucune liste publique pour l'instant." |

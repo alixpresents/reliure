@@ -10,8 +10,8 @@ export function useBookBySlug(slug) {
     if (!slug) { setLoading(false); setNotFound(true); return; }
     (async () => {
       // Try slug first, then fallback to ID
-      let { data } = await supabase.from("books").select("*").eq("slug", slug).single();
-      if (!data) {
+      let { data, error } = await supabase.from("books").select("*").eq("slug", slug).single();
+      if (error || !data) {
         const res = await supabase.from("books").select("*").eq("id", slug).single();
         data = res.data;
       }

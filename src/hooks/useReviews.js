@@ -37,7 +37,8 @@ export function useMyReviews(profileUserId) {
       .select("*, books(*)")
       .eq("user_id", targetId)
       .not("body", "is", null)
-      .order("created_at", { ascending: false });
+      .order("created_at", { ascending: false })
+      .limit(50);
     setReviews(data ?? []);
     setLoading(false);
   }, [targetId]);

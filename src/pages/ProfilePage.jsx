@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import Img from "../components/Img";
 import Stars from "../components/Stars";
 import Avatar from "../components/Avatar";
@@ -18,8 +18,11 @@ import { useNav } from "../lib/NavigationContext";
 import { useNavigate, Link } from "react-router-dom";
 import ContentMenu from "../components/ContentMenu";
 import { supabase } from "../lib/supabase";
+import { safeMutation, unwrapSupabase } from "../lib/safeMutation";
 import CreateListModal from "../components/CreateListModal";
 import Skeleton from "../components/Skeleton";
+import Toast from "../components/Toast";
+import { useToast } from "../hooks/useToast";
 
 function ReadingItem({ book, go, onFinish, initialPage = 0, statusId = null, isOwner = true }) {
   const [currentPage, setCurrentPage] = useState(initialPage);
@@ -46,12 +49,20 @@ function ReadingItem({ book, go, onFinish, initialPage = 0, statusId = null, isO
     const n = parseInt(draft, 10);
     if (!isNaN(n) && n >= 0) {
       const clamped = Math.min(n, book.p);
-      setCurrentPage(clamped);
+      const prevPage = currentPage;
       if (statusId) {
-        const { error } = await supabase.from("reading_status").update({ current_page: clamped }).eq("id", statusId);
-        if (error) console.error("page update error:", error, "statusId:", statusId);
+        await safeMutation({
+          onOptimistic: () => setCurrentPage(clamped),
+          mutate: () => unwrapSupabase(
+            supabase.from("reading_status").update({ current_page: clamped }).eq("id", statusId),
+            "page update"
+          ),
+          onRevert: () => setCurrentPage(prevPage),
+          errorMessage: `page update error (statusId: ${statusId})`,
+        });
       } else {
         console.error("page update skipped: statusId is null for book", book.t);
+        setCurrentPage(clamped);
       }
       if (n >= book.p) setFinished(true);
     }
@@ -156,7 +167,7 @@ function FavNote({ note, isOwner, onSave }) {
             className="bg-transparent border-none outline-none text-[11px] text-[#666] font-body w-[100px] text-center"
             maxLength={24}
           />
-          <span className="text-[9px] text-[#999] font-body shrink-0">{draft.length}/24</span>
+          <span className="text-[9px] text-[#767676] font-body shrink-0">{draft.length}/24</span>
         </div>
       </div>
     );
@@ -182,7 +193,7 @@ function FavNote({ note, isOwner, onSave }) {
           onClick={e => { e.stopPropagation(); setEditing(true); setDraft(""); }}
           className="inline-block bg-white border border-[#eee] rounded-[10px] px-1.5 py-[1px] shadow-[0_1px_4px_rgba(0,0,0,0.06)] cursor-pointer opacity-100 sm:opacity-0 sm:group-hover/fav:opacity-100 transition-opacity duration-150"
         >
-          <span className="text-[11px] text-[#ccc]">+</span>
+          <span className="text-[11px] text-[#767676]">+</span>
         </div>
       </div>
     );
@@ -301,7 +312,7 @@ function FavoritesSection({ favorites, isOwner, go, onAdd, onRemove, onSwap, onU
         {isOwner && (
           <button
             onClick={() => { setEditing(!editing); setDragFrom(null); setDragOver(null); }}
-            className={`bg-transparent border-none cursor-pointer text-[12px] font-body transition-colors duration-150 ${editing ? "text-[#1a1a1a] font-medium" : "text-[#999] hover:text-[#1a1a1a]"}`}
+            className={`bg-transparent border-none cursor-pointer text-[12px] font-body transition-colors duration-150 ${editing ? "text-[#1a1a1a] font-medium" : "text-[#767676] hover:text-[#1a1a1a]"}`}
           >
             {editing ? "Terminé" : "Modifier"}
           </button>
@@ -332,7 +343,7 @@ function FavoritesSection({ favorites, isOwner, go, onAdd, onRemove, onSwap, onU
                     opacity: isDragging ? 0.6 : 1,
                     boxShadow: isDragging ? "0 8px 24px rgba(0,0,0,0.15)" : "none",
                     borderRadius: 3,
-                    outline: isDropTarget ? "2px dashed #ddd" : "none",
+                    outline: isDropTarget ? "2px dashed #eee" : "none",
                     outlineOffset: isDropTarget ? 2 : 0,
                     transition: "opacity 150ms, box-shadow 150ms",
                   }}
@@ -394,10 +405,10 @@ function FavoritesSection({ favorites, isOwner, go, onAdd, onRemove, onSwap, onU
                 tabIndex={0}
                 onClick={() => { console.log('[Favorites] slot clicked, editMode:', editing); if (!dragFrom) onAdd(pos); }}
                 onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onAdd(pos); } }}
-                className="w-full aspect-[2/3] border-[1.5px] border-dashed border-[#ddd] rounded-[3px] flex items-center justify-center cursor-pointer hover:border-[#bbb] transition-colors duration-150"
-                style={isDropTarget ? { borderColor: "#bbb", borderWidth: 2 } : undefined}
+                className="w-full aspect-[2/3] border-[1.5px] border-dashed border-[#eee] rounded-[3px] flex items-center justify-center cursor-pointer hover:border-[#767676] transition-colors duration-150"
+                style={isDropTarget ? { borderColor: "#eee", borderWidth: 2 } : undefined}
               >
-                <span className="text-[20px] text-[#ccc]">+</span>
+                <span className="text-[20px] text-[#767676]">+</span>
               </div>
             </div>
           );
@@ -439,6 +450,105 @@ export default function ProfilePage({ viewedProfile, initialTab }) {
   const { user } = useAuth();
   const profile = viewedProfile;
   const profileId = viewedProfile?.id;
+
+  // Inline profile editing state
+  const [editingName, setEditingName] = useState(false);
+  const [nameDraft, setNameDraft] = useState("");
+  const [localDisplayName, setLocalDisplayName] = useState(null);
+  const [editingBio, setEditingBio] = useState(false);
+  const [bioDraft, setBioDraft] = useState("");
+  const [localBio, setLocalBio] = useState(null);
+  const [localAvatar, setLocalAvatar] = useState(null);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const avatarInputRef = useRef(null);
+  const nameInputRef = useRef(null);
+  const bioTextareaRef = useRef(null);
+
+  const displayName = localDisplayName ?? profile?.display_name;
+  const bio = localBio ?? profile?.bio;
+  const avatarUrl = localAvatar ?? profile?.avatar_url;
+
+  useEffect(() => {
+    if (editingName && nameInputRef.current) { nameInputRef.current.focus(); nameInputRef.current.select(); }
+  }, [editingName]);
+
+  useEffect(() => {
+    if (editingBio && bioTextareaRef.current) { bioTextareaRef.current.focus(); }
+  }, [editingBio]);
+
+  const startEditName = () => {
+    setNameDraft(displayName || profile?.username || "");
+    setEditingName(true);
+  };
+
+  const commitName = async () => {
+    setEditingName(false);
+    const trimmed = nameDraft.trim().slice(0, 50);
+    if (!trimmed || trimmed === (displayName || profile?.username)) return;
+    setLocalDisplayName(trimmed);
+    await supabase.from("users").update({ display_name: trimmed }).eq("id", user.id);
+  };
+
+  const startEditBio = () => {
+    setBioDraft(bio || "");
+    setEditingBio(true);
+  };
+
+  const commitBio = async () => {
+    setEditingBio(false);
+    const trimmed = bioDraft.trim().slice(0, 160);
+    if (trimmed === (bio || "")) return;
+    setLocalBio(trimmed || null);
+    await supabase.from("users").update({ bio: trimmed || null }).eq("id", user.id);
+  };
+
+  const [avatarError, setAvatarError] = useState(null);
+  const showAvatarError = (msg) => {
+    setAvatarError(msg);
+    setTimeout(() => setAvatarError(null), 4000);
+  };
+
+  const compressImage = (file) => new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      const MAX = 400;
+      const ratio = Math.min(MAX / img.width, MAX / img.height, 1);
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.round(img.width * ratio);
+      canvas.height = Math.round(img.height * ratio);
+      canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
+      canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error("canvas toBlob failed")), "image/jpeg", 0.85);
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error("image load failed")); };
+    img.src = url;
+  });
+
+  const handleAvatarChange = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    if (!["image/jpeg", "image/jpg", "image/png", "image/webp"].includes(file.type)) {
+      showAvatarError("Format non supporté. Utilise un fichier JPG, PNG ou WebP.");
+      return;
+    }
+    if (file.size > 1 * 1024 * 1024) {
+      showAvatarError("Image trop lourde. Maximum 1 Mo.");
+      return;
+    }
+    setUploadingAvatar(true);
+    let blob;
+    try { blob = await compressImage(file); } catch (err) { console.error("compress error:", err); setUploadingAvatar(false); return; }
+    const path = `${user.id}/avatar.jpg`;
+    const { error: uploadErr } = await supabase.storage.from("avatars").upload(path, blob, { upsert: true, contentType: "image/jpeg" });
+    if (uploadErr) { console.error("avatar upload error:", uploadErr); setUploadingAvatar(false); return; }
+    const { data: { publicUrl } } = supabase.storage.from("avatars").getPublicUrl(path);
+    const urlWithBust = `${publicUrl}?t=${Date.now()}`;
+    await supabase.from("users").update({ avatar_url: urlWithBust }).eq("id", user.id);
+    setLocalAvatar(urlWithBust);
+    setUploadingAvatar(false);
+  };
   const isOwnProfile = user?.id === profileId;
   const { books: dbReading, refetch: refetchReading } = useReadingList("reading", profileId);
   const profileData = useProfileData(profileId);
@@ -451,6 +561,7 @@ export default function ProfilePage({ viewedProfile, initialTab }) {
   const listIds = myLists.map(l => l.id);
   const { likedSet: listLikedSet, initialSet: listInitialSet, toggle: toggleListLike } = useLikes(listIds, "list");
   const [showCreateList, setShowCreateList] = useState(false);
+  const { toast, showToast } = useToast();
   const onSearch = () => navigate("/explorer");
   const onBackfill = () => navigate("/backfill");
 
@@ -480,7 +591,7 @@ export default function ProfilePage({ viewedProfile, initialTab }) {
   };
 
   // Diary: group read books by month
-  const diaryMonths = (() => {
+  const diaryMonths = useMemo(() => {
     const months = ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre"];
     const grouped = new Map();
     (profileData.diaryBooks || []).forEach(rs => {
@@ -494,7 +605,7 @@ export default function ProfilePage({ viewedProfile, initialTab }) {
       });
     });
     return Array.from(grouped.entries());
-  })();
+  }, [profileData.diaryBooks]);
 
   // Library: all statuses
   const libraryBooks = (profileData.allStatuses || []).map(rs => ({
@@ -518,42 +629,85 @@ export default function ProfilePage({ viewedProfile, initialTab }) {
 
   return (
     <div>
+      {toast.visible && <Toast message={toast.message} />}
       {/* Header */}
       <div className="pt-8 pb-6">
         <div className="flex items-center gap-3.5 mb-3.5 flex-wrap sm:flex-nowrap">
-          <Avatar
-            i={(profile.display_name || profile.username || "?").split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2)}
-            s={52}
-            src={profile.avatar_url}
-          />
-          <div className="flex-1">
-            <div className="text-[22px] font-normal font-display italic">
-              {profile.display_name || profile.username}
+          {/* Avatar — editable on own profile */}
+          {isOwnProfile ? (
+            <div
+              className="relative rounded-full shrink-0 cursor-pointer group/avatar"
+              style={{ width: 52, height: 52 }}
+              onClick={() => avatarInputRef.current?.click()}
+            >
+              <Avatar
+                i={(displayName || profile.username || "?").split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2)}
+                s={52}
+                src={avatarUrl}
+              />
+              <div className="absolute inset-0 rounded-full bg-black/40 flex items-center justify-center opacity-0 group-hover/avatar:opacity-100 transition-opacity duration-150">
+                {uploadingAvatar ? (
+                  <div className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                ) : (
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+                    <circle cx="12" cy="13" r="4" />
+                  </svg>
+                )}
+              </div>
+              <input
+                ref={avatarInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                className="hidden"
+                onChange={handleAvatarChange}
+              />
             </div>
+          ) : (
+            <Avatar
+              i={(displayName || profile.username || "?").split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2)}
+              s={52}
+              src={avatarUrl}
+            />
+          )}
+          <div className="flex-1">
+            {/* Display name — editable on own profile */}
+            {isOwnProfile && editingName ? (
+              <input
+                ref={nameInputRef}
+                type="text"
+                value={nameDraft}
+                onChange={e => setNameDraft(e.target.value)}
+                onBlur={commitName}
+                onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); commitName(); } if (e.key === "Escape") setEditingName(false); }}
+                maxLength={50}
+                className="text-[22px] font-normal font-display italic bg-transparent border-none border-b border-b-[#1a1a1a] outline-none w-full py-0 px-0"
+                style={{ borderBottom: "1px solid #1a1a1a" }}
+              />
+            ) : (
+              <div
+                className={`text-[22px] font-normal font-display italic ${isOwnProfile ? "cursor-pointer hover:opacity-70 transition-opacity duration-150" : ""}`}
+                onClick={isOwnProfile ? startEditName : undefined}
+              >
+                {displayName || profile.username}
+              </div>
+            )}
             <div className="text-xs text-[#767676] font-body">@{profile.username}</div>
           </div>
-          <div className="flex gap-5 text-xs text-[#737373] font-body w-full sm:w-auto mt-2 sm:mt-0">
+          <div className="flex gap-5 text-xs text-[#767676] font-body w-full sm:w-auto mt-2 sm:mt-0">
             {[[String(totalBooks), "livres"], [String(booksThisYear), "cette année"], [String(followers), "abonnés"], [String(followingCount), "abonnements"]].map(([n, l]) => (
               <span key={l}><strong className="text-[#1a1a1a] font-semibold">{n}</strong> {l}</span>
             ))}
           </div>
-          {isOwnProfile && (
-            <button
-              onClick={() => navigate("/parametres")}
-              className="shrink-0 px-4 py-1.5 rounded-full text-[13px] font-medium font-body border border-[#eee] text-[#737373] bg-transparent hover:border-[#ccc] hover:text-[#1a1a1a] transition-colors duration-150"
-            >
-              Modifier le profil
-            </button>
-          )}
           {!isOwnProfile && (
             <button
               onClick={() => {
                 if (!user) { navigate("/login"); return; }
-                isFollowing ? unfollow() : follow();
+                isFollowing ? unfollow(() => showToast("Une erreur est survenue")) : follow(() => showToast("Une erreur est survenue"));
               }}
               className={`shrink-0 px-4 py-1.5 rounded-full text-[13px] font-medium font-body border transition-colors duration-150 ${
                 isFollowing
-                  ? "bg-transparent text-[#737373] border-[#eee] hover:border-[#ccc] hover:text-[#1a1a1a]"
+                  ? "bg-transparent text-[#767676] border-[#eee] hover:border-[#767676] hover:text-[#1a1a1a]"
                   : "bg-[#1a1a1a] text-white border-[#1a1a1a] hover:bg-[#333]"
               }`}
             >
@@ -561,10 +715,56 @@ export default function ProfilePage({ viewedProfile, initialTab }) {
             </button>
           )}
         </div>
-        {profile.bio && (
-          <p className="text-[13px] text-[#6b6b6b] leading-relaxed max-w-[480px] m-0 mb-3 font-body">
+        {/* Bio — editable on own profile */}
+        {isOwnProfile ? (
+          editingBio ? (
+            <div className="max-w-[480px] mb-3">
+              <textarea
+                ref={bioTextareaRef}
+                value={bioDraft}
+                onChange={e => setBioDraft(e.target.value.slice(0, 160))}
+                onBlur={commitBio}
+                onKeyDown={e => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) { e.preventDefault(); commitBio(); } if (e.key === "Escape") setEditingBio(false); }}
+                rows={3}
+                maxLength={160}
+                className="w-full text-[13px] text-[#666] leading-relaxed font-body bg-transparent border border-[#eee] rounded-lg outline-none p-2.5 resize-none focus:border-[#767676] transition-[border] duration-150"
+              />
+              <div className="text-[10px] text-[#767676] font-body text-right mt-1">{bioDraft.length}/160</div>
+            </div>
+          ) : bio ? (
+            <p
+              className="text-[13px] text-[#666] leading-relaxed max-w-[480px] m-0 mb-3 font-body cursor-pointer hover:opacity-70 transition-opacity duration-150"
+              onClick={startEditBio}
+            >
+              {bio}
+            </p>
+          ) : (
+            <p
+              className="text-[14px] italic text-[#767676] max-w-[480px] m-0 mb-3 font-body cursor-pointer hover:text-[#767676] transition-colors duration-150"
+              onClick={startEditBio}
+            >
+              Ajoute une bio...
+            </p>
+          )
+        ) : profile.bio ? (
+          <p className="text-[13px] text-[#666] leading-relaxed max-w-[480px] m-0 mb-3 font-body">
             {profile.bio}
           </p>
+        ) : null}
+        {/* Paramètres link — own profile only */}
+        {isOwnProfile && (
+          <button
+            onClick={() => navigate("/parametres")}
+            className="text-[11px] text-[#767676] font-body bg-transparent border-none cursor-pointer hover:text-[#1a1a1a] transition-colors duration-150 p-0 mt-1"
+          >
+            ⚙ Paramètres
+          </button>
+        )}
+        {/* Avatar error toast */}
+        {avatarError && (
+          <div className="mt-3 px-3 py-2 rounded-lg bg-[#fff3f3] border border-[#fdd] text-[12px] text-[#c00] font-body max-w-[360px]">
+            {avatarError}
+          </div>
         )}
       </div>
 
@@ -575,13 +775,13 @@ export default function ProfilePage({ viewedProfile, initialTab }) {
           tabIndex={0}
           onClick={onBackfill}
           onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onBackfill(); } }}
-          className="flex items-center gap-4 p-3 px-4 bg-surface rounded-lg border border-[#eee] cursor-pointer hover:border-[#ddd] transition-colors duration-150 mb-0"
+          className="flex items-center gap-4 p-3 px-4 bg-surface rounded-lg border border-[#eee] cursor-pointer hover:border-[#eee] transition-colors duration-150 mb-0"
         >
           <div className="flex-1">
             <div className="text-[13px] font-medium font-body">Tu as lu d'autres livres ?</div>
-            <div className="text-xs text-[#737373] font-body">Remplis ta bibliothèque en quelques clics.</div>
+            <div className="text-xs text-[#767676] font-body">Remplis ta bibliothèque en quelques clics.</div>
           </div>
-          <button className="px-3 py-[6px] rounded-[16px] text-xs font-medium font-body bg-white border-[1.5px] border-[#ddd] text-[#1a1a1a] cursor-pointer hover:border-[#bbb] transition-colors duration-150">
+          <button className="px-3 py-[6px] rounded-[16px] text-xs font-medium font-body bg-white border-[1.5px] border-[#eee] text-[#1a1a1a] cursor-pointer hover:border-[#767676] transition-colors duration-150">
             Ajouter
           </button>
         </div>
@@ -618,7 +818,7 @@ export default function ProfilePage({ viewedProfile, initialTab }) {
           ))
         ) : (
           <EmptyState>
-            <div className="text-sm text-[#737373] font-body">Rien en cours.</div>
+            <div className="text-sm text-[#767676] font-body">Rien en cours.</div>
             <div className="text-xs text-[#767676] font-body mt-1">
               Que lis-tu en ce moment ?{" "}
               <span role="button" tabIndex={0} onClick={onSearch} onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onSearch(); } }} className="underline cursor-pointer hover:text-[#1a1a1a] transition-colors duration-150">Chercher</span>
@@ -649,7 +849,7 @@ export default function ProfilePage({ viewedProfile, initialTab }) {
             >
               <div className="text-xs">{label}</div>
               {showHints && tab === value && (
-                <div style={{ opacity: hintsOpacity, transition: "opacity 150ms" }} className="text-[11px] text-[#bbb] font-normal mt-0.5 leading-tight">
+                <div style={{ opacity: hintsOpacity, transition: "opacity 150ms" }} className="text-[11px] text-[#767676] font-normal mt-0.5 leading-tight">
                   {TAB_SUBTITLES[value]}
                 </div>
               )}
@@ -687,12 +887,12 @@ export default function ProfilePage({ viewedProfile, initialTab }) {
             <EmptyState>
               {isOwnProfile ? (
                 <>
-                  <div className="text-sm text-[#999] font-body">Ton journal de lecture est vide.</div>
-                  <div className="text-[13px] text-[#bbb] font-body mt-1">Ajoute ton premier livre.</div>
+                  <div className="text-sm text-[#767676] font-body">Ton journal de lecture est vide.</div>
+                  <div className="text-[13px] text-[#767676] font-body mt-1">Ajoute ton premier livre.</div>
                   <button onClick={onSearch} className="mt-4 px-5 py-2.5 rounded-[20px] text-[13px] font-medium font-body bg-[#1a1a1a] text-white border-none cursor-pointer hover:bg-[#333] transition-colors duration-150">Chercher un livre</button>
                 </>
               ) : (
-                <div className="text-sm text-[#999] font-body">Aucune lecture enregistrée pour l'instant.</div>
+                <div className="text-sm text-[#767676] font-body">Aucune lecture enregistrée pour l'instant.</div>
               )}
             </EmptyState>
           )}
@@ -723,17 +923,41 @@ export default function ProfilePage({ viewedProfile, initialTab }) {
           </div>
 
           {libraryBooks.length === 0 ? (
-            <EmptyState>
-              {isOwnProfile ? (
-                <>
-                  <div className="text-sm text-[#999] font-body">Ta bibliothèque est vide.</div>
-                  <div className="text-[13px] text-[#bbb] font-body mt-1">Commence par ajouter des lectures passées.</div>
-                  <button onClick={() => navigate("/backfill")} className="mt-4 px-5 py-2.5 rounded-[20px] text-[13px] font-medium font-body bg-[#1a1a1a] text-white border-none cursor-pointer hover:bg-[#333] transition-colors duration-150">Ajouter des livres</button>
-                </>
-              ) : (
-                <div className="text-sm text-[#999] font-body">Aucun livre dans la bibliothèque.</div>
-              )}
-            </EmptyState>
+            isOwnProfile ? (
+              <div className="py-14 flex flex-col items-center text-center px-4">
+                <h2 className="font-display italic text-[22px] font-normal text-[#1a1a1a] mb-3">
+                  Ta bibliothèque t'attend.
+                </h2>
+                <p className="text-[14px] text-[#666] font-body leading-relaxed mb-7" style={{ maxWidth: 360 }}>
+                  Reliure garde la trace de tout ce que tu lis — tes critiques, tes citations, tes coups de cœur. Commence par importer ta bibliothèque Goodreads ou ajoute ton premier livre.
+                </p>
+                <div className="flex flex-col sm:flex-row gap-3 items-center">
+                  <button
+                    onClick={() => navigate("/backfill")}
+                    className="px-5 py-2.5 rounded-[20px] text-[13px] font-medium font-body bg-[#1a1a1a] text-white border-none cursor-pointer hover:bg-[#333] transition-colors duration-150"
+                  >
+                    📥 Importer depuis Goodreads
+                  </button>
+                  <button
+                    onClick={() => navigate("/explorer")}
+                    className="px-5 py-2.5 rounded-[20px] text-[13px] font-medium font-body bg-transparent text-[#1a1a1a] border border-[#eee] cursor-pointer hover:border-[#767676] transition-colors duration-150"
+                  >
+                    Parcourir les livres
+                  </button>
+                </div>
+                <p className="text-[11px] text-[#767676] font-body mt-5">
+                  Tu peux aussi{" "}
+                  <button onClick={() => navigate("/backfill")} className="bg-transparent border-none cursor-pointer text-[11px] text-[#767676] font-body underline p-0 hover:text-[#1a1a1a] transition-colors duration-100">
+                    importer
+                  </button>
+                  {" "}depuis Babelio ou Livraddict.
+                </p>
+              </div>
+            ) : (
+              <EmptyState>
+                <div className="text-sm text-[#767676] font-body">Aucun livre dans la bibliothèque.</div>
+              </EmptyState>
+            )
           ) : <>
 
           {/* Grille */}
@@ -761,7 +985,7 @@ export default function ProfilePage({ viewedProfile, initialTab }) {
                   <Img book={b} w={36} h={54} />
                   <div className="flex-1 min-w-0">
                     <div className="text-sm font-medium font-body truncate">{b.t}</div>
-                    <div className="text-xs text-[#737373] font-body">{b.a} · {b.y}</div>
+                    <div className="text-xs text-[#767676] font-body">{b.a} · {b.y}</div>
                   </div>
                   {(b._rating || b.r) > 0 && <Stars r={b._rating || b.r} s={11} />}
                 </div>
@@ -821,7 +1045,7 @@ export default function ProfilePage({ viewedProfile, initialTab }) {
                     <div className="flex items-start justify-between gap-2">
                       <div>
                         <div className="text-base font-medium font-body mb-0.5">{b.title}</div>
-                        <div className="text-xs text-[#737373] mb-2 font-body">{bookObj.a}{bookObj.y ? `, ${bookObj.y}` : ""}</div>
+                        <div className="text-xs text-[#767676] mb-2 font-body">{bookObj.a}{bookObj.y ? `, ${bookObj.y}` : ""}</div>
                       </div>
                       <ContentMenu type="review" item={rv} onDelete={() => refetchReviews()} onEdit={() => refetchReviews()} />
                     </div>
@@ -842,11 +1066,11 @@ export default function ProfilePage({ viewedProfile, initialTab }) {
             <EmptyState>
               {isOwnProfile ? (
                 <>
-                  <div className="text-sm text-[#999] font-body">Tu n'as pas encore écrit de critique.</div>
+                  <div className="text-sm text-[#767676] font-body">Tu n'as pas encore écrit de critique.</div>
                   <button onClick={() => navigate("/explorer")} className="mt-4 px-5 py-2.5 rounded-[20px] text-[13px] font-medium font-body bg-[#1a1a1a] text-white border-none cursor-pointer hover:bg-[#333] transition-colors duration-150">Explorer des livres</button>
                 </>
               ) : (
-                <div className="text-sm text-[#999] font-body">Aucune critique pour l'instant.</div>
+                <div className="text-sm text-[#767676] font-body">Aucune critique pour l'instant.</div>
               )}
             </EmptyState>
           )}
@@ -870,7 +1094,7 @@ export default function ProfilePage({ viewedProfile, initialTab }) {
                 {bookObj && (
                   <div className="flex items-center gap-2.5">
                     <Img book={bookObj} w={28} h={40} onClick={() => go(bookObj)} />
-                    <Link to={`/livre/${bookObj.slug}`} className="text-[13px] font-medium font-body text-[#1a1a1a] no-underline hover:text-[#444] transition-colors duration-100">{bookObj.t}</Link>
+                    <Link to={`/livre/${bookObj.slug}`} className="text-[13px] font-medium font-body text-[#1a1a1a] no-underline hover:text-[#333] transition-colors duration-100">{bookObj.t}</Link>
                     <span className="text-xs text-[#767676] font-body">· {bookObj.a}</span>
                   </div>
                 )}
@@ -878,7 +1102,7 @@ export default function ProfilePage({ viewedProfile, initialTab }) {
             );
           }) : (
             <EmptyState>
-              <div className="text-sm text-[#999] font-body">
+              <div className="text-sm text-[#767676] font-body">
                 {isOwnProfile ? "Tu n'as pas encore sauvegardé de citation." : "Aucune citation pour l'instant."}
               </div>
             </EmptyState>
@@ -892,14 +1116,14 @@ export default function ProfilePage({ viewedProfile, initialTab }) {
           {isOwnProfile && (
             <button
               onClick={() => setShowCreateList(true)}
-              className="w-full py-3 mb-4 border-[1.5px] border-dashed border-[#ddd] rounded-lg text-[13px] text-[#999] font-body bg-transparent cursor-pointer hover:border-[#bbb] hover:text-[#666] transition-colors duration-150"
+              className="w-full py-3 mb-4 border-[1.5px] border-dashed border-[#eee] rounded-lg text-[13px] text-[#767676] font-body bg-transparent cursor-pointer hover:border-[#767676] hover:text-[#666] transition-colors duration-150"
             >
               + Nouvelle liste
             </button>
           )}
           {myLists.length === 0 && (
             <EmptyState>
-              <div className="text-sm text-[#999] font-body">
+              <div className="text-sm text-[#767676] font-body">
                 {isOwnProfile ? "Tu n'as pas encore créé de liste." : "Aucune liste publique pour l'instant."}
               </div>
               {isOwnProfile && (
@@ -927,14 +1151,14 @@ export default function ProfilePage({ viewedProfile, initialTab }) {
                       return <Img key={b.id} book={bookObj} w={60} h={90} />;
                     })}
                     {totalItems > 4 && (
-                      <div className="w-[60px] h-[90px] rounded-[3px] bg-avatar-bg flex items-center justify-center text-[11px] text-[#737373] shrink-0 font-body">
+                      <div className="w-[60px] h-[90px] rounded-[3px] bg-avatar-bg flex items-center justify-center text-[11px] text-[#767676] shrink-0 font-body">
                         +{totalItems - 4}
                       </div>
                     )}
                   </div>
                 )}
                 <div className="text-[15px] font-medium font-body">{l.title}</div>
-                <div className="text-xs text-[#737373] mt-1 font-body flex items-center gap-1.5">
+                <div className="text-xs text-[#767676] mt-1 font-body flex items-center gap-1.5">
                   <span>{totalItems} livre{totalItems !== 1 ? "s" : ""}</span>
                   <span>·</span>
                   <span>{l.is_public ? "Publique" : "Privée"}</span>
@@ -943,7 +1167,7 @@ export default function ProfilePage({ viewedProfile, initialTab }) {
                     count={l.likes_count || 0}
                     liked={listLikedSet.has(l.id)}
                     initialLiked={listInitialSet.has(l.id)}
-                    onToggle={() => toggleListLike(l.id)}
+                    onToggle={() => toggleListLike(l.id, () => showToast("Une erreur est survenue"))}
                     className="text-xs"
                   />
                 </div>
@@ -983,7 +1207,7 @@ export default function ProfilePage({ viewedProfile, initialTab }) {
                 ].map((st, i) => (
                   <div key={i} className="bg-white p-5 text-center">
                     <div className="text-[22px] font-semibold font-body">{st.v}</div>
-                    <div className="text-[10px] text-[#737373] mt-[3px] uppercase tracking-[0.5px] font-body">{st.l}</div>
+                    <div className="text-[10px] text-[#767676] mt-[3px] uppercase tracking-[0.5px] font-body">{st.l}</div>
                   </div>
                 ))}
               </div>
@@ -995,7 +1219,7 @@ export default function ProfilePage({ viewedProfile, initialTab }) {
                   <div className="flex items-end gap-1.5 mt-2 mb-7" style={{ height: barH + 24 }}>
                     {chrono.map((v, i) => (
                       <div key={i} className="flex-1 flex flex-col items-center gap-1">
-                        {v > 0 && <div className="text-[9px] text-[#737373] font-body">{v}</div>}
+                        {v > 0 && <div className="text-[9px] text-[#767676] font-body">{v}</div>}
                         <div className={`w-full rounded-[3px] ${v ? "bg-[#1a1a1a]" : "bg-avatar-bg"}`} style={{ height: v ? (v / max) * barH : 4 }} />
                         <span className="text-[9px] text-[#767676] font-body">{["J", "F", "M", "A", "M", "J", "J", "A", "S", "O", "N", "D"][i]}</span>
                       </div>

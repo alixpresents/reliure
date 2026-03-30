@@ -15,7 +15,7 @@ export default function TagPage() {
 
   return (
     <div className="pt-6">
-      <button onClick={() => navigate(-1)} className="bg-transparent border-none text-[#737373] cursor-pointer text-[13px] pb-4 font-body">
+      <button onClick={() => navigate(-1)} className="bg-transparent border-none text-[#767676] cursor-pointer text-[13px] pb-4 font-body">
         ← Retour
       </button>
       <Label>Thème</Label>
@@ -25,8 +25,8 @@ export default function TagPage() {
         <div className="py-8 text-center text-[13px] text-[#767676] font-body">Chargement...</div>
       ) : books.length === 0 ? (
         <div className="py-12 text-center">
-          <div className="text-[15px] text-[#737373] font-body">Aucun livre pour ce thème pour l'instant.</div>
-          <div className="text-[13px] text-[#999] font-body mt-2 mb-6">La communauté grandit — reviens bientôt.</div>
+          <div className="text-[15px] text-[#767676] font-body">Aucun livre pour ce thème pour l'instant.</div>
+          <div className="text-[13px] text-[#767676] font-body mt-2 mb-6">La communauté grandit — reviens bientôt.</div>
           <Link to="/explorer" className="text-[13px] font-medium font-body text-[#1a1a1a] no-underline border-b border-[#1a1a1a] pb-px hover:opacity-60 transition-opacity duration-150">
             Explorer tous les livres →
           </Link>
@@ -39,14 +39,14 @@ export default function TagPage() {
             </p>
           )}
           {!sparse && (
-            <p className="text-[13px] text-[#737373] mt-1 mb-5 font-body">{books.length} livre{books.length > 1 ? "s" : ""}</p>
+            <p className="text-[13px] text-[#767676] mt-1 mb-5 font-body">{books.length} livre{books.length > 1 ? "s" : ""}</p>
           )}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             {books.map(book => (
               <div key={book.id} className="text-center">
                 <Img book={book} w={120} h={180} onClick={() => go(book)} className="w-full h-auto aspect-[2/3]" />
                 <div className="text-xs font-medium mt-2 overflow-hidden text-ellipsis whitespace-nowrap font-body">{book.t}</div>
-                <div className="text-[11px] text-[#767676] mt-0.5 font-body">{book.a.split(" ").pop()}</div>
+                <div className="text-[11px] text-[#767676] mt-0.5 font-body">{(book.a || "").split(" ").pop()}</div>
               </div>
             ))}
           </div>

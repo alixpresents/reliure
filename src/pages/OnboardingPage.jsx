@@ -34,13 +34,13 @@ function PickedBook({ book, rating, onRate, onRemove }) {
         <Img book={book} w={90} h={135} />
         <button
           onClick={onRemove}
-          className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-white border border-[#eee] text-[#767676] hover:text-[#1a1a1a] hover:border-[#ccc] text-xs leading-none flex items-center justify-center cursor-pointer transition-all duration-150 shadow-[0_1px_3px_rgba(0,0,0,0.08)]"
+          className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-white border border-[#eee] text-[#767676] hover:text-[#1a1a1a] hover:border-[#eee] text-xs leading-none flex items-center justify-center cursor-pointer transition-all duration-150 shadow-[0_1px_3px_rgba(0,0,0,0.08)]"
         >
           ×
         </button>
       </div>
       <div className="text-[11px] font-medium mt-2 font-body text-center max-w-[90px] truncate">{book.t}</div>
-      <div className="text-[10px] text-[#737373] font-body">{book.a.split(" ").pop()}</div>
+      <div className="text-[10px] text-[#767676] font-body">{book.a.split(" ").pop()}</div>
       <div className="mt-1.5">
         <InteractiveStars value={rating} onChange={onRate} size="text-xs" />
       </div>
@@ -88,12 +88,12 @@ function Step1({ username, setUsername, bio, setBio, onNext, error: externalErro
       <h1 className="font-display italic text-[24px] sm:text-[32px] font-normal text-center mb-2 leading-tight">
         Crée ton profil de lecteur
       </h1>
-      <p className="text-[15px] text-[#737373] text-center mb-10 font-body">
+      <p className="text-[15px] text-[#767676] text-center mb-10 font-body">
         Rejoins une communauté de lecteurs passionnés.
       </p>
 
       <div className="mb-6">
-        <label className="text-xs font-medium text-[#737373] mb-1.5 block font-body">Pseudo</label>
+        <label className="text-xs font-medium text-[#767676] mb-1.5 block font-body">Pseudo</label>
         <div className={`flex items-center border-b-[1.5px] transition-colors duration-200 ${borderColor}`}>
           <span className="text-[#767676] text-[17px] font-body">@</span>
           <input
@@ -113,7 +113,7 @@ function Step1({ username, setUsername, bio, setBio, onNext, error: externalErro
       </div>
 
       <div className="mb-10">
-        <label className="text-xs font-medium text-[#737373] mb-1.5 block font-body">
+        <label className="text-xs font-medium text-[#767676] mb-1.5 block font-body">
           Bio <span className="font-normal text-[#767676]">(optionnel)</span>
         </label>
         <input
@@ -189,14 +189,14 @@ function Step2({ picks, setPicks, onFinish, onSkip }) {
       <h1 className="font-display italic text-[28px] sm:text-[32px] font-normal text-center mb-2 leading-tight">
         Qu'est-ce que tu lis en ce moment ?
       </h1>
-      <p className="text-[15px] text-[#737373] text-center mb-8 font-body">
+      <p className="text-[15px] text-[#767676] text-center mb-8 font-body">
         Ajoute 1 à 3 livres pour démarrer.
       </p>
 
       {picks.length < 3 && (
         <div className="mb-6 relative">
-          <div className="bg-surface rounded-lg py-[11px] px-4 flex items-center gap-2.5 border border-[#eee] focus-within:border-[#ccc] transition-[border] duration-150">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#bbb" strokeWidth="2" className="shrink-0">
+          <div className="bg-surface rounded-lg py-[11px] px-4 flex items-center gap-2.5 border border-[#eee] focus-within:border-[#767676] transition-[border] duration-150">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f0f0f0" strokeWidth="2" className="shrink-0">
               <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
             </svg>
             <input
@@ -232,7 +232,7 @@ function Step2({ picks, setPicks, onFinish, onSkip }) {
                   )}
                   <div className="min-w-0">
                     <div className="text-sm font-medium font-body truncate">{gb.title}</div>
-                    <div className="text-xs text-[#737373] font-body">{gb.authors.join(", ")}{gb.publishedDate ? ` · ${gb.publishedDate.slice(0, 4)}` : ""}</div>
+                    <div className="text-xs text-[#767676] font-body">{gb.authors.join(", ")}{gb.publishedDate ? ` · ${gb.publishedDate.slice(0, 4)}` : ""}</div>
                   </div>
                 </div>
               ))}
@@ -244,7 +244,7 @@ function Step2({ picks, setPicks, onFinish, onSkip }) {
       {hasBooks && (
         <div className="mb-6">
           <div className="flex items-center justify-between mb-4">
-            <span className="text-xs font-medium text-[#737373] font-body">Tes livres</span>
+            <span className="text-xs font-medium text-[#767676] font-body">Tes livres</span>
             <span className="text-xs text-[#767676] font-body">{picks.length}/3</span>
           </div>
           <div className="flex justify-center gap-6">

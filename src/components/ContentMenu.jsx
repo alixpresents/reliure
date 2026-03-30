@@ -74,7 +74,7 @@ export default function ContentMenu({ type, item, onDelete, onEdit }) {
         <textarea
           value={editBody}
           onChange={e => setEditBody(e.target.value)}
-          className={`w-full min-h-[80px] p-3 bg-white border border-[#eee] rounded-lg outline-none text-[15px] text-[#1a1a1a] leading-[1.7] resize-y placeholder:text-[#767676] focus:border-[#ccc] transition-[border] duration-150 ${type === "quote" ? "font-display italic" : "font-body"}`}
+          className={`w-full min-h-[80px] p-3 bg-white border border-[#eee] rounded-lg outline-none text-[15px] text-[#1a1a1a] leading-[1.7] resize-y placeholder:text-[#767676] focus:border-[#767676] transition-[border] duration-150 ${type === "quote" ? "font-display italic" : "font-body"}`}
         />
         {type === "review" && (
           <div className="flex items-center gap-3 mt-3">

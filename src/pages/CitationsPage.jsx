@@ -12,10 +12,14 @@ import { supabase } from "../lib/supabase";
 import { searchBooks } from "../lib/googleBooks";
 import { importBook } from "../lib/importBook";
 import { logActivity } from "../hooks/useActivity";
+import { safeMutation, unwrapSupabase } from "../lib/safeMutation";
 import ContentMenu from "../components/ContentMenu";
+import Toast from "../components/Toast";
+import { useToast } from "../hooks/useToast";
 
 function AddQuoteModal({ onClose, onPublished }) {
   const { user } = useAuth();
+  const { toast, showToast } = useToast();
   const [step, setStep] = useState("search"); // "search" | "compose"
   const [searchQ, setSearchQ] = useState("");
   const [results, setResults] = useState([]);
@@ -67,22 +71,28 @@ function AddQuoteModal({ onClose, onPublished }) {
   const handlePublish = async () => {
     if (!quoteText.trim() || !user || !selectedBook) return;
     setSaving(true);
-    const { data } = await supabase
-      .from("quotes")
-      .insert({ user_id: user.id, book_id: selectedBook.id, body: quoteText.trim() })
-      .select("id")
-      .single();
-    if (data) {
-      logActivity(user.id, "quote", data.id, "quote", {
-        book_id: selectedBook.id,
-        book_title: selectedBook.title,
-        book_author: Array.isArray(selectedBook.authors) ? selectedBook.authors.join(", ") : (selectedBook.authors || ""),
-        cover_url: selectedBook.cover_url,
-        quote_body: quoteText.trim(),
-      });
-    }
-    setSaving(false);
-    onPublished();
+    await safeMutation({
+      mutate: () => unwrapSupabase(
+        supabase.from("quotes")
+          .insert({ user_id: user.id, book_id: selectedBook.id, body: quoteText.trim() })
+          .select("id")
+          .single(),
+        "publish quote"
+      ),
+      onSuccess: (data) => {
+        logActivity(user.id, "quote", data.id, "quote", {
+          book_id: selectedBook.id,
+          book_title: selectedBook.title,
+          book_author: Array.isArray(selectedBook.authors) ? selectedBook.authors.join(", ") : (selectedBook.authors || ""),
+          cover_url: selectedBook.cover_url,
+          quote_body: quoteText.trim(),
+        });
+        setSaving(false);
+        onPublished();
+      },
+      onError: () => { setSaving(false); showToast("Une erreur est survenue"); },
+      errorMessage: "publish quote error",
+    });
   };
 
   const bookObj = selectedBook ? {
@@ -94,6 +104,7 @@ function AddQuoteModal({ onClose, onPublished }) {
 
   return (
     <>
+      {toast.visible && <Toast message={toast.message} />}
       {/* Backdrop */}
       <div
         onClick={onClose}
@@ -133,7 +144,7 @@ function AddQuoteModal({ onClose, onPublished }) {
                   value={searchQ}
                   onChange={e => setSearchQ(e.target.value)}
                   placeholder="Titre, auteur…"
-                  className="w-full bg-surface rounded-lg py-[10px] px-4 text-[14px] font-body text-[#1a1a1a] placeholder-[#bbb] border border-[#eee] outline-none focus:border-[#ccc] transition-[border] duration-150"
+                  className="w-full bg-surface rounded-lg py-[10px] px-4 text-[14px] font-body text-[#1a1a1a] placeholder-[#767676] border border-[#eee] outline-none focus:border-[#767676] transition-[border] duration-150"
                 />
               </div>
               <div style={{ maxHeight: 320, overflowY: "auto" }}>
@@ -153,7 +164,7 @@ function AddQuoteModal({ onClose, onPublished }) {
                     {gb.cover ? (
                       <img src={gb.cover} alt="" className="w-9 h-[54px] rounded-[3px] object-cover shrink-0" style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.08)" }} />
                     ) : (
-                      <div className="w-9 h-[54px] rounded-[3px] bg-cover-fallback shrink-0 flex items-center justify-center text-[9px] text-[#999] font-body text-center px-1 leading-tight">{gb.title}</div>
+                      <div className="w-9 h-[54px] rounded-[3px] bg-cover-fallback shrink-0 flex items-center justify-center text-[9px] text-[#767676] font-body text-center px-1 leading-tight">{gb.title}</div>
                     )}
                     <div className="flex-1 min-w-0">
                       <div className="text-[13px] font-medium font-body text-[#1a1a1a] truncate">
@@ -182,7 +193,7 @@ function AddQuoteModal({ onClose, onPublished }) {
                 onChange={e => setQuoteText(e.target.value)}
                 placeholder="La phrase qui t'a marqué…"
                 rows={4}
-                className="w-full bg-surface rounded-lg py-3 px-4 text-[14px] font-display italic text-[#1a1a1a] placeholder-[#bbb] border border-[#eee] outline-none focus:border-[#ccc] transition-[border] duration-150 resize-none leading-relaxed"
+                className="w-full bg-surface rounded-lg py-3 px-4 text-[14px] font-display italic text-[#1a1a1a] placeholder-[#767676] border border-[#eee] outline-none focus:border-[#767676] transition-[border] duration-150 resize-none leading-relaxed"
               />
               <div className="flex justify-end mt-3">
                 <button
@@ -208,6 +219,7 @@ export default function CitationsPage() {
   const { quotes: myQuotes, loading: myQuotesLoading } = useMyQuotes(user?.id);
   const { likedSet, initialSet, toggle } = useLikes(dbQuotes.map(q => q.id), "quote");
   const [modalOpen, setModalOpen] = useState(false);
+  const { toast, showToast } = useToast();
 
   const useDb = dbQuotes.length > 0;
   const showOnboarding = user && !myQuotesLoading && myQuotes.length === 0;
@@ -219,6 +231,7 @@ export default function CitationsPage() {
 
   return (
     <div className="pt-6">
+      {toast.visible && <Toast message={toast.message} />}
       <div className="flex items-center justify-between mb-1">
         <Heading>Citations</Heading>
         {user && (
@@ -230,10 +243,10 @@ export default function CitationsPage() {
           </button>
         )}
       </div>
-      <p className="text-sm text-[#737373] mb-5 font-body">Les plus belles phrases, partagées par la communauté.</p>
+      <p className="text-sm text-[#767676] mb-5 font-body">Les plus belles phrases, partagées par la communauté.</p>
 
       {showOnboarding && (
-        <p className="text-[13px] text-[#999] font-body mb-6 leading-relaxed">
+        <p className="text-[13px] text-[#767676] font-body mb-6 leading-relaxed">
           Sauvegarde les phrases qui t'ont marqué depuis n'importe quelle fiche livre, ou directement ici.
         </p>
       )}
@@ -255,11 +268,11 @@ export default function CitationsPage() {
                 {bookObj && <Img book={bookObj} w={36} h={52} onClick={() => go(bookObj)} />}
                 <div className="flex-1">
                   {bookObj && <div className="text-[13px] font-medium font-body">{bookObj.t}</div>}
-                  {bookObj && <div className="text-xs text-[#737373] font-body">{bookObj.a}</div>}
+                  {bookObj && <div className="text-xs text-[#767676] font-body">{bookObj.a}</div>}
                 </div>
                 <div className="text-right">
                   <div className="text-xs font-body"><UserName user={q.users} className="text-xs" /></div>
-                  <div className="text-xs text-[#767676] mt-0.5 font-body"><LikeButton count={q.likes_count || 0} liked={likedSet.has(q.id)} initialLiked={initialSet.has(q.id)} onToggle={() => toggle(q.id)} /></div>
+                  <div className="text-xs text-[#767676] mt-0.5 font-body"><LikeButton count={q.likes_count || 0} liked={likedSet.has(q.id)} initialLiked={initialSet.has(q.id)} onToggle={() => toggle(q.id, () => showToast("Une erreur est survenue"))} /></div>
                 </div>
               </div>
             </div>
@@ -275,10 +288,10 @@ export default function CitationsPage() {
               <Img book={q.b} w={36} h={52} onClick={() => go(q.b)} />
               <div className="flex-1">
                 <div className="text-[13px] font-medium font-body">{q.b.t}</div>
-                <div className="text-xs text-[#737373] font-body">{q.b.a}</div>
+                <div className="text-xs text-[#767676] font-body">{q.b.a}</div>
               </div>
               <div className="text-right">
-                <div className="text-xs text-[#737373] font-body">{q.u}</div>
+                <div className="text-xs text-[#767676] font-body">{q.u}</div>
                 <div className="text-xs text-[#767676] mt-0.5 font-body"><LikeButton count={q.lk} /></div>
               </div>
             </div>

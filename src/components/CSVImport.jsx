@@ -228,15 +228,19 @@ export default function CSVImport() {
           continue;
         }
 
+        // Vérifier si reading_status existe déjà avant d'insérer
+        const { data: existing } = await supabase
+          .from("reading_status")
+          .select("id")
+          .eq("user_id", user.id)
+          .eq("book_id", book.id)
+          .maybeSingle();
+
         // Créer reading_status — ne pas écraser si déjà existant
         const { error: rsErr } = await supabase.from("reading_status").upsert(
           { user_id: user.id, book_id: book.id, status: row.status },
           { onConflict: "user_id,book_id", ignoreDuplicates: true }
         );
-        if (rsErr && rsErr.code !== "23505") {
-          // 23505 = duplicate, c'est ok
-          console.warn("reading_status upsert:", rsErr);
-        }
 
         // Créer review rating-only si note >= 1 — ne pas écraser
         if (row.rating >= 1) {
@@ -246,14 +250,15 @@ export default function CSVImport() {
           );
         }
 
-        // Déterminer si c'est un ajout ou un doublon
-        if (rsErr?.code === "23505") {
+        // Comptage : succès / doublon / erreur
+        if (!rsErr && !existing) {
+          imported++;
+        } else if (existing || rsErr?.code === "23505") {
           skipped++;
         } else {
-          imported++;
+          skipped++;
         }
       } catch (err) {
-        console.warn("CSV import error for:", row.title, err);
         failed++;
         failures.push(row.title);
       }
@@ -284,7 +289,7 @@ export default function CSVImport() {
           onDrop={onDrop}
           onClick={() => fileRef.current?.click()}
           className={`border-[1.5px] border-dashed rounded-lg py-10 px-6 text-center cursor-pointer transition-colors duration-150 ${
-            dragOver ? "border-[#999] bg-[#f5f3f0]" : "border-[#ddd] bg-[#fafaf8] hover:bg-[#f5f3f0]"
+            dragOver ? "border-[#767676] bg-[#f5f3f0]" : "border-[#eee] bg-[#fafaf8] hover:bg-[#f5f3f0]"
           }`}
         >
           <div className="text-[15px] text-[#1a1a1a] font-body font-medium mb-1">
@@ -352,7 +357,7 @@ export default function CSVImport() {
         <div className="flex justify-center gap-3">
           <button
             onClick={reset}
-            className="px-5 py-2.5 rounded-[20px] text-[13px] font-medium font-body bg-transparent text-[#767676] border border-[#ddd] cursor-pointer hover:border-[#999] transition-colors duration-150"
+            className="px-5 py-2.5 rounded-[20px] text-[13px] font-medium font-body bg-transparent text-[#767676] border border-[#eee] cursor-pointer hover:border-[#767676] transition-colors duration-150"
           >
             Annuler
           </button>
@@ -407,7 +412,7 @@ export default function CSVImport() {
         <div className="flex justify-center">
           <button
             onClick={() => { abortRef.current = true; }}
-            className="px-5 py-2.5 rounded-[20px] text-[13px] font-medium font-body bg-transparent text-[#767676] border border-[#ddd] cursor-pointer hover:border-[#999] transition-colors duration-150"
+            className="px-5 py-2.5 rounded-[20px] text-[13px] font-medium font-body bg-transparent text-[#767676] border border-[#eee] cursor-pointer hover:border-[#767676] transition-colors duration-150"
           >
             Arrêter l'import
           </button>

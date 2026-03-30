@@ -15,9 +15,14 @@ create index if not exists search_cache_expires_idx
 -- Pas de RLS publique, accès uniquement via service_role
 alter table public.search_cache enable row level security;
 
--- Purge automatique quotidienne (décommenter si pg_cron est activé)
--- select cron.schedule(
---   'purge-search-cache',
---   '0 4 * * *',
---   $$delete from public.search_cache where expires_at < now()$$
--- );
+-- Service role peut tout faire sur le cache
+CREATE POLICY "service_full_access" ON search_cache FOR ALL TO service_role USING (true) WITH CHECK (true);
+-- Les utilisateurs authentifiés peuvent lire le cache
+CREATE POLICY "authenticated_read" ON search_cache FOR SELECT TO authenticated USING (true);
+
+-- Purge automatique toutes les heures
+SELECT cron.schedule(
+  'clean-expired-search-cache',
+  '0 * * * *',
+  $$DELETE FROM search_cache WHERE expires_at < now()$$
+);

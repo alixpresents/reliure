@@ -1,7 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Origin": "https://reliure.vercel.app", // TODO: ajouter https://reliure.app quand le domaine custom sera configuré
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type",
 };
@@ -12,7 +12,7 @@ const corsHeaders = {
 async function fetchGoogleBooks(isbn: string) {
   const key = Deno.env.get("GOOGLE_BOOKS_KEY");
   const url = `https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}${key ? `&key=${key}` : ""}`;
-  const res = await fetch(url);
+  const res = await fetch(url, { signal: AbortSignal.timeout(5000) });
   if (!res.ok) return null;
   const data = await res.json();
   const v = data.items?.[0]?.volumeInfo;
@@ -48,7 +48,7 @@ async function fetchGoogleBooks(isbn: string) {
 // ---------------------------------------------------------------------------
 async function fetchOpenLibrary(isbn: string) {
   const url = `https://openlibrary.org/api/books?bibkeys=ISBN:${isbn}&format=json&jscmd=data`;
-  const res = await fetch(url);
+  const res = await fetch(url, { signal: AbortSignal.timeout(5000) });
   if (!res.ok) return null;
   const data = await res.json();
   const entry = data[`ISBN:${isbn}`];
@@ -102,7 +102,7 @@ async function fetchBnF(isbn: string) {
   const url =
     `https://catalogue.bnf.fr/api/SRU?version=1.2&operation=searchRetrieve` +
     `&query=bib.isbn+adj+"${isbn}"&recordSchema=unimarcxchange&maximumRecords=1`;
-  const res = await fetch(url);
+  const res = await fetch(url, { signal: AbortSignal.timeout(5000) });
   if (!res.ok) return null;
   const xml = await res.text();
 
@@ -347,6 +347,12 @@ Deno.serve(async (req) => {
     const { isbn, fallback } = await req.json();
     if (!isbn) {
       return new Response(JSON.stringify({ error: "isbn required" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    if (!/^\d{10}(\d{3})?$/.test(isbn)) {
+      return new Response(JSON.stringify({ error: "Invalid ISBN format" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });

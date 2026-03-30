@@ -1,4 +1,7 @@
 import { useState } from "react";
+import { safeMutation } from "../lib/safeMutation";
+import Toast from "./Toast";
+import { useToast } from "../hooks/useToast";
 
 export default function CreateListModal({ open, onClose, onCreate }) {
   const [title, setTitle] = useState("");
@@ -6,6 +9,7 @@ export default function CreateListModal({ open, onClose, onCreate }) {
   const [isPublic, setIsPublic] = useState(true);
   const [isRanked, setIsRanked] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const { toast, showToast } = useToast();
 
   if (!open) return null;
 
@@ -14,17 +18,24 @@ export default function CreateListModal({ open, onClose, onCreate }) {
     const t = title.trim();
     if (!t) return;
     setSubmitting(true);
-    await onCreate({ title: t, description: description.trim() || null, isPublic, isRanked });
-    setSubmitting(false);
-    setTitle("");
-    setDescription("");
-    setIsPublic(true);
-    setIsRanked(false);
-    onClose();
+    await safeMutation({
+      mutate: () => onCreate({ title: t, description: description.trim() || null, isPublic, isRanked }),
+      onSuccess: () => {
+        setSubmitting(false);
+        setTitle("");
+        setDescription("");
+        setIsPublic(true);
+        setIsRanked(false);
+        onClose();
+      },
+      onError: () => { setSubmitting(false); showToast("Une erreur est survenue"); },
+      errorMessage: "create list error",
+    });
   };
 
   return (
     <>
+      {toast.visible && <Toast message={toast.message} />}
       <div
         onClick={onClose}
         className="fixed inset-0 bg-black/30 transition-opacity duration-150"
@@ -50,7 +61,7 @@ export default function CreateListModal({ open, onClose, onCreate }) {
                 value={title}
                 onChange={e => setTitle(e.target.value)}
                 placeholder="Romans latino-américains essentiels"
-                className="w-full text-base bg-transparent border border-[#eee] rounded-lg px-3 py-2.5 outline-none font-body text-[#1a1a1a] placeholder:text-[#ccc] focus:border-[#bbb] transition-colors duration-150"
+                className="w-full text-base bg-transparent border border-[#eee] rounded-lg px-3 py-2.5 outline-none font-body text-[#1a1a1a] placeholder:text-[#767676] focus:border-[#767676] transition-colors duration-150"
               />
             </div>
 
@@ -63,7 +74,7 @@ export default function CreateListModal({ open, onClose, onCreate }) {
                 onChange={e => setDescription(e.target.value)}
                 placeholder="Une sélection de..."
                 rows={2}
-                className="w-full text-[14px] bg-transparent border border-[#eee] rounded-lg px-3 py-2.5 outline-none font-body text-[#1a1a1a] placeholder:text-[#ccc] resize-none focus:border-[#bbb] transition-colors duration-150"
+                className="w-full text-[14px] bg-transparent border border-[#eee] rounded-lg px-3 py-2.5 outline-none font-body text-[#1a1a1a] placeholder:text-[#767676] resize-none focus:border-[#767676] transition-colors duration-150"
               />
             </div>
 
@@ -77,7 +88,7 @@ export default function CreateListModal({ open, onClose, onCreate }) {
                 />
                 <span className="text-[13px] text-[#666] font-body">Publique</span>
                 <span className="relative group/tip inline-flex">
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#bbb" strokeWidth="2" className="cursor-help">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#f0f0f0" strokeWidth="2" className="cursor-help">
                     <circle cx="12" cy="12" r="10" /><path d="M12 16v-4" /><path d="M12 8h.01" />
                   </svg>
                   <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2.5 py-1.5 rounded-md bg-[#1a1a1a] text-white text-[11px] font-body whitespace-nowrap opacity-0 scale-95 group-hover/tip:opacity-100 group-hover/tip:scale-100 transition-all duration-150 pointer-events-none">
@@ -95,7 +106,7 @@ export default function CreateListModal({ open, onClose, onCreate }) {
                 />
                 <span className="text-[13px] text-[#666] font-body">Classement</span>
                 <span className="relative group/tip inline-flex">
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#bbb" strokeWidth="2" className="cursor-help">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#f0f0f0" strokeWidth="2" className="cursor-help">
                     <circle cx="12" cy="12" r="10" /><path d="M12 16v-4" /><path d="M12 8h.01" />
                   </svg>
                   <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2.5 py-1.5 rounded-md bg-[#1a1a1a] text-white text-[11px] font-body whitespace-nowrap opacity-0 scale-95 group-hover/tip:opacity-100 group-hover/tip:scale-100 transition-all duration-150 pointer-events-none">
@@ -110,7 +121,7 @@ export default function CreateListModal({ open, onClose, onCreate }) {
               <button
                 type="button"
                 onClick={onClose}
-                className="px-4 py-2.5 rounded-[20px] text-[13px] font-medium font-body bg-transparent text-[#666] border-[1.5px] border-[#ddd] cursor-pointer hover:border-[#999] transition-colors duration-150"
+                className="px-4 py-2.5 rounded-[20px] text-[13px] font-medium font-body bg-transparent text-[#666] border-[1.5px] border-[#eee] cursor-pointer hover:border-[#767676] transition-colors duration-150"
               >
                 Annuler
               </button>

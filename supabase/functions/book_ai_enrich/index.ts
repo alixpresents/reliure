@@ -1,10 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-// @ts-ignore
-export const config = { verify_jwt: false };
-
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Origin": "https://reliure.vercel.app", // TODO: ajouter https://reliure.app quand le domaine custom sera configuré
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type",
 };

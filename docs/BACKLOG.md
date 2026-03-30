@@ -792,10 +792,20 @@ définitivement pour les requêtes ambiguës ou mal orthographiées.
 
 ## 14. Enrichissement IA des fiches livres (système de crédits)
 
-**Statut :** Post-bêta · Priorité moyenne
+**Statut :** Partiellement implémenté · Système de crédits post-bêta
 **Portée :** BookPage + modération communautaire + edge function
 
-### Le concept
+### Ce qui est implémenté
+
+Edge function `book_ai_enrich` opérationnelle (déclenchée uniquement depuis BackfillPage) :
+- Claude Haiku génère métadonnées + description FR pour les fiches incomplètes
+- Cascade 4 sources pour la couverture (Google Books, BnF, Open Library, Amazon)
+- Open Library confirme et fournit l'OLID
+- Champ `source = 'ai_enriched'` et `ai_confidence` (numeric 3,2) dans `books`
+- Badge "À vérifier" sur BookPage si `ai_confidence < 0.7`
+- Accessible depuis BackfillPage (section "Fiches incomplètes") — jamais automatique
+
+### Le concept original (système de crédits — post-bêta)
 Certaines fiches livres sont pauvres : description absente
 ou trop courte, genres incorrects, thèmes manquants.
 Permettre aux utilisateurs de confiance de déclencher
@@ -808,7 +818,7 @@ de crédits.
 - Le coût réel est faible (Claude Haiku ~$0.001 par
   enrichissement) mais le crédit donne une valeur perçue
 
-### Qui peut enrichir
+### Qui peut enrichir (post-bêta)
 - **Modérateurs** : crédits illimités, accès immédiat
 - **Users vérifiés** (badge "Contributeur") :
   5 crédits/mois offerts, rechargeables
@@ -831,13 +841,13 @@ L'enrichissement n'est jamais publié automatiquement.
 L'user voit un aperçu et valide ou rejette chaque champ.
 Un champ rejeté ne consomme pas de crédit.
 
-### Tables envisagées
+### Tables envisagées (système de crédits)
 - `ai_credits` : user_id, balance, lifetime_earned, updated_at
 - `ai_enrichment_log` : id, user_id, book_id, fields_enriched (jsonb), model_used, tokens_used, created_at
 
-### Ce qu'on ne fait PAS en v1
-- Pas d'enrichissement automatique sans action humaine
-- Pas de vente de crédits (gratuit uniquement)
+### Ce qu'on ne fait PAS encore
+- Pas de système de crédits (enrichissement réservé aux admins via BackfillPage)
+- Pas de vente de crédits
 - Pas d'enrichissement des critiques ou citations
 - Pas de rollback automatique (signalement manuel suffit)
 
@@ -995,26 +1005,29 @@ Coût estimé : ~$0.001 par synthèse.
 
 ## 4. Enrichissement communautaire des fiches livres
 
-**Statut :** Idée · Post-beta
+**Statut :** Partiellement implémenté · Modération communautaire post-bêta
 **Inspiré de :** TMDb (contributions ouvertes + modération), Babelio (corrections communautaires), Open Library (éditions collaboratives)
 **Portée :** Feature fiche livre + back-office modération
 
-### Le concept
+### Ce qui est implémenté
 
-Quand une fiche livre est incomplète (pas de couverture, pas de description, nombre de pages manquant, auteur mal orthographié), n'importe quel utilisateur connecté peut proposer une correction ou un enrichissement. La modification est soumise à validation avant d'être appliquée.
+`EnrichModal` sur BookPage : tout utilisateur connecté peut modifier directement une fiche, sans file de modération (MVP simplifié). Déclenché via le bouton "Modifier la fiche" dans la section hero.
 
-### Ce qu'on peut enrichir
-
-- Couverture (upload d'image)
-- Description / résumé
+Ce qu'on peut modifier aujourd'hui :
+- Couverture (upload vers Supabase Storage bucket `book-covers`, URL mise à jour dans `books.cover_url`)
+- Description
 - Nombre de pages
 - Date de publication
 - Éditeur
-- ISBN
 - Genres / thèmes
-- Correction du titre ou de l'auteur
 
-### Mécanique de modération
+La modification est appliquée immédiatement (UPDATE dans `books`). Pas de file de modération en v1.
+
+### Le concept original (modération — post-bêta)
+
+Quand une fiche livre est incomplète, n'importe quel utilisateur connecté peut proposer une correction. La modification est soumise à validation avant d'être appliquée.
+
+### Mécanique de modération (post-bêta)
 
 Deux niveaux envisageables :
 
@@ -1022,14 +1035,13 @@ Deux niveaux envisageables :
 
 **V2 — modération communautaire** : les utilisateurs avec un seuil de contributions validées (ex : 10+ acceptées) obtiennent un statut "contributeur de confiance" et leurs modifications sont appliquées directement, sans attente. Modèle Wikipedia/TMDb.
 
-### UX sur la fiche livre
+### UX sur la fiche livre (post-bêta)
 
-- Bouton discret "Compléter cette fiche" visible uniquement si des champs sont manquants
 - Formulaire léger : un champ à la fois, pas une page entière
 - Feedback : "Merci ! Ta contribution sera examinée sous 48h"
 - Si la contribution est acceptée : notification à l'utilisateur + badge "Contributeur" sur son profil
 
-### Tables envisagées
+### Tables envisagées (système de modération)
 ```sql
 book_contributions
   id, user_id, book_id,
@@ -1044,12 +1056,11 @@ contributor_stats
   user_id, accepted_count, rejected_count, trusted (boolean)
 ```
 
-### Ce qu'on ne fait PAS en v1
+### Ce qu'on ne fait PAS encore
 
 - Pas d'historique de modifications visible publiquement (v2)
 - Pas de système de votes sur les contributions
-- Pas d'upload de couverture par les users en v1 (trop complexe — modération image, stockage Supabase Storage) — uniquement les champs texte/numériques
-- Pas de merge automatique sans validation humaine
+- Pas de merge automatique sans validation humaine (post-bêta)
 
 ---
 
@@ -1085,6 +1096,158 @@ contributions communautaires, accéder au back-office).
 - Pas de permissions granulaires par livre ou par section
 - Pas de système de candidature modérateur (nomination manuelle)
 - Pas d'historique des actions de modération visible publiquement
+
+---
+
+## 19. Édition et suppression des critiques et citations (ContentMenu)
+
+**Statut :** Implémenté · MVP
+**Portée :** BookPage, ProfilePage, FeedPage, ExplorePage, CitationsPage
+
+### Ce qui est implémenté
+
+Composant `src/components/ContentMenu.jsx` — menu contextuel edit/delete visible uniquement par l'auteur du contenu (`user.id === item.user_id`).
+
+- **Visibilité** : `opacity-0 group-hover:opacity-100` sur desktop, toujours visible sur mobile (`max-sm:opacity-100`)
+- **Révélation** : le wrapper parent doit avoir `className="group"` et `position: relative`
+- **Suppression** : supprime dans `reviews` ou `quotes` ET dans `activity` (nettoyage du fil)
+- **Édition critique** : modal avec InteractiveStars, textarea body, checkbox spoilers — UPDATE dans `reviews` + update du metadata `activity`
+- **Édition citation** : modal avec textarea body uniquement — UPDATE dans `quotes` + update du metadata `activity`
+- **Callbacks** : `onDelete()` et `onEdit()` permettent au parent de refetch
+
+Intégré partout où critiques/citations apparaissent :
+- ProfilePage (onglets Mes critiques + Mes citations) → `refetchReviews()` / `refetchQuotes()`
+- BookPage (onglets Critiques + Citations) → `refetchReviews()` / `refetchQuotes()`
+- FeedPage → `refetchFeed()`
+- ExplorePage → `window.location.reload()` (hooks useExplore sans refetch)
+- CitationsPage → `refetch()` depuis `useCommunityQuotes`
+
+---
+
+## 20. État vide bibliothèque — onboarding enrichi
+
+**Statut :** Implémenté · MVP
+**Portée :** ProfilePage onglet Bibliothèque
+
+### Ce qui est implémenté
+
+Quand l'utilisateur connecté (`isOwnProfile`) n'a aucun livre dans sa bibliothèque, affichage d'un état vide éditorial inspiré d'Oku.club :
+
+- Titre en Instrument Serif italic 22px : "Ta bibliothèque t'attend."
+- Accroche 14px expliquant Reliure (critiques, citations, coups de cœur)
+- Deux CTAs côte à côte : "📥 Importer depuis Goodreads" (→ `/backfill`, fond noir) + "Parcourir les livres" (→ `/explorer`, fond transparent)
+- Note de bas de page 11px mentionnant import Babelio / Livraddict
+
+---
+
+## 21. Édition inline du profil (avatar, nom, bio)
+
+**Statut :** Implémenté · MVP
+**Portée :** ProfilePage — header, isOwnProfile uniquement
+
+### Ce qui est implémenté
+
+Suppression du bouton "Modifier le profil" → `/parametres`. Édition directement dans le header du profil, sans navigation.
+
+**Avatar**
+- Hover → overlay semi-transparent avec icône appareil photo SVG
+- Clic → file picker (jpg/jpeg/png/webp, max 1 Mo)
+- Validation côté client : type MIME strict, taille max 1 Mo
+- Compression canvas avant upload : redimensionné à max 400×400px, exporté en JPEG qualité 0.85
+- Upload vers Supabase Storage bucket `avatars`, chemin `${user.id}/avatar.jpg` (upsert — écrase toujours le même fichier)
+- UPDATE `users.avatar_url` avec URL publique + cache-bust `?t=timestamp`
+- Optimistic update local immédiat (`localAvatar` state)
+- Spinner pendant l'upload
+- Toast d'erreur inline (rouge, 4s) pour format non supporté ou fichier trop lourd
+
+**Nom affiché**
+- Clic sur le nom → input inline, même taille/police (22px Instrument Serif italic)
+- Bordure bottom 1px uniquement, fond transparent
+- Entrée ou blur → UPDATE `users.display_name` (max 50 chars)
+- Escape annule sans sauvegarder
+
+**Bio**
+- Si null → placeholder italic "Ajoute une bio..." cliquable en 14px #999
+- Clic → textarea inline avec compteur /160
+- Cmd+Entrée ou blur → UPDATE `users.bio` (max 160 chars)
+- Escape annule sans sauvegarder
+
+**Lien Paramètres**
+- Bouton "⚙ Paramètres" 11px #767676 sous les stats → `/parametres`
+- Réservé aux réglages avancés : email, mot de passe, suppression de compte
+
+### Bucket Supabase Storage requis
+Bucket `avatars` avec policy : public read + authenticated insert/update (à créer si inexistant).
+
+---
+
+## 22. Audit couleurs — harmonisation palette
+
+**Statut :** Implémenté · MVP
+**Portée :** tous les fichiers `src/pages/` et `src/components/`
+
+### Ce qui a été fait
+
+Remplacement systématique de toutes les couleurs hors-palette par les valeurs officielles du design system (définies dans CLAUDE.md et `src/index.css @theme`).
+
+**Règles appliquées :**
+- `#737373`, `#999`, `#bbb`, `#ccc`, `#aaa` (texte/icône) → `#767676`
+- `#ddd` (bordures) → `#eee`
+- `#555` → `#666`, `#444` → `#333`, `#6b6b6b` → `#666`
+- `stroke="#bbb"` sur SVGs décoratifs → `stroke="#f0f0f0"`
+- `focus:border-[#ccc]` → `focus:border-[#767676]`
+- `hover:border-[#bbb/ccc]` → `hover:border-[#eee]` ou `#767676` selon contexte
+
+**Intouchable :** `#2E7D32`, `#c00`, `#8B6914`, `#f0ede8`, `#fef9e7`
+
+Fichiers concernés : BackfillPage, ListPage, Search, BookPage, ProfilePage, ExplorePage, OnboardingPage, ChallengesPage, ContentMenu, Avatar (initiales).
+
+---
+
+## 23. Accessibilité clavier — focus-visible (WCAG 2.4.7)
+
+**Statut :** Implémenté · MVP
+**Portée :** `src/index.css`
+
+### Ce qui a été fait
+
+Extension de la règle CSS focus-visible pour couvrir tous les éléments interactifs :
+
+```css
+[role="button"]:focus-visible,
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: 2px solid #1a1a1a;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+:focus:not(:focus-visible) { outline: none; }
+```
+
+L'outline s'affiche à la navigation clavier, invisible au clic souris (UI propre).
+
+---
+
+## 24. Toast d'erreur pour les mutations
+
+**Statut :** Implémenté · MVP
+**Portée :** BookPage, ProfilePage, ExplorePage, FeedPage, CitationsPage, CreateListModal
+
+### Ce qui a été fait
+
+Feedback minimaliste quand une mutation réseau échoue (like, follow, création liste, publication citation).
+
+**Architecture :**
+- `src/components/Toast.jsx` — notification fixe centrée en bas, z-10000 (au-dessus des modals), fond `#1a1a1a`, texte blanc, animation slide-up 180ms, auto-dismiss 3s
+- `src/hooks/useToast.js` — hook `{ toast, showToast }`, timeout géré par ref (safe vis-à-vis des re-renders)
+- `src/hooks/useLikes.js` — `toggle(targetId, onError?)` — paramètre optionnel
+- `src/hooks/useFollow.js` — `follow(onError?)` / `unfollow(onError?)` — paramètre optionnel
+- Toutes les pages passent `() => showToast("Une erreur est survenue")` comme `onError`
+
+**Intégration :** `safeMutation` supportait déjà `onError` — aucun refactoring de la plomberie nécessaire.
 
 ---
 

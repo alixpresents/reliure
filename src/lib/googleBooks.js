@@ -35,11 +35,18 @@ function getCached(q) {
 function setCache(q, results) {
   const k = cacheKey(q);
   if (cache.size >= CACHE_MAX) {
-    let oldK = null, oldTs = Infinity;
-    for (const [key, val] of cache) {
-      if (val.ts < oldTs) { oldK = key; oldTs = val.ts; }
+    const now = Date.now();
+    for (const [key, entry] of cache) {
+      if (entry.ts + CACHE_TTL < now) cache.delete(key);
     }
-    if (oldK) cache.delete(oldK);
+    // If still at capacity after expiry sweep, evict the oldest entry
+    if (cache.size >= CACHE_MAX) {
+      let oldK = null, oldTs = Infinity;
+      for (const [key, val] of cache) {
+        if (val.ts < oldTs) { oldK = key; oldTs = val.ts; }
+      }
+      if (oldK) cache.delete(oldK);
+    }
   }
   cache.set(k, { results, ts: Date.now() });
 }

@@ -12,6 +12,8 @@ import ContentMenu from "../components/ContentMenu";
 import { useNav } from "../lib/NavigationContext";
 import { useNavigate } from "react-router-dom";
 import { usePopularBooks, usePopularReviews, usePopularQuotes, usePopularLists } from "../hooks/useExplore";
+import Toast from "../components/Toast";
+import { useToast } from "../hooks/useToast";
 
 const THEMES_PRINCIPAUX = [
   'Roman', 'Littérature française', 'Manga', 'Science-fiction',
@@ -34,17 +36,19 @@ export default function ExplorePage({ onSearch }) {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { books: popular, loading: loadingBooks } = usePopularBooks();
-  const { reviews, loading: loadingReviews } = usePopularReviews();
-  const { quotes, loading: loadingQuotes } = usePopularQuotes();
+  const { reviews, loading: loadingReviews, refetch: refetchReviews } = usePopularReviews();
+  const { quotes, loading: loadingQuotes, refetch: refetchQuotes } = usePopularQuotes();
   const { lists, loading: loadingLists } = usePopularLists();
   const { likedSet: likedReviews, initialSet: initLikedReviews, toggle: toggleReviewLike } = useLikes(reviews.map(r => r.id), "review");
   const { likedSet, initialSet, toggle: toggleQuoteLike } = useLikes(quotes.map(q => q.id), "quote");
   const { likedSet: likedLists, initialSet: initLikedLists, toggle: toggleListLike } = useLikes(lists.map(l => l.id), "list");
+  const { toast, showToast } = useToast();
 
   const allEmpty = !loadingBooks && !loadingReviews && !loadingQuotes && !loadingLists && popular.length === 0 && reviews.length === 0 && quotes.length === 0 && lists.length === 0;
 
   return (
     <div>
+      {toast.visible && <Toast message={toast.message} />}
       {/* Hero — visiteurs non connectés uniquement */}
       {!user && (
         <div className="pt-8 pb-6 border-b border-[#f0f0f0] mb-2">
@@ -71,9 +75,9 @@ export default function ExplorePage({ onSearch }) {
           onClick={onSearch}
           onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onSearch(); } }}
           aria-label="Rechercher"
-          className="bg-surface rounded-lg py-[11px] px-4 flex items-center gap-2.5 border border-[#eee] cursor-pointer hover:border-[#ddd] transition-[border] duration-150"
+          className="bg-surface rounded-lg py-[11px] px-4 flex items-center gap-2.5 border border-[#eee] cursor-pointer hover:border-[#eee] transition-[border] duration-150"
         >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#bbb" strokeWidth="2">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f0f0f0" strokeWidth="2">
             <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
           </svg>
           <span className="text-[#767676] text-sm font-body">Chercher des livres, auteurs, tags...</span>
@@ -91,7 +95,7 @@ export default function ExplorePage({ onSearch }) {
       {/* Empty state */}
       {allEmpty && (
         <div className="py-16 text-center">
-          <div className="text-[15px] text-[#737373] font-body leading-relaxed">
+          <div className="text-[15px] text-[#767676] font-body leading-relaxed">
             Reliure se remplit au fil des lectures.<br />
             Ajoute ton premier livre pour commencer.
           </div>
@@ -173,19 +177,19 @@ export default function ExplorePage({ onSearch }) {
                   <div className="flex items-start justify-between gap-2">
                     <div>
                       {bookObj && <div className="text-[15px] font-medium font-body">{bookObj.t}</div>}
-                      {bookObj && <div className="text-xs text-[#737373] font-body mt-0.5">{bookObj.a}{bookObj.y ? `, ${bookObj.y}` : ""}</div>}
+                      {bookObj && <div className="text-xs text-[#767676] font-body mt-0.5">{bookObj.a}{bookObj.y ? `, ${bookObj.y}` : ""}</div>}
                     </div>
-                    <ContentMenu type="review" item={rv} onDelete={() => window.location.reload()} onEdit={() => window.location.reload()} />
+                    <ContentMenu type="review" item={rv} onDelete={refetchReviews} onEdit={refetchReviews} />
                   </div>
                   {rv.rating > 0 && <div className="mt-1"><Stars r={rv.rating} s={11} /></div>}
                   <div className="mt-1.5">
                     {rv.contains_spoilers ? (
                       <details>
                         <summary className="text-[11px] text-spoiler cursor-pointer font-medium font-body">Cette critique contient des spoilers</summary>
-                        <p className="text-[14px] text-[#444] leading-[1.65] mt-1 font-body m-0">{rv.body}</p>
+                        <p className="text-[14px] text-[#333] leading-[1.65] mt-1 font-body m-0">{rv.body}</p>
                       </details>
                     ) : (
-                      <p className="text-[14px] text-[#444] leading-[1.65] font-body m-0" style={{ display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{rv.body}</p>
+                      <p className="text-[14px] text-[#333] leading-[1.65] font-body m-0" style={{ display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{rv.body}</p>
                     )}
                   </div>
                   <div className="flex items-center gap-1 mt-2 text-xs text-[#767676] font-body">
@@ -195,7 +199,7 @@ export default function ExplorePage({ onSearch }) {
                       count={rv.likes_count || 0}
                       liked={likedReviews.has(rv.id)}
                       initialLiked={initLikedReviews.has(rv.id)}
-                      onToggle={() => toggleReviewLike(rv.id)}
+                      onToggle={() => toggleReviewLike(rv.id, () => showToast("Une erreur est survenue"))}
                     />
                   </div>
                 </div>
@@ -231,17 +235,17 @@ export default function ExplorePage({ onSearch }) {
                   <div className="text-[15px] italic text-[#1a1a1a] leading-[1.7] border-l-[3px] border-l-cover-fallback pl-3.5 mb-2.5 font-display flex-1">
                     « {q.body} »
                   </div>
-                  <ContentMenu type="quote" item={q} onDelete={() => window.location.reload()} onEdit={() => window.location.reload()} />
+                  <ContentMenu type="quote" item={q} onDelete={refetchQuotes} onEdit={refetchQuotes} />
                 </div>
                 <div className="flex items-center gap-2">
                   {bookObj && <Img book={bookObj} w={24} h={34} onClick={() => go(bookObj)} />}
-                  {bookObj && <span className="text-xs text-[#737373] font-body">{bookObj.t}</span>}
+                  {bookObj && <span className="text-xs text-[#767676] font-body">{bookObj.t}</span>}
                   <span className="text-[11px] text-[#767676] font-body">· <UserName user={q.users} className="text-[11px]" /></span>
                   <LikeButton
                     count={q.likes_count || 0}
                     liked={likedSet.has(q.id)}
                     initialLiked={initialSet.has(q.id)}
-                    onToggle={() => toggleQuoteLike(q.id)}
+                    onToggle={() => toggleQuoteLike(q.id, () => showToast("Une erreur est survenue"))}
                     className="ml-auto text-[11px] font-body"
                   />
                 </div>
@@ -283,7 +287,7 @@ export default function ExplorePage({ onSearch }) {
                 <div className="flex gap-2 mb-3.5 p-3.5 px-4 bg-surface rounded-lg overflow-x-auto">
                   {l.previewBooks.map(b => <Img key={b.id} book={b} w={68} h={102} />)}
                   {l.bookCount > 4 && (
-                    <div className="w-[68px] h-[102px] rounded-[3px] bg-avatar-bg flex items-center justify-center text-xs text-[#737373] shrink-0 font-body">
+                    <div className="w-[68px] h-[102px] rounded-[3px] bg-avatar-bg flex items-center justify-center text-xs text-[#767676] shrink-0 font-body">
                       +{l.bookCount - 4}
                     </div>
                   )}
@@ -297,13 +301,13 @@ export default function ExplorePage({ onSearch }) {
                 <div className="flex items-center gap-2 mt-[5px]">
                   <Avatar i={(l.userName || "?").split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2)} s={20} />
                   <UserName user={l.users} className="text-xs" />
-                  <span className="text-xs text-[#737373] font-body">· {l.bookCount} livres</span>
+                  <span className="text-xs text-[#767676] font-body">· {l.bookCount} livres</span>
                   <span className="text-xs font-body" onClick={e => e.stopPropagation()}>
                     <LikeButton
                       count={l.likes_count || 0}
                       liked={likedLists.has(l.id)}
                       initialLiked={initLikedLists.has(l.id)}
-                      onToggle={() => toggleListLike(l.id)}
+                      onToggle={() => toggleListLike(l.id, () => showToast("Une erreur est survenue"))}
                     />
                   </span>
                 </div>

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../lib/AuthContext";
 import { logActivity } from "./useActivity";
@@ -8,6 +8,7 @@ export function useReadingStatus(bookId) {
   const [status, setStatusState] = useState(null); // full row or null
   const [loading, setLoading] = useState(true);
   const [alreadyRead, setAlreadyRead] = useState(false);
+  const latestRequestRef = useRef(0);
 
   const fetch = useCallback(async () => {
     if (!user || !bookId) { setStatusState(null); setAlreadyRead(false); setLoading(false); return; }
@@ -29,23 +30,33 @@ export function useReadingStatus(bookId) {
   const setStatus = async (newStatus, extras = {}, meta = {}) => {
     if (!user || !bookId) return;
 
+    const requestId = ++latestRequestRef.current;
     const payload = { status: newStatus, ...extras };
     const activityMeta = { status: newStatus, book_id: bookId, ...meta };
+    const prevStatus = status;
 
-    if (status?.id) {
-      const unchanged = status.status === newStatus;
-      await supabase.from("reading_status").update(payload).eq("id", status.id);
-      setStatusState(prev => ({ ...prev, ...payload }));
-      if (!unchanged) logActivity(user.id, "reading_status", status.id, "reading_status", activityMeta);
-    } else {
-      const { data } = await supabase
-        .from("reading_status")
-        .insert({ user_id: user.id, book_id: bookId, ...payload })
-        .select("*")
-        .single();
-      if (data) {
-        setStatusState(data);
-        logActivity(user.id, "reading_status", data.id, "reading_status", activityMeta);
+    try {
+      if (status?.id) {
+        const unchanged = status.status === newStatus;
+        await supabase.from("reading_status").update(payload).eq("id", status.id);
+        if (requestId !== latestRequestRef.current) return;
+        setStatusState(prev => ({ ...prev, ...payload }));
+        if (!unchanged) logActivity(user.id, "reading_status", status.id, "reading_status", activityMeta);
+      } else {
+        const { data } = await supabase
+          .from("reading_status")
+          .insert({ user_id: user.id, book_id: bookId, ...payload })
+          .select("*")
+          .single();
+        if (requestId !== latestRequestRef.current) return;
+        if (data) {
+          setStatusState(data);
+          logActivity(user.id, "reading_status", data.id, "reading_status", activityMeta);
+        }
+      }
+    } catch (err) {
+      if (requestId === latestRequestRef.current) {
+        setStatusState(prevStatus);
       }
     }
   };
@@ -102,7 +113,6 @@ export function useUserRating(bookId) {
         .eq("book_id", bookId)
         .select("id, body")
         .maybeSingle();
-      if (error) console.error("rating removal error:", error);
       if (data && !data.body) {
         await supabase.from("reviews").delete().eq("id", data.id);
       }

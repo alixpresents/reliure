@@ -12,6 +12,16 @@ function normalize(s) {
   return (s || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
 }
 
+function normalizeAuthor(s) {
+  return normalize(s)
+    .replace(/\([^)]*\)/g, "")
+    .replace(/[^a-z\s]/g, "")
+    .trim()
+    .split(/\s+/)
+    .sort()
+    .join(" ");
+}
+
 async function fetchUsers(query, limit = 5) {
   let req = supabase.from("users").select("id, username, display_name, avatar_url");
   if (query) {
@@ -114,22 +124,12 @@ export default function Search({ open, onClose, go }) {
 
   // Hooks inconditionnels — DOIVENT être avant tout return conditionnel
 
-  // Normalisation partagée pour matching IA ↔ classique
-  const normalizeAuthorForMatch = (s) =>
-    normalize(s)
-      .replace(/\([^)]*\)/g, "")
-      .replace(/[^a-z\s]/g, "")
-      .trim()
-      .split(/\s+/)
-      .sort()
-      .join(" ");
-
   const isAIConfirmed = (r, aiBooksList) =>
     aiBooksList.some(ai => {
       const aiTitle = normalize(ai.title);
-      const aiAuthor = normalizeAuthorForMatch(ai.author || "");
+      const aiAuthor = normalizeAuthor(ai.author || "");
       const rTitle = normalize(r.title);
-      const rAuthor = normalizeAuthorForMatch(r.authors?.[0] || "");
+      const rAuthor = normalizeAuthor(r.authors?.[0] || "");
       return rTitle === aiTitle || (aiAuthor && rAuthor === aiAuthor && rTitle.includes(aiTitle.split(" ")[0]));
     });
 
@@ -140,9 +140,9 @@ export default function Search({ open, onClose, go }) {
     for (const r of results) {
       for (const ai of aiBooks) {
         const aiTitle = normalize(ai.title);
-        const aiAuthor = normalizeAuthorForMatch(ai.author || "");
+        const aiAuthor = normalizeAuthor(ai.author || "");
         const rTitle = normalize(r.title);
-        const rAuthor = normalizeAuthorForMatch(r.authors?.[0] || "");
+        const rAuthor = normalizeAuthor(r.authors?.[0] || "");
         if (rTitle === aiTitle || (aiAuthor && rAuthor === aiAuthor && rTitle.includes(aiTitle.split(" ")[0]))) {
           const key = r.googleId || r.isbn13 || r.title;
           map.set(key, ai);
@@ -397,7 +397,7 @@ export default function Search({ open, onClose, go }) {
         >
           {/* Input */}
           <div className="flex items-center gap-3 px-5 py-4 border-b border-[#eee]">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#bbb" strokeWidth="2" className="shrink-0">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f0f0f0" strokeWidth="2" className="shrink-0">
               <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
             </svg>
 
@@ -409,7 +409,7 @@ export default function Search({ open, onClose, go }) {
                   style={{ fontFamily: "Instrument Serif, serif", fontStyle: "italic", fontSize: "1rem" }}
                 >
                   <span style={{ visibility: "hidden" }}>{q}</span>
-                  <span className="text-[#ccc]">{ghost}</span>
+                  <span className="text-[#767676]">{ghost}</span>
                 </div>
               )}
               <input
@@ -418,14 +418,14 @@ export default function Search({ open, onClose, go }) {
                 onChange={e => setQ(e.target.value)}
                 onKeyDown={handleInputKeyDown}
                 placeholder={placeholder}
-                className="w-full text-base border-none outline-none text-[#1a1a1a] font-display italic placeholder:text-[#999] placeholder:font-display placeholder:italic"
+                className="w-full text-base border-none outline-none text-[#1a1a1a] font-display italic placeholder:text-[#767676] placeholder:font-display placeholder:italic"
                 style={{ background: "transparent" }}
               />
               {/* Mobile ghost accept button */}
               {ghost && (
                 <button
                   onClick={acceptGhost}
-                  className="absolute right-0 top-1/2 -translate-y-1/2 z-20 text-[10px] text-[#999] bg-[#f0ede8] rounded px-1.5 py-0.5 md:hidden border-none cursor-pointer font-body"
+                  className="absolute right-0 top-1/2 -translate-y-1/2 z-20 text-[10px] text-[#767676] bg-[#f0ede8] rounded px-1.5 py-0.5 md:hidden border-none cursor-pointer font-body"
                   aria-label="Accepter la suggestion"
                 >
                   Tab
@@ -436,7 +436,7 @@ export default function Search({ open, onClose, go }) {
             {q && (
               <button
                 onClick={() => { setQ(""); setResults([]); setUserResults([]); inputRef.current?.focus(); }}
-                className="text-[#999] hover:text-[#1a1a1a] bg-transparent border-none cursor-pointer p-2 shrink-0 transition-colors duration-150"
+                className="text-[#767676] hover:text-[#1a1a1a] bg-transparent border-none cursor-pointer p-2 shrink-0 transition-colors duration-150"
                 aria-label="Effacer"
               >
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -446,7 +446,7 @@ export default function Search({ open, onClose, go }) {
             )}
             <button
               onClick={handleClose}
-              className="sm:hidden shrink-0 bg-transparent border-none cursor-pointer text-[14px] text-[#999] font-body py-1"
+              className="sm:hidden shrink-0 bg-transparent border-none cursor-pointer text-[14px] text-[#767676] font-body py-1"
             >
               Annuler
             </button>
@@ -463,7 +463,7 @@ export default function Search({ open, onClose, go }) {
               <>
                 {userResults.length > 0 ? (
                   <>
-                    <div className="px-5 pt-3 pb-1 text-[11px] uppercase tracking-[1.5px] text-[#999] font-body">
+                    <div className="px-5 pt-3 pb-1 text-[11px] uppercase tracking-[1.5px] text-[#767676] font-body">
                       {userSuggestionLabel}
                     </div>
                     {userResults.map(u => <UserRow key={u.id} u={u} onSelect={handleSelectUser} />)}
@@ -488,11 +488,11 @@ export default function Search({ open, onClose, go }) {
                 {/* Lecteurs en secondaire */}
                 {userResults.length > 0 && (
                   <>
-                    <div className="px-5 pt-3 pb-1 text-[11px] uppercase tracking-[1.5px] text-[#999] font-body">Lecteurs</div>
+                    <div className="px-5 pt-3 pb-1 text-[11px] uppercase tracking-[1.5px] text-[#767676] font-body">Lecteurs</div>
                     {userResults.map(u => <UserRow key={u.id} u={u} onSelect={handleSelectUser} />)}
                     {displayResults.length > 0 && (
-                      <div className="px-5 pt-3 pb-1 text-[11px] uppercase tracking-[1.5px] text-[#999] font-body">
-                        Livres {displayResults.length > 0 && <span className="normal-case tracking-normal text-[#bbb]">({displayResults.length})</span>}
+                      <div className="px-5 pt-3 pb-1 text-[11px] uppercase tracking-[1.5px] text-[#767676] font-body">
+                        Livres {displayResults.length > 0 && <span className="normal-case tracking-normal text-[#767676]">({displayResults.length})</span>}
                       </div>
                     )}
                   </>
@@ -537,7 +537,7 @@ export default function Search({ open, onClose, go }) {
                       )}
                       <div className="flex-1 min-w-0">
                         <div className="text-[14px] font-medium font-body truncate">{gb.title}</div>
-                        <div className="text-xs text-[#737373] font-body truncate">
+                        <div className="text-xs text-[#767676] font-body truncate">
                           {gb.authors.join(", ")}
                         </div>
                       </div>
@@ -554,7 +554,7 @@ export default function Search({ open, onClose, go }) {
                     {displayResults.length > 0 && (
                       <div className="flex items-center gap-2 px-5 py-3">
                         <div className="flex-1 h-px bg-[#f0f0f0]" />
-                        <span className="text-[10px] uppercase tracking-widest text-[#ccc] font-medium font-body">
+                        <span className="text-[10px] uppercase tracking-widest text-[#767676] font-medium font-body">
                           {interpretedAs ? `\u00AB ${interpretedAs} \u00BB` : "Suggestions"}
                         </span>
                         <span className="text-[10px]">✨</span>
@@ -562,7 +562,7 @@ export default function Search({ open, onClose, go }) {
                       </div>
                     )}
                     {displayResults.length === 0 && interpretedAs && (
-                      <div className="px-5 py-2 text-xs text-[#999] font-body">
+                      <div className="px-5 py-2 text-xs text-[#767676] font-body">
                         Compris : « {interpretedAs} »
                       </div>
                     )}
@@ -572,12 +572,12 @@ export default function Search({ open, onClose, go }) {
                         onClick={() => handleAIBookClick(aiBook)}
                         className="flex gap-3 py-2.5 px-5 min-h-[44px] items-center cursor-pointer hover:bg-[#fafaf8] transition-colors duration-100"
                       >
-                        <div className="w-9 h-[52px] rounded-sm bg-[#f0ede8] flex items-center justify-center text-[10px] text-[#bbb] shrink-0">✨</div>
+                        <div className="w-9 h-[52px] rounded-sm bg-[#f0ede8] flex items-center justify-center text-[10px] text-[#767676] shrink-0">✨</div>
                         <div className="flex-1 min-w-0">
                           <div className="text-[14px] font-medium font-body truncate">{aiBook.title}</div>
-                          <div className="text-xs text-[#737373] font-body truncate">{aiBook.author}</div>
+                          <div className="text-xs text-[#767676] font-body truncate">{aiBook.author}</div>
                           {aiBook.why && (
-                            <div className="text-[11px] text-[#bbb] font-body mt-0.5">→ {aiBook.why}</div>
+                            <div className="text-[11px] text-[#767676] font-body mt-0.5">→ {aiBook.why}</div>
                           )}
                         </div>
                       </div>
@@ -587,7 +587,7 @@ export default function Search({ open, onClose, go }) {
 
                 {/* AI loading indicator (subtle) */}
                 {aiLoading && displayResults.length > 0 && (
-                  <div className="text-center py-3 text-[11px] text-[#ccc] font-body">
+                  <div className="text-center py-3 text-[11px] text-[#767676] font-body">
                     Recherche approfondie…
                   </div>
                 )}

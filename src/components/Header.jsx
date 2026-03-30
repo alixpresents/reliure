@@ -27,7 +27,7 @@ export default function Header({ onSearch, initials = "?", username, isLoggedIn 
   };
 
   return (
-    <header className="sticky top-0 z-100 bg-white/92 backdrop-blur-[12px] border-b border-[#eee]">
+    <header className="sticky top-0 z-50 bg-white/92 backdrop-blur-[12px] border-b border-[#eee]">
       <div className="max-w-[1060px] mx-auto flex items-center h-[52px] px-3 sm:px-6 gap-2 sm:gap-3">
         <Link to="/explorer" className="flex items-center gap-1.5 mr-2 no-underline">
           <span className="text-[17px] font-bold tracking-tight font-body text-[#1a1a1a]">reliure</span>
@@ -90,7 +90,7 @@ export default function Header({ onSearch, initials = "?", username, isLoggedIn 
                 <div className="absolute right-0 top-full mt-2 bg-white border border-[#eee] rounded-lg shadow-[0_4px_16px_rgba(0,0,0,0.08)] z-50 overflow-hidden min-w-[160px]">
                   <button
                     onClick={handleLogout}
-                    className="w-full px-4 py-3 text-left text-[13px] font-body text-[#737373] bg-transparent border-none cursor-pointer hover:bg-surface hover:text-[#1a1a1a] transition-colors duration-100"
+                    className="w-full px-4 py-3 text-left text-[13px] font-body text-[#767676] bg-transparent border-none cursor-pointer hover:bg-surface hover:text-[#1a1a1a] transition-colors duration-100"
                   >
                     Se déconnecter
                   </button>
@@ -101,7 +101,7 @@ export default function Header({ onSearch, initials = "?", username, isLoggedIn 
         ) : (
           <Link
             to="/login"
-            className="text-[13px] font-medium font-body text-[#1a1a1a] no-underline px-3 py-1.5 rounded-full border border-[#eee] hover:border-[#ccc] transition-colors duration-150 shrink-0"
+            className="text-[13px] font-medium font-body text-[#1a1a1a] no-underline px-3 py-1.5 rounded-full border border-[#eee] hover:border-[#eee] transition-colors duration-150 shrink-0"
           >
             Se connecter
           </Link>

@@ -10,12 +10,13 @@ export default function ArticlePage() {
   const { slug } = useParams();
   const navigate = useNavigate();
   const { goToBook: go } = useNav();
-  const article = JARTICLES.find(a => a.id === slug) || JARTICLES[0];
-  const others = JARTICLES.filter(a => a.id !== article.id).slice(0, 3);
+  const article = JARTICLES.find(a => a.id === slug);
+  const others = article ? JARTICLES.filter(a => a.id !== article.id).slice(0, 3) : [];
   const [progress, setProgress] = useState(0);
   const articleRef = useRef(null);
 
   useEffect(() => {
+    if (!article) return;
     const onScroll = () => {
       if (!articleRef.current) return;
       const el = articleRef.current;
@@ -27,7 +28,15 @@ export default function ArticlePage() {
     window.addEventListener("scroll", onScroll, { passive: true });
     onScroll();
     return () => window.removeEventListener("scroll", onScroll);
-  }, [article.id]);
+  }, [article?.id]);
+
+  if (!article) {
+    return (
+      <div className="py-16 text-center">
+        <p className="text-[15px] text-[#767676] font-body">Article introuvable.</p>
+      </div>
+    );
+  }
 
   // Generate mock paragraphs from the excerpt
   const paragraphs = [
@@ -48,7 +57,7 @@ export default function ArticlePage() {
       </div>
       <button
         onClick={() => navigate("/la-revue")}
-        className="bg-transparent border-none text-[#737373] cursor-pointer text-[13px] py-4 font-body"
+        className="bg-transparent border-none text-[#767676] cursor-pointer text-[13px] py-4 font-body"
       >
         ← La Revue
       </button>
@@ -60,11 +69,11 @@ export default function ArticlePage() {
         {article.st && (
           <p className="text-base text-[#666] leading-relaxed mb-4 font-body">{article.st}</p>
         )}
-        <div className="text-[13px] text-[#737373] font-body">
+        <div className="text-[13px] text-[#767676] font-body">
           <span className="font-medium text-[#1a1a1a]">{article.a}</span>
-          <span className="mx-1.5 text-[#ddd]">·</span>
+          <span className="mx-1.5 text-[#f0f0f0]">·</span>
           {article.d}
-          <span className="mx-1.5 text-[#ddd]">·</span>
+          <span className="mx-1.5 text-[#f0f0f0]">·</span>
           {article.rt} de lecture
         </div>
       </div>
@@ -77,10 +86,10 @@ export default function ArticlePage() {
         <div className="sm:order-2 sm:w-[160px] sm:shrink-0 sm:sticky sm:top-20 sm:self-start flex flex-col items-center sm:items-start">
           <Img book={article.cv} w={160} h={240} onClick={() => go(article.cv)} className="w-[140px] h-[210px] sm:w-[160px] sm:h-[240px]" />
           <div className="text-[13px] font-medium mt-3 font-body text-center sm:text-left">{article.cv.t}</div>
-          <div className="text-xs text-[#737373] font-body text-center sm:text-left">{article.cv.a}</div>
+          <div className="text-xs text-[#767676] font-body text-center sm:text-left">{article.cv.a}</div>
           <button
             onClick={() => go(article.cv)}
-            className="mt-3 w-full px-4 py-[6px] rounded-[14px] text-xs font-medium font-body bg-transparent text-[#737373] border-[1.5px] border-[#ddd] cursor-pointer hover:border-[#999] hover:text-[#1a1a1a] transition-colors duration-150 text-center"
+            className="mt-3 w-full px-4 py-[6px] rounded-[14px] text-xs font-medium font-body bg-transparent text-[#767676] border-[1.5px] border-[#eee] cursor-pointer hover:border-[#767676] hover:text-[#1a1a1a] transition-colors duration-150 text-center"
           >
             Voir la fiche
           </button>
@@ -117,9 +126,9 @@ export default function ArticlePage() {
             <div className="flex-1">
               <div className="mb-2"><Tag>{a.tag}</Tag></div>
               <h4 className="text-[15px] sm:text-[17px] font-normal mb-1 leading-[1.3] font-display italic">{a.t}</h4>
-              <div className="text-xs text-[#737373] font-body mt-2">
+              <div className="text-xs text-[#767676] font-body mt-2">
                 <span className="font-medium text-[#666]">{a.a}</span>
-                <span className="mx-1.5 text-[#ddd]">·</span>{a.d}
+                <span className="mx-1.5 text-[#f0f0f0]">·</span>{a.d}
               </div>
             </div>
             <Img book={a.cv} w={64} h={96} />

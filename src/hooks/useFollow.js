@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../lib/AuthContext";
+import { safeMutation, unwrapSupabase } from "../lib/safeMutation";
 
 export function useFollow(targetUserId) {
   const { user } = useAuth();
@@ -21,16 +22,32 @@ export function useFollow(targetUserId) {
       });
   }, [user, targetUserId]);
 
-  const follow = async () => {
+  const follow = (onError) => {
     if (!user || !targetUserId) return;
-    setFollowing(true);
-    await supabase.from("follows").insert({ follower_id: user.id, following_id: targetUserId });
+    return safeMutation({
+      onOptimistic: () => setFollowing(true),
+      mutate: () => unwrapSupabase(
+        supabase.from("follows").insert({ follower_id: user.id, following_id: targetUserId }),
+        "follow"
+      ),
+      onRevert: () => setFollowing(false),
+      onError,
+      errorMessage: "follow error",
+    });
   };
 
-  const unfollow = async () => {
+  const unfollow = (onError) => {
     if (!user || !targetUserId) return;
-    setFollowing(false);
-    await supabase.from("follows").delete().eq("follower_id", user.id).eq("following_id", targetUserId);
+    return safeMutation({
+      onOptimistic: () => setFollowing(false),
+      mutate: () => unwrapSupabase(
+        supabase.from("follows").delete().eq("follower_id", user.id).eq("following_id", targetUserId),
+        "unfollow"
+      ),
+      onRevert: () => setFollowing(true),
+      onError,
+      errorMessage: "unfollow error",
+    });
   };
 
   return { following, loading, follow, unfollow };

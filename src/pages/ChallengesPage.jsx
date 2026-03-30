@@ -49,7 +49,7 @@ function ChallengesIndex({ onSelect, enrolled, onJoin }) {
   return (
     <div className="pt-5">
       <h1 className="font-display italic text-[26px] font-normal m-0 leading-tight">Défis</h1>
-      <p className="text-[13px] text-[#737373] font-body mt-1 mb-6">Rejoins un défi de lecture et découvre de nouveaux livres.</p>
+      <p className="text-[13px] text-[#767676] font-body mt-1 mb-6">Rejoins un défi de lecture et découvre de nouveaux livres.</p>
 
       {mine.length > 0 && (
         <div className="mb-6">
@@ -69,7 +69,7 @@ function ChallengesIndex({ onSelect, enrolled, onJoin }) {
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="text-[15px] font-medium font-body truncate">{c.title}</div>
-                  <div className="text-xs text-[#737373] font-body">Par {c.creator} · {c.participants} participants</div>
+                  <div className="text-xs text-[#767676] font-body">Par {c.creator} · {c.participants} participants</div>
                 </div>
                 <div className="flex flex-col items-center shrink-0">
                   <MiniProgress completed={c.progress} total={c.target} />
@@ -98,11 +98,11 @@ function ChallengesIndex({ onSelect, enrolled, onJoin }) {
               </div>
               <div className="flex-1 min-w-0">
                 <div className="text-[15px] font-medium font-body truncate">{c.title}</div>
-                <div className="text-xs text-[#737373] font-body">Par {c.creator} · {c.participants} participants</div>
+                <div className="text-xs text-[#767676] font-body">Par {c.creator} · {c.participants} participants</div>
               </div>
               <button
                 onClick={e => { e.stopPropagation(); onJoin(c.id); }}
-                className="px-3 py-[5px] rounded-[14px] text-[11px] font-medium font-body bg-transparent border-[1.5px] border-[#ddd] text-[#767676] cursor-pointer hover:border-[#999] hover:text-[#1a1a1a] transition-colors duration-150 shrink-0"
+                className="px-3 py-[5px] rounded-[14px] text-[11px] font-medium font-body bg-transparent border-[1.5px] border-[#eee] text-[#767676] cursor-pointer hover:border-[#767676] hover:text-[#1a1a1a] transition-colors duration-150 shrink-0"
               >
                 Rejoindre
               </button>
@@ -160,7 +160,7 @@ function ParticipantView() {
       <div className="border-l-2 border-avatar-bg pl-5 ml-2">
         {filtered.map(item => (
           <div key={item.id} className="relative pb-7 last:pb-0">
-            <div className={`absolute -left-[27px] top-[2px] w-3 h-3 rounded-full ${item.completed ? "bg-[#1a1a1a]" : "bg-avatar-bg border-2 border-[#ddd]"}`} />
+            <div className={`absolute -left-[27px] top-[2px] w-3 h-3 rounded-full ${item.completed ? "bg-[#1a1a1a]" : "bg-avatar-bg border-2 border-[#eee]"}`} />
             <div className="flex items-center gap-2 mb-1">
               <span className={`text-[11px] font-semibold font-body ${item.completed ? "text-[#1a1a1a]" : "text-[#767676]"}`}>{item.code}</span>
               {item.completed && <span className="text-[9px] font-medium px-1.5 py-[2px] rounded-lg bg-[#e8f5e9] text-[#2e7d32] font-body">Complété</span>}
@@ -184,7 +184,7 @@ function ParticipantView() {
             ) : (
               <div className="flex items-center justify-between">
                 <div className="text-[11px] text-[#767676] font-body">Mod. : {item.mod} · {item.responses} réponses</div>
-                <button className="px-3 py-[5px] rounded-[14px] text-[11px] font-body bg-transparent border-[1.5px] border-dashed border-[#ddd] text-[#767676] cursor-pointer hover:border-[#767676] hover:text-[#1a1a1a] transition-colors duration-150">+ Soumettre</button>
+                <button className="px-3 py-[5px] rounded-[14px] text-[11px] font-body bg-transparent border-[1.5px] border-dashed border-[#eee] text-[#767676] cursor-pointer hover:border-[#767676] hover:text-[#1a1a1a] transition-colors duration-150">+ Soumettre</button>
               </div>
             )}
           </div>
@@ -206,7 +206,7 @@ function PublicView() {
           </div>
         </div>
         <h1 className="font-display italic text-[24px] sm:text-[28px] font-normal m-0 leading-tight">{c.title}</h1>
-        <p className="text-sm text-[#737373] leading-relaxed max-w-[400px] mx-auto mt-2 font-body">{c.description}</p>
+        <p className="text-sm text-[#767676] leading-relaxed max-w-[400px] mx-auto mt-2 font-body">{c.description}</p>
         <div className="text-xs text-[#767676] font-body mt-2">Par {c.creator} · {c.startDate} — {c.endDate}</div>
       </div>
 
@@ -254,7 +254,7 @@ function PublicView() {
         <Label>Participants récents</Label>
         <div className="flex items-center">
           {["ML", "TB", "CD", "SK", "LR"].map((initials, i) => (
-            <div key={initials} className="w-8 h-8 rounded-full bg-avatar-bg flex items-center justify-center text-[10px] font-medium text-[#6b6b6b] font-body border-2 border-white" style={{ marginLeft: i > 0 ? -8 : 0, zIndex: 5 - i }}>{initials}</div>
+            <div key={initials} className="w-8 h-8 rounded-full bg-avatar-bg flex items-center justify-center text-[10px] font-medium text-[#666] font-body border-2 border-white" style={{ marginLeft: i > 0 ? -8 : 0, zIndex: 5 - i }}>{initials}</div>
           ))}
           <span className="text-[11px] text-[#767676] font-body ml-2">+{c.participants - 5}</span>
         </div>
@@ -295,7 +295,7 @@ export default function ChallengesPage() {
       {banner}
       <div className="pt-5">
       {/* Back */}
-      <button onClick={handleBack} className="bg-transparent border-none text-[#737373] cursor-pointer text-[13px] pb-4 font-body">← Défis</button>
+      <button onClick={handleBack} className="bg-transparent border-none text-[#767676] cursor-pointer text-[13px] pb-4 font-body">← Défis</button>
 
       {/* Toggle */}
       <div className="flex justify-center mb-6">

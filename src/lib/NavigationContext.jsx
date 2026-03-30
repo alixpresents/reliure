@@ -7,8 +7,9 @@ export function NavigationProvider({ children, openSearchFor }) {
   const navigate = useNavigate();
 
   const goToBook = (book) => {
-    const slug = book.slug || book._supabase?.slug;
-    navigate(slug ? `/livre/${slug}` : `/livre/${book.id}`);
+    const slug = book.slug || book._supabase?.slug || book.id;
+    if (!slug) return;
+    navigate(`/livre/${slug}`);
   };
 
   return (

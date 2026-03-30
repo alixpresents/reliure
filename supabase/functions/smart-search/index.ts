@@ -1,7 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Origin": "https://reliure.vercel.app", // TODO: ajouter https://reliure.app quand le domaine custom sera configuré
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type",
 };
@@ -101,7 +101,6 @@ Deno.serve(async (req) => {
 
     // Call Claude Haiku
     const apiKey = Deno.env.get("ANTHROPIC_API_KEY");
-    console.log("DEBUG: API key exists:", !!apiKey, "length:", apiKey?.length);
     if (!apiKey) {
       console.error("smart-search: ANTHROPIC_API_KEY not set");
       return Response.json(
@@ -126,9 +125,7 @@ Deno.serve(async (req) => {
       }),
     });
 
-    console.log("DEBUG: Anthropic status:", aiRes.status);
     const rawText = await aiRes.text();
-    console.log("DEBUG: Anthropic raw response:", rawText.slice(0, 300));
 
     if (!aiRes.ok) {
       console.error("smart-search: Anthropic API error", aiRes.status);

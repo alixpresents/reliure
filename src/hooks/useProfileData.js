@@ -20,8 +20,8 @@ export function useProfileData(profileUserId) {
   const [loading, setLoading] = useState(true);
 
   const currentYear = new Date().getFullYear();
-  const yearStart = `${currentYear}-01-01`;
-  const yearEnd = `${currentYear}-12-31`;
+  const yearStart = new Date(currentYear, 0, 1);
+  const yearEnd = new Date(currentYear + 1, 0, 1);
 
   const fetch = useCallback(async () => {
     if (!targetId) { setLoading(false); return; }
@@ -64,20 +64,20 @@ export function useProfileData(profileUserId) {
     // Stats: count ALL read books, not just those with dates
     const total = statuses.length;
     const allReadThisYear = allRead.filter(r => {
-      const date = r.finished_at || r.created_at;
-      return date >= yearStart && date <= yearEnd + "T23:59:59";
+      const date = new Date(r.finished_at || r.created_at);
+      return date >= yearStart && date < yearEnd;
     });
     const thisYear = allReadThisYear.length;
     const pagesThisYear = allReadThisYear.reduce((sum, r) => sum + (r.books?.page_count || 0), 0);
 
-    const revsThisYear = revs.filter(r => r.created_at >= yearStart);
+    const revsThisYear = revs.filter(r => new Date(r.created_at) >= yearStart && new Date(r.created_at) < yearEnd);
     const avgRating = revsThisYear.length > 0
       ? Math.round((revsThisYear.reduce((sum, r) => sum + (r.rating || 0), 0) / revsThisYear.length) * 10) / 10
       : 0;
 
     // Chronology: books read per month this year (diary entries only — need date)
     const chronology = Array(12).fill(0);
-    diary.filter(r => r.finished_at >= yearStart && r.finished_at <= yearEnd + "T23:59:59").forEach(r => {
+    diary.filter(r => { const d = new Date(r.finished_at); return d >= yearStart && d < yearEnd; }).forEach(r => {
       const month = new Date(r.finished_at).getMonth();
       chronology[month]++;
     });

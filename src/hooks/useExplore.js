@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "../lib/supabase";
 
 function normalizeBook(b) {
@@ -51,40 +51,40 @@ export function usePopularReviews() {
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    (async () => {
-      const { data } = await supabase
-        .from("reviews")
-        .select("*, books(id, title, cover_url, authors, publication_date), users(username, display_name)")
-        .not("body", "is", null)
-        .neq("body", "")
-        .order("likes_count", { ascending: false })
-        .limit(3);
-      setReviews(data ?? []);
-      setLoading(false);
-    })();
+  const fetch = useCallback(async () => {
+    const { data } = await supabase
+      .from("reviews")
+      .select("*, books(id, title, cover_url, authors, publication_date), users(username, display_name)")
+      .not("body", "is", null)
+      .neq("body", "")
+      .order("likes_count", { ascending: false })
+      .limit(3);
+    setReviews(data ?? []);
+    setLoading(false);
   }, []);
 
-  return { reviews, loading };
+  useEffect(() => { fetch(); }, [fetch]);
+
+  return { reviews, loading, refetch: fetch };
 }
 
 export function usePopularQuotes() {
   const [quotes, setQuotes] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    (async () => {
-      const { data } = await supabase
-        .from("quotes")
-        .select("*, books(id, title, cover_url, authors), users(username, display_name)")
-        .order("likes_count", { ascending: false })
-        .limit(3);
-      setQuotes(data ?? []);
-      setLoading(false);
-    })();
+  const fetch = useCallback(async () => {
+    const { data } = await supabase
+      .from("quotes")
+      .select("*, books(id, title, cover_url, authors), users(username, display_name)")
+      .order("likes_count", { ascending: false })
+      .limit(3);
+    setQuotes(data ?? []);
+    setLoading(false);
   }, []);
 
-  return { quotes, loading };
+  useEffect(() => { fetch(); }, [fetch]);
+
+  return { quotes, loading, refetch: fetch };
 }
 
 export function usePopularLists() {
@@ -153,7 +153,7 @@ export function useAvailableGenres() {
       const { data } = await supabase
         .from("books")
         .select("genres")
-        .not("genres", "is", null);
+        .not("genres", "eq", "[]");
 
       if (!data) { setGenres([]); setLoading(false); return; }
 

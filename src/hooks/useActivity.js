@@ -23,7 +23,7 @@ export function useFeed() {
     // Later: filter by followed users
     const { data } = await supabase
       .from("activity")
-      .select("*, users(username, display_name)")
+      .select("*, users(username, display_name, avatar_url)")
       .order("created_at", { ascending: false })
       .limit(20);
     // Deduplicate: keep only the most recent activity per user + book

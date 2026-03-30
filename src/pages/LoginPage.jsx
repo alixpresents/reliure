@@ -43,7 +43,7 @@ export default function LoginPage() {
               </svg>
             </div>
             <div className="text-sm font-medium font-body text-[#1a1a1a]">Vérifie ta boîte mail !</div>
-            <div className="text-[13px] text-[#737373] font-body mt-1">
+            <div className="text-[13px] text-[#767676] font-body mt-1">
               Un lien de connexion a été envoyé à <span className="font-medium text-[#1a1a1a]">{email}</span>
             </div>
           </div>
@@ -53,7 +53,7 @@ export default function LoginPage() {
             <h1 className="font-display italic text-[26px] font-normal text-center mb-2 leading-tight">
               Connecte-toi
             </h1>
-            <p className="text-[13px] text-[#737373] text-center mb-8 font-body">
+            <p className="text-[13px] text-[#767676] text-center mb-8 font-body">
               Entre ton email pour recevoir un lien de connexion.
             </p>
 
@@ -64,7 +64,7 @@ export default function LoginPage() {
                 onChange={e => setEmail(e.target.value)}
                 placeholder="ton@email.com"
                 autoFocus
-                className="w-full bg-surface rounded-lg py-3 px-4 border border-[#eee] outline-none text-base md:text-sm text-[#1a1a1a] font-body placeholder:text-[#767676] focus:border-[#ccc] transition-[border] duration-150"
+                className="w-full bg-surface rounded-lg py-3 px-4 border border-[#eee] outline-none text-base md:text-sm text-[#1a1a1a] font-body placeholder:text-[#767676] focus:border-[#767676] transition-[border] duration-150"
               />
             </div>
 

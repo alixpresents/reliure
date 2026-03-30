@@ -26,7 +26,7 @@ export default function Img({ book, w, h, onClick, className = "" }) {
       )}
       {showFallback && (
         <div className="absolute inset-0 flex items-center justify-center p-2">
-          <span className="font-display italic text-center leading-snug text-[#999]" style={{ fontSize: "clamp(9px, 12%, 13px)", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+          <span className="font-display italic text-center leading-snug text-[#767676]" style={{ fontSize: "clamp(9px, 12%, 13px)", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
             {book.t}
           </span>
         </div>

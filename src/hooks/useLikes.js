@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../lib/AuthContext";
+import { safeMutation, unwrapSupabase } from "../lib/safeMutation";
 
 export function useLikes(targetIds, targetType) {
   const { user } = useAuth();
@@ -27,23 +28,36 @@ export function useLikes(targetIds, targetType) {
 
   useEffect(() => { fetch(); }, [fetch]);
 
-  const toggle = async (targetId) => {
+  const toggle = (targetId, onError) => {
     if (!user) return;
     const wasLiked = likedSet.has(targetId);
 
-    setLikedSet(prev => {
+    const applyToggle = (liked) => setLikedSet(prev => {
       const next = new Set(prev);
-      if (wasLiked) next.delete(targetId);
-      else next.add(targetId);
+      if (liked) next.add(targetId);
+      else next.delete(targetId);
       return next;
     });
 
-    if (wasLiked) {
-      await supabase.from("likes").delete()
-        .eq("user_id", user.id).eq("target_id", targetId).eq("target_type", targetType);
-    } else {
-      await supabase.from("likes").insert({ user_id: user.id, target_id: targetId, target_type: targetType });
-    }
+    return safeMutation({
+      onOptimistic: () => applyToggle(!wasLiked),
+      mutate: () => {
+        if (wasLiked) {
+          return unwrapSupabase(
+            supabase.from("likes").delete()
+              .eq("user_id", user.id).eq("target_id", targetId).eq("target_type", targetType),
+            "unlike"
+          );
+        }
+        return unwrapSupabase(
+          supabase.from("likes").insert({ user_id: user.id, target_id: targetId, target_type: targetType }),
+          "like"
+        );
+      },
+      onRevert: () => applyToggle(wasLiked),
+      onError,
+      errorMessage: "toggleLike error",
+    });
   };
 
   return { likedSet, initialSet: initialSet.current, toggle };

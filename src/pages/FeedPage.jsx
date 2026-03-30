@@ -11,6 +11,8 @@ import UserName from "../components/UserName";
 import { formatRelativeTime } from "../lib/formatTime";
 import Skeleton from "../components/Skeleton";
 import ContentMenu from "../components/ContentMenu";
+import Toast from "../components/Toast";
+import { useToast } from "../hooks/useToast";
 
 function actionLabel(actionType, metadata) {
   if (actionType === "review") return "a critiqué";
@@ -55,6 +57,7 @@ export default function FeedPage() {
   const quoteIds = items.filter(i => i.action_type === "quote").map(i => i.target_id);
   const { likedSet: likedReviews, initialSet: initLikedReviews, toggle: toggleReviewLike } = useLikes(reviewIds, "review");
   const { likedSet: likedQuotes, initialSet: initLikedQuotes, toggle: toggleQuoteLike } = useLikes(quoteIds, "quote");
+  const { toast, showToast } = useToast();
 
   // Fetch cover previews for list-type activity items
   const [listPreviews, setListPreviews] = useState({});
@@ -77,16 +80,25 @@ export default function FeedPage() {
       });
   }, [items]);
 
+  const [loadingBookId, setLoadingBookId] = useState(null);
   const goToBook = async (meta) => {
     if (!meta.book_id) return;
-    const { data } = await supabase.from("books").select("slug").eq("id", meta.book_id).single();
-    if (data?.slug) {
-      nav(`/livre/${data.slug}`);
+    setLoadingBookId(meta.book_id);
+    try {
+      const { data } = await supabase.from("books").select("slug").eq("id", meta.book_id).single();
+      if (data?.slug) {
+        nav(`/livre/${data.slug}`);
+      }
+    } catch (err) {
+      console.error("goToBook error:", err);
+    } finally {
+      setLoadingBookId(null);
     }
   };
 
   return (
     <div className="pt-5">
+      {toast.visible && <Toast message={toast.message} />}
       <Heading>Fil d'activité</Heading>
 
       {loading ? (
@@ -116,17 +128,17 @@ export default function FeedPage() {
                   <p className="text-[13px] leading-normal font-body m-0">
                     <UserName user={it.users} className="text-[13px]" />
                     {" "}
-                    <span className="text-[#737373]">{actionLabel(it.action_type, meta)}</span>
+                    <span className="text-[#767676]">{actionLabel(it.action_type, meta)}</span>
                     {" "}
                     {it.action_type !== "list" && (
                       <>
                         <span
-                          className={`font-medium ${meta.book_id ? "cursor-pointer hover:underline" : ""}`}
+                          className={`font-medium ${meta.book_id ? "cursor-pointer hover:underline" : ""} ${loadingBookId === meta.book_id ? "cursor-wait" : ""}`}
                           onClick={() => goToBook(meta)}
                         >
                           {bookTitle}
                         </span>
-                        {bookAuthor && <span className="text-[#737373]"> de {bookAuthor}</span>}
+                        {bookAuthor && <span className="text-[#767676]"> de {bookAuthor}</span>}
                         {meta.rating > 0 && (
                           <span className="inline-flex align-middle ml-1.5"><Stars r={meta.rating} s={11} /></span>
                         )}
@@ -158,7 +170,7 @@ export default function FeedPage() {
                                 <img key={i} src={url} alt="" className="w-[38px] h-[57px] object-cover rounded-[2px] shrink-0 bg-cover-fallback" />
                               ))}
                               {extra > 0 && (
-                                <div className="w-[38px] h-[57px] rounded-[2px] shrink-0 bg-[#f0ede8] flex items-center justify-center text-[11px] text-[#999] font-body">
+                                <div className="w-[38px] h-[57px] rounded-[2px] shrink-0 bg-[#f0ede8] flex items-center justify-center text-[11px] text-[#767676] font-body">
                                   +{extra}
                                 </div>
                               )}
@@ -188,7 +200,7 @@ export default function FeedPage() {
                           count={meta.likes_count || 0}
                           liked={likedReviews.has(it.target_id)}
                           initialLiked={initLikedReviews.has(it.target_id)}
-                          onToggle={() => toggleReviewLike(it.target_id)}
+                          onToggle={() => toggleReviewLike(it.target_id, () => showToast("Une erreur est survenue"))}
                         />
                         <span className="cursor-pointer hover:text-[#1a1a1a] transition-colors duration-150">Répondre</span>
                         <ContentMenu type="review" item={{ id: it.target_id, user_id: it.user_id, body: meta.review_body, rating: meta.rating, contains_spoilers: meta.contains_spoilers }} onDelete={() => refetchFeed()} onEdit={() => refetchFeed()} />
@@ -207,7 +219,7 @@ export default function FeedPage() {
                           count={meta.likes_count || 0}
                           liked={likedQuotes.has(it.target_id)}
                           initialLiked={initLikedQuotes.has(it.target_id)}
-                          onToggle={() => toggleQuoteLike(it.target_id)}
+                          onToggle={() => toggleQuoteLike(it.target_id, () => showToast("Une erreur est survenue"))}
                         />
                         <ContentMenu type="quote" item={{ id: it.target_id, user_id: it.user_id, body: meta.quote_body }} onDelete={() => refetchFeed()} onEdit={() => refetchFeed()} />
                       </div>
@@ -222,7 +234,7 @@ export default function FeedPage() {
 
                 {/* Mini cover — masqué pour les listes (mosaïque inline) */}
                 {it.action_type !== "list" && (
-                  <MiniCover url={meta.cover_url} title={bookTitle} onClick={() => goToBook(meta)} />
+                  <MiniCover url={meta.cover_url} title={bookTitle} onClick={() => goToBook(meta)} className={loadingBookId === meta.book_id ? "cursor-wait" : ""} />
                 )}
               </div>
             </div>
@@ -230,7 +242,7 @@ export default function FeedPage() {
         })}</div>
       ) : (
         <div className="py-12 text-center font-body">
-          <div className="text-sm text-[#999]">Suis des lecteurs pour voir leur activité ici.</div>
+          <div className="text-sm text-[#767676]">Suis des lecteurs pour voir leur activité ici.</div>
           <button onClick={() => nav("/explorer")} className="mt-4 px-5 py-2.5 rounded-[20px] text-[13px] font-medium bg-[#1a1a1a] text-white border-none cursor-pointer hover:bg-[#333] transition-colors duration-150">Explorer</button>
         </div>
       )}
