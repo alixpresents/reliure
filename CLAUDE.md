@@ -119,7 +119,7 @@ Stratégie hybride, par priorité :
 
 L'edge function `book_import` (`supabase/functions/book_import/index.ts`) interroge 3 sources en parallèle par ISBN (Google Books, Open Library, BnF SRU), fusionne les résultats selon une priorité par champ, génère le slug, et upsert dans `books`. Si l'edge function échoue, `importBook.js` retombe sur un import client-side avec les données Google Books.
 
-**Recherche BnF en parallèle** (`src/lib/bnfSearch.js`) : lancée simultanément avec Google Books dans `searchBooks()` via `Promise.all`. Timeout 3s, retourne `[]` en cas d'erreur (ne bloque jamais). Les résultats BnF sont au format `{ _source: 'bnf', volumeInfo: {...} }`, passent dans le même pipeline de scoring avec un bonus +3 (dépôt légal = livre FR confirmé). Dédoublonnage cross-source par ISBN-13 avant scoring. Couvertures via `couverture.bnf.fr/ark/isbn/{isbn13}` (fallback géré par `Img`).
+**Recherche BnF** (`src/lib/bnfSearch.js`) : toujours disponible pour l'edge function `book_import` (import par ISBN). N'est plus utilisée dans la recherche libre (supprimée pour éviter les timeouts de 3s).
 
 ### Priorité de fusion par champ (edge function `book_import`)
 - `title` : BnF > Google > Open Library
@@ -132,16 +132,20 @@ L'edge function `book_import` (`supabase/functions/book_import/index.ts`) interr
 - `language` : BnF > Google
 - `genres` : Google > Open Library
 
-### Qualité des résultats de recherche (`src/lib/googleBooks.js` + `src/lib/bnfSearch.js` + `src/lib/searchSuggestions.js`)
+### Qualité des résultats de recherche (`src/lib/googleBooks.js`)
 
-La fonction `searchBooks` applique un pipeline en 6 étapes :
+Architecture DB-first : la base locale (3700+ livres) est la source primaire, Google Books sert uniquement à la découverte.
 
-1. **Suggestions locales** (`searchSuggestions.js`) : une liste curatée de ~150 livres populaires permet le prefix-matching côté client. "harry p" → "Harry Potter à l'école des sorciers", "belle du sei" → "Belle du Seigneur". Le matching supporte les séquences de mots partiels (chaque mot de la query matche le début du mot correspondant dans le titre/auteur). Si une suggestion matche, la query canonique est envoyée à l'API au lieu de la query brute.
-2. **Stratégie de requête adaptative** : analyse de la query (court, mot unique, 2 mots, ISBN, signal auteur "de/par/by") et construction de requêtes parallèles ciblées (intitle, inauthor, permutations, broad). Les queries 3+ mots utilisent aussi `intitle:` sans guillemets pour couvrir les préfixes.
-3. **Filtrage** : exclusion des résultats sans couverture, sans ISBN, avec mots-clés parasites dans le titre (résumé, fiche de lecture, analyse, sparknotes, bac…), et **blacklist d'éditeurs parasites** (fichesdelecture, primento, ebookslib, bookelis, etc.)
-4. **Scoring** : score multi-signaux — complétude métadonnées, éditeurs FR/EN connus (+3/+2), langue FR/EN (+2/+1), popularité (ratingsCount/averageRating), pertinence titre (exact +5, startsWith +3, contains +1), prefix-matching multi-mots (+6), pertinence auteur (last-name matching +4 own-work bonus, -4 biographie penalty), préférence tome 1, pénalité meta-works (-3) et contenu parasitaire (-4/keyword)
-5. **Seuil minimum** : score > 5 requis pour être retenu (fallback à > 2 si < 3 résultats au-dessus du seuil)
-6. **Boost DB** : +4 points pour les livres déjà dans notre table `books` ; tri final + troncature à 10 résultats
+`searchBooks(query)` fonctionne en 2 étapes parallèles :
+
+1. **Recherche locale** via RPC PostgreSQL `search_books_v2` : gère apostrophes françaises, accents, matching titre + auteurs, tri par popularité (`rating_count DESC`). Résultats DB toujours affichés en premier.
+2. **Google Books** : une seule requête (`langRestrict=fr`, max 15 résultats), filtrée (sans couverture, sans ISBN, éditeurs parasites, mots-clés parasites exclus), limitée à 8 résultats après filtre.
+
+**Déduplication** : les résultats Google qui dupliquent un résultat DB (même ISBN-13 ou même titre normalisé) sont supprimés. Les résultats DB ne sont jamais supprimés.
+
+**Format de retour** (`{ googleId, _source, dbId, slug, title, authors, coverUrl, isbn13, ... }`) — même format pour DB et Google, consommé directement par `Search.jsx`.
+
+**`searchSuggestions.js`** : autocomplete dynamique depuis Supabase (ilike titre par popularité, cache 1 min). N'est plus appelé dans le pipeline principal (remplacé par la RPC).
 
 ### Recherche assistée IA (`supabase/functions/smart-search/index.ts` + `src/hooks/useSmartSearch.js`)
 
@@ -168,8 +172,8 @@ Filet de secours intelligent qui enrichit le pipeline classique Google Books. Ac
 - Ghost text : overlay invisible aligné sur l'input, accepté par Tab/ArrowRight, rejeté par Escape
 - `displayResults` useMemo : quand l'IA a répondu, filtre les résultats classiques — confirmés (titre + auteur matching) en premier, non-confirmés limités à 2. `aiConfirmedMap` lie chaque résultat classique au livre IA correspondant.
 - Résultats IA affichés sous les résultats classiques avec indicateur ✨, dédoublonnés par titre normalisé
+- IA activée uniquement si résultats classiques < 2 OU query en langage naturel (`looksLikeNaturalLanguage`)
 - Clic sur un résultat IA → recherche Google Books avec le titre canonique → import normal
-- Clic sur un résultat BnF → recherche Google Books par ISBN d'abord, puis titre+auteur, puis import direct BnF si aucun match titre trouvé
 - Clic sur un résultat DB → navigation directe via `slug ?? dbId` sans passer par importBook
 - Indicateur "Recherche approfondie…" pendant le chargement IA
 - Le SYSTEM_PROMPT de `smart-search` retourne l'ISBN de l'édition poche française (Folio, LdP, Points…)
@@ -192,7 +196,7 @@ Filet de secours intelligent qui enrichit le pipeline classique Google Books. Ac
 - `search_cache` — query_normalized (PK), response (jsonb), hit_count, expires_at (service_role only, pas de RLS publique)
 
 ### Anti-doublons : regroupement des éditions par oeuvre
-Reliure regroupe les éditions par oeuvre (comme Letterboxd : un film = une fiche). Avant toute création dans `books`, vérification par ISBN exact puis par titre normalisé + auteur principal via `findExistingBook` (`src/utils/deduplicateBook.js`). Appliqué dans les deux points d'insertion : `importBook.js` (client-side) et edge function `book_import` (server-side). Normalisation : suppression accents/ponctuation, coupe au premier `:` ou `/` (sous-titres BnF), extraction du nom de famille de l'auteur.
+Reliure regroupe les éditions par oeuvre (comme Letterboxd : un film = une fiche). Avant toute création dans `books`, vérification par ISBN exact puis par titre normalisé + auteur principal via `findExistingBook` (`src/utils/deduplicateBook.js`). Appliqué dans les deux points d'insertion : `importBook.js` (client-side) et edge function `book_import` (server-side). Normalisation : remplacement des apostrophes françaises par un espace, suppression accents/ponctuation, coupe au premier `:` ou `/` (sous-titres BnF), extraction du nom de famille de l'auteur. Ce fix garantit que "L'Étranger", "L\u2019Étranger" et "L'Etranger" produisent la même clé normalisée.
 
 ### Décisions clés
 - `reading_status` séparée de `reviews` : on peut marquer "lu" sans critiquer (geste minimal = plus de volume)

@@ -462,54 +462,29 @@ Actuellement : une critique par livre par utilisateur (upsert sur `user_id` + `b
 
 ## 6. Qualité des résultats de recherche (ranking & déduplication)
 
-**Statut :** ✅ Fait (pipeline 6 étapes, BnF SRU, anti-doublons ISBN + œuvre, DB boost, scoring multi-signaux)
-**Portée :** Edge function `book_import` + logique de ranking côté recherche
+**Statut :** ✅ Fait — architecture DB-first via RPC `search_books_v2` (mars 2026)
+**Portée :** `src/lib/googleBooks.js` + RPC PostgreSQL + `src/utils/deduplicateBook.js`
 
-### Le problème
+### Architecture DB-first (implémentée)
 
-Google Books API renvoie beaucoup de bruit. Une recherche « Monte Cristo » devrait évidemment remonter *Le Comte de Monte-Cristo* d'Alexandre Dumas en premier résultat. En pratique, l'API mélange l'édition de référence avec des résumés scolaires, des adaptations jeunesse, des versions abrégées, des ebooks sans couverture, des doublons ISBN, et des titres vaguement apparentés.
+La base locale (3700+ livres) est la source primaire. Google Books sert uniquement à la découverte de nouveaux livres.
 
-C'est un problème critique : la recherche est le premier geste de l'utilisateur (onboarding, ajout quotidien). Si le bon livre n'apparaît pas dans les 3 premiers résultats, l'expérience est cassée.
+**`searchBooks(query)`** lance en parallèle :
+1. **RPC `search_books_v2`** (Supabase) — gère apostrophes françaises, accents, matching titre + auteurs, tri par `rating_count DESC`. Résultats affichés en premier, jamais supprimés.
+2. **Google Books** — une seule requête `langRestrict=fr`, max 8 résultats après filtre (pas de couverture, pas d'ISBN, éditeurs parasites, mots-clés parasites exclus).
 
-### Stratégie de ranking envisagée
+**Déduplication** : résultats Google dupliquant un résultat DB (même ISBN-13 ou titre normalisé) supprimés. Max 10 résultats finaux.
 
-**Étape 1 — Filtrage côté API (immédiat)**
-- Privilégier `langRestrict=fr` pour les recherches en français
-- Filtrer les résultats sans `industryIdentifiers` (ISBN) quand possible
-- Exclure les résultats sans couverture (`imageLinks` absent) ou les reléguer en fin de liste
+**Anti-doublons à l'import** (`deduplicateBook.js`) : normalisation des apostrophes françaises avant comparaison → "L'Étranger" et "L\u2019Étranger" produisent la même clé, pas de doublon créé.
 
-**Étape 2 — Scoring côté Reliure (MVP)**
-Un score composite calculé à l'import ou à la recherche, basé sur :
-- **Complétude des métadonnées** : titre, auteur, couverture, ISBN, nombre de pages → plus c'est complet, plus le score monte
-- **Nombre de pages** : un résumé scolaire de 32 pages ne devrait pas passer devant l'édition intégrale de 1200 pages
-- **Nombre de ratings/reviews Google Books** : signal de popularité, l'édition de référence en a plus
-- **Langue** : boost FR si l'utilisateur est francophone
-- **Éditeur connu** : Gallimard, Folio, Poche, Flammarion, etc. → boost par rapport à un éditeur inconnu ou auto-édité
-- **Présence dans notre base** : si le livre a déjà été importé et a des reading_status/reviews chez nous, c'est probablement la bonne édition → boost fort
+### BnF SRU
 
-**Étape 3 — Déduplication / regroupement par œuvre (v2)**
-- Regrouper les éditions d'une même œuvre (poche, relié, audio, traductions) sous une fiche unique
-- Identifier l'œuvre par titre normalisé + auteur, ou par liens entre ISBN (quand disponible via BnF/Nudger)
-- Afficher l'édition « principale » en résultat de recherche, avec un lien « Voir les X éditions » sur la fiche livre
-- C'est ce que fait Babelio avec leurs 286K regroupements algorithmiques — on peut s'en inspirer sans avoir besoin de leur volume au départ
+Conservé dans l'edge function `book_import` pour l'import par ISBN. Supprimé de la recherche libre (trop lente, pas de couvertures).
 
-### Heuristiques spécifiques
+### Ce qu'on ne fait PAS (toujours vrai)
 
-- Si le titre exact match un classique connu (dictionnaire de ~500 œuvres canoniques ?), forcer le résultat en premier
-- Si l'auteur est identifié dans la requête (« Dumas Monte Cristo »), filtrer agressivement les résultats sans cet auteur
-- Les résultats de type « study guide », « SparkNotes », « résumé » devraient être exclus ou relégués (détection par éditeur ou mots-clés dans le sous-titre)
-
-### Ce qu'on ne fait PAS en v1
-
-- Pas de regroupement par œuvre (trop complexe, nécessite une table `works`)
-- Pas de dictionnaire de classiques (commencer par le scoring générique)
-- Pas de correction orthographique / fuzzy search côté Reliure (Google Books le fait déjà)
-
-### Questions ouvertes
-
-- Faut-il cacher les résultats en dessous d'un seuil de score, ou juste les ordonner ?
-- Le scoring doit-il tourner dans l'edge function (à l'import) ou côté client (au moment de la recherche) ?
-- Faut-il un mécanisme de signalement communautaire (« ce n'est pas le bon livre ») pour améliorer le ranking au fil du temps ?
+- Pas de regroupement par œuvre (nécessite une table `works`)
+- Pas de correction orthographique côté Reliure (Google Books le fait)
 
 ---
 
