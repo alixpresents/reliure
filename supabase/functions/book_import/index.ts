@@ -289,6 +289,7 @@ function mergeSources(
 // ---------------------------------------------------------------------------
 function normTitle(t: string): string {
   return t
+    .replace(/[\u2018\u2019\u201A\u2039\u203A''`]/g, " ")
     .toLowerCase()
     .trim()
     .split(/\s*[:/]\s/)[0]

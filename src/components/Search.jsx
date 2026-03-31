@@ -69,7 +69,8 @@ export default function Search({ open, onClose, go, initialQuery = "" }) {
   const atQuery = q.slice(1);
 
   // AI smart search — enabled when classic results are weak or NL query
-  const aiEnabled = !atMode && q.length >= 2;
+  const hasClassicResults = results.length >= 2;
+  const aiEnabled = !atMode && q.length >= 2 && (!hasClassicResults || looksLikeNaturalLanguage(q));
   const {
     books: aiBooks,
     ghost: rawGhost,

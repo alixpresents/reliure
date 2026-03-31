@@ -13,6 +13,8 @@
  */
 function normalizeTitle(title) {
   return title
+    // Normaliser les apostrophes françaises AVANT tout traitement
+    .replace(/[\u2018\u2019\u201A\u2039\u203A''`]/g, " ")
     .toLowerCase()
     .trim()
     // Couper au premier " : " ou " / " (sous-titre BnF, type de document)
