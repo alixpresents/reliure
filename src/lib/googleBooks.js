@@ -129,7 +129,7 @@ async function fetchGoogleBooks(query) {
     const data = await res.json();
     const items = data.items || [];
 
-    return items
+    const filtered = items
       .filter(it => {
         const v = it.volumeInfo;
         if (!v?.title) return false;
@@ -165,6 +165,8 @@ async function fetchGoogleBooks(query) {
           description: v.description || null,
         };
       });
+    filtered._rawCount = items.length;
+    return filtered;
   } catch {
     return [];
   }
@@ -199,18 +201,50 @@ export async function searchBooks(query) {
   const cached = getCached(query);
   if (cached) return cached;
 
-  // Lancer DB et Google en parallèle
-  // DB est quasi-instantanée (<50ms), Google prend 400-800ms
-  const [localBooks, googleBooks] = await Promise.all([
-    searchLocalBooks(query),
-    fetchGoogleBooks(query),
-  ]);
-
+  // Étape 1 : RPC locale (rapide, ~50ms)
+  const localBooks = await searchLocalBooks(query);
   const dbResults = localBooks.map(formatDbResult);
-  const results = deduplicateResults(dbResults, googleBooks);
 
-  // Max 10 résultats
+  // Skip logic : déterminer si Google est nécessaire
+  const digits = query.replace(/[^0-9]/g, "");
+  const isISBN = digits.length >= 10 && digits.length <= 13;
+  const dbSufficient = dbResults.length >= 3;
+  const isbnFound = isISBN && dbResults.length >= 1;
+  const skipGoogle = dbSufficient || isbnFound;
+
+  let googleResults = [];
+  let googleRaw = 0;
+  let skipReason = null;
+
+  if (skipGoogle) {
+    skipReason = isbnFound ? "isbn_found" : "db_sufficient";
+  } else {
+    // Étape 2 : Google Books (seulement si nécessaire)
+    googleResults = await fetchGoogleBooks(query);
+    googleRaw = googleResults._rawCount || 0;
+  }
+
+  const results = deduplicateResults(dbResults, googleResults);
   const final = results.slice(0, 10);
+
+  // Métadonnées skip logic (attachées au tableau)
+  final._skippedGoogle = skipGoogle;
+  final._skipReason = skipReason;
+
+  // Logging structuré
+  const googleUseful = final.filter(r => r._source === "google").length;
+  console.log("[search-analytics]", JSON.stringify({
+    query,
+    ts: new Date().toISOString(),
+    db: dbResults.length,
+    googleCalled: !skipGoogle,
+    googleRaw,
+    googleFiltered: googleResults.length,
+    googleDeduped: googleResults.length - (googleResults.length - googleUseful),
+    googleUseful,
+    skipped: skipGoogle,
+    skipReason,
+  }));
 
   setCache(query, final);
   return final;

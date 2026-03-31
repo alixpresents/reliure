@@ -1,0 +1,1149 @@
+[
+  {
+    "title": "Ceux qui restent",
+    "author": "Olivier Douzou",
+    "status": "not_found"
+  },
+  {
+    "title": "Changer l'eau des fleurs",
+    "author": "Valérie Perrin",
+    "status": "resolved",
+    "isbn13": "9782286157227",
+    "bnfTitle": "Changer l'eau des fleurs",
+    "bnfAuthors": [
+      "Valérie Perrin"
+    ],
+    "bnfPublisher": null,
+    "bnfDate": null
+  },
+  {
+    "title": "Rapide",
+    "author": "Franck Thilliez",
+    "status": "not_found"
+  },
+  {
+    "title": "La Fille qui rêvait d'un petit bidon d'essence et d'une allumette",
+    "author": "David Lagercrantz",
+    "status": "not_found"
+  },
+  {
+    "title": "Ru",
+    "author": "Kim Thúy",
+    "status": "resolved",
+    "isbn13": "9782286066598",
+    "bnfTitle": "Ru",
+    "bnfAuthors": [
+      "Kim Thúy"
+    ],
+    "bnfPublisher": "le Grand livre du mois",
+    "bnfDate": "2010"
+  },
+  {
+    "title": "Guerre et Paix",
+    "author": "Léon Tolstoï",
+    "status": "resolved",
+    "isbn13": "9782302018785",
+    "bnfTitle": "Guerre et paix",
+    "bnfAuthors": [],
+    "bnfPublisher": "Soleil",
+    "bnfDate": "2011"
+  },
+  {
+    "title": "Les Religieuses de Loudun",
+    "author": "Michelet",
+    "status": "not_found"
+  },
+  {
+    "title": "Le Maître du Monde",
+    "author": "Jules Verne",
+    "status": "resolved",
+    "isbn13": "9782010051845",
+    "bnfTitle": "Maître du monde",
+    "bnfAuthors": [
+      "Jules Verne"
+    ],
+    "bnfPublisher": "Hachette",
+    "bnfDate": "1978"
+  },
+  {
+    "title": "Le Maître de Ballantrae",
+    "author": "Robert Louis Stevenson",
+    "status": "match_no_isbn",
+    "bnfTitle": "Le maître de Ballantrae",
+    "bnfAuthors": [
+      "Robert Louis Stevenson"
+    ]
+  },
+  {
+    "title": "Aghami",
+    "author": "Odette Weulersse",
+    "status": "not_found"
+  },
+  {
+    "title": "Le Chemin de Kandahar",
+    "author": "Franck Weulersse",
+    "status": "not_found"
+  },
+  {
+    "title": "La Fille du Nil",
+    "author": "Franck Weulersse",
+    "status": "not_found"
+  },
+  {
+    "title": "La Joconde",
+    "author": "E. L. James",
+    "status": "not_found"
+  },
+  {
+    "title": "Mona Lisa Overdrive",
+    "author": "William Gibson",
+    "status": "resolved",
+    "isbn13": "9780553052503",
+    "bnfTitle": "Mona Lisa overdrive",
+    "bnfAuthors": [
+      "William Gibson"
+    ],
+    "bnfPublisher": "Bantam books",
+    "bnfDate": "1988"
+  },
+  {
+    "title": "La Porte étroite",
+    "author": "André Gide",
+    "status": "resolved",
+    "isbn13": "9782744107894",
+    "bnfTitle": "La porte étroite",
+    "bnfAuthors": [
+      "André Gide"
+    ],
+    "bnfPublisher": "France loisirs",
+    "bnfDate": "1997"
+  },
+  {
+    "title": "Si le grain ne meurt",
+    "author": "André Gide",
+    "status": "resolved",
+    "isbn13": "9782851220806",
+    "bnfTitle": "Si le grain ne meurt",
+    "bnfAuthors": [
+      "André Gide"
+    ],
+    "bnfPublisher": null,
+    "bnfDate": null
+  },
+  {
+    "title": "Hamlet, prince de Danemark",
+    "author": "William Shakespeare",
+    "status": "match_no_isbn",
+    "bnfTitle": "Hamlet, prince de Danemark...",
+    "bnfAuthors": [
+      "William Shakespeare"
+    ]
+  },
+  {
+    "title": "Dadok",
+    "author": "Éric Reinhardt",
+    "status": "not_found"
+  },
+  {
+    "title": "Un homme qui dort",
+    "author": "Georges Perec",
+    "status": "resolved",
+    "isbn13": "9782207280461",
+    "bnfTitle": "Un Homme qui dort",
+    "bnfAuthors": [
+      "Georges Perec"
+    ],
+    "bnfPublisher": "Denoël",
+    "bnfDate": "1982"
+  },
+  {
+    "title": "Trois hommes dans un bateau",
+    "author": "Jérôme K. Jérôme",
+    "status": "resolved",
+    "isbn13": "9782724223644",
+    "bnfTitle": "Trois hommes dans un bateau",
+    "bnfAuthors": [
+      "Jerome K. Jerome"
+    ],
+    "bnfPublisher": "France loisirs",
+    "bnfDate": "1985"
+  },
+  {
+    "title": "L'Étrange Cas du Dr Jekyll et de Mr Hyde",
+    "author": "Robert Louis Stevenson",
+    "status": "resolved",
+    "isbn13": "9791090634121",
+    "bnfTitle": "L'étrange cas du Dr Jekyll et de Mr Hyde",
+    "bnfAuthors": [
+      "Robert Louis Stevenson"
+    ],
+    "bnfPublisher": "Hauteur d'homme",
+    "bnfDate": "2015"
+  },
+  {
+    "title": "Le Chemin de Damas",
+    "author": "Odette Weulersse",
+    "status": "not_found"
+  },
+  {
+    "title": "La Marchande de Rêves",
+    "author": "Odette Weulersse",
+    "status": "not_found"
+  },
+  {
+    "title": "Bel-Ami",
+    "author": "Guy de Maupassant",
+    "status": "resolved",
+    "isbn13": "9782959478604",
+    "bnfTitle": "Bel-Ami",
+    "bnfAuthors": [
+      "Guy de Maupassant"
+    ],
+    "bnfPublisher": null,
+    "bnfDate": null
+  },
+  {
+    "title": "Bouvard et Pécuchet",
+    "author": "Gustave Flaubert",
+    "status": "resolved",
+    "isbn13": "9782814504257",
+    "bnfTitle": "Bouvard et Pécuchet",
+    "bnfAuthors": [
+      "Gustave Flaubert"
+    ],
+    "bnfPublisher": null,
+    "bnfDate": null
+  },
+  {
+    "title": "Le Horla",
+    "author": "Guy de Maupassant",
+    "status": "resolved",
+    "isbn13": "9782322647460",
+    "bnfTitle": "Le Horla",
+    "bnfAuthors": [
+      "Guy Maupassant"
+    ],
+    "bnfPublisher": null,
+    "bnfDate": null
+  },
+  {
+    "title": "La Bête humaine",
+    "author": "Émile Zola",
+    "status": "resolved",
+    "isbn13": "9782351789643",
+    "bnfTitle": "La Bête humaine",
+    "bnfAuthors": [
+      "Émile Zola"
+    ],
+    "bnfPublisher": null,
+    "bnfDate": null
+  },
+  {
+    "title": "Anéantir",
+    "author": "Michel Houellebecq",
+    "status": "resolved",
+    "isbn13": "9782080271532",
+    "bnfTitle": "Anéantir",
+    "bnfAuthors": [
+      "Michel Houellebecq"
+    ],
+    "bnfPublisher": null,
+    "bnfDate": null
+  },
+  {
+    "title": "La Carte et le Territoire",
+    "author": "Michel Houellebecq",
+    "status": "resolved",
+    "isbn13": "9782298046007",
+    "bnfTitle": "La carte et le territoire",
+    "bnfAuthors": [
+      "Michel Houellebecq"
+    ],
+    "bnfPublisher": "Éd. France loisirs",
+    "bnfDate": "2011"
+  },
+  {
+    "title": "Extension du domaine de la lutte",
+    "author": "Michel Houellebecq",
+    "status": "resolved",
+    "isbn13": "9782080257741",
+    "bnfTitle": "Extension du domaine de la lutte",
+    "bnfAuthors": [
+      "Michel Houellebecq"
+    ],
+    "bnfPublisher": null,
+    "bnfDate": null
+  },
+  {
+    "title": "Boussole",
+    "author": "Mathias Énard",
+    "status": "resolved",
+    "isbn13": "9782286128432",
+    "bnfTitle": "Boussole",
+    "bnfAuthors": [
+      "Mathias Énard"
+    ],
+    "bnfPublisher": "le Grand livre du mois",
+    "bnfDate": "2015"
+  },
+  {
+    "title": "L'Art de perdre",
+    "author": "Alice Zeniter",
+    "status": "resolved",
+    "isbn13": "9782286152529",
+    "bnfTitle": "L'art de perdre",
+    "bnfAuthors": [
+      "Alice Zeniter"
+    ],
+    "bnfPublisher": null,
+    "bnfDate": null
+  },
+  {
+    "title": "Couleurs de l'incendie",
+    "author": "Pierre Lemaitre",
+    "status": "resolved",
+    "isbn13": "9782298146011",
+    "bnfTitle": "Couleurs de l'incendie",
+    "bnfAuthors": [
+      "Pierre Lemaitre"
+    ],
+    "bnfPublisher": null,
+    "bnfDate": null
+  },
+  {
+    "title": "Miroir de nos peines",
+    "author": "Pierre Lemaitre",
+    "status": "resolved",
+    "isbn13": "9782298159332",
+    "bnfTitle": "Miroir de nos peines",
+    "bnfAuthors": [
+      "Pierre Lemaitre"
+    ],
+    "bnfPublisher": null,
+    "bnfDate": null
+  },
+  {
+    "title": "Le Livre des Baltimore",
+    "author": "Joël Dicker",
+    "status": "resolved",
+    "isbn13": "9782298115123",
+    "bnfTitle": "Le livre des Baltimore",
+    "bnfAuthors": [
+      "Joël Dicker"
+    ],
+    "bnfPublisher": "Éditions France loisirs",
+    "bnfDate": "2016"
+  },
+  {
+    "title": "L'Énigme de la chambre 622",
+    "author": "Joël Dicker",
+    "status": "resolved",
+    "isbn13": "9782889730155",
+    "bnfTitle": "L'énigme de la chambre 622",
+    "bnfAuthors": [
+      "Joël Dicker"
+    ],
+    "bnfPublisher": null,
+    "bnfDate": null
+  },
+  {
+    "title": "Éducation européenne",
+    "author": "Romain Gary",
+    "status": "resolved",
+    "isbn13": "9782070362035",
+    "bnfTitle": "Éducation européenne",
+    "bnfAuthors": [
+      "Romain Gary"
+    ],
+    "bnfPublisher": "Gallimard",
+    "bnfDate": "1972"
+  },
+  {
+    "title": "Pas pleurer",
+    "author": "Lydie Salvayre",
+    "status": "resolved",
+    "isbn13": "9782286115302",
+    "bnfTitle": "Pas pleurer",
+    "bnfAuthors": [
+      "Lydie Salvayre"
+    ],
+    "bnfPublisher": "le Grand livre du mois",
+    "bnfDate": "2014"
+  },
+  {
+    "title": "Trois jours et une vie",
+    "author": "Pierre Lemaitre",
+    "status": "resolved",
+    "isbn13": "9782286128852",
+    "bnfTitle": "Trois jours et une vie",
+    "bnfAuthors": [
+      "Pierre Lemaitre"
+    ],
+    "bnfPublisher": "le Grand livre du mois",
+    "bnfDate": "2016"
+  },
+  {
+    "title": "Petit Pays",
+    "author": "Gaël Faye",
+    "status": "resolved",
+    "isbn13": "9782298130331",
+    "bnfTitle": "Petit pays",
+    "bnfAuthors": [
+      "Gaël Faye"
+    ],
+    "bnfPublisher": "Éditions France loisirs",
+    "bnfDate": "2017"
+  },
+  {
+    "title": "Le Lambeau",
+    "author": "Philippe Lançon",
+    "status": "resolved",
+    "isbn13": "9782286159245",
+    "bnfTitle": "Le lambeau",
+    "bnfAuthors": [
+      "Philippe Lançon"
+    ],
+    "bnfPublisher": null,
+    "bnfDate": null
+  },
+  {
+    "title": "S'adapter",
+    "author": "Clara Dupont-Monod",
+    "status": "resolved",
+    "isbn13": "9782298179842",
+    "bnfTitle": "S'adapter",
+    "bnfAuthors": [
+      "Clara Dupont-Monod"
+    ],
+    "bnfPublisher": null,
+    "bnfDate": null
+  },
+  {
+    "title": "Suite française",
+    "author": "Irène Némirovsky",
+    "status": "resolved",
+    "isbn13": "9782286007560",
+    "bnfTitle": "Suite française",
+    "bnfAuthors": [
+      "Irène Némirovsky"
+    ],
+    "bnfPublisher": "le Grand livre du mois",
+    "bnfDate": "2004"
+  },
+  {
+    "title": "Connemara",
+    "author": "Nicolas Mathieu",
+    "status": "resolved",
+    "isbn13": "9782370833525",
+    "bnfTitle": "Connemara",
+    "bnfAuthors": [
+      "Nicolas Mathieu"
+    ],
+    "bnfPublisher": null,
+    "bnfDate": null
+  },
+  {
+    "title": "Les Choses humaines",
+    "author": "Karine Tuil",
+    "status": "resolved",
+    "isbn13": "9782286164881",
+    "bnfTitle": "Les choses humaines",
+    "bnfAuthors": [
+      "Karine Tuil"
+    ],
+    "bnfPublisher": null,
+    "bnfDate": null
+  },
+  {
+    "title": "L'Énigme du retour",
+    "author": "Dany Laferrière",
+    "status": "resolved",
+    "isbn13": "9782286064365",
+    "bnfTitle": "L'énigme du retour",
+    "bnfAuthors": [
+      "Dany Laferrière"
+    ],
+    "bnfPublisher": "le Grand livre du mois",
+    "bnfDate": "2009"
+  },
+  {
+    "title": "Texaco",
+    "author": "Patrick Chamoiseau",
+    "status": "resolved",
+    "isbn13": "9782070727506",
+    "bnfTitle": "Texaco",
+    "bnfAuthors": [
+      "Patrick Chamoiseau"
+    ],
+    "bnfPublisher": "Gallimard",
+    "bnfDate": "1994"
+  },
+  {
+    "title": "Allah n'est pas obligé",
+    "author": "Ahmadou Kourouma",
+    "status": "resolved",
+    "isbn13": "9782298050264",
+    "bnfTitle": "Allah n'est pas obligé",
+    "bnfAuthors": [
+      "Ahmadou Kourouma"
+    ],
+    "bnfPublisher": "Éd. France loisirs",
+    "bnfDate": "2011"
+  },
+  {
+    "title": "L'Enfant noir",
+    "author": "Camara Laye",
+    "status": "resolved",
+    "isbn13": "9782953782905",
+    "bnfTitle": "L'enfant noir",
+    "bnfAuthors": [
+      "Laye Camara"
+    ],
+    "bnfPublisher": "Esprit libre junior",
+    "bnfDate": "2010"
+  },
+  {
+    "title": "Mémoires de porc-épic",
+    "author": "Alain Mabanckou",
+    "status": "resolved",
+    "isbn13": "9782757860762",
+    "bnfTitle": "Mémoires de porc-épic",
+    "bnfAuthors": [
+      "Alain Mabanckou"
+    ],
+    "bnfPublisher": null,
+    "bnfDate": null
+  },
+  {
+    "title": "Petit piment",
+    "author": "Alain Mabanckou",
+    "status": "resolved",
+    "isbn13": "9782286124410",
+    "bnfTitle": "Petit Piment",
+    "bnfAuthors": [
+      "Alain Mabanckou"
+    ],
+    "bnfPublisher": "le Grand livre du mois",
+    "bnfDate": "2015"
+  },
+  {
+    "title": "Verre Cassé",
+    "author": "Alain Mabanckou",
+    "status": "resolved",
+    "isbn13": "9782020680165",
+    "bnfTitle": "Verre cassé",
+    "bnfAuthors": [
+      "Alain Mabanckou"
+    ],
+    "bnfPublisher": "Éd. du Seuil",
+    "bnfDate": "2005"
+  },
+  {
+    "title": "Trois femmes puissantes",
+    "author": "Marie NDiaye",
+    "status": "resolved",
+    "isbn13": "9782286059736",
+    "bnfTitle": "Trois femmes puissantes",
+    "bnfAuthors": [
+      "Marie Ndiaye"
+    ],
+    "bnfPublisher": "le Grand livre du mois",
+    "bnfDate": "2009"
+  },
+  {
+    "title": "Le Testament français",
+    "author": "Andreï Makine",
+    "status": "resolved",
+    "isbn13": "9782715219366",
+    "bnfTitle": "Le testament français",
+    "bnfAuthors": [
+      "Andreï Makine"
+    ],
+    "bnfPublisher": "Mercure de France",
+    "bnfDate": "1995"
+  },
+  {
+    "title": "La Nuit sacrée",
+    "author": "Tahar Ben Jelloun",
+    "status": "resolved",
+    "isbn13": "9782020097161",
+    "bnfTitle": "La Nuit sacrée",
+    "bnfAuthors": [
+      "Tahar Ben Jelloun"
+    ],
+    "bnfPublisher": "Éd. du Seuil",
+    "bnfDate": "1987"
+  },
+  {
+    "title": "L'Enfant de sable",
+    "author": "Tahar Ben Jelloun",
+    "status": "resolved",
+    "isbn13": "9782724228946",
+    "bnfTitle": "L'Enfant de sable",
+    "bnfAuthors": [
+      "Tahar Ben Jelloun"
+    ],
+    "bnfPublisher": "France loisirs",
+    "bnfDate": "1985"
+  },
+  {
+    "title": "Kafka sur le rivage",
+    "author": "Haruki Murakami",
+    "status": "resolved",
+    "isbn13": "9782714498854",
+    "bnfTitle": "Kafka sur le rivage",
+    "bnfAuthors": [
+      "Haruki Murakami"
+    ],
+    "bnfPublisher": null,
+    "bnfDate": null
+  },
+  {
+    "title": "L'Amour aux temps du choléra",
+    "author": "Gabriel García Márquez",
+    "status": "resolved",
+    "isbn13": "9782246844402",
+    "bnfTitle": "L'amour aux temps du choléra",
+    "bnfAuthors": [
+      "Ugo Bertotti"
+    ],
+    "bnfPublisher": null,
+    "bnfDate": null
+  },
+  {
+    "title": "Anna Karénine",
+    "author": "Léon Tolstoï",
+    "status": "match_no_isbn",
+    "bnfTitle": "Anna Karenine",
+    "bnfAuthors": [
+      "Lev Nikolaevič Tolstoj"
+    ]
+  },
+  {
+    "title": "Dragon Ball 1",
+    "author": "Akira Toriyama",
+    "status": "match_no_isbn",
+    "bnfTitle": "Dragon Ball",
+    "bnfAuthors": [
+      "Akira Toriyama"
+    ]
+  },
+  {
+    "title": "Jujutsu Kaisen 1",
+    "author": "Gege Akutami",
+    "status": "no_title_match",
+    "bnfTop": "Ryomen Sukuna"
+  },
+  {
+    "title": "Chainsaw Man 1",
+    "author": "Tatsuki Fujimoto",
+    "status": "resolved",
+    "isbn13": "9782820345165",
+    "bnfTitle": "Chainsaw man",
+    "bnfAuthors": [
+      "Tatsuki Fujimoto"
+    ],
+    "bnfPublisher": null,
+    "bnfDate": null
+  },
+  {
+    "title": "Spy×Family 1",
+    "author": "Tatsuya Endo",
+    "status": "resolved",
+    "isbn13": "9782380710243",
+    "bnfTitle": "Spy x family",
+    "bnfAuthors": [
+      "Tatsuya Endō"
+    ],
+    "bnfPublisher": null,
+    "bnfDate": null
+  },
+  {
+    "title": "Demon Slayer 1",
+    "author": "Koyoharu Gotouge",
+    "status": "resolved",
+    "isbn13": "9782809482317",
+    "bnfTitle": "Demon slayer",
+    "bnfAuthors": [
+      "Koyoharu Gotōge"
+    ],
+    "bnfPublisher": null,
+    "bnfDate": null
+  },
+  {
+    "title": "L'Attaque des Titans 1",
+    "author": "Hajime Isayama",
+    "status": "resolved",
+    "isbn13": "9782811611699",
+    "bnfTitle": "L'attaque des titans",
+    "bnfAuthors": [
+      "Hajime Isayama"
+    ],
+    "bnfPublisher": "Pika éd.",
+    "bnfDate": "2013"
+  },
+  {
+    "title": "My Hero Academia 1",
+    "author": "Kohei Horikoshi",
+    "status": "resolved",
+    "isbn13": "9791032710821",
+    "bnfTitle": "My hero academia smash",
+    "bnfAuthors": [
+      "Hirofumi Neda"
+    ],
+    "bnfPublisher": null,
+    "bnfDate": null
+  },
+  {
+    "title": "Death Note 1",
+    "author": "Tsugumi Ohba",
+    "status": "resolved",
+    "isbn13": "9782298023626",
+    "bnfTitle": "Death note",
+    "bnfAuthors": [
+      "Tsugumi Ōba",
+      "Takeshi Obata"
+    ],
+    "bnfPublisher": "Éd. France loisirs",
+    "bnfDate": "2009"
+  },
+  {
+    "title": "Fullmetal Alchemist 1",
+    "author": "Hiromu Arakawa",
+    "status": "resolved",
+    "isbn13": "9782368529904",
+    "bnfTitle": "Fullmetal alchemist",
+    "bnfAuthors": [
+      "Hiromu Arakawa"
+    ],
+    "bnfPublisher": null,
+    "bnfDate": null
+  },
+  {
+    "title": "Tokyo Ghoul 1",
+    "author": "Sui Ishida",
+    "status": "resolved",
+    "isbn13": "9782723495615",
+    "bnfTitle": "Tokyo ghoul",
+    "bnfAuthors": [
+      "Sui Ishida"
+    ],
+    "bnfPublisher": "Glénat",
+    "bnfDate": "2013"
+  },
+  {
+    "title": "Hunter × Hunter 1",
+    "author": "Yoshihiro Togashi",
+    "status": "resolved",
+    "isbn13": "9782871292661",
+    "bnfTitle": "Hunter x Hunter",
+    "bnfAuthors": [
+      "Yoshihiro Togashi"
+    ],
+    "bnfPublisher": "Dargaud Bénélux-Kana",
+    "bnfDate": "2000"
+  },
+  {
+    "title": "Berserk 1",
+    "author": "Kentaro Miura",
+    "status": "resolved",
+    "isbn13": "9782344020685",
+    "bnfTitle": "Berserk",
+    "bnfAuthors": [
+      "Kentarō Miura"
+    ],
+    "bnfPublisher": "Glénat",
+    "bnfDate": "2004"
+  },
+  {
+    "title": "Vagabond 1",
+    "author": "Takehiko Inoue",
+    "status": "resolved",
+    "isbn13": "9782759502189",
+    "bnfTitle": "Vagabond",
+    "bnfAuthors": [
+      "Takehiko Inoue"
+    ],
+    "bnfPublisher": "Tonkam",
+    "bnfDate": "2008"
+  },
+  {
+    "title": "Slam Dunk 1",
+    "author": "Takehiko Inoue",
+    "status": "resolved",
+    "isbn13": "9782505124160",
+    "bnfTitle": "Slam dunk",
+    "bnfAuthors": [
+      "Takehiko Inoue"
+    ],
+    "bnfPublisher": null,
+    "bnfDate": null
+  },
+  {
+    "title": "Bleach 1",
+    "author": "Tite Kubo",
+    "status": "resolved",
+    "isbn13": "9782344053829",
+    "bnfTitle": "Bleach, can't fear your own world",
+    "bnfAuthors": [
+      "Taito Kubo",
+      "Ryōgo Narita"
+    ],
+    "bnfPublisher": null,
+    "bnfDate": null
+  },
+  {
+    "title": "One Punch Man 1",
+    "author": "ONE / Yusuke Murata",
+    "status": "resolved",
+    "isbn13": "9782368522257",
+    "bnfTitle": "One-punch man",
+    "bnfAuthors": [
+      "One"
+    ],
+    "bnfPublisher": "Kurokawa",
+    "bnfDate": "2016"
+  },
+  {
+    "title": "Astérix le Gaulois",
+    "author": "René Goscinny",
+    "status": "match_no_isbn",
+    "bnfTitle": "Une Aventure d'Astérix le Gaulois",
+    "bnfAuthors": []
+  },
+  {
+    "title": "Le Chat du Rabbin 1",
+    "author": "Joann Sfar",
+    "status": "resolved",
+    "isbn13": "9782205076189",
+    "bnfTitle": "Le chat du rabbin",
+    "bnfAuthors": [
+      "Joann Sfar"
+    ],
+    "bnfPublisher": "Dargaud",
+    "bnfDate": "2016"
+  },
+  {
+    "title": "Persepolis",
+    "author": "Marjane Satrapi",
+    "status": "resolved",
+    "isbn13": "9782918647416",
+    "bnfTitle": "Persepolis",
+    "bnfAuthors": [
+      "Marjane Satrapi"
+    ],
+    "bnfPublisher": null,
+    "bnfDate": null
+  },
+  {
+    "title": "Maus",
+    "author": "Art Spiegelman",
+    "status": "resolved",
+    "isbn13": "9782080660299",
+    "bnfTitle": "Maus",
+    "bnfAuthors": [
+      "Art Spiegelman"
+    ],
+    "bnfPublisher": "Flammarion",
+    "bnfDate": "1987"
+  },
+  {
+    "title": "Les Vieux Fourneaux 1",
+    "author": "Wilfrid Lupano",
+    "status": "no_title_match",
+    "bnfTop": "Ceux qui restent"
+  },
+  {
+    "title": "Solo Leveling 1",
+    "author": "Chugong",
+    "status": "resolved",
+    "isbn13": "9782382880807",
+    "bnfTitle": "Solo leveling",
+    "bnfAuthors": [
+      "Chugong"
+    ],
+    "bnfPublisher": null,
+    "bnfDate": null
+  },
+  {
+    "title": "Frieren 1",
+    "author": "Kanehito Yamada",
+    "status": "resolved",
+    "isbn13": "9791032710838",
+    "bnfTitle": "Frieren",
+    "bnfAuthors": [
+      "Kanehito Yamada"
+    ],
+    "bnfPublisher": null,
+    "bnfDate": null
+  },
+  {
+    "title": "Blue Lock 1",
+    "author": "Muneyuki Kaneshiro",
+    "status": "resolved",
+    "isbn13": "9782811650254",
+    "bnfTitle": "Blue lock",
+    "bnfAuthors": [
+      "Muneyuki Kaneshiro"
+    ],
+    "bnfPublisher": null,
+    "bnfDate": null
+  },
+  {
+    "title": "Kaiju No. 8 1",
+    "author": "Naoya Matsumoto",
+    "status": "not_found"
+  },
+  {
+    "title": "La Nuit des prolétaires",
+    "author": "Jacques Rancière",
+    "status": "resolved",
+    "isbn13": "9782818502969",
+    "bnfTitle": "La nuit des prolétaires",
+    "bnfAuthors": [
+      "Jacques Rancière"
+    ],
+    "bnfPublisher": "Pluriel",
+    "bnfDate": "2012"
+  },
+  {
+    "title": "Indignez-vous !",
+    "author": "Stéphane Hessel",
+    "status": "resolved",
+    "isbn13": "9791090354203",
+    "bnfTitle": "Indignez-vous !",
+    "bnfAuthors": [
+      "Stéphane Hessel"
+    ],
+    "bnfPublisher": "Indigène éd.",
+    "bnfDate": "2011"
+  },
+  {
+    "title": "No Logo",
+    "author": "Naomi Klein",
+    "status": "resolved",
+    "isbn13": "9782760921931",
+    "bnfTitle": "No logo",
+    "bnfAuthors": [
+      "Naomi Klein"
+    ],
+    "bnfPublisher": "Actes Sud",
+    "bnfDate": "2001"
+  },
+  {
+    "title": "L'Homme révolté",
+    "author": "Albert Camus",
+    "status": "resolved",
+    "isbn13": "9782070212095",
+    "bnfTitle": "L'homme révolté",
+    "bnfAuthors": [
+      "Albert Camus"
+    ],
+    "bnfPublisher": "Gallimard",
+    "bnfDate": "1992"
+  },
+  {
+    "title": "Les Essais",
+    "author": "Michel de Montaigne",
+    "status": "resolved",
+    "isbn13": "9782869591509",
+    "bnfTitle": "Les essais",
+    "bnfAuthors": [
+      "Michel de Montaigne"
+    ],
+    "bnfPublisher": "Arléa",
+    "bnfDate": "1992"
+  },
+  {
+    "title": "Micromégas",
+    "author": "Voltaire",
+    "status": "match_no_isbn",
+    "bnfTitle": "Micromégas",
+    "bnfAuthors": [
+      "Voltaire"
+    ]
+  },
+  {
+    "title": "Colomba",
+    "author": "Prosper Mérimée",
+    "status": "resolved",
+    "isbn13": "9782322636518",
+    "bnfTitle": "Colomba",
+    "bnfAuthors": [
+      "Prosper Mérimée"
+    ],
+    "bnfPublisher": null,
+    "bnfDate": null
+  },
+  {
+    "title": "La Nuit du renard",
+    "author": "Mary Higgins Clark",
+    "status": "resolved",
+    "isbn13": "9782830217513",
+    "bnfTitle": "La Nuit du renard",
+    "bnfAuthors": [
+      "Mary Higgins Clark"
+    ],
+    "bnfPublisher": "[diffusion Guilde internationale du disque]",
+    "bnfDate": "1985"
+  },
+  {
+    "title": "Le Grand Monde",
+    "author": "Pierre Lemaitre",
+    "status": "resolved",
+    "isbn13": "9782810204861",
+    "bnfTitle": "Le grand monde",
+    "bnfAuthors": [
+      "Christian de Metter"
+    ],
+    "bnfPublisher": null,
+    "bnfDate": null
+  },
+  {
+    "title": "Le Plus Grand Menu du monde",
+    "author": "Hervé Le Tellier",
+    "status": "not_found"
+  },
+  {
+    "title": "La Disparition de Stephanie Mailer",
+    "author": "Joël Dicker",
+    "status": "resolved",
+    "isbn13": "9782286160227",
+    "bnfTitle": "La disparition de Stephanie Mailer",
+    "bnfAuthors": [
+      "Joël Dicker"
+    ],
+    "bnfPublisher": null,
+    "bnfDate": null
+  },
+  {
+    "title": "Veiller sur elle",
+    "author": "Jean-Baptiste Andrea",
+    "status": "resolved",
+    "isbn13": "9782378803759",
+    "bnfTitle": "Veiller sur elle",
+    "bnfAuthors": [
+      "Jean-Baptiste Andrea"
+    ],
+    "bnfPublisher": null,
+    "bnfDate": null
+  },
+  {
+    "title": "Jacaranda",
+    "author": "Gaël Faye",
+    "status": "resolved",
+    "isbn13": "9782246831457",
+    "bnfTitle": "Jacaranda",
+    "bnfAuthors": [
+      "Gaël Faye"
+    ],
+    "bnfPublisher": null,
+    "bnfDate": null
+  },
+  {
+    "title": "Sympathie pour le diable",
+    "author": "Irène Némirovsky",
+    "status": "not_found"
+  },
+  {
+    "title": "Le Chercheur d'os",
+    "author": "Tahar Djaout",
+    "status": "not_found"
+  },
+  {
+    "title": "Une si longue lettre",
+    "author": "Mariama Bâ",
+    "status": "resolved",
+    "isbn13": "9782723604307",
+    "bnfTitle": "Une Si longue lettre",
+    "bnfAuthors": [
+      "Mariama Bâ"
+    ],
+    "bnfPublisher": "Nouvelles éditions africaines",
+    "bnfDate": "1983"
+  },
+  {
+    "title": "Monnè, outrages et défis",
+    "author": "Ahmadou Kourouma",
+    "status": "resolved",
+    "isbn13": "9782020114264",
+    "bnfTitle": "Monnè, outrages et défis",
+    "bnfAuthors": [
+      "Ahmadou Kourouma"
+    ],
+    "bnfPublisher": "Éd. du Seuil",
+    "bnfDate": "1990"
+  },
+  {
+    "title": "Le Baobab fou",
+    "author": "Ken Bugul",
+    "status": "resolved",
+    "isbn13": "9782708708037",
+    "bnfTitle": "Le baobab fou",
+    "bnfAuthors": [
+      "Ken Bugul"
+    ],
+    "bnfPublisher": "Présence africaine",
+    "bnfDate": "2010"
+  },
+  {
+    "title": "Gouverneurs de la rosée",
+    "author": "Jacques Roumain",
+    "status": "resolved",
+    "isbn13": "9782877638180",
+    "bnfTitle": "Gouverneurs de la rosée",
+    "bnfAuthors": [
+      "Jacques Roumain"
+    ],
+    "bnfPublisher": "Orphie",
+    "bnfDate": "2015"
+  },
+  {
+    "title": "La Femme qui attendait",
+    "author": "Andreï Makine",
+    "status": "resolved",
+    "isbn13": "9782702892831",
+    "bnfTitle": "La femme qui attendait",
+    "bnfAuthors": [
+      "Andreï Makine"
+    ],
+    "bnfPublisher": "le Grand livre du mois",
+    "bnfDate": "2004"
+  },
+  {
+    "title": "Le Passé devant soi",
+    "author": "Gilbert Gatore",
+    "status": "resolved",
+    "isbn13": "9782752903099",
+    "bnfTitle": "Le passé devant soi",
+    "bnfAuthors": [
+      "Gilbert Gatore"
+    ],
+    "bnfPublisher": "Phébus",
+    "bnfDate": "2007"
+  },
+  {
+    "title": "La Part du colibri",
+    "author": "Pierre Rabhi",
+    "status": "resolved",
+    "isbn13": "9782815928229",
+    "bnfTitle": "La part du colibri",
+    "bnfAuthors": [
+      "Pierre Rabhi"
+    ],
+    "bnfPublisher": null,
+    "bnfDate": null
+  },
+  {
+    "title": "La Haine de l'Occident",
+    "author": "Jean Ziegler",
+    "status": "resolved",
+    "isbn13": "9782226186935",
+    "bnfTitle": "La haine de l'Occident",
+    "bnfAuthors": [
+      "Jean Ziegler"
+    ],
+    "bnfPublisher": "A. Michel",
+    "bnfDate": "2008"
+  }
+]

@@ -1,0 +1,1054 @@
+{
+  "results": [
+    {
+      "query": "L'étranger",
+      "expected": "L'étranger",
+      "category": "Titres populaires FR",
+      "ol": {
+        "elapsed": 10006,
+        "count": 0,
+        "rank": -1,
+        "recall3": false,
+        "coverPct": 0,
+        "frenchPct": 0,
+        "metaScore": 0,
+        "top3": [],
+        "error": "The operation was aborted due to timeout"
+      },
+      "gb": {
+        "elapsed": 719,
+        "totalFound": 1000000,
+        "count": 10,
+        "rank": 1,
+        "recall3": true,
+        "coverPct": 1,
+        "metaScore": 0.7777777777777778,
+        "top3": [
+          "L'Étranger — Albert Camus",
+          "Le Magasin théatral — ?",
+          "L'Étranger — ?"
+        ],
+        "error": null
+      }
+    },
+    {
+      "query": "Les Misérables",
+      "expected": "Les Misérables",
+      "category": "Titres populaires FR",
+      "ol": {
+        "elapsed": 10003,
+        "count": 0,
+        "rank": -1,
+        "recall3": false,
+        "coverPct": 0,
+        "frenchPct": 0,
+        "metaScore": 0,
+        "top3": [],
+        "error": "The operation was aborted due to timeout"
+      },
+      "gb": {
+        "elapsed": 1189,
+        "totalFound": 1000000,
+        "count": 10,
+        "rank": 1,
+        "recall3": true,
+        "coverPct": 0.7,
+        "metaScore": 0.8888888888888888,
+        "top3": [
+          "Les Miserables — Victor Hugo",
+          "Les misérables — Victor Hugo",
+          "Les Misérables — Victor Hugo"
+        ],
+        "error": null
+      }
+    },
+    {
+      "query": "Madame Bovary",
+      "expected": "Madame Bovary",
+      "category": "Titres populaires FR",
+      "ol": {
+        "elapsed": 10003,
+        "count": 0,
+        "rank": -1,
+        "recall3": false,
+        "coverPct": 0,
+        "frenchPct": 0,
+        "metaScore": 0,
+        "top3": [],
+        "error": "The operation was aborted due to timeout"
+      },
+      "gb": {
+        "elapsed": 742,
+        "totalFound": 1000000,
+        "count": 10,
+        "rank": 1,
+        "recall3": true,
+        "coverPct": 0.9,
+        "metaScore": 1,
+        "top3": [
+          "Madame Bovary — Gustave Flaubert",
+          "MADAME BOVARY — Gustave Flaubert",
+          "Madame Bovary (Collector) — Gustave Flaubert"
+        ],
+        "error": null
+      }
+    },
+    {
+      "query": "Le Petit Prince",
+      "expected": "Le Petit Prince",
+      "category": "Titres populaires FR",
+      "ol": {
+        "elapsed": 10002,
+        "count": 0,
+        "rank": -1,
+        "recall3": false,
+        "coverPct": 0,
+        "frenchPct": 0,
+        "metaScore": 0,
+        "top3": [],
+        "error": "The operation was aborted due to timeout"
+      },
+      "gb": {
+        "elapsed": 976,
+        "totalFound": 1000000,
+        "count": 10,
+        "rank": 1,
+        "recall3": true,
+        "coverPct": 0.7,
+        "metaScore": 0.8888888888888888,
+        "top3": [
+          "Le Petit Prince — Antoine de Saint-Exupéry",
+          "Le Petit Prince — Antoine De Saint-Exupéry",
+          "Il était une fois le petit prince d'Antoine de Saint-Exupéry — Alban Cerisier"
+        ],
+        "error": null
+      }
+    },
+    {
+      "query": "La Peste",
+      "expected": "La Peste",
+      "category": "Titres populaires FR",
+      "ol": {
+        "elapsed": 10002,
+        "count": 0,
+        "rank": -1,
+        "recall3": false,
+        "coverPct": 0,
+        "frenchPct": 0,
+        "metaScore": 0,
+        "top3": [],
+        "error": "The operation was aborted due to timeout"
+      },
+      "gb": {
+        "elapsed": 771,
+        "totalFound": 1000000,
+        "count": 10,
+        "rank": 1,
+        "recall3": true,
+        "coverPct": 1,
+        "metaScore": 0.8888888888888888,
+        "top3": [
+          "La peste — Albert Camus",
+          "Les hommes et la peste en France et dans les pays européens et méditerranéens (1). La peste dans l'histoire — Jean-Noël Biraben",
+          "Revue des sciences médicales en France et à l'étranger — Georges Hayem"
+        ],
+        "error": null
+      }
+    },
+    {
+      "query": "Germinal",
+      "expected": "Germinal",
+      "category": "Titres populaires FR",
+      "ol": {
+        "elapsed": 8934,
+        "totalFound": 1248,
+        "count": 10,
+        "rank": 1,
+        "recall3": true,
+        "coverPct": 0.3,
+        "frenchPct": 1,
+        "metaScore": 0,
+        "top3": [
+          "Germinal — Émile Zola",
+          "Children of the Ghetto — Israel Zangwill",
+          "Germinal — Émile Zola"
+        ],
+        "error": null
+      },
+      "gb": {
+        "elapsed": 668,
+        "totalFound": 1000000,
+        "count": 10,
+        "rank": 1,
+        "recall3": true,
+        "coverPct": 0.7,
+        "metaScore": 1,
+        "top3": [
+          "Germinal — Émile Zola",
+          "Germinal — Émile Zola",
+          "Germinal — Émile Zola"
+        ],
+        "error": null
+      }
+    },
+    {
+      "query": "Le Maître et Marguerite",
+      "expected": "Le Maître et Marguerite",
+      "category": "Titres populaires FR",
+      "ol": {
+        "elapsed": 9175,
+        "count": 0,
+        "rank": -1,
+        "recall3": false,
+        "coverPct": 0,
+        "frenchPct": 0,
+        "metaScore": 0,
+        "top3": [],
+        "error": "HTTP 503"
+      },
+      "gb": {
+        "elapsed": 1841,
+        "totalFound": 1000000,
+        "count": 10,
+        "rank": 1,
+        "recall3": true,
+        "coverPct": 0.5,
+        "metaScore": 1,
+        "top3": [
+          "Le Maître et Marguerite — Mikhaïl Boulgakov",
+          "Le Maître et Marguerite — Mihail Afanasʹevič Bulgakov",
+          "Le Maître et Marguerite de Mikhail Bulgakov (Analyse de l'œuvre) — Natalia Torres Behar"
+        ],
+        "error": null
+      }
+    },
+    {
+      "query": "Du côté de chez Swann",
+      "expected": "Du côté de chez Swann",
+      "category": "Titres populaires FR",
+      "ol": {
+        "elapsed": 10002,
+        "count": 0,
+        "rank": -1,
+        "recall3": false,
+        "coverPct": 0,
+        "frenchPct": 0,
+        "metaScore": 0,
+        "top3": [],
+        "error": "The operation was aborted due to timeout"
+      },
+      "gb": {
+        "elapsed": 1284,
+        "totalFound": 1000000,
+        "count": 10,
+        "rank": 1,
+        "recall3": true,
+        "coverPct": 0.9,
+        "metaScore": 1,
+        "top3": [
+          "Du côté de chez Swann — Marcel Proust",
+          "Du côté de chez Swann — Marcel Proust",
+          "Du côté de chez Swann (texte intégral) — Marcel Proust"
+        ],
+        "error": null
+      }
+    },
+    {
+      "query": "Les Fleurs du mal",
+      "expected": "Les Fleurs du mal",
+      "category": "Titres populaires FR",
+      "ol": {
+        "elapsed": 10001,
+        "count": 0,
+        "rank": -1,
+        "recall3": false,
+        "coverPct": 0,
+        "frenchPct": 0,
+        "metaScore": 0,
+        "top3": [],
+        "error": "The operation was aborted due to timeout"
+      },
+      "gb": {
+        "elapsed": 769,
+        "totalFound": 1000000,
+        "count": 10,
+        "rank": 1,
+        "recall3": true,
+        "coverPct": 0.7,
+        "metaScore": 0.5555555555555556,
+        "top3": [
+          "Les Fleurs Du Mal — Charles Baudelaire",
+          "Les Fleurs du mal par Charles Baudelaire — Charles Baudelaire",
+          "Les Fleurs Du Mal — Charles Baudelaire"
+        ],
+        "error": null
+      }
+    },
+    {
+      "query": "1984",
+      "expected": "1984",
+      "category": "Titres populaires FR",
+      "ol": {
+        "elapsed": 7904,
+        "totalFound": 4943,
+        "count": 10,
+        "rank": -1,
+        "recall3": false,
+        "coverPct": 1,
+        "frenchPct": 1,
+        "metaScore": 0,
+        "top3": [
+          "Nineteen Eighty-Four — George Orwell",
+          "... Trotzdem Ja zum Leben sagen — Viktor E. Frankl",
+          "Henry Moore — David Sylvester"
+        ],
+        "error": null
+      },
+      "gb": {
+        "elapsed": 1248,
+        "totalFound": 1000000,
+        "count": 10,
+        "rank": -1,
+        "recall3": false,
+        "coverPct": 1,
+        "metaScore": 0.8888888888888888,
+        "top3": [
+          "Official Gazette of the United States Patent and Trademark Office — ?",
+          "Comprehensive Organic Functional Group Transformations — Alan R. Katritzky",
+          "General and Synthetic Methods — G. Pattenden"
+        ],
+        "error": null
+      }
+    },
+    {
+      "query": "Albert Camus",
+      "expected": "L'étranger",
+      "category": "Auteurs",
+      "ol": {
+        "elapsed": 1133,
+        "totalFound": 932,
+        "count": 10,
+        "rank": 3,
+        "recall3": true,
+        "coverPct": 1,
+        "frenchPct": 1,
+        "metaScore": 0,
+        "top3": [
+          "La Peste — Albert Camus",
+          "La Chute — Albert Camus",
+          "L’étranger — Albert Camus"
+        ],
+        "error": null
+      },
+      "gb": {
+        "elapsed": 1116,
+        "totalFound": 1000000,
+        "count": 10,
+        "rank": 3,
+        "recall3": true,
+        "coverPct": 0.9,
+        "metaScore": 0.8888888888888888,
+        "top3": [
+          "Oeuvres complètes d'Albert Camus — Albert Camus",
+          "L'ordre libertaire — Michel Onfray",
+          "Albert Camus et la guerre d'Algérie — Alain Vircondelet"
+        ],
+        "error": null
+      }
+    },
+    {
+      "query": "Victor Hugo",
+      "expected": "Les Misérables",
+      "category": "Auteurs",
+      "ol": {
+        "elapsed": 1475,
+        "totalFound": 4107,
+        "count": 10,
+        "rank": 2,
+        "recall3": true,
+        "coverPct": 0.5,
+        "frenchPct": 1,
+        "metaScore": 0,
+        "top3": [
+          "Notre Dame de Paris — Victor Hugo",
+          "Les Misérables — Victor Hugo",
+          "Quatrevingt-treize — Victor Hugo"
+        ],
+        "error": null
+      },
+      "gb": {
+        "elapsed": 1055,
+        "totalFound": 1000000,
+        "count": 10,
+        "rank": -1,
+        "recall3": false,
+        "coverPct": 1,
+        "metaScore": 0.6666666666666666,
+        "top3": [
+          "Œuvres de Victor Hugo — Victor Hugo",
+          "Oeuvres complètes de Victor Hugo — Victor Hugo",
+          "Morceaux choisis de Victor Hugo — Victor Hugo"
+        ],
+        "error": null
+      }
+    },
+    {
+      "query": "Borges",
+      "expected": "Ficciones",
+      "category": "Auteurs",
+      "ol": {
+        "elapsed": 347,
+        "totalFound": 423,
+        "count": 10,
+        "rank": 1,
+        "recall3": true,
+        "coverPct": 1,
+        "frenchPct": 1,
+        "metaScore": 0,
+        "top3": [
+          "Ficciones — Jorge Luis Borges",
+          "El Aleph — Jorge Luis Borges",
+          "Metamorphosis — Franz Kafka"
+        ],
+        "error": null
+      },
+      "gb": {
+        "elapsed": 667,
+        "totalFound": 1000000,
+        "count": 10,
+        "rank": -1,
+        "recall3": false,
+        "coverPct": 0.9,
+        "metaScore": 0.8888888888888888,
+        "top3": [
+          "Borges, l'écrivain périphérique — Beatriz Sarlo",
+          "Jorge Luis Borges — Marcel Le Goff",
+          "Borges et la métaphysique — Serge Champeau"
+        ],
+        "error": null
+      }
+    },
+    {
+      "query": "Émile Zola",
+      "expected": "Germinal",
+      "category": "Auteurs",
+      "ol": {
+        "elapsed": 2848,
+        "totalFound": 2869,
+        "count": 10,
+        "rank": 1,
+        "recall3": true,
+        "coverPct": 0.4,
+        "frenchPct": 1,
+        "metaScore": 0,
+        "top3": [
+          "Germinal — Émile Zola",
+          "Nana — Émile Zola",
+          "Émile Zola — Colette Becker"
+        ],
+        "error": null
+      },
+      "gb": {
+        "elapsed": 728,
+        "totalFound": 1000000,
+        "count": 10,
+        "rank": 2,
+        "recall3": true,
+        "coverPct": 0.7,
+        "metaScore": 0.8888888888888888,
+        "top3": [
+          "La Terre — Emile ZOLA",
+          "Germinal — Émile Zola",
+          "Coffret Émile Zola — Émile Zola"
+        ],
+        "error": null
+      }
+    },
+    {
+      "query": "Marcel Proust",
+      "expected": "Du côté de chez Swann",
+      "category": "Auteurs",
+      "ol": {
+        "elapsed": 3311,
+        "totalFound": 1658,
+        "count": 10,
+        "rank": 1,
+        "recall3": true,
+        "coverPct": 0.8,
+        "frenchPct": 1,
+        "metaScore": 0,
+        "top3": [
+          "Du côté de chez Swann — Marcel Proust",
+          "À la recherche du temps perdu — Marcel Proust",
+          "Sodome et Gomorrhe — Marcel Proust"
+        ],
+        "error": null
+      },
+      "gb": {
+        "elapsed": 719,
+        "totalFound": 1000000,
+        "count": 10,
+        "rank": -1,
+        "recall3": false,
+        "coverPct": 0.9,
+        "metaScore": 1,
+        "top3": [
+          "Marcel Proust (prénoms complets : Valentin Louis Georges Eugène Marcel), né à Auteuil le 10 juillet 1871 et mort à Paris le 18 novembre 1922, est un écrivain français, dont l'œuvre principale est une suite romanesque intitulée À la recherche du temps perdu, publiée de 1913 à 1927. — Marcel Proust ",
+          "A la recherche du temps perdu - Les oeuvres complètes de Marcel Proust (édition augmentée) — Marcel Proust",
+          "Marcel Proust La Prisonnière (1923) (À la recherche du temps perdu) — Marcel Proust "
+        ],
+        "error": null
+      }
+    },
+    {
+      "query": "petit pri",
+      "expected": "Le Petit Prince",
+      "category": "Partielles",
+      "ol": {
+        "elapsed": 9520,
+        "totalFound": 26,
+        "count": 10,
+        "rank": -1,
+        "recall3": false,
+        "coverPct": 0.3,
+        "frenchPct": 1,
+        "metaScore": 0,
+        "top3": [
+          "Le petit nuage pris de vertige — Paule Alen",
+          "Le parti pris des choses — Ponge, Francis.",
+          "Parti Pris DES Choses / Douze Petits Ecrits / Poemes — Ponge"
+        ],
+        "error": null
+      },
+      "gb": {
+        "elapsed": 699,
+        "totalFound": 1000000,
+        "count": 10,
+        "rank": 1,
+        "recall3": true,
+        "coverPct": 0.9,
+        "metaScore": 1,
+        "top3": [
+          "Le petit prince de Saint-Exupéry — Marie-Anne Barbéris",
+          "Маленький принц / Le Petit Prince. Уровень 1 — Антуан де Сент-Экзюпери",
+          "Le Petit Prince - Saint-Éxupéry (Fiche de lecture) — Sophie Lecomte"
+        ],
+        "error": null
+      }
+    },
+    {
+      "query": "miser",
+      "expected": "Les Misérables",
+      "category": "Partielles",
+      "ol": {
+        "elapsed": 6798,
+        "totalFound": 1615,
+        "count": 10,
+        "rank": 1,
+        "recall3": true,
+        "coverPct": 0.9,
+        "frenchPct": 1,
+        "metaScore": 0,
+        "top3": [
+          "Les Misérables — Victor Hugo",
+          "Pensées — Blaise Pascal",
+          "A Christmas Carol — Charles Dickens"
+        ],
+        "error": null
+      },
+      "gb": {
+        "elapsed": 768,
+        "totalFound": 1000000,
+        "count": 10,
+        "rank": -1,
+        "recall3": false,
+        "coverPct": 1,
+        "metaScore": 0.6666666666666666,
+        "top3": [
+          "Concordance des orateurs sacrés anciens et modernes — Louis Beaucé",
+          "Éléments de la grammaire latine — J.. Pasquet",
+          "Abrégé de grammaire latine — E. Sommer"
+        ],
+        "error": null
+      }
+    },
+    {
+      "query": "bovary",
+      "expected": "Madame Bovary",
+      "category": "Partielles",
+      "ol": {
+        "elapsed": 6537,
+        "totalFound": 406,
+        "count": 10,
+        "rank": 1,
+        "recall3": true,
+        "coverPct": 0.6,
+        "frenchPct": 1,
+        "metaScore": 0,
+        "top3": [
+          "Madame Bovary — Gustave Flaubert",
+          "Eugénie Grandet — Honoré de Balzac",
+          "La orgía perpetua — Mario Vargas Llosa"
+        ],
+        "error": null
+      },
+      "gb": {
+        "elapsed": 815,
+        "totalFound": 1000000,
+        "count": 10,
+        "rank": 1,
+        "recall3": true,
+        "coverPct": 0.9,
+        "metaScore": 1,
+        "top3": [
+          "Madame Bovary — Gustave Flaubert",
+          "Madame Bovary — Gustave Flaubert",
+          "Madame Bovary — Gustave Flaubert"
+        ],
+        "error": null
+      }
+    },
+    {
+      "query": "peste camus",
+      "expected": "La Peste",
+      "category": "Partielles",
+      "ol": {
+        "elapsed": 4104,
+        "totalFound": 26,
+        "count": 10,
+        "rank": 1,
+        "recall3": true,
+        "coverPct": 0.4,
+        "frenchPct": 1,
+        "metaScore": 0,
+        "top3": [
+          "La Peste — Albert Camus",
+          "La peste, Camus — Pol Gaillard",
+          "La Peste-Camus — Pol Gaillmard"
+        ],
+        "error": null
+      },
+      "gb": {
+        "elapsed": 860,
+        "totalFound": 1000000,
+        "count": 10,
+        "rank": 1,
+        "recall3": true,
+        "coverPct": 0.6,
+        "metaScore": 0.8888888888888888,
+        "top3": [
+          "La peste — Albert Camus",
+          "La Peste d'Albert Camus (Analyse de l'oeuvre) — lePetitLitteraire,",
+          "\"La Peste\" - Albert Camus — Véronique Anglard"
+        ],
+        "error": null
+      }
+    },
+    {
+      "query": "etranger",
+      "expected": "L'étranger",
+      "category": "Partielles",
+      "ol": {
+        "elapsed": 4279,
+        "totalFound": 6736,
+        "count": 10,
+        "rank": 1,
+        "recall3": true,
+        "coverPct": 1,
+        "frenchPct": 1,
+        "metaScore": 0,
+        "top3": [
+          "L’étranger — Albert Camus",
+          "The Strange Case of Dr. Jekyll and Mr. Hyde — Robert Louis Stevenson",
+          "Rebecca — Daphne du Maurier"
+        ],
+        "error": null
+      },
+      "gb": {
+        "elapsed": 728,
+        "totalFound": 1000000,
+        "count": 10,
+        "rank": 1,
+        "recall3": true,
+        "coverPct": 1,
+        "metaScore": 0.7777777777777778,
+        "top3": [
+          "Le barbare, l'étranger — Didier Nourrisson",
+          "La Revue scientifique de la France et de l'étranger — ?",
+          "Nouvelle revue historique de droit français et étranger — ?"
+        ],
+        "error": null
+      }
+    },
+    {
+      "query": "Naruto",
+      "expected": "Naruto",
+      "category": "Mangas/BD",
+      "ol": {
+        "elapsed": 3182,
+        "totalFound": 212,
+        "count": 10,
+        "rank": 1,
+        "recall3": true,
+        "coverPct": 0,
+        "frenchPct": 1,
+        "metaScore": 0,
+        "top3": [
+          "Livre de Coloriage Naruto — Edition Coloriage shippuden",
+          "Naruto Livre de Coloriage — naruto naruto",
+          "Livre de Coloriage Naruto — Edition Coloriage Naruto"
+        ],
+        "error": null
+      },
+      "gb": {
+        "elapsed": 1345,
+        "totalFound": 1000000,
+        "count": 10,
+        "rank": 1,
+        "recall3": true,
+        "coverPct": 0.9,
+        "metaScore": 0.7777777777777778,
+        "top3": [
+          "La philosophie selon Naruto — Arnaud Jahan",
+          "Coloriage Nàruto — Cahier Dactivités Naruto Magique",
+          "Naruto Ultimate Ninja 2 — Dan Birlew"
+        ],
+        "error": null
+      }
+    },
+    {
+      "query": "One Piece",
+      "expected": "One Piece",
+      "category": "Mangas/BD",
+      "ol": {
+        "elapsed": 1235,
+        "totalFound": 690,
+        "count": 10,
+        "rank": 1,
+        "recall3": true,
+        "coverPct": 0.7,
+        "frenchPct": 1,
+        "metaScore": 0,
+        "top3": [
+          "ONE PIECE 1 — 尾田栄一郎",
+          "Livre de Coloriage One Piece — Edition Coloriage One piece",
+          "The Old Curiosity Shop — Charles Dickens"
+        ],
+        "error": null
+      },
+      "gb": {
+        "elapsed": 1343,
+        "totalFound": 1000000,
+        "count": 10,
+        "rank": 1,
+        "recall3": true,
+        "coverPct": 1,
+        "metaScore": 1,
+        "top3": [
+          "One Piece - Édition originale - Tome 01 — Eiichiro Oda",
+          "One Piece - Édition originale - Tome 96 — Eiichiro Oda",
+          "One Piece édition originale - Chapitre 859 — Eiichiro Oda"
+        ],
+        "error": null
+      }
+    },
+    {
+      "query": "Sakamoto Days",
+      "expected": "Sakamoto Days",
+      "category": "Mangas/BD",
+      "ol": {
+        "elapsed": 3845,
+        "totalFound": 0,
+        "count": 0,
+        "rank": -1,
+        "recall3": false,
+        "coverPct": 0,
+        "frenchPct": 0,
+        "metaScore": 0,
+        "top3": [],
+        "error": null
+      },
+      "gb": {
+        "elapsed": 663,
+        "totalFound": 1000000,
+        "count": 10,
+        "rank": 1,
+        "recall3": true,
+        "coverPct": 1,
+        "metaScore": 1,
+        "top3": [
+          "Sakamoto Days - Tome 01 — Yuto Suzuki",
+          "Sakamoto Days - Tome 20 — Yuto Suzuki",
+          "Sakamoto Days - Tome 11 — Yuto Suzuki"
+        ],
+        "error": null
+      }
+    },
+    {
+      "query": "Dragon Ball",
+      "expected": "Dragon Ball",
+      "category": "Mangas/BD",
+      "ol": {
+        "elapsed": 2995,
+        "totalFound": 262,
+        "count": 10,
+        "rank": 1,
+        "recall3": true,
+        "coverPct": 0,
+        "frenchPct": 1,
+        "metaScore": 0,
+        "top3": [
+          "Dragon Ball — Massi Amrane",
+          "Dragon Ball — Happy Héros",
+          "Dràgon Ball Coloriage — Madeleine Yvette"
+        ],
+        "error": null
+      },
+      "gb": {
+        "elapsed": 730,
+        "totalFound": 1000000,
+        "count": 10,
+        "rank": 1,
+        "recall3": true,
+        "coverPct": 0.9,
+        "metaScore": 1,
+        "top3": [
+          "Dragon Ball Super - Tome 11 — Akira Toriyama",
+          "Dragon Ball Z « It's Over 9,000 ! » Des visions du monde en collision — Derek Padula",
+          "Dragon Ball — Valérie Précigout"
+        ],
+        "error": null
+      }
+    },
+    {
+      "query": "L'Arabe du futur",
+      "expected": "L'Arabe du futur",
+      "category": "Mangas/BD",
+      "ol": {
+        "elapsed": 3914,
+        "totalFound": 13,
+        "count": 10,
+        "rank": 1,
+        "recall3": true,
+        "coverPct": 1,
+        "frenchPct": 1,
+        "metaScore": 0,
+        "top3": [
+          "L'Arabe du futur — Riad Sattouf",
+          "L'Arabe du futur, tome 3 — Riad Sattouf",
+          "L'Arabe du futur, tome 4 — Riad Sattouf"
+        ],
+        "error": null
+      },
+      "gb": {
+        "elapsed": 720,
+        "totalFound": 1000000,
+        "count": 10,
+        "rank": 1,
+        "recall3": true,
+        "coverPct": 0.2,
+        "metaScore": 0.7777777777777778,
+        "top3": [
+          "L'Arabe du futur: (1984-1985) — Riad Sattouf",
+          "Une jeunesse au Moyen-Orient (1978-2011) — Riad Sattouf",
+          "L'Arabe du futur: (1987-1992) — Riad Sattouf"
+        ],
+        "error": null
+      }
+    },
+    {
+      "query": "Je rouille",
+      "expected": "Je rouille",
+      "category": "Obscurs/Récents",
+      "ol": {
+        "elapsed": 2462,
+        "totalFound": 2,
+        "count": 2,
+        "rank": -1,
+        "recall3": false,
+        "coverPct": 1,
+        "frenchPct": 1,
+        "metaScore": 0,
+        "top3": [
+          "Mademoiselle Fifi — Guy de Maupassant",
+          "OEuvres complètes .. — Benjamin Péret"
+        ],
+        "error": null
+      },
+      "gb": {
+        "elapsed": 1034,
+        "totalFound": 1000000,
+        "count": 10,
+        "rank": -1,
+        "recall3": false,
+        "coverPct": 0.9,
+        "metaScore": 0.6666666666666666,
+        "top3": [
+          "Dictionnaire usuel de tous les verbes français, tant réguliers qu'irréguliers, entièrement conjugués — Louis-Nicolas Bescherelle",
+          "Dictionnaire usuel de tous les verbes français — Bescherelle",
+          "Dictionnaire usuel de tous les verbes français — Bescherelle (M., Louis Nicolas)"
+        ],
+        "error": null
+      }
+    },
+    {
+      "query": "Pedro Páramo",
+      "expected": "Pedro Páramo",
+      "category": "Obscurs/Récents",
+      "ol": {
+        "elapsed": 548,
+        "totalFound": 4,
+        "count": 4,
+        "rank": 1,
+        "recall3": true,
+        "coverPct": 0.25,
+        "frenchPct": 1,
+        "metaScore": 0,
+        "top3": [
+          "Pedro Páramo — Juan Rulfo",
+          "Conte Bilingue en Français et Espagnol — Colin Hann",
+          "Conte Bilingue en Français et Japonais Avec Kanji — Pedro Páramo"
+        ],
+        "error": null
+      },
+      "gb": {
+        "elapsed": 954,
+        "totalFound": 1000000,
+        "count": 10,
+        "rank": 1,
+        "recall3": true,
+        "coverPct": 0.7,
+        "metaScore": 0.6666666666666666,
+        "top3": [
+          "Pedro Páramo — Juan Rulfo",
+          "Pedro Páramo de Juan Rulfo (Analyse de l'œuvre) — Natalia Torres Behar",
+          "Pedro Páramo — Natalia Torres Behar"
+        ],
+        "error": null
+      }
+    },
+    {
+      "query": "Austerlitz Sebald",
+      "expected": "Austerlitz",
+      "category": "Obscurs/Récents",
+      "ol": {
+        "elapsed": 268,
+        "totalFound": 0,
+        "count": 0,
+        "rank": -1,
+        "recall3": false,
+        "coverPct": 0,
+        "frenchPct": 0,
+        "metaScore": 0,
+        "top3": [],
+        "error": null
+      },
+      "gb": {
+        "elapsed": 828,
+        "totalFound": 1000000,
+        "count": 10,
+        "rank": 1,
+        "recall3": true,
+        "coverPct": 0.8,
+        "metaScore": 0.6666666666666666,
+        "top3": [
+          "Austerlitz — W. G. Sebald",
+          "Austerlitz — Winfried Georg Sebald",
+          "Les langues dans Austerlitz de W. G. Sebald: Babel revisitée ? — Martine Carré"
+        ],
+        "error": null
+      }
+    },
+    {
+      "query": "Les détectives sauvages",
+      "expected": "Les détectives sauvages",
+      "category": "Obscurs/Récents",
+      "ol": {
+        "elapsed": 1908,
+        "totalFound": 5,
+        "count": 5,
+        "rank": -1,
+        "recall3": false,
+        "coverPct": 1,
+        "frenchPct": 1,
+        "metaScore": 0,
+        "top3": [
+          "Los detectives salvajes — Roberto Bolaño",
+          "King Henry VI. Part 3 — William Shakespeare",
+          "The secret of Red Gate Farm — Carolyn Keene"
+        ],
+        "error": null
+      },
+      "gb": {
+        "elapsed": 997,
+        "totalFound": 1000000,
+        "count": 10,
+        "rank": 1,
+        "recall3": true,
+        "coverPct": 0.7,
+        "metaScore": 0.6666666666666666,
+        "top3": [
+          "Les détectives sauvages — Roberto Bolaño",
+          "Les détectives sauvages — Roberto Bolaño",
+          "Les détectives sauvages — Roberto Bolaño"
+        ],
+        "error": null
+      }
+    },
+    {
+      "query": "L'ordre du jour",
+      "expected": "L'ordre du jour",
+      "category": "Obscurs/Récents",
+      "ol": {
+        "elapsed": 1466,
+        "totalFound": 345,
+        "count": 10,
+        "rank": 1,
+        "recall3": true,
+        "coverPct": 0.3,
+        "frenchPct": 1,
+        "metaScore": 0,
+        "top3": [
+          "L' ordre du jour — [Julian, Charles de Carentan]",
+          "L'ordre du jour — Éric Vuillard",
+          "L' ordre du jour — Jean-Luc Outers"
+        ],
+        "error": null
+      },
+      "gb": {
+        "elapsed": 1199,
+        "totalFound": 1000000,
+        "count": 10,
+        "rank": 1,
+        "recall3": true,
+        "coverPct": 1,
+        "metaScore": 0.7777777777777778,
+        "top3": [
+          "L'ordre du jour — Eric Vuillard",
+          "Compte-rendu des séances de l'Assemblée nationale — ?",
+          "Histoire parlementaire de l'Assemblée...nationale; précédée du récit de la révolution de Paris — Felix Wouters"
+        ],
+        "error": null
+      }
+    }
+  ],
+  "summary": {
+    "olRecall": 16,
+    "gbRecall": 24,
+    "olTimes": {
+      "p50": 4104,
+      "p90": 10003,
+      "avg": 5274
+    },
+    "gbTimes": {
+      "p50": 828,
+      "p90": 1343,
+      "avg": 939
+    },
+    "olAvgCover": 0.415,
+    "gbAvgCover": 0.8333333333333333,
+    "olAvgMeta": 0,
+    "gbAvgMeta": 0.8518518518518522,
+    "olAvgFrench": 0.6666666666666666
+  }
+}

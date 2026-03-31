@@ -1,0 +1,569 @@
+[
+  {
+    "isbn": "9782330089558",
+    "title": "Ceux qui restent",
+    "status": "checksum_invalid"
+  },
+  {
+    "isbn": "9782253068556",
+    "title": "Changer l'eau des fleurs",
+    "status": "suspect",
+    "reason": "OL: 404, BnF: \"Tu n'as pas tellement changé\""
+  },
+  {
+    "isbn": "9782253069522",
+    "title": "Rapide",
+    "status": "suspect",
+    "reason": "OL: \"Re-vive L'empereur (French Edition)\", BnF: \"Re-vive l'Empereur !\""
+  },
+  {
+    "isbn": "9782253190357",
+    "title": "La Fille qui rêvait d'un petit bidon d'essence et d'une allumette",
+    "status": "checksum_invalid"
+  },
+  {
+    "isbn": "9782253098348",
+    "title": "Guerre et Paix",
+    "status": "isbn_not_found",
+    "reason": "OL 404, BnF 0 résultats"
+  },
+  {
+    "isbn": "9782253048770",
+    "title": "Le Maître du Monde",
+    "status": "suspect",
+    "reason": "ISBN partagé avec 3 livres"
+  },
+  {
+    "isbn": "9782253048770",
+    "title": "Le Maître de Ballantrae",
+    "status": "suspect",
+    "reason": "ISBN partagé avec 3 livres"
+  },
+  {
+    "isbn": "9782253048770",
+    "title": "L'Étrange Cas du Dr Jekyll et de Mr Hyde",
+    "status": "suspect",
+    "reason": "ISBN partagé avec 3 livres"
+  },
+  {
+    "isbn": "9782253048749",
+    "title": "Aghami",
+    "status": "suspect",
+    "reason": "ISBN partagé avec 5 livres"
+  },
+  {
+    "isbn": "9782253048749",
+    "title": "La Fille du Nil",
+    "status": "suspect",
+    "reason": "ISBN partagé avec 5 livres"
+  },
+  {
+    "isbn": "9782253048749",
+    "title": "Mona Lisa Overdrive",
+    "status": "suspect",
+    "reason": "ISBN partagé avec 5 livres"
+  },
+  {
+    "isbn": "9782253048749",
+    "title": "Trois hommes dans un bateau",
+    "status": "suspect",
+    "reason": "ISBN partagé avec 5 livres"
+  },
+  {
+    "isbn": "9782253048749",
+    "title": "Le Chemin de Damas",
+    "status": "suspect",
+    "reason": "ISBN partagé avec 5 livres"
+  },
+  {
+    "isbn": "9782253045632",
+    "title": "Le Chemin de Kandahar",
+    "status": "suspect",
+    "reason": "OL: 404, BnF: \"Le bruit de la soie\""
+  },
+  {
+    "isbn": "9782070360505",
+    "title": "La Porte étroite",
+    "status": "suspect",
+    "reason": "ISBN partagé avec 2 livres"
+  },
+  {
+    "isbn": "9782070360505",
+    "title": "Un homme qui dort",
+    "status": "suspect",
+    "reason": "ISBN partagé avec 2 livres"
+  },
+  {
+    "isbn": "9782070360536",
+    "title": "Si le grain ne meurt",
+    "status": "suspect",
+    "reason": "OL: \"Fondation\", BnF: \"Fondation\""
+  },
+  {
+    "isbn": "9782070360529",
+    "title": "Hamlet, prince de Danemark",
+    "status": "suspect",
+    "reason": "OL: \"Seconde Fondation\", BnF: \"Seconde Fondation\""
+  },
+  {
+    "isbn": "9782072797032",
+    "title": "Dadok",
+    "status": "checksum_invalid"
+  },
+  {
+    "isbn": "9782070411443",
+    "title": "Bel-Ami",
+    "status": "suspect",
+    "reason": "OL: \"Sortis du bois\""
+  },
+  {
+    "isbn": "9782070362998",
+    "title": "Bouvard et Pécuchet",
+    "status": "isbn_not_found",
+    "reason": "OL 404, BnF 0 résultats"
+  },
+  {
+    "isbn": "9782070411405",
+    "title": "Le Horla",
+    "status": "suspect",
+    "reason": "OL: \"Le Pays des aveugles et autres récits d'anticipation\""
+  },
+  {
+    "isbn": "9782253004233",
+    "title": "La Bête humaine",
+    "status": "suspect",
+    "reason": "OL: \"L Huile Sur Le Feu\""
+  },
+  {
+    "isbn": "9782081510241",
+    "title": "Anéantir",
+    "status": "isbn_not_found",
+    "reason": "OL 404, BnF 0 résultats"
+  },
+  {
+    "isbn": "9782290034545",
+    "title": "La Carte et le Territoire",
+    "status": "isbn_not_found",
+    "reason": "OL 404, BnF 0 résultats"
+  },
+  {
+    "isbn": "9782290050613",
+    "title": "Extension du domaine de la lutte",
+    "status": "isbn_not_found",
+    "reason": "OL 404, BnF 0 résultats"
+  },
+  {
+    "isbn": "9782081471757",
+    "title": "Sérotonine",
+    "status": "verified",
+    "olTitle": "Sérotonine"
+  },
+  {
+    "isbn": "9782330066734",
+    "title": "Boussole",
+    "status": "isbn_not_found",
+    "reason": "OL 404, BnF 0 résultats"
+  },
+  {
+    "isbn": "9782081435865",
+    "title": "L'Art de perdre",
+    "status": "isbn_not_found",
+    "reason": "OL 404, BnF 0 résultats"
+  },
+  {
+    "isbn": "9782253237310",
+    "title": "Couleurs de l'incendie",
+    "status": "suspect",
+    "reason": "OL: 404, BnF: \"Aveu de faiblesses\""
+  },
+  {
+    "isbn": "9782253243359",
+    "title": "Miroir de nos peines",
+    "status": "suspect",
+    "reason": "OL: 404, BnF: \"Les raisons du coeur\""
+  },
+  {
+    "isbn": "9782253066552",
+    "title": "Le Livre des Baltimore",
+    "status": "suspect",
+    "reason": "OL: \"The [Mdbbat67wtr/255] (Lettres gothiques)\""
+  },
+  {
+    "isbn": "9782253080701",
+    "title": "L'Énigme de la chambre 622",
+    "status": "isbn_not_found",
+    "reason": "OL 404, BnF 0 résultats"
+  },
+  {
+    "isbn": "9782070369478",
+    "title": "Éducation européenne",
+    "status": "suspect",
+    "reason": "OL: \"Rivage de Barbarie\""
+  },
+  {
+    "isbn": "9782757849545",
+    "title": "Pas pleurer",
+    "status": "suspect",
+    "reason": "OL: 404, BnF: \"Sans faille\""
+  },
+  {
+    "isbn": "9782253088523",
+    "title": "Trois jours et une vie",
+    "status": "suspect",
+    "reason": "OL: 404, BnF: \"La philosophie de l'histoire\""
+  },
+  {
+    "isbn": "9782253070320",
+    "title": "Petit Pays",
+    "status": "suspect",
+    "reason": "OL: 404, BnF: \"Mars\""
+  },
+  {
+    "isbn": "9782072689697",
+    "title": "Le Lambeau",
+    "status": "isbn_not_found",
+    "reason": "OL 404, BnF 0 résultats"
+  },
+  {
+    "isbn": "9782253082224",
+    "title": "S'adapter",
+    "status": "suspect",
+    "reason": "OL: 404, BnF: \"Lettres persanes\""
+  },
+  {
+    "isbn": "9782070340743",
+    "title": "Suite française",
+    "status": "isbn_not_found",
+    "reason": "OL 404, BnF 0 résultats"
+  },
+  {
+    "isbn": "9782330170028",
+    "title": "Connemara",
+    "status": "isbn_not_found",
+    "reason": "OL 404, BnF 0 résultats"
+  },
+  {
+    "isbn": "9782072849251",
+    "title": "Les Choses humaines",
+    "status": "isbn_not_found",
+    "reason": "OL 404, BnF 0 résultats"
+  },
+  {
+    "isbn": "9782253156505",
+    "title": "L'Énigme du retour",
+    "status": "suspect",
+    "reason": "OL: \"Christianisme et philosophie\", BnF: \"Christianisme et philosophie\""
+  },
+  {
+    "isbn": "9782070722006",
+    "title": "Texaco",
+    "status": "suspect",
+    "reason": "OL: \"Jeanne et les juges\""
+  },
+  {
+    "isbn": "9782020525145",
+    "title": "Allah n'est pas obligé",
+    "status": "isbn_not_found",
+    "reason": "OL 404, BnF 0 résultats"
+  },
+  {
+    "isbn": "9782266231244",
+    "title": "L'Enfant noir",
+    "status": "isbn_not_found",
+    "reason": "OL 404, BnF 0 résultats"
+  },
+  {
+    "isbn": "9782757803684",
+    "title": "Mémoires de porc-épic",
+    "status": "suspect",
+    "reason": "OL: \"L'homme sans qualités\", BnF: \"L'homme sans qualités\""
+  },
+  {
+    "isbn": "9782757854488",
+    "title": "Petit piment",
+    "status": "suspect",
+    "reason": "OL: 404, BnF: \"Deux ou trois choses que l'on ne vous dit jamais sur le capitalisme\""
+  },
+  {
+    "isbn": "9782020855068",
+    "title": "Verre Cassé",
+    "status": "isbn_not_found",
+    "reason": "OL 404, BnF 0 résultats"
+  },
+  {
+    "isbn": "9782070424368",
+    "title": "Trois femmes puissantes",
+    "status": "isbn_not_found",
+    "reason": "OL 404, BnF 0 résultats"
+  },
+  {
+    "isbn": "9782070400553",
+    "title": "Le Testament français",
+    "status": "suspect",
+    "reason": "OL: \"Lecriture Ou La Vie\""
+  },
+  {
+    "isbn": "9782020126861",
+    "title": "La Nuit sacrée",
+    "status": "isbn_not_found",
+    "reason": "OL 404, BnF 0 résultats"
+  },
+  {
+    "isbn": "9782020092302",
+    "title": "L'Enfant de sable",
+    "status": "isbn_not_found",
+    "reason": "OL 404, BnF 0 résultats"
+  },
+  {
+    "isbn": "9782264042156",
+    "title": "Kafka sur le rivage",
+    "status": "isbn_not_found",
+    "reason": "OL 404, BnF 0 résultats"
+  },
+  {
+    "isbn": "9782253045076",
+    "title": "L'Amour aux temps du choléra",
+    "status": "suspect",
+    "reason": "OL: \"La maison du jeune homme seul\""
+  },
+  {
+    "isbn": "9782070415731",
+    "title": "Fahrenheit 451",
+    "status": "verified",
+    "olTitle": "Fahrenheit 451"
+  },
+  {
+    "isbn": "9782253098355",
+    "title": "Anna Karénine",
+    "status": "suspect",
+    "reason": "OL: \"La Fille Du Capitaine\""
+  },
+  {
+    "isbn": "9782723488525",
+    "title": "One Piece 1",
+    "status": "verified",
+    "olTitle": "One Piece - Édition originale Tome 01"
+  },
+  {
+    "isbn": "9782723418546",
+    "title": "Dragon Ball 1",
+    "status": "suspect",
+    "reason": "OL: \"Prince Valiant \""
+  },
+  {
+    "isbn": "9791032705179",
+    "title": "Jujutsu Kaisen 1",
+    "status": "suspect",
+    "reason": "OL: 404, BnF: \"L'éternité à tout prix !\""
+  },
+  {
+    "isbn": "9782889513796",
+    "title": "Chainsaw Man 1",
+    "status": "isbn_not_found",
+    "reason": "OL 404, BnF 0 résultats"
+  },
+  {
+    "isbn": "9782380710151",
+    "title": "Spy×Family 1",
+    "status": "isbn_not_found",
+    "reason": "OL 404, BnF 0 résultats"
+  },
+  {
+    "isbn": "9791032702895",
+    "title": "Demon Slayer 1",
+    "status": "isbn_not_found",
+    "reason": "OL 404, BnF 0 résultats"
+  },
+  {
+    "isbn": "9782811607261",
+    "title": "L'Attaque des Titans 1",
+    "status": "checksum_invalid"
+  },
+  {
+    "isbn": "9791032700310",
+    "title": "My Hero Academia 1",
+    "status": "isbn_not_found",
+    "reason": "OL 404, BnF 0 résultats"
+  },
+  {
+    "isbn": "9782505001560",
+    "title": "Death Note 1",
+    "status": "suspect",
+    "reason": "OL: 404, BnF: \"Le duo Inui-Kaidô\""
+  },
+  {
+    "isbn": "9782351421239",
+    "title": "Fullmetal Alchemist 1",
+    "status": "suspect",
+    "reason": "OL: 404, BnF: \"Regatta. 6\""
+  },
+  {
+    "isbn": "9782344001585",
+    "title": "Tokyo Ghoul 1",
+    "status": "suspect",
+    "reason": "OL: \"Bodegas - Tome 02\", BnF: \"Rioja. Deuxième partie\""
+  },
+  {
+    "isbn": "9782505003137",
+    "title": "Hunter × Hunter 1",
+    "status": "suspect",
+    "reason": "OL: 404, BnF: \"Ushijima\""
+  },
+  {
+    "isbn": "9782723448017",
+    "title": "Berserk 1",
+    "status": "isbn_not_found",
+    "reason": "OL 404, BnF 0 résultats"
+  },
+  {
+    "isbn": "9782845800069",
+    "title": "Vagabond 1",
+    "status": "isbn_not_found",
+    "reason": "OL 404, BnF 0 résultats"
+  },
+  {
+    "isbn": "9782505074854",
+    "title": "Slam Dunk 1",
+    "status": "isbn_not_found",
+    "reason": "OL 404, BnF 0 résultats"
+  },
+  {
+    "isbn": "9782723443753",
+    "title": "Bleach 1",
+    "status": "isbn_not_found",
+    "reason": "OL 404, BnF 0 résultats"
+  },
+  {
+    "isbn": "9782368520840",
+    "title": "One Punch Man 1",
+    "status": "isbn_not_found",
+    "reason": "OL 404, BnF 0 résultats"
+  },
+  {
+    "isbn": "9782014001013",
+    "title": "Astérix le Gaulois",
+    "status": "suspect",
+    "reason": "OL: \"Astérix - Le Domaine des dieux - Version spéciale\", BnF: \"Le domaine des dieux (Éd. limitée) texte de René Goscinny ; dessins d'Albert Uderzo\""
+  },
+  {
+    "isbn": "9782203001190",
+    "title": "Tintin au Tibet",
+    "status": "verified",
+    "olTitle": "Tintin au Tibet"
+  },
+  {
+    "isbn": "9782205055658",
+    "title": "Le Chat du Rabbin 1",
+    "status": "isbn_not_found",
+    "reason": "OL 404, BnF 0 résultats"
+  },
+  {
+    "isbn": "9782844146793",
+    "title": "Persepolis",
+    "status": "suspect",
+    "reason": "OL: 404, BnF: \"Vanité\""
+  },
+  {
+    "isbn": "9782370730145",
+    "title": "L'Arabe du futur 1",
+    "status": "verified",
+    "olTitle": "L'Arabe du futur"
+  },
+  {
+    "isbn": "9782080661418",
+    "title": "Maus",
+    "status": "suspect",
+    "reason": "OL: \"Le veilleur du marais\""
+  },
+  {
+    "isbn": "9782205088168",
+    "title": "Le Monde sans fin",
+    "status": "verified",
+    "olTitle": "Le Monde sans fin, miracle énergétique et dérive climatique"
+  },
+  {
+    "isbn": "9782205072921",
+    "title": "Les Vieux Fourneaux 1",
+    "status": "suspect",
+    "reason": "OL: \"La passion de Dodin-Bouffant\", BnF: \"La passion de Dodin-Bouffant\""
+  },
+  {
+    "isbn": "9791038107557",
+    "title": "Solo Leveling 1",
+    "status": "isbn_not_found",
+    "reason": "OL 404, BnF 0 résultats"
+  },
+  {
+    "isbn": "9791041103348",
+    "title": "Frieren 1",
+    "status": "suspect",
+    "reason": "OL: 404, BnF: \"Grèce anatomie\""
+  },
+  {
+    "isbn": "9791032710593",
+    "title": "Blue Lock 1",
+    "status": "isbn_not_found",
+    "reason": "OL 404, BnF 0 résultats"
+  },
+  {
+    "isbn": "9782889516728",
+    "title": "Kaiju No. 8 1",
+    "status": "isbn_not_found",
+    "reason": "OL 404, BnF 0 résultats"
+  },
+  {
+    "isbn": "9782020027281",
+    "title": "Mythologies",
+    "status": "verified",
+    "olTitle": "De l'interpretation"
+  },
+  {
+    "isbn": "9782070729685",
+    "title": "Surveiller et punir",
+    "status": "verified",
+    "olTitle": "Surveiller et punir"
+  },
+  {
+    "isbn": "9782070326211",
+    "title": "La Banalité du mal",
+    "status": "verified",
+    "olTitle": "Eichmann à Jérusalem"
+  },
+  {
+    "isbn": "9782213600697",
+    "title": "La Nuit des prolétaires",
+    "status": "suspect",
+    "reason": "OL: \"Ascenseur pour l'échafaud\""
+  },
+  {
+    "isbn": "9782226393876",
+    "title": "Homo Deus",
+    "status": "verified",
+    "olTitle": "Homo deus"
+  },
+  {
+    "isbn": "9782226436030",
+    "title": "21 leçons pour le XXIe siècle",
+    "status": "verified",
+    "bnfTitle": "21 leçons pour le XXIème siècle",
+    "note": "OL 404, BnF confirmed"
+  },
+  {
+    "isbn": "9791090354012",
+    "title": "Indignez-vous !",
+    "status": "isbn_not_found",
+    "reason": "OL 404, BnF 0 résultats"
+  },
+  {
+    "isbn": "9782742765270",
+    "title": "No Logo",
+    "status": "suspect",
+    "reason": "OL: \"\"Le  Yucatán est ailleurs\"\", BnF: \"\"Le Yucatán est ailleurs\"\""
+  },
+  {
+    "isbn": "9782070323036",
+    "title": "L'Homme révolté",
+    "status": "suspect",
+    "reason": "OL: \"Impuretés\""
+  }
+]

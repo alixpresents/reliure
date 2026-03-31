@@ -7,8 +7,34 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600;700&display=swap" rel="stylesheet">
     <title>reliure</title>
+    <script>
+      if (localStorage.getItem('reliure-theme') === 'dark') {
+        document.documentElement.setAttribute('data-theme', 'dark');
+      }
+    </script>
+    <style>
+  #splash {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #fff;
+    font-family: 'Instrument Serif', serif;
+    font-style: italic;
+    font-size: 1.5rem;
+    color: #1a1a1a;
+    z-index: 9999;
+    transition: opacity 0.2s ease;
+  }
+  [data-theme="dark"] #splash {
+    background: #131211;
+    color: #e8e5df;
+  }
+</style>
   </head>
   <body>
+    <div id="splash">reliure</div>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>

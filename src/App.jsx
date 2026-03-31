@@ -41,6 +41,14 @@ export default function App() {
   const { toast, showToast } = useToast();
   const { theme, toggleTheme } = useTheme();
 
+  useEffect(() => {
+    const splash = document.getElementById('splash');
+    if (splash) {
+      splash.style.opacity = '0';
+      setTimeout(() => splash.remove(), 200);
+    }
+  }, []);
+
   const openSearchFor = (cb) => { setSearchCb(() => cb); setSearch(true); };
   const closeSearch = () => { setSearch(false); setSearchCb(null); setSearchInitialQuery(""); };
 

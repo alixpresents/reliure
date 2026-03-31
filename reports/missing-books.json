@@ -1,0 +1,1146 @@
+[
+  {
+    "title": "Ceux qui restent",
+    "author": "Olivier Douzou",
+    "isbn13": null,
+    "category": "cache_only",
+    "searchedCount": 14,
+    "source": "smart-search-cache",
+    "priority": "high"
+  },
+  {
+    "title": "Changer l'eau des fleurs",
+    "author": "Valérie Perrin",
+    "isbn13": "9782286157227",
+    "category": "cache_only",
+    "searchedCount": 5,
+    "source": "smart-search-cache",
+    "priority": "high",
+    "isbn_source": "bnf_sru"
+  },
+  {
+    "title": "Rapide",
+    "author": "Franck Thilliez",
+    "isbn13": null,
+    "category": "cache_only",
+    "searchedCount": 3,
+    "source": "smart-search-cache",
+    "priority": "high"
+  },
+  {
+    "title": "La Fille qui rêvait d'un petit bidon d'essence et d'une allumette",
+    "author": "David Lagercrantz",
+    "isbn13": null,
+    "category": "cache_only",
+    "searchedCount": 3,
+    "source": "smart-search-cache",
+    "priority": "high"
+  },
+  {
+    "title": "Ru",
+    "author": "Kim Thúy",
+    "isbn13": "9782286066598",
+    "category": "francophonie",
+    "searchedCount": 1,
+    "source": "curated+cache",
+    "priority": "high",
+    "isbn_source": "bnf_sru"
+  },
+  {
+    "title": "Guerre et Paix",
+    "author": "Léon Tolstoï",
+    "isbn13": null,
+    "category": "international_traduit",
+    "searchedCount": 1,
+    "source": "curated+cache",
+    "priority": "low"
+  },
+  {
+    "title": "Les Religieuses de Loudun",
+    "author": "Michelet",
+    "isbn13": null,
+    "category": "cache_only",
+    "searchedCount": 2,
+    "source": "smart-search-cache",
+    "priority": "medium"
+  },
+  {
+    "title": "Le Maître du Monde",
+    "author": "Jules Verne",
+    "isbn13": "9782010051845",
+    "category": "cache_only",
+    "searchedCount": 2,
+    "source": "smart-search-cache",
+    "priority": "medium",
+    "isbn_source": "bnf_sru"
+  },
+  {
+    "title": "Le Maître de Ballantrae",
+    "author": "Robert Louis Stevenson",
+    "isbn13": null,
+    "category": "cache_only",
+    "searchedCount": 2,
+    "source": "smart-search-cache",
+    "priority": "low"
+  },
+  {
+    "title": "Aghami",
+    "author": "Odette Weulersse",
+    "isbn13": null,
+    "category": "cache_only",
+    "searchedCount": 1,
+    "source": "smart-search-cache",
+    "priority": "low"
+  },
+  {
+    "title": "Le Chemin de Kandahar",
+    "author": "Franck Weulersse",
+    "isbn13": null,
+    "category": "cache_only",
+    "searchedCount": 1,
+    "source": "smart-search-cache",
+    "priority": "low"
+  },
+  {
+    "title": "La Fille du Nil",
+    "author": "Franck Weulersse",
+    "isbn13": null,
+    "category": "cache_only",
+    "searchedCount": 1,
+    "source": "smart-search-cache",
+    "priority": "low"
+  },
+  {
+    "title": "La Joconde",
+    "author": "E. L. James",
+    "isbn13": null,
+    "category": "cache_only",
+    "searchedCount": 1,
+    "source": "smart-search-cache",
+    "priority": "medium"
+  },
+  {
+    "title": "Mona Lisa Overdrive",
+    "author": "William Gibson",
+    "isbn13": null,
+    "category": "cache_only",
+    "searchedCount": 1,
+    "source": "smart-search-cache",
+    "priority": "low"
+  },
+  {
+    "title": "La Porte étroite",
+    "author": "André Gide",
+    "isbn13": "9782744107894",
+    "category": "cache_only",
+    "searchedCount": 1,
+    "source": "smart-search-cache",
+    "priority": "medium",
+    "isbn_source": "bnf_sru"
+  },
+  {
+    "title": "Si le grain ne meurt",
+    "author": "André Gide",
+    "isbn13": "9782851220806",
+    "category": "cache_only",
+    "searchedCount": 1,
+    "source": "smart-search-cache",
+    "priority": "medium",
+    "isbn_source": "bnf_sru"
+  },
+  {
+    "title": "Hamlet, prince de Danemark",
+    "author": "William Shakespeare",
+    "isbn13": null,
+    "category": "cache_only",
+    "searchedCount": 1,
+    "source": "smart-search-cache",
+    "priority": "low"
+  },
+  {
+    "title": "Dadok",
+    "author": "Éric Reinhardt",
+    "isbn13": null,
+    "category": "cache_only",
+    "searchedCount": 1,
+    "source": "smart-search-cache",
+    "priority": "low"
+  },
+  {
+    "title": "Un homme qui dort",
+    "author": "Georges Perec",
+    "isbn13": "9782207280461",
+    "category": "cache_only",
+    "searchedCount": 1,
+    "source": "smart-search-cache",
+    "priority": "medium",
+    "isbn_source": "bnf_sru"
+  },
+  {
+    "title": "Trois hommes dans un bateau",
+    "author": "Jérôme K. Jérôme",
+    "isbn13": "9782724223644",
+    "category": "cache_only",
+    "searchedCount": 1,
+    "source": "smart-search-cache",
+    "priority": "medium",
+    "isbn_source": "bnf_sru"
+  },
+  {
+    "title": "L'Étrange Cas du Dr Jekyll et de Mr Hyde",
+    "author": "Robert Louis Stevenson",
+    "isbn13": "9791090634121",
+    "category": "cache_only",
+    "searchedCount": 1,
+    "source": "smart-search-cache",
+    "priority": "medium",
+    "isbn_source": "bnf_sru"
+  },
+  {
+    "title": "Le Chemin de Damas",
+    "author": "Odette Weulersse",
+    "isbn13": null,
+    "category": "cache_only",
+    "searchedCount": 1,
+    "source": "smart-search-cache",
+    "priority": "low"
+  },
+  {
+    "title": "La Marchande de Rêves",
+    "author": "Odette Weulersse",
+    "isbn13": null,
+    "category": "cache_only",
+    "searchedCount": 1,
+    "source": "smart-search-cache",
+    "priority": "medium"
+  },
+  {
+    "title": "Bel-Ami",
+    "author": "Guy de Maupassant",
+    "isbn13": "9782959478604",
+    "category": "classiques_fr",
+    "searchedCount": 0,
+    "source": "curated",
+    "priority": "medium",
+    "isbn_source": "bnf_sru"
+  },
+  {
+    "title": "Bouvard et Pécuchet",
+    "author": "Gustave Flaubert",
+    "isbn13": "9782814504257",
+    "category": "classiques_fr",
+    "searchedCount": 0,
+    "source": "curated",
+    "priority": "medium",
+    "isbn_source": "bnf_sru"
+  },
+  {
+    "title": "Le Horla",
+    "author": "Guy de Maupassant",
+    "isbn13": "9782322647460",
+    "category": "classiques_fr",
+    "searchedCount": 0,
+    "source": "curated",
+    "priority": "medium",
+    "isbn_source": "bnf_sru"
+  },
+  {
+    "title": "La Bête humaine",
+    "author": "Émile Zola",
+    "isbn13": "9782351789643",
+    "category": "classiques_fr",
+    "searchedCount": 0,
+    "source": "curated",
+    "priority": "medium",
+    "isbn_source": "bnf_sru"
+  },
+  {
+    "title": "Anéantir",
+    "author": "Michel Houellebecq",
+    "isbn13": "9782080271532",
+    "category": "contemporain_fr",
+    "searchedCount": 0,
+    "source": "curated",
+    "priority": "medium",
+    "isbn_source": "bnf_sru"
+  },
+  {
+    "title": "La Carte et le Territoire",
+    "author": "Michel Houellebecq",
+    "isbn13": "9782298046007",
+    "category": "contemporain_fr",
+    "searchedCount": 0,
+    "source": "curated",
+    "priority": "medium",
+    "isbn_source": "bnf_sru"
+  },
+  {
+    "title": "Extension du domaine de la lutte",
+    "author": "Michel Houellebecq",
+    "isbn13": "9782080257741",
+    "category": "contemporain_fr",
+    "searchedCount": 0,
+    "source": "curated",
+    "priority": "medium",
+    "isbn_source": "bnf_sru"
+  },
+  {
+    "title": "Sérotonine",
+    "author": "Michel Houellebecq",
+    "isbn13": "9782081471757",
+    "category": "contemporain_fr",
+    "searchedCount": 0,
+    "source": "curated",
+    "priority": "medium"
+  },
+  {
+    "title": "Boussole",
+    "author": "Mathias Énard",
+    "isbn13": "9782286128432",
+    "category": "contemporain_fr",
+    "searchedCount": 0,
+    "source": "curated",
+    "priority": "medium",
+    "isbn_source": "bnf_sru"
+  },
+  {
+    "title": "L'Art de perdre",
+    "author": "Alice Zeniter",
+    "isbn13": "9782286152529",
+    "category": "contemporain_fr",
+    "searchedCount": 0,
+    "source": "curated",
+    "priority": "medium",
+    "isbn_source": "bnf_sru"
+  },
+  {
+    "title": "Couleurs de l'incendie",
+    "author": "Pierre Lemaitre",
+    "isbn13": "9782298146011",
+    "category": "contemporain_fr",
+    "searchedCount": 0,
+    "source": "curated",
+    "priority": "medium",
+    "isbn_source": "bnf_sru"
+  },
+  {
+    "title": "Miroir de nos peines",
+    "author": "Pierre Lemaitre",
+    "isbn13": "9782298159332",
+    "category": "contemporain_fr",
+    "searchedCount": 0,
+    "source": "curated",
+    "priority": "medium",
+    "isbn_source": "bnf_sru"
+  },
+  {
+    "title": "Le Livre des Baltimore",
+    "author": "Joël Dicker",
+    "isbn13": "9782298115123",
+    "category": "contemporain_fr",
+    "searchedCount": 0,
+    "source": "curated",
+    "priority": "medium",
+    "isbn_source": "bnf_sru"
+  },
+  {
+    "title": "L'Énigme de la chambre 622",
+    "author": "Joël Dicker",
+    "isbn13": "9782889730155",
+    "category": "contemporain_fr",
+    "searchedCount": 0,
+    "source": "curated",
+    "priority": "medium",
+    "isbn_source": "bnf_sru"
+  },
+  {
+    "title": "Éducation européenne",
+    "author": "Romain Gary",
+    "isbn13": "9782070362035",
+    "category": "contemporain_fr",
+    "searchedCount": 0,
+    "source": "curated",
+    "priority": "medium",
+    "isbn_source": "bnf_sru"
+  },
+  {
+    "title": "Pas pleurer",
+    "author": "Lydie Salvayre",
+    "isbn13": "9782286115302",
+    "category": "contemporain_fr",
+    "searchedCount": 0,
+    "source": "curated",
+    "priority": "medium",
+    "isbn_source": "bnf_sru"
+  },
+  {
+    "title": "Trois jours et une vie",
+    "author": "Pierre Lemaitre",
+    "isbn13": "9782286128852",
+    "category": "contemporain_fr",
+    "searchedCount": 0,
+    "source": "curated",
+    "priority": "medium",
+    "isbn_source": "bnf_sru"
+  },
+  {
+    "title": "Petit Pays",
+    "author": "Gaël Faye",
+    "isbn13": "9782298130331",
+    "category": "contemporain_fr",
+    "searchedCount": 0,
+    "source": "curated",
+    "priority": "medium",
+    "isbn_source": "bnf_sru"
+  },
+  {
+    "title": "Le Lambeau",
+    "author": "Philippe Lançon",
+    "isbn13": "9782286159245",
+    "category": "contemporain_fr",
+    "searchedCount": 0,
+    "source": "curated",
+    "priority": "medium",
+    "isbn_source": "bnf_sru"
+  },
+  {
+    "title": "S'adapter",
+    "author": "Clara Dupont-Monod",
+    "isbn13": "9782298179842",
+    "category": "contemporain_fr",
+    "searchedCount": 0,
+    "source": "curated",
+    "priority": "medium",
+    "isbn_source": "bnf_sru"
+  },
+  {
+    "title": "Suite française",
+    "author": "Irène Némirovsky",
+    "isbn13": "9782286007560",
+    "category": "contemporain_fr",
+    "searchedCount": 0,
+    "source": "curated",
+    "priority": "medium",
+    "isbn_source": "bnf_sru"
+  },
+  {
+    "title": "Connemara",
+    "author": "Nicolas Mathieu",
+    "isbn13": "9782370833525",
+    "category": "contemporain_fr",
+    "searchedCount": 0,
+    "source": "curated",
+    "priority": "medium",
+    "isbn_source": "bnf_sru"
+  },
+  {
+    "title": "Les Choses humaines",
+    "author": "Karine Tuil",
+    "isbn13": "9782286164881",
+    "category": "contemporain_fr",
+    "searchedCount": 0,
+    "source": "curated",
+    "priority": "medium",
+    "isbn_source": "bnf_sru"
+  },
+  {
+    "title": "L'Énigme du retour",
+    "author": "Dany Laferrière",
+    "isbn13": "9782286064365",
+    "category": "francophonie",
+    "searchedCount": 0,
+    "source": "curated",
+    "priority": "medium",
+    "isbn_source": "bnf_sru"
+  },
+  {
+    "title": "Texaco",
+    "author": "Patrick Chamoiseau",
+    "isbn13": "9782070727506",
+    "category": "francophonie",
+    "searchedCount": 0,
+    "source": "curated",
+    "priority": "medium",
+    "isbn_source": "bnf_sru"
+  },
+  {
+    "title": "Allah n'est pas obligé",
+    "author": "Ahmadou Kourouma",
+    "isbn13": "9782298050264",
+    "category": "francophonie",
+    "searchedCount": 0,
+    "source": "curated",
+    "priority": "medium",
+    "isbn_source": "bnf_sru"
+  },
+  {
+    "title": "L'Enfant noir",
+    "author": "Camara Laye",
+    "isbn13": "9782953782905",
+    "category": "francophonie",
+    "searchedCount": 0,
+    "source": "curated",
+    "priority": "medium",
+    "isbn_source": "bnf_sru"
+  },
+  {
+    "title": "Mémoires de porc-épic",
+    "author": "Alain Mabanckou",
+    "isbn13": "9782757860762",
+    "category": "francophonie",
+    "searchedCount": 0,
+    "source": "curated",
+    "priority": "medium",
+    "isbn_source": "bnf_sru"
+  },
+  {
+    "title": "Petit piment",
+    "author": "Alain Mabanckou",
+    "isbn13": "9782286124410",
+    "category": "francophonie",
+    "searchedCount": 0,
+    "source": "curated",
+    "priority": "medium",
+    "isbn_source": "bnf_sru"
+  },
+  {
+    "title": "Verre Cassé",
+    "author": "Alain Mabanckou",
+    "isbn13": "9782020680165",
+    "category": "francophonie",
+    "searchedCount": 0,
+    "source": "curated",
+    "priority": "medium",
+    "isbn_source": "bnf_sru"
+  },
+  {
+    "title": "Trois femmes puissantes",
+    "author": "Marie NDiaye",
+    "isbn13": "9782286059736",
+    "category": "francophonie",
+    "searchedCount": 0,
+    "source": "curated",
+    "priority": "medium",
+    "isbn_source": "bnf_sru"
+  },
+  {
+    "title": "Le Testament français",
+    "author": "Andreï Makine",
+    "isbn13": "9782715219366",
+    "category": "francophonie",
+    "searchedCount": 0,
+    "source": "curated",
+    "priority": "medium",
+    "isbn_source": "bnf_sru"
+  },
+  {
+    "title": "La Nuit sacrée",
+    "author": "Tahar Ben Jelloun",
+    "isbn13": "9782020097161",
+    "category": "francophonie",
+    "searchedCount": 0,
+    "source": "curated",
+    "priority": "medium",
+    "isbn_source": "bnf_sru"
+  },
+  {
+    "title": "L'Enfant de sable",
+    "author": "Tahar Ben Jelloun",
+    "isbn13": "9782724228946",
+    "category": "francophonie",
+    "searchedCount": 0,
+    "source": "curated",
+    "priority": "medium",
+    "isbn_source": "bnf_sru"
+  },
+  {
+    "title": "Kafka sur le rivage",
+    "author": "Haruki Murakami",
+    "isbn13": "9782714498854",
+    "category": "international_traduit",
+    "searchedCount": 0,
+    "source": "curated",
+    "priority": "medium",
+    "isbn_source": "bnf_sru"
+  },
+  {
+    "title": "L'Amour aux temps du choléra",
+    "author": "Gabriel García Márquez",
+    "isbn13": "9782246844402",
+    "category": "international_traduit",
+    "searchedCount": 0,
+    "source": "curated",
+    "priority": "medium",
+    "isbn_source": "bnf_sru"
+  },
+  {
+    "title": "Fahrenheit 451",
+    "author": "Ray Bradbury",
+    "isbn13": "9782070415731",
+    "category": "international_traduit",
+    "searchedCount": 0,
+    "source": "curated",
+    "priority": "medium"
+  },
+  {
+    "title": "Anna Karénine",
+    "author": "Léon Tolstoï",
+    "isbn13": null,
+    "category": "international_traduit",
+    "searchedCount": 0,
+    "source": "curated",
+    "priority": "low"
+  },
+  {
+    "title": "One Piece 1",
+    "author": "Eiichiro Oda",
+    "isbn13": "9782723488525",
+    "category": "mangas_bd",
+    "searchedCount": 0,
+    "source": "curated",
+    "priority": "medium"
+  },
+  {
+    "title": "Dragon Ball 1",
+    "author": "Akira Toriyama",
+    "isbn13": null,
+    "category": "mangas_bd",
+    "searchedCount": 0,
+    "source": "curated",
+    "priority": "low"
+  },
+  {
+    "title": "Jujutsu Kaisen 1",
+    "author": "Gege Akutami",
+    "isbn13": null,
+    "category": "mangas_bd",
+    "searchedCount": 0,
+    "source": "curated",
+    "priority": "low"
+  },
+  {
+    "title": "Chainsaw Man 1",
+    "author": "Tatsuki Fujimoto",
+    "isbn13": "9782820345165",
+    "category": "mangas_bd",
+    "searchedCount": 0,
+    "source": "curated",
+    "priority": "medium",
+    "isbn_source": "bnf_sru"
+  },
+  {
+    "title": "Spy×Family 1",
+    "author": "Tatsuya Endo",
+    "isbn13": "9782380710243",
+    "category": "mangas_bd",
+    "searchedCount": 0,
+    "source": "curated",
+    "priority": "medium",
+    "isbn_source": "bnf_sru"
+  },
+  {
+    "title": "Demon Slayer 1",
+    "author": "Koyoharu Gotouge",
+    "isbn13": "9782809482317",
+    "category": "mangas_bd",
+    "searchedCount": 0,
+    "source": "curated",
+    "priority": "medium",
+    "isbn_source": "bnf_sru"
+  },
+  {
+    "title": "L'Attaque des Titans 1",
+    "author": "Hajime Isayama",
+    "isbn13": "9782811611699",
+    "category": "mangas_bd",
+    "searchedCount": 0,
+    "source": "curated",
+    "priority": "medium",
+    "isbn_source": "bnf_sru"
+  },
+  {
+    "title": "My Hero Academia 1",
+    "author": "Kohei Horikoshi",
+    "isbn13": "9791032710821",
+    "category": "mangas_bd",
+    "searchedCount": 0,
+    "source": "curated",
+    "priority": "medium",
+    "isbn_source": "bnf_sru"
+  },
+  {
+    "title": "Death Note 1",
+    "author": "Tsugumi Ohba",
+    "isbn13": "9782298023626",
+    "category": "mangas_bd",
+    "searchedCount": 0,
+    "source": "curated",
+    "priority": "medium",
+    "isbn_source": "bnf_sru"
+  },
+  {
+    "title": "Fullmetal Alchemist 1",
+    "author": "Hiromu Arakawa",
+    "isbn13": "9782368529904",
+    "category": "mangas_bd",
+    "searchedCount": 0,
+    "source": "curated",
+    "priority": "medium",
+    "isbn_source": "bnf_sru"
+  },
+  {
+    "title": "Tokyo Ghoul 1",
+    "author": "Sui Ishida",
+    "isbn13": "9782723495615",
+    "category": "mangas_bd",
+    "searchedCount": 0,
+    "source": "curated",
+    "priority": "medium",
+    "isbn_source": "bnf_sru"
+  },
+  {
+    "title": "Hunter × Hunter 1",
+    "author": "Yoshihiro Togashi",
+    "isbn13": "9782871292661",
+    "category": "mangas_bd",
+    "searchedCount": 0,
+    "source": "curated",
+    "priority": "medium",
+    "isbn_source": "bnf_sru"
+  },
+  {
+    "title": "Berserk 1",
+    "author": "Kentaro Miura",
+    "isbn13": "9782344020685",
+    "category": "mangas_bd",
+    "searchedCount": 0,
+    "source": "curated",
+    "priority": "medium",
+    "isbn_source": "bnf_sru"
+  },
+  {
+    "title": "Vagabond 1",
+    "author": "Takehiko Inoue",
+    "isbn13": "9782759502189",
+    "category": "mangas_bd",
+    "searchedCount": 0,
+    "source": "curated",
+    "priority": "medium",
+    "isbn_source": "bnf_sru"
+  },
+  {
+    "title": "Slam Dunk 1",
+    "author": "Takehiko Inoue",
+    "isbn13": "9782505124160",
+    "category": "mangas_bd",
+    "searchedCount": 0,
+    "source": "curated",
+    "priority": "medium",
+    "isbn_source": "bnf_sru"
+  },
+  {
+    "title": "Bleach 1",
+    "author": "Tite Kubo",
+    "isbn13": "9782344053829",
+    "category": "mangas_bd",
+    "searchedCount": 0,
+    "source": "curated",
+    "priority": "medium",
+    "isbn_source": "bnf_sru"
+  },
+  {
+    "title": "One Punch Man 1",
+    "author": "ONE / Yusuke Murata",
+    "isbn13": "9782368522257",
+    "category": "mangas_bd",
+    "searchedCount": 0,
+    "source": "curated",
+    "priority": "medium",
+    "isbn_source": "bnf_sru"
+  },
+  {
+    "title": "Astérix le Gaulois",
+    "author": "René Goscinny",
+    "isbn13": null,
+    "category": "mangas_bd",
+    "searchedCount": 0,
+    "source": "curated",
+    "priority": "low"
+  },
+  {
+    "title": "Tintin au Tibet",
+    "author": "Hergé",
+    "isbn13": "9782203001190",
+    "category": "mangas_bd",
+    "searchedCount": 0,
+    "source": "curated",
+    "priority": "medium"
+  },
+  {
+    "title": "Le Chat du Rabbin 1",
+    "author": "Joann Sfar",
+    "isbn13": "9782205076189",
+    "category": "mangas_bd",
+    "searchedCount": 0,
+    "source": "curated",
+    "priority": "medium",
+    "isbn_source": "bnf_sru"
+  },
+  {
+    "title": "Persepolis",
+    "author": "Marjane Satrapi",
+    "isbn13": "9782918647416",
+    "category": "mangas_bd",
+    "searchedCount": 0,
+    "source": "curated",
+    "priority": "medium",
+    "isbn_source": "bnf_sru"
+  },
+  {
+    "title": "L'Arabe du futur 1",
+    "author": "Riad Sattouf",
+    "isbn13": "9782370730145",
+    "category": "mangas_bd",
+    "searchedCount": 0,
+    "source": "curated",
+    "priority": "medium"
+  },
+  {
+    "title": "Maus",
+    "author": "Art Spiegelman",
+    "isbn13": "9782080660299",
+    "category": "mangas_bd",
+    "searchedCount": 0,
+    "source": "curated",
+    "priority": "medium",
+    "isbn_source": "bnf_sru"
+  },
+  {
+    "title": "Le Monde sans fin",
+    "author": "Christophe Blain",
+    "isbn13": "9782205088168",
+    "category": "mangas_bd",
+    "searchedCount": 0,
+    "source": "curated",
+    "priority": "medium"
+  },
+  {
+    "title": "Les Vieux Fourneaux 1",
+    "author": "Wilfrid Lupano",
+    "isbn13": null,
+    "category": "mangas_bd",
+    "searchedCount": 0,
+    "source": "curated",
+    "priority": "low"
+  },
+  {
+    "title": "Solo Leveling 1",
+    "author": "Chugong",
+    "isbn13": "9782382880807",
+    "category": "mangas_bd",
+    "searchedCount": 0,
+    "source": "curated",
+    "priority": "medium",
+    "isbn_source": "bnf_sru"
+  },
+  {
+    "title": "Frieren 1",
+    "author": "Kanehito Yamada",
+    "isbn13": "9791032710838",
+    "category": "mangas_bd",
+    "searchedCount": 0,
+    "source": "curated",
+    "priority": "medium",
+    "isbn_source": "bnf_sru"
+  },
+  {
+    "title": "Blue Lock 1",
+    "author": "Muneyuki Kaneshiro",
+    "isbn13": "9782811650254",
+    "category": "mangas_bd",
+    "searchedCount": 0,
+    "source": "curated",
+    "priority": "medium",
+    "isbn_source": "bnf_sru"
+  },
+  {
+    "title": "Kaiju No. 8 1",
+    "author": "Naoya Matsumoto",
+    "isbn13": null,
+    "category": "mangas_bd",
+    "searchedCount": 0,
+    "source": "curated",
+    "priority": "low"
+  },
+  {
+    "title": "Mythologies",
+    "author": "Roland Barthes",
+    "isbn13": "9782020027281",
+    "category": "essais",
+    "searchedCount": 0,
+    "source": "curated",
+    "priority": "medium"
+  },
+  {
+    "title": "Surveiller et punir",
+    "author": "Michel Foucault",
+    "isbn13": "9782070729685",
+    "category": "essais",
+    "searchedCount": 0,
+    "source": "curated",
+    "priority": "medium"
+  },
+  {
+    "title": "La Banalité du mal",
+    "author": "Hannah Arendt",
+    "isbn13": "9782070326211",
+    "category": "essais",
+    "searchedCount": 0,
+    "source": "curated",
+    "priority": "medium"
+  },
+  {
+    "title": "La Nuit des prolétaires",
+    "author": "Jacques Rancière",
+    "isbn13": "9782818502969",
+    "category": "essais",
+    "searchedCount": 0,
+    "source": "curated",
+    "priority": "medium",
+    "isbn_source": "bnf_sru"
+  },
+  {
+    "title": "Homo Deus",
+    "author": "Yuval Noah Harari",
+    "isbn13": "9782226393876",
+    "category": "essais",
+    "searchedCount": 0,
+    "source": "curated",
+    "priority": "medium"
+  },
+  {
+    "title": "21 leçons pour le XXIe siècle",
+    "author": "Yuval Noah Harari",
+    "isbn13": "9782226436030",
+    "category": "essais",
+    "searchedCount": 0,
+    "source": "curated",
+    "priority": "medium"
+  },
+  {
+    "title": "Indignez-vous !",
+    "author": "Stéphane Hessel",
+    "isbn13": "9791090354203",
+    "category": "essais",
+    "searchedCount": 0,
+    "source": "curated",
+    "priority": "medium",
+    "isbn_source": "bnf_sru"
+  },
+  {
+    "title": "No Logo",
+    "author": "Naomi Klein",
+    "isbn13": "9782760921931",
+    "category": "essais",
+    "searchedCount": 0,
+    "source": "curated",
+    "priority": "medium",
+    "isbn_source": "bnf_sru"
+  },
+  {
+    "title": "L'Homme révolté",
+    "author": "Albert Camus",
+    "isbn13": "9782070212095",
+    "category": "essais",
+    "searchedCount": 0,
+    "source": "curated",
+    "priority": "medium",
+    "isbn_source": "bnf_sru"
+  },
+  {
+    "title": "Les Essais",
+    "author": "Michel de Montaigne",
+    "isbn13": "9782869591509",
+    "category": "classiques_fr",
+    "searchedCount": 0,
+    "source": "curated",
+    "priority": "medium",
+    "isbn_source": "bnf_sru"
+  },
+  {
+    "title": "Micromégas",
+    "author": "Voltaire",
+    "isbn13": null,
+    "category": "classiques_fr",
+    "searchedCount": 0,
+    "source": "curated",
+    "priority": "low"
+  },
+  {
+    "title": "Colomba",
+    "author": "Prosper Mérimée",
+    "isbn13": "9782322636518",
+    "category": "classiques_fr",
+    "searchedCount": 0,
+    "source": "curated",
+    "priority": "medium",
+    "isbn_source": "bnf_sru"
+  },
+  {
+    "title": "La Nuit du renard",
+    "author": "Mary Higgins Clark",
+    "isbn13": "9782830217513",
+    "category": "contemporain_fr",
+    "searchedCount": 0,
+    "source": "curated",
+    "priority": "medium",
+    "isbn_source": "bnf_sru"
+  },
+  {
+    "title": "Le Grand Monde",
+    "author": "Pierre Lemaitre",
+    "isbn13": "9782810204861",
+    "category": "contemporain_fr",
+    "searchedCount": 0,
+    "source": "curated",
+    "priority": "medium",
+    "isbn_source": "bnf_sru"
+  },
+  {
+    "title": "Le Plus Grand Menu du monde",
+    "author": "Hervé Le Tellier",
+    "isbn13": null,
+    "category": "contemporain_fr",
+    "searchedCount": 0,
+    "source": "curated",
+    "priority": "low"
+  },
+  {
+    "title": "La Disparition de Stephanie Mailer",
+    "author": "Joël Dicker",
+    "isbn13": "9782286160227",
+    "category": "contemporain_fr",
+    "searchedCount": 0,
+    "source": "curated",
+    "priority": "medium",
+    "isbn_source": "bnf_sru"
+  },
+  {
+    "title": "Veiller sur elle",
+    "author": "Jean-Baptiste Andrea",
+    "isbn13": "9782378803759",
+    "category": "contemporain_fr",
+    "searchedCount": 0,
+    "source": "curated",
+    "priority": "medium",
+    "isbn_source": "bnf_sru"
+  },
+  {
+    "title": "Jacaranda",
+    "author": "Gaël Faye",
+    "isbn13": "9782246831457",
+    "category": "contemporain_fr",
+    "searchedCount": 0,
+    "source": "curated",
+    "priority": "medium",
+    "isbn_source": "bnf_sru"
+  },
+  {
+    "title": "Sympathie pour le diable",
+    "author": "Irène Némirovsky",
+    "isbn13": null,
+    "category": "contemporain_fr",
+    "searchedCount": 0,
+    "source": "curated",
+    "priority": "low"
+  },
+  {
+    "title": "Le Chercheur d'os",
+    "author": "Tahar Djaout",
+    "isbn13": null,
+    "category": "francophonie",
+    "searchedCount": 0,
+    "source": "curated",
+    "priority": "low"
+  },
+  {
+    "title": "Une si longue lettre",
+    "author": "Mariama Bâ",
+    "isbn13": "9782723604307",
+    "category": "francophonie",
+    "searchedCount": 0,
+    "source": "curated",
+    "priority": "medium",
+    "isbn_source": "bnf_sru"
+  },
+  {
+    "title": "Monnè, outrages et défis",
+    "author": "Ahmadou Kourouma",
+    "isbn13": "9782020114264",
+    "category": "francophonie",
+    "searchedCount": 0,
+    "source": "curated",
+    "priority": "medium",
+    "isbn_source": "bnf_sru"
+  },
+  {
+    "title": "Le Baobab fou",
+    "author": "Ken Bugul",
+    "isbn13": "9782708708037",
+    "category": "francophonie",
+    "searchedCount": 0,
+    "source": "curated",
+    "priority": "medium",
+    "isbn_source": "bnf_sru"
+  },
+  {
+    "title": "Gouverneurs de la rosée",
+    "author": "Jacques Roumain",
+    "isbn13": "9782877638180",
+    "category": "francophonie",
+    "searchedCount": 0,
+    "source": "curated",
+    "priority": "medium",
+    "isbn_source": "bnf_sru"
+  },
+  {
+    "title": "La Femme qui attendait",
+    "author": "Andreï Makine",
+    "isbn13": "9782702892831",
+    "category": "francophonie",
+    "searchedCount": 0,
+    "source": "curated",
+    "priority": "medium",
+    "isbn_source": "bnf_sru"
+  },
+  {
+    "title": "Le Passé devant soi",
+    "author": "Gilbert Gatore",
+    "isbn13": "9782752903099",
+    "category": "francophonie",
+    "searchedCount": 0,
+    "source": "curated",
+    "priority": "medium",
+    "isbn_source": "bnf_sru"
+  },
+  {
+    "title": "La Part du colibri",
+    "author": "Pierre Rabhi",
+    "isbn13": "9782815928229",
+    "category": "essais",
+    "searchedCount": 0,
+    "source": "curated",
+    "priority": "medium",
+    "isbn_source": "bnf_sru"
+  },
+  {
+    "title": "La Haine de l'Occident",
+    "author": "Jean Ziegler",
+    "isbn13": "9782226186935",
+    "category": "essais",
+    "searchedCount": 0,
+    "source": "curated",
+    "priority": "medium",
+    "isbn_source": "bnf_sru"
+  }
+]

@@ -134,12 +134,26 @@ L'edge function `book_import` (`supabase/functions/book_import/index.ts`) interr
 
 ### Qualité des résultats de recherche (`src/lib/googleBooks.js`)
 
-Architecture DB-first : la base locale (3700+ livres) est la source primaire, Google Books sert uniquement à la découverte.
+Architecture DB-first : la base locale (3830+ livres) est la source primaire, Google Books sert uniquement à la découverte.
 
-`searchBooks(query)` fonctionne en 2 étapes parallèles :
+`searchBooks(query)` fonctionne en séquentiel (RPC-first) avec skip logic :
 
-1. **Recherche locale** via RPC PostgreSQL `search_books_v2` : gère apostrophes françaises, accents, matching titre + auteurs, tri par popularité (`rating_count DESC`). Résultats DB toujours affichés en premier.
-2. **Google Books** : une seule requête (`langRestrict=fr`, max 15 résultats), filtrée (sans couverture, sans ISBN, éditeurs parasites, mots-clés parasites exclus), limitée à 8 résultats après filtre.
+1. **Recherche locale** via RPC PostgreSQL `search_books_v2` (migration `008_improve_search_books_v2.sql`) :
+   - **Cross-field matching** : chaque mot significatif (>2 chars) doit être présent dans le titre OU dans les auteurs (`bool_and` sur `title LIKE OR authors LIKE`). Permet "Victor Hugo Les Misérables", "Madame Bovary Flaubert".
+   - **Scoring de pertinence** : match exact titre (+100), titre commence par query (+50), couverture titre (×30), couverture auteur (×5), rating_count en tie-breaker. Garantit que "Les Misérables" remonte avant des livres parasites.
+   - **Matching compact** : pour les queries mono-token ≥5 chars (ex: "LETRANGER"), compare sans espaces ni ponctuation → matche "L'étranger".
+   - **Branche ISBN** : si la query est un nombre de 10-13 chiffres, match exact sur `isbn_13`.
+   - Gère apostrophes françaises, accents via `unaccent(lower())`.
+2. **Skip logic** (économie quota Google Books, ~60% d'appels évités) :
+   - Si RPC retourne ≥ 3 résultats → skip Google (`db_sufficient`)
+   - Si query est un ISBN et RPC retourne ≥ 1 résultat → skip Google (`isbn_found`)
+   - Sinon → appel Google Books pour découverte
+   - Le tableau retourné porte `_skippedGoogle` et `_skipReason` en propriétés
+3. **Google Books** (conditionnel) : une seule requête (`langRestrict=fr`, max 15 résultats), filtrée (sans couverture, sans ISBN, éditeurs parasites, mots-clés parasites exclus), limitée à 8 résultats après filtre.
+
+**Logging** : chaque appel `searchBooks()` émet un `console.log('[search-analytics]', JSON.stringify({...}))` avec les compteurs DB, Google, skip. Greppable dans les logs Vercel.
+
+**Smart-search aligné** : `useSmartSearch` dans `Search.jsx` est désactivé quand `dbResultCount >= 3` et que la query n'est pas en langage naturel — cohérent avec la skip logic Google.
 
 **Déduplication** : les résultats Google qui dupliquent un résultat DB (même ISBN-13 ou même titre normalisé) sont supprimés. Les résultats DB ne sont jamais supprimés.
 
@@ -149,7 +163,7 @@ Architecture DB-first : la base locale (3700+ livres) est la source primaire, Go
 
 ### Recherche assistée IA (`supabase/functions/smart-search/index.ts` + `src/hooks/useSmartSearch.js`)
 
-Filet de secours intelligent qui enrichit le pipeline classique Google Books. Activé systématiquement dès 2 caractères (debounce 600ms). Le coût est amorti par le cache `search_cache` (7 jours).
+Filet de secours intelligent qui enrichit le pipeline classique. Activé dès 2 caractères (debounce 600ms) seulement si `dbResultCount < 3` ou si la query est en langage naturel (`looksLikeNaturalLanguage`). Désactivé quand la DB suffit (aligné avec la skip logic Google). Le coût est amorti par le cache `search_cache` (7 jours).
 
 **Edge function `smart-search`** :
 - Appelle Claude Haiku (`claude-haiku-4-5-20251001`) avec un system prompt spécialisé livres francophones
@@ -177,6 +191,17 @@ Filet de secours intelligent qui enrichit le pipeline classique Google Books. Ac
 - Clic sur un résultat DB → navigation directe via `slug ?? dbId` sans passer par importBook
 - Indicateur "Recherche approfondie…" pendant le chargement IA
 - Le SYSTEM_PROMPT de `smart-search` retourne l'ISBN de l'édition poche française (Folio, LdP, Points…)
+
+### Enrichissement batch de la base locale
+
+Scripts dans `scripts/`, rapports dans `reports/`. Pipeline exécuté en mars 2026 : +93 livres importés via BnF+OL (0 appel Google).
+
+- `scripts/identify-missing-books.mjs` — liste curatée ~200 livres FR + extraction queries search_cache → `reports/missing-books.json`
+- `scripts/validate-isbn.mjs` — validation ISBN via checksum + Open Library + BnF SRU. `--apply` nullifie les invalides.
+- `scripts/resolve-isbn-bnf.mjs` — résolution ISBN par titre+auteur via BnF SRU (UNIMARC). 78,5% de taux de résolution. `--apply` met à jour missing-books.json.
+- `scripts/batch-import-missing.mjs` — import batch, 3 modes : `--source edge` (edge function), `--source direct` (BnF+OL, 0 Google), `--source google`. Dry-run par défaut, `--apply` pour importer.
+
+**Leçon critique** : ne jamais faire confiance aux ISBN générés par un LLM (88% d'hallucinations constatées). Toujours valider via source externe.
 
 ## Architecture de données
 

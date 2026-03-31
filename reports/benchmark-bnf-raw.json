@@ -1,0 +1,636 @@
+{
+  "results": [
+    {
+      "query": "L'étranger",
+      "expected": "L'étranger",
+      "category": "Titres populaires FR",
+      "elapsed": 2408,
+      "totalFound": 8880,
+      "count": 10,
+      "rank": 1,
+      "recall3": true,
+      "metaScore": 0.75,
+      "top3": [
+        "Annuaire des Français de l'étranger . Les oeuvres françaises à l'étranger. 1950 — Union des Français de l'étranger",
+        "Premiers pas à l'étranger — France",
+        "Libye — France"
+      ],
+      "hasISBN": true,
+      "hasPublisher": true,
+      "hasPages": true,
+      "coverCheck": false,
+      "error": null
+    },
+    {
+      "query": "Les Misérables",
+      "expected": "Les Misérables",
+      "category": "Titres populaires FR",
+      "elapsed": 1365,
+      "totalFound": 35,
+      "count": 10,
+      "rank": 2,
+      "recall3": true,
+      "metaScore": 0.75,
+      "top3": [
+        "The novel of the century — David Bellos",
+        "Les propos lamentables de Henry de Valois, tirez de sa confession , par un remords de conscience, qui tousjours tourmente les miserables — ?",
+        "L'Amiral des Terreneuvas , de Granville à Terreneuve, les misérables de la mer, récit — Pierre Béhier"
+      ],
+      "hasISBN": true,
+      "hasPublisher": true,
+      "hasPages": true,
+      "coverCheck": false,
+      "error": null
+    },
+    {
+      "query": "Madame Bovary",
+      "expected": "Madame Bovary",
+      "category": "Titres populaires FR",
+      "elapsed": 1215,
+      "totalFound": 28,
+      "count": 10,
+      "rank": 3,
+      "recall3": true,
+      "metaScore": 0.75,
+      "top3": [
+        "Nous autres Yonvillais — Guy Piolé",
+        "Flaubert's \"gueuloir\" — Michael Fried",
+        "Atti del convegno internazionale Madame Bovary — Convegno internazionale \"Madame Bovary\" : preludi"
+      ],
+      "hasISBN": true,
+      "hasPublisher": true,
+      "hasPages": true,
+      "coverCheck": false,
+      "error": null
+    },
+    {
+      "query": "Le Petit Prince",
+      "expected": "Le Petit Prince",
+      "category": "Titres populaires FR",
+      "elapsed": 971,
+      "totalFound": 766,
+      "count": 10,
+      "rank": 1,
+      "recall3": true,
+      "metaScore": 1,
+      "top3": [
+        "Le Petit Prince et Okoda — Katherine Quénot",
+        "Le Petit Prince et Ashkabaar — Katherine Quénot",
+        "Le Petit Prince et Coppelius — Katherine Quénot"
+      ],
+      "hasISBN": true,
+      "hasPublisher": true,
+      "hasPages": true,
+      "coverCheck": false,
+      "error": null
+    },
+    {
+      "query": "La Peste",
+      "expected": "La Peste",
+      "category": "Titres populaires FR",
+      "elapsed": 1659,
+      "totalFound": 86,
+      "count": 10,
+      "rank": -1,
+      "recall3": false,
+      "metaScore": 1,
+      "top3": [
+        "Paul Poiret raconté aux enfants — Geneviève Fontan",
+        "René — Disiz",
+        "Lexik des cités — Permis de vivre la ville"
+      ],
+      "hasISBN": true,
+      "hasPublisher": true,
+      "hasPages": true,
+      "coverCheck": false,
+      "error": null
+    },
+    {
+      "query": "Germinal",
+      "expected": "Germinal",
+      "category": "Titres populaires FR",
+      "elapsed": 2038,
+      "totalFound": 3454,
+      "count": 10,
+      "rank": 1,
+      "recall3": true,
+      "metaScore": 0.6666666666666666,
+      "top3": [
+        "Germinal (Mézières) — Université populaire Germinal",
+        "Jérémie-Jacques Oberlin, préfet [-directeur] et les instituteurs du Gymnase, à leurs concitoyens. [Tableau des instituteurs. - Précis des leçons. - Tableau des élèves.] — Jérémie Jacques Oberlin",
+        "Germinal ou Le sacre du printemps — Germinal Casado"
+      ],
+      "hasISBN": true,
+      "hasPublisher": true,
+      "hasPages": true,
+      "coverCheck": null,
+      "error": null
+    },
+    {
+      "query": "Le Maître et Marguerite",
+      "expected": "Le Maître et Marguerite",
+      "category": "Titres populaires FR",
+      "elapsed": 994,
+      "totalFound": 118,
+      "count": 10,
+      "rank": 1,
+      "recall3": true,
+      "metaScore": 1,
+      "top3": [
+        "Le maître et Marguerite — Mikhaïl Boulgakov",
+        "Le maître &amp; Marguerite — Misha Zaslavsky",
+        "Le maître et Marguerite — Mikhaïl Boulgakov"
+      ],
+      "hasISBN": true,
+      "hasPublisher": true,
+      "hasPages": true,
+      "coverCheck": null,
+      "error": null
+    },
+    {
+      "query": "Du côté de chez Swann",
+      "expected": "Du côté de chez Swann",
+      "category": "Titres populaires FR",
+      "elapsed": 1586,
+      "totalFound": 104,
+      "count": 10,
+      "rank": 2,
+      "recall3": true,
+      "metaScore": 0.8333333333333334,
+      "top3": [
+        "Pel cantó de Swann — Marcel Proust",
+        "Lire \"Du côté de chez Swann\" de Proust — Luc Fraisse",
+        "À la recherche du temps perdu. [I], Du côté de chez Swann — Marcel Proust"
+      ],
+      "hasISBN": true,
+      "hasPublisher": true,
+      "hasPages": true,
+      "coverCheck": null,
+      "error": null
+    },
+    {
+      "query": "Les Fleurs du mal",
+      "expected": "Les Fleurs du mal",
+      "category": "Titres populaires FR",
+      "elapsed": 1440,
+      "totalFound": 599,
+      "count": 10,
+      "rank": 1,
+      "recall3": true,
+      "metaScore": 1,
+      "top3": [
+        "Le spleen de Paris ; Les fleurs du mal — Charles Baudelaire",
+        "Les fleurs du mal — David Yesaya",
+        "Les fleurs du mal — Charles Baudelaire"
+      ],
+      "hasISBN": true,
+      "hasPublisher": true,
+      "hasPages": true,
+      "coverCheck": null,
+      "error": null
+    },
+    {
+      "query": "1984",
+      "expected": "1984",
+      "category": "Titres populaires FR",
+      "elapsed": 2572,
+      "totalFound": 58792,
+      "count": 10,
+      "rank": 1,
+      "recall3": true,
+      "metaScore": 0.8333333333333334,
+      "top3": [
+        "Figuration critique 1984 — Figuration critique",
+        "La Révolution — ?",
+        "Sessions d'étude 1984 — Société canadienne d'histoire de l'Eglise catholique"
+      ],
+      "hasISBN": true,
+      "hasPublisher": true,
+      "hasPages": true,
+      "coverCheck": null,
+      "error": null
+    },
+    {
+      "query": "Albert Camus",
+      "expected": "L'étranger",
+      "category": "Auteurs",
+      "elapsed": 1545,
+      "totalFound": 746,
+      "count": 10,
+      "rank": -1,
+      "recall3": false,
+      "metaScore": 0.8333333333333334,
+      "top3": [
+        "Albert Camus — ?",
+        "De l'ombre vers le soleil — ?",
+        "ABCdaire du terroir ch'ti — École Albert Camus"
+      ],
+      "hasISBN": true,
+      "hasPublisher": true,
+      "hasPages": true,
+      "coverCheck": null,
+      "error": null
+    },
+    {
+      "query": "Victor Hugo",
+      "expected": "Les Misérables",
+      "category": "Auteurs",
+      "elapsed": 1496,
+      "totalFound": 5121,
+      "count": 10,
+      "rank": 3,
+      "recall3": true,
+      "metaScore": 0.8333333333333334,
+      "top3": [
+        "Coba — Víctor Hugo Viscarra Rodríguez",
+        "La sandalia del peregrino (2a edición) Victor H. Escala — Víctor Hugo Escala",
+        "Les femmes de Victor Hugo — Maison natale de Victor Hugo"
+      ],
+      "hasISBN": true,
+      "hasPublisher": true,
+      "hasPages": true,
+      "coverCheck": null,
+      "error": null
+    },
+    {
+      "query": "Borges",
+      "expected": "Ficciones",
+      "category": "Auteurs",
+      "elapsed": 1287,
+      "totalFound": 1733,
+      "count": 10,
+      "rank": 2,
+      "recall3": true,
+      "metaScore": 0.9166666666666666,
+      "top3": [
+        "Borges y los clásicos — Carlos Gamerro",
+        "Homenagem a Luciano Cordeiro,... (por A. C. Borges de Figueiredo) — Antonio Cardoso Borges de Figueiredo",
+        "Una profunda necesidad en la ficción contemporánea — ?"
+      ],
+      "hasISBN": true,
+      "hasPublisher": true,
+      "hasPages": true,
+      "coverCheck": null,
+      "error": null
+    },
+    {
+      "query": "Émile Zola",
+      "expected": "Germinal",
+      "category": "Auteurs",
+      "elapsed": 1674,
+      "totalFound": 2354,
+      "count": 10,
+      "rank": -1,
+      "recall3": false,
+      "metaScore": 0.6666666666666666,
+      "top3": [
+        "Zola und die Tiere... — Denise Le Blond-Zola",
+        "Émile Zola raconté par sa fille — Denise Le Blond-Zola",
+        "Zola et Cézanne d'après une correspondance retrouvée — Denise Le Blond-Zola"
+      ],
+      "hasISBN": true,
+      "hasPublisher": true,
+      "hasPages": true,
+      "coverCheck": null,
+      "error": null
+    },
+    {
+      "query": "Marcel Proust",
+      "expected": "Du côté de chez Swann",
+      "category": "Auteurs",
+      "elapsed": 1126,
+      "totalFound": 1073,
+      "count": 10,
+      "rank": -1,
+      "recall3": false,
+      "metaScore": 0.5,
+      "top3": [
+        "[Jaarboek] — Marcel Proust Vereniging",
+        "Publikation der Marcel Proust Gesellschaft — Marcel Proust Gesellschaft",
+        "[Jaarboek] — Marcel Proust Vereniging"
+      ],
+      "hasISBN": false,
+      "hasPublisher": true,
+      "hasPages": false,
+      "coverCheck": null,
+      "error": null
+    },
+    {
+      "query": "petit pri",
+      "expected": "Le Petit Prince",
+      "category": "Partielles",
+      "elapsed": 176,
+      "totalFound": 1,
+      "count": 1,
+      "rank": -1,
+      "recall3": false,
+      "metaScore": 1,
+      "top3": [
+        "Lo prinçòt — Antoine de Saint-Exupéry"
+      ],
+      "hasISBN": true,
+      "hasPublisher": true,
+      "hasPages": true,
+      "coverCheck": null,
+      "error": null
+    },
+    {
+      "query": "miser",
+      "expected": "Les Misérables",
+      "category": "Partielles",
+      "elapsed": 1158,
+      "totalFound": 396,
+      "count": 10,
+      "rank": -1,
+      "recall3": false,
+      "metaScore": 0.5833333333333334,
+      "top3": [
+        "Manganese carbonate in the Batesville district, Arkansas, by Hugh D. Miser, with a chapter on minerals of the ores, by D. F. Hewett and H. D. Miser — Hugh D. Miser",
+        "The San Juan Canyon, South-Eastern Utah, a geographic and hydrographic reconnaissance by Hugh D. Miser — Hugh D. Miser",
+        "Contributions to economic geology (short papers and preliminary reports) 1928. Part II. Mineral fuels. H. D. Miser,... — Hugh D. Miser"
+      ],
+      "hasISBN": false,
+      "hasPublisher": true,
+      "hasPages": true,
+      "coverCheck": null,
+      "error": null
+    },
+    {
+      "query": "bovary",
+      "expected": "Madame Bovary",
+      "category": "Partielles",
+      "elapsed": 726,
+      "totalFound": 568,
+      "count": 10,
+      "rank": 1,
+      "recall3": true,
+      "metaScore": 0.8333333333333334,
+      "top3": [
+        "Ry, pays de Madame Bovary — René Vérard",
+        "Flaubert's \"gueuloir\" — Michael Fried",
+        "Madame Bovary — Gustave Flaubert"
+      ],
+      "hasISBN": true,
+      "hasPublisher": true,
+      "hasPages": true,
+      "coverCheck": null,
+      "error": null
+    },
+    {
+      "query": "peste camus",
+      "expected": "La Peste",
+      "category": "Partielles",
+      "elapsed": 1201,
+      "totalFound": 29,
+      "count": 10,
+      "rank": 1,
+      "recall3": true,
+      "metaScore": 0.8333333333333334,
+      "top3": [
+        "\"La peste\" d'Albert Camus — ?",
+        "Albert Camus. 8, Camus romancier, \"La Peste\" — ?",
+        "Albert Camus — Donald Ross Haggis"
+      ],
+      "hasISBN": true,
+      "hasPublisher": true,
+      "hasPages": true,
+      "coverCheck": null,
+      "error": null
+    },
+    {
+      "query": "etranger",
+      "expected": "L'étranger",
+      "category": "Partielles",
+      "elapsed": 2126,
+      "totalFound": 12086,
+      "count": 10,
+      "rank": 1,
+      "recall3": true,
+      "metaScore": 0.5,
+      "top3": [
+        "Annuaire des Français de l'étranger . Les oeuvres françaises à l'étranger. 1950 — Union des Français de l'étranger",
+        "Poétique de l'étranger — Groupe de recherche Le texte étranger",
+        "[Le Bulletin du Rassemblement des français de l'étranger] — Rassemblement des français de l'étranger"
+      ],
+      "hasISBN": false,
+      "hasPublisher": true,
+      "hasPages": true,
+      "coverCheck": null,
+      "error": null
+    },
+    {
+      "query": "Naruto",
+      "expected": "Naruto",
+      "category": "Mangas/BD",
+      "elapsed": 1360,
+      "totalFound": 281,
+      "count": 10,
+      "rank": 2,
+      "recall3": true,
+      "metaScore": 1,
+      "top3": [
+        "Manga's cultural crossroads — ?",
+        "Naruto vs Hitachi !! — Masashi Kishimoto",
+        "Naruto uzumaki !! — Masashi Kishimoto"
+      ],
+      "hasISBN": true,
+      "hasPublisher": true,
+      "hasPages": true,
+      "coverCheck": null,
+      "error": null
+    },
+    {
+      "query": "One Piece",
+      "expected": "One Piece",
+      "category": "Mangas/BD",
+      "elapsed": 1603,
+      "totalFound": 29,
+      "count": 10,
+      "rank": -1,
+      "recall3": false,
+      "metaScore": 0.8333333333333334,
+      "top3": [
+        "Emerald city — Jennifer Egan",
+        "Killers — Neil Daniels",
+        "Chopperman — Hirofumi Takei"
+      ],
+      "hasISBN": true,
+      "hasPublisher": true,
+      "hasPages": true,
+      "coverCheck": null,
+      "error": null
+    },
+    {
+      "query": "Sakamoto Days",
+      "expected": "Sakamoto Days",
+      "category": "Mangas/BD",
+      "elapsed": 357,
+      "totalFound": 0,
+      "count": 0,
+      "rank": -1,
+      "recall3": false,
+      "metaScore": 0,
+      "top3": [],
+      "hasISBN": false,
+      "hasPublisher": false,
+      "hasPages": false,
+      "coverCheck": null,
+      "error": null
+    },
+    {
+      "query": "Dragon Ball",
+      "expected": "Dragon Ball",
+      "category": "Mangas/BD",
+      "elapsed": 1122,
+      "totalFound": 5,
+      "count": 5,
+      "rank": 3,
+      "recall3": true,
+      "metaScore": 0.5,
+      "top3": [
+        "Colorami — Editions S.F.C.",
+        "Jeux coloriage — Editions S.F.C.",
+        "Histoire à colorier — Editions S.F.C."
+      ],
+      "hasISBN": false,
+      "hasPublisher": true,
+      "hasPages": false,
+      "coverCheck": null,
+      "error": null
+    },
+    {
+      "query": "L'Arabe du futur",
+      "expected": "L'Arabe du futur",
+      "category": "Mangas/BD",
+      "elapsed": 1010,
+      "totalFound": 13,
+      "count": 10,
+      "rank": 1,
+      "recall3": true,
+      "metaScore": 0.8333333333333334,
+      "top3": [
+        "L'Arabe du futur — Riad Sattouf",
+        "Moi, Fadi le frère volé. Tome 1, 1986-1994 — Riad Sattouf",
+        "Moi, Fadi le frère volé. Tome 1, 1986-1994 — Riad Sattouf"
+      ],
+      "hasISBN": true,
+      "hasPublisher": true,
+      "hasPages": true,
+      "coverCheck": null,
+      "error": null
+    },
+    {
+      "query": "Je rouille",
+      "expected": "Je rouille",
+      "category": "Obscurs/Récents",
+      "elapsed": 432,
+      "totalFound": 1,
+      "count": 1,
+      "rank": 1,
+      "recall3": true,
+      "metaScore": 1,
+      "top3": [
+        "Je rouille — Robin Watine"
+      ],
+      "hasISBN": true,
+      "hasPublisher": true,
+      "hasPages": true,
+      "coverCheck": null,
+      "error": null
+    },
+    {
+      "query": "Pedro Páramo",
+      "expected": "Pedro Páramo",
+      "category": "Obscurs/Récents",
+      "elapsed": 1376,
+      "totalFound": 11,
+      "count": 10,
+      "rank": -1,
+      "recall3": false,
+      "metaScore": 0.6666666666666666,
+      "top3": [
+        "Le Théâtre en Espagne — Jean Poutet",
+        "El Desierto prodigioso y prodigio del desierto... — Pedro de Solís y Valenzuela",
+        "El Desierto prodigioso y prodigio del desierto.... 1, [ Mansiones I-XI] — Pedro de Solís y Valenzuela"
+      ],
+      "hasISBN": false,
+      "hasPublisher": true,
+      "hasPages": true,
+      "coverCheck": null,
+      "error": null
+    },
+    {
+      "query": "Austerlitz Sebald",
+      "expected": "Austerlitz",
+      "category": "Obscurs/Récents",
+      "elapsed": 1597,
+      "totalFound": 18,
+      "count": 10,
+      "rank": 3,
+      "recall3": true,
+      "metaScore": 1,
+      "top3": [
+        "W.G. Sebald — Sydney German studies symposium",
+        "Childness and the writing of the German past — Nora Maguire",
+        "Sebald's vision — Carol Jacobs"
+      ],
+      "hasISBN": true,
+      "hasPublisher": true,
+      "hasPages": true,
+      "coverCheck": null,
+      "error": null
+    },
+    {
+      "query": "Les détectives sauvages",
+      "expected": "Les détectives sauvages",
+      "category": "Obscurs/Récents",
+      "elapsed": 1341,
+      "totalFound": 7,
+      "count": 7,
+      "rank": 1,
+      "recall3": true,
+      "metaScore": 1,
+      "top3": [
+        "Les détectives sauvages — Roberto Bolaño",
+        "Les détectives sauvages — Roberto Bolaño",
+        "Los detectives salvajes — Roberto Bolaño"
+      ],
+      "hasISBN": true,
+      "hasPublisher": true,
+      "hasPages": true,
+      "coverCheck": null,
+      "error": null
+    },
+    {
+      "query": "L'ordre du jour",
+      "expected": "L'ordre du jour",
+      "category": "Obscurs/Récents",
+      "elapsed": 1650,
+      "totalFound": 1538,
+      "count": 10,
+      "rank": 1,
+      "recall3": true,
+      "metaScore": 0.5833333333333334,
+      "top3": [
+        "L'Ordre du jour (Paris) — ?",
+        "L'Ordre du jour — Alinea",
+        "Champions — Jean Bobet"
+      ],
+      "hasISBN": false,
+      "hasPublisher": true,
+      "hasPages": true,
+      "coverCheck": null,
+      "error": null
+    }
+  ],
+  "summary": {
+    "recall": 21,
+    "times": {
+      "p50": 1365,
+      "p90": 2126,
+      "avg": 1354
+    },
+    "coverChecked": 5,
+    "coverFound": 0
+  }
+}
