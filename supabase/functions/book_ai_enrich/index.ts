@@ -42,6 +42,7 @@ Règles :
   try {
     const res = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
+      signal: AbortSignal.timeout(8000),
       headers: {
         "Content-Type": "application/json",
         "x-api-key": apiKey,
@@ -92,7 +93,7 @@ async function fetchOpenLibrary(
 ): Promise<OLResult | null> {
   try {
     const url = `https://openlibrary.org/search.json?title=${encodeURIComponent(title)}&author=${encodeURIComponent(author)}&limit=3&lang=fre`;
-    const res = await fetch(url);
+    const res = await fetch(url, { signal: AbortSignal.timeout(5000) });
     if (!res.ok) return null;
     const data = await res.json();
     const doc = data.docs?.[0];
@@ -147,6 +148,7 @@ async function findCover(
   try {
     const olRes = await fetch(
       `https://openlibrary.org/search.json?title=${encodeURIComponent(title)}&author=${encodeURIComponent(author)}&limit=1`,
+      { signal: AbortSignal.timeout(5000) },
     );
     if (olRes.ok) {
       const olData = await olRes.json();
@@ -170,7 +172,7 @@ async function findCover(
 
   for (const url of candidates) {
     try {
-      const res = await fetch(url, { method: "HEAD" });
+      const res = await fetch(url, { method: "HEAD", signal: AbortSignal.timeout(3000) });
       const ct = res.headers.get("content-type") || "";
       if (res.ok && ct.startsWith("image")) {
         return url;

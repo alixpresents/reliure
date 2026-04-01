@@ -111,6 +111,7 @@ Deno.serve(async (req) => {
 
     const aiRes = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
+      signal: AbortSignal.timeout(8000),
       headers: {
         "Content-Type": "application/json",
         "x-api-key": apiKey,

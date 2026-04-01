@@ -48,7 +48,7 @@ serve(async (req) => {
   if (isbn13) {
     try {
       const gbRes = await fetch(
-        `https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn13}&key=${Deno.env.get('GOOGLE_BOOKS_API_KEY')}`,
+        `https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn13}&key=${Deno.env.get('GOOGLE_BOOKS_KEY')}`,
         { signal: AbortSignal.timeout(3000) }
       )
       const gbData = await gbRes.json()
@@ -65,7 +65,7 @@ serve(async (req) => {
     try {
       const query = encodeURIComponent(`${title} ${author || ''}`.trim())
       const gbRes = await fetch(
-        `https://www.googleapis.com/books/v1/volumes?q=${query}&key=${Deno.env.get('GOOGLE_BOOKS_API_KEY')}&maxResults=5`,
+        `https://www.googleapis.com/books/v1/volumes?q=${query}&key=${Deno.env.get('GOOGLE_BOOKS_KEY')}&maxResults=5`,
         { signal: AbortSignal.timeout(3000) }
       )
       const gbData = await gbRes.json()
