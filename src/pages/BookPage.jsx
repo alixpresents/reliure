@@ -223,7 +223,7 @@ function EnrichModal({ bookId, onClose, onSaved, initialDescription, initialPage
   );
 }
 
-export default function BookPage({ book }) {
+export default function BookPage({ book, refetchBook }) {
   const navigate = useNavigate();
   const { goToBook: go } = useNav();
   const bookId = book._supabase?.id || book.id;
@@ -240,23 +240,10 @@ export default function BookPage({ book }) {
   // Live book data from Supabase
   const isUuid = typeof bookId === "string" && bookId.includes("-");
   const { lists: bookLists } = useBookLists(isUuid ? bookId : null);
-  const [liveBook, setLiveBook] = useState(null);
-  useEffect(() => {
-    if (!isUuid) return;
-    supabase.from("books").select("avg_rating, rating_count, description, cover_url, page_count, publisher").eq("id", bookId).single().then(({ data }) => {
-      if (data) setLiveBook(data);
-    });
-  }, [bookId, isUuid]);
-  const avgRating = liveBook?.avg_rating ?? book.r ?? 0;
-  const ratingCount = liveBook?.rating_count ?? book.rt ?? 0;
-  const bookDescription = liveBook?.description ?? book.description ?? null;
-  const displayBook = liveBook?.cover_url ? { ...book, c: liveBook.cover_url } : book;
-  const refetchLiveBook = () => {
-    if (!isUuid) return;
-    supabase.from("books").select("avg_rating, rating_count, description, cover_url, page_count, publisher").eq("id", bookId).single().then(({ data }) => {
-      if (data) setLiveBook(data);
-    });
-  };
+  const avgRating = book.r ?? 0;
+  const ratingCount = book.rt ?? 0;
+  const bookDescription = book.desc ?? null;
+  const displayBook = book;
 
   const [st, setSt] = useState(null);
   const [ur, setUr] = useState(0);
@@ -403,10 +390,7 @@ export default function BookPage({ book }) {
       setNoDate(false);
       dbSetStatus("read", { finished_at: now }, { book_title: book.t || book.title, book_author: book.a || book.authors, cover_url: book.c || book.cover_url });
     }
-    if (isUuid) {
-      const { data } = await supabase.from("books").select("avg_rating, rating_count").eq("id", bookId).single();
-      if (data) setLiveBook(data);
-    }
+    if (refetchBook) refetchBook();
   };
 
   const handlePublishReview = async () => {
@@ -475,14 +459,14 @@ export default function BookPage({ book }) {
         <EnrichModal
           bookId={bookId}
           initialDescription={bookDescription}
-          initialPages={book.p || book.page_count || liveBook?.page_count}
-          initialPublisher={liveBook?.publisher || book.publisher}
-          initialPubDate={book.y || book.publication_date}
-          initialCoverUrl={book.c || book.cover_url || liveBook?.cover_url}
+          initialPages={book.p || book._supabase?.page_count}
+          initialPublisher={book._supabase?.publisher}
+          initialPubDate={book.y || book._supabase?.publication_date}
+          initialCoverUrl={book.c}
           onClose={() => setShowEnrichModal(false)}
           onSaved={() => {
             setShowEnrichModal(false);
-            refetchLiveBook();
+            if (refetchBook) refetchBook();
             setEnrichToast(true);
             setTimeout(() => setEnrichToast(false), 3000);
           }}

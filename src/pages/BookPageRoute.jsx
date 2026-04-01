@@ -32,14 +32,14 @@ function BookSkeleton() {
 
 export default function BookPageRoute() {
   const { slug } = useParams();
-  const { book, loading, notFound } = useBookBySlug(slug);
+  const { book, loading, notFound, refetch } = useBookBySlug(slug);
 
   if (loading) return <BookSkeleton />;
   if (notFound || !book) return <NotFoundPage />;
 
   return (
     <div className="sk-fade">
-      <BookPage book={book} />
+      <BookPage book={book} refetchBook={refetch} />
     </div>
   );
 }
