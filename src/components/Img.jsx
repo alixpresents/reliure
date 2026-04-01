@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-export default function Img({ book, w, h, onClick, className = "" }) {
+export default function Img({ book, w, h, onClick, className = "", priority = false }) {
   const hasOverride = className.includes("w-full");
   const [imgFailed, setImgFailed] = useState(false);
   const src = book.c;
@@ -19,6 +19,7 @@ export default function Img({ book, w, h, onClick, className = "" }) {
         <img
           src={src}
           alt=""
+          loading={priority ? "eager" : "lazy"}
           className="w-full h-full object-cover block absolute inset-0"
           onLoad={e => { if (e.target.naturalWidth < 10 || e.target.naturalHeight < 10) setImgFailed(true); }}
           onError={() => setImgFailed(true)}
