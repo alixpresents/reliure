@@ -13,6 +13,7 @@ import { formatRelativeTime } from "../lib/formatTime";
 import Skeleton from "../components/Skeleton";
 import ContentMenu from "../components/ContentMenu";
 import Toast from "../components/Toast";
+import Tooltip from "../components/Tooltip";
 import { useToast } from "../hooks/useToast";
 
 function actionLabel(actionType, metadata) {
@@ -83,7 +84,9 @@ const FeedItem = memo(function FeedItem({
           <p className="text-[13px] leading-normal font-body m-0">
             <UserName user={it.users} className="text-[13px]" />
             {isTopContributor && (
-              <span title="Top Contributeur" className="inline-block align-middle ml-0.5" style={{ fontSize: 12, color: "#C9A84C" }}>★</span>
+              <Tooltip text={`Top Contributeur · ${new Date().toLocaleDateString("fr-FR", { month: "long", year: "numeric" })}`}>
+                <span className="inline-block align-middle ml-0.5" style={{ fontSize: 12, color: "#C9A84C", cursor: "default" }}>★</span>
+              </Tooltip>
             )}
             {" "}
             <span style={{ color: "var(--text-tertiary)" }}>{actionLabel(it.action_type, meta)}</span>
