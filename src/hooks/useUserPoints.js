@@ -17,10 +17,10 @@ export const LEVEL_NAMES = {
 async function fetchUserPoints(userId) {
   const { data } = await supabase
     .from("user_points")
-    .select("total_points, level")
+    .select("total_points, monthly_points, level")
     .eq("user_id", userId)
     .maybeSingle();
-  return data ?? { total_points: 0, level: 1 };
+  return data ?? { total_points: 0, monthly_points: 0, level: 1 };
 }
 
 async function fetchUserBadges(userId) {
@@ -55,6 +55,7 @@ export function useUserPoints(userId) {
 
   return {
     totalPoints: points.total_points,
+    monthlyPoints: points.monthly_points,
     level: points.level,
     levelName,
     badges,

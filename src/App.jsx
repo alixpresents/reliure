@@ -10,8 +10,10 @@ import { NavigationProvider } from "./lib/NavigationContext";
 import JoinBanner from "./components/JoinBanner";
 import OnboardingTooltip from "./components/OnboardingTooltip";
 import Toast from "./components/Toast";
+import BadgeToast from "./components/BadgeToast";
 import { useToast } from "./hooks/useToast";
 import { useTheme } from "./hooks/useTheme";
+import { useNewBadges } from "./hooks/useNewBadges";
 
 // Landing page — chargée immédiatement (route par défaut)
 import ExplorePage from "./pages/ExplorePage";
@@ -44,6 +46,7 @@ export default function App() {
   const [walkthroughActive, setWalkthroughActive] = useState(false);
   const { toast, showToast } = useToast();
   const { theme, toggleTheme } = useTheme();
+  const { badge: newBadge, dismiss: dismissBadge } = useNewBadges();
 
   useEffect(() => {
     console.log('[perf] App mounted at', Math.round(performance.now()), 'ms');
@@ -176,6 +179,7 @@ export default function App() {
         />
       )}
       {toast.visible && <Toast message={toast.message} />}
+      {isLoggedIn && <BadgeToast badge={newBadge} onDismiss={dismissBadge} />}
     </div>
   );
 }

@@ -23,8 +23,10 @@ import CreateListModal from "../components/CreateListModal";
 import Skeleton from "../components/Skeleton";
 import Toast from "../components/Toast";
 import RoleBadge from "../components/RoleBadge";
+import LevelBadge from "../components/LevelBadge";
 import { useToast } from "../hooks/useToast";
 import { useUserRole } from "../hooks/useUserRole";
+import { useUserPoints } from "../hooks/useUserPoints";
 
 function ReadingItem({ book, go, onFinish, initialPage = 0, statusId = null, isOwner = true }) {
   const [currentPage, setCurrentPage] = useState(initialPage);
@@ -381,6 +383,7 @@ export default function ProfilePage({ viewedProfile, initialTab }) {
   const profile = viewedProfile;
   const profileId = viewedProfile?.id;
   const { role } = useUserRole(profileId);
+  const { levelName, totalPoints, monthlyPoints, pinnedBadges } = useUserPoints(profileId);
 
   // Inline profile editing state
   const [editingName, setEditingName] = useState(false);
@@ -630,10 +633,11 @@ export default function ProfilePage({ viewedProfile, initialTab }) {
                 {isOwnProfile && <span className="text-[15px] select-none opacity-0 group-hover/name:opacity-100 transition-opacity duration-150" style={{ color: "var(--text-muted)" }}>✎</span>}
               </div>
             )}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <span className="text-xs font-body" style={{ color: "var(--text-tertiary)" }}>@{profile.username}</span>
               {role && <RoleBadge role={role} />}
             </div>
+            {totalPoints > 0 && <LevelBadge levelName={levelName} totalPoints={totalPoints} monthlyPoints={isOwnProfile ? monthlyPoints : 0} />}
           </div>
           <div className="flex gap-5 text-xs font-body w-full sm:w-auto mt-2 sm:mt-0" style={{ color: "var(--text-tertiary)" }}>
             {[[totalBooks, totalBooks < 2 ? "livre" : "livres"], [booksThisYear, "cette année"], [followers, followers < 2 ? "abonné" : "abonnés"], [followingCount, followingCount < 2 ? "abonnement" : "abonnements"]].map(([n, l]) => (
@@ -746,6 +750,37 @@ export default function ProfilePage({ viewedProfile, initialTab }) {
         onSwap={swapPositions}
         onUpdateNote={updateNote}
       />}
+
+      {/* Badges épinglés */}
+      {pinnedBadges.length > 0 && (
+        <div className="border-t border-border-light py-5">
+          <div className="flex items-center justify-between mb-3">
+            <Label>Badges</Label>
+            <Link
+              to={`/${profile.username}/badges`}
+              className="text-[11px] font-body hover:opacity-70 transition-opacity duration-150"
+              style={{ color: "var(--text-tertiary)" }}
+            >
+              Voir tous ›
+            </Link>
+          </div>
+          <div className="flex gap-4 flex-wrap">
+            {pinnedBadges.map(b => (
+              <div key={b.id} className="flex flex-col items-center gap-1" title={b.badge_definitions?.description}>
+                <div
+                  className="flex items-center justify-center rounded-full"
+                  style={{ width: 36, height: 36, backgroundColor: "var(--bg-elevated)", border: "1px solid var(--border-default)", fontSize: 18 }}
+                >
+                  {b.badge_definitions?.icon ?? "🏅"}
+                </div>
+                <span className="text-[10px] font-body text-center leading-tight max-w-[48px]" style={{ color: "var(--text-tertiary)" }}>
+                  {b.badge_definitions?.name}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* En cours */}
       <div className="border-t border-border-light py-6">
