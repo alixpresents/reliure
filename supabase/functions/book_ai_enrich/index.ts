@@ -1,10 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "https://reliure.vercel.app", // TODO: ajouter https://reliure.app quand le domaine custom sera configuré
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
-};
+import { getCorsHeaders } from "../_shared/cors.ts";
 
 // ---------------------------------------------------------------------------
 // A) Claude Haiku — métadonnées de base
@@ -198,7 +193,7 @@ function pick<T>(...values: (T | null | undefined)[]): T | null {
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: getCorsHeaders(req) });
   }
 
   try {
@@ -207,7 +202,7 @@ Deno.serve(async (req) => {
     if (!title) {
       return Response.json(
         { error: "title required" },
-        { status: 400, headers: corsHeaders },
+        { status: 400, headers: getCorsHeaders(req) },
       );
     }
 
@@ -254,12 +249,12 @@ Deno.serve(async (req) => {
       `[book_ai_enrich] "${title}" → confidence:${confidence} cover:${!!coverUrl} isbn:${bestIsbn}`,
     );
 
-    return Response.json(result, { headers: corsHeaders });
+    return Response.json(result, { headers: getCorsHeaders(req) });
   } catch (err) {
     console.error("book_ai_enrich error:", err);
     return Response.json(
       { error: (err as Error).message },
-      { status: 500, headers: corsHeaders },
+      { status: 500, headers: getCorsHeaders(req) },
     );
   }
 });

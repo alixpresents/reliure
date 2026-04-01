@@ -1,10 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "https://reliure.vercel.app", // TODO: ajouter https://reliure.app quand le domaine custom sera configuré
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
-};
+import { getCorsHeaders } from "../_shared/cors.ts";
 
 const SYSTEM_PROMPT = `Tu es le moteur de recherche intelligent de Reliure, une app de lecture francophone.
 
@@ -59,7 +54,7 @@ function normalizeQuery(q: string): string {
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: getCorsHeaders(req) });
   }
 
   try {
@@ -68,7 +63,7 @@ Deno.serve(async (req) => {
     if (!query || query.length < 2) {
       return Response.json(
         { books: [], ghost: null, interpreted_as: null },
-        { headers: corsHeaders },
+        { headers: getCorsHeaders(req) },
       );
     }
 
@@ -96,7 +91,7 @@ Deno.serve(async (req) => {
         .eq("query_normalized", normalizedQuery)
         .then(() => {});
 
-      return Response.json(cached.response, { headers: corsHeaders });
+      return Response.json(cached.response, { headers: getCorsHeaders(req) });
     }
 
     // Call Claude Haiku
@@ -105,7 +100,7 @@ Deno.serve(async (req) => {
       console.error("smart-search: ANTHROPIC_API_KEY not set");
       return Response.json(
         { books: [], ghost: null, interpreted_as: null },
-        { headers: corsHeaders },
+        { headers: getCorsHeaders(req) },
       );
     }
 
@@ -132,7 +127,7 @@ Deno.serve(async (req) => {
       console.error("smart-search: Anthropic API error", aiRes.status);
       return Response.json(
         { books: [], ghost: null, interpreted_as: null },
-        { headers: corsHeaders },
+        { headers: getCorsHeaders(req) },
       );
     }
 
@@ -158,13 +153,13 @@ Deno.serve(async (req) => {
       ).toISOString(),
     });
 
-    return Response.json(result, { headers: corsHeaders });
+    return Response.json(result, { headers: getCorsHeaders(req) });
   } catch (error) {
     console.error("smart-search error:", error);
     // Never break search because AI is down
     return Response.json(
       { books: [], ghost: null, interpreted_as: null },
-      { status: 200, headers: corsHeaders },
+      { status: 200, headers: getCorsHeaders(req) },
     );
   }
 });
