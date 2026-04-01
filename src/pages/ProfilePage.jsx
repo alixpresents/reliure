@@ -298,13 +298,14 @@ function FavoritesSection({ favorites, isOwner, go, onAdd, onRemove, onSwap, onU
   const handleDragOver = (e, pos) => {
     e.preventDefault();
     e.dataTransfer.dropEffect = "move";
+    console.log("dragover", pos);
     if (pos !== dragOverRef.current) setDragOver(pos);
   };
   const handleDrop = (e, pos) => {
     e.preventDefault();
-    // Read from dataTransfer — survives any dragend/ref timing issue
     const raw = e.dataTransfer.getData("text/plain");
     const from = raw ? parseInt(raw, 10) : dragFromRef.current;
+    console.log("drop", { from, to: pos });
     if (from !== null && !isNaN(from) && from !== pos) onSwap(from, pos);
     setDragFrom(null);
     setDragOver(null);
@@ -324,16 +325,20 @@ function FavoritesSection({ favorites, isOwner, go, onAdd, onRemove, onSwap, onU
 
           if (fav?.book) {
             return (
-              <div key={pos} className="group/fav" data-fav-pos={pos}>
+              <div
+                key={pos}
+                className="group/fav"
+                data-fav-pos={pos}
+                onDragOver={isOwner ? e => handleDragOver(e, pos) : undefined}
+                onDrop={isOwner ? e => handleDrop(e, pos) : undefined}
+                onDragLeave={isOwner ? () => setDragOver(null) : undefined}
+                onTouchStart={isOwner ? e => handleTouchStart(e, pos) : undefined}
+                onTouchMove={isOwner ? handleTouchMoveCancel : undefined}
+                onTouchEnd={isOwner ? handleTouchEnd : undefined}
+              >
                 <div
                   className={`relative ${poppingPos === pos ? "animate-confirm-pop" : ""}`}
                   onAnimationEnd={() => setPoppingPos(null)}
-                  onDragOver={isOwner ? e => handleDragOver(e, pos) : undefined}
-                  onDrop={isOwner ? e => handleDrop(e, pos) : undefined}
-                  onDragLeave={isOwner ? () => setDragOver(null) : undefined}
-                  onTouchStart={isOwner ? e => handleTouchStart(e, pos) : undefined}
-                  onTouchMove={isOwner ? handleTouchMoveCancel : undefined}
-                  onTouchEnd={isOwner ? handleTouchEnd : undefined}
                   style={{
                     opacity: isDragging ? 0.4 : 1,
                     transform: isDragging ? "scale(0.95)" : "scale(1)",
