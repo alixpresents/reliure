@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { useSearchParams } from "react-router-dom";
 import { B } from "../data";
 import Img from "../components/Img";
 import InteractiveStars from "../components/InteractiveStars";
@@ -81,10 +82,16 @@ function StepWelcome({ onNext }) {
 }
 
 /* ─── Step 1: Username ─── */
-function StepUsername({ username, setUsername, bio, setBio, onNext, error: externalError, userEmail }) {
+function StepUsername({ username, setUsername, bio, setBio, onNext, error: externalError, userEmail, usernameParam }) {
   const [status, setStatus] = useState(null); // null | 'available' | 'reserved_for_you' | 'reserved' | 'taken' | 'invalid'
   const [saving, setSaving] = useState(false);
   const timer = useRef(null);
+
+  // Pre-fill from ?username= query param — waits for email (needed for reserved_for_you)
+  useEffect(() => {
+    if (!usernameParam || !userEmail) return;
+    setUsername(usernameParam.toLowerCase().replace(/[^a-z0-9_]/g, ""));
+  }, [usernameParam, userEmail]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     clearTimeout(timer.current);
@@ -337,6 +344,8 @@ function StepBooks({ picks, setPicks, onFinish, onSkip }) {
 /* ─── Main OnboardingPage ─── */
 export default function OnboardingPage({ onComplete }) {
   const { user } = useAuth();
+  const [searchParams] = useSearchParams();
+  const usernameParam = searchParams.get("username") || "";
   const [step, setStep] = useState(0); // 0=welcome, 1=username, 2=books
   const [username, setUsername] = useState("");
   const [bio, setBio] = useState("");
@@ -442,6 +451,7 @@ export default function OnboardingPage({ onComplete }) {
               onNext={handleUsernameNext}
               error={step1Error}
               userEmail={user?.email}
+              usernameParam={usernameParam}
             />
           )}
           {step === 2 && (
