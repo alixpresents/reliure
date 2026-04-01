@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "../lib/supabase";
 
 function mapBook(data) {
@@ -18,30 +18,24 @@ function mapBook(data) {
   };
 }
 
+async function fetchBook(slug) {
+  const _t0 = performance.now();
+  let { data, error } = await supabase.from("books").select("*").eq("slug", slug).single();
+  if (error || !data) {
+    const res = await supabase.from("books").select("*").eq("id", slug).single();
+    data = res.data;
+  }
+  console.log('[perf] useBookBySlug:', Math.round(performance.now() - _t0), 'ms');
+  if (!data) throw new Error("not_found");
+  return mapBook(data);
+}
+
 export function useBookBySlug(slug) {
-  const [book, setBook] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [notFound, setNotFound] = useState(false);
+  const { data: book = null, isLoading: loading, isError: notFound } = useQuery({
+    queryKey: ["book", slug],
+    queryFn: () => fetchBook(slug),
+    enabled: !!slug,
+  });
 
-  const fetchBook = useCallback(async () => {
-    if (!slug) { setLoading(false); setNotFound(true); return; }
-    const _t0 = performance.now();
-    // Try slug first, then fallback to ID
-    let { data, error } = await supabase.from("books").select("*").eq("slug", slug).single();
-    if (error || !data) {
-      const res = await supabase.from("books").select("*").eq("id", slug).single();
-      data = res.data;
-    }
-    if (data) {
-      setBook(mapBook(data));
-    } else {
-      setNotFound(true);
-    }
-    console.log('[perf] useBookBySlug:', Math.round(performance.now() - _t0), 'ms');
-    setLoading(false);
-  }, [slug]);
-
-  useEffect(() => { fetchBook(); }, [fetchBook]);
-
-  return { book, loading, notFound, refetch: fetchBook };
+  return { book, loading, notFound };
 }

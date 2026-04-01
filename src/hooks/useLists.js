@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../lib/AuthContext";
 import { slugify, generateUniqueSlug } from "../utils/slugify";
@@ -7,29 +8,30 @@ import { logActivity } from "./useActivity";
 export function useMyLists(profileUserId) {
   const { user } = useAuth();
   const targetId = profileUserId || user?.id;
-  // Visitors can only see public lists; owners see all their lists
   const isOwner = !!user && user.id === targetId;
+  const queryClient = useQueryClient();
 
-  const [lists, setLists] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { data: lists = [], isLoading: loading } = useQuery({
+    queryKey: ["myLists", targetId],
+    queryFn: async () => {
+      let query = supabase
+        .from("lists")
+        .select("id, title, description, is_public, is_ranked, slug, likes_count, created_at, list_items(id, book_id, position, note, books(id, title, authors, cover_url, slug))")
+        .eq("user_id", targetId)
+        .order("created_at", { ascending: false });
+      if (!isOwner) query = query.eq("is_public", true);
+      const { data } = await query.limit(30);
+      return data ?? [];
+    },
+    enabled: !!targetId,
+  });
 
-  const fetch = useCallback(async () => {
-    if (!targetId) { setLists([]); setLoading(false); return; }
-    let query = supabase
-      .from("lists")
-      .select("id, title, description, is_public, is_ranked, slug, likes_count, created_at, list_items(id, book_id, position, note, books(id, title, authors, cover_url, slug))")
-      .eq("user_id", targetId)
-      .order("created_at", { ascending: false });
-    // Visitors only see public lists (RLS also enforces this, but be explicit)
-    if (!isOwner) query = query.eq("is_public", true);
-    const { data } = await query.limit(30);
-    setLists(data ?? []);
-    setLoading(false);
-  }, [targetId, isOwner]);
+  const refetch = useCallback(
+    () => queryClient.invalidateQueries({ queryKey: ["myLists", targetId] }),
+    [queryClient, targetId]
+  );
 
-  useEffect(() => { fetch(); }, [fetch]);
-
-  return { lists, loading, refetch: fetch };
+  return { lists, loading, refetch };
 }
 
 export function useListBySlug(slugOrId) {
@@ -97,7 +99,6 @@ export function useListBySlug(slugOrId) {
   const updateList = async (fields) => {
     if (!list) return;
     await supabase.from("lists").update(fields).eq("id", list.id);
-    // Log activity when a list is made public for the first time
     if (fields.is_public === true && !list.is_public) {
       logActivity(list.user_id, "list", list.id, "list", { list_title: list.title, list_slug: list.slug });
     }

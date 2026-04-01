@@ -28,6 +28,7 @@ import { useBookLists } from "../hooks/useBookLists";
 import ContentMenu from "../components/ContentMenu";
 import Toast from "../components/Toast";
 import { useToast } from "../hooks/useToast";
+import { useQueryClient } from "@tanstack/react-query";
 
 function LoginModal({ book, onClose, onNavigate }) {
   useEffect(() => {
@@ -283,8 +284,9 @@ const BookQuoteItem = memo(function BookQuoteItem({ q, liked, initialLiked, togg
   );
 });
 
-export default function BookPage({ book, refetchBook }) {
+export default function BookPage({ book }) {
   const navigate = useNavigate();
+  const bookQueryClient = useQueryClient();
   const { goToBook: go } = useNav();
   const bookId = book._supabase?.id || book.id;
   const { status: dbStatus, loading: statusLoading, alreadyRead, setStatus: dbSetStatus, removeStatus: dbRemoveStatus, updateFields: dbUpdateFields } = useReadingStatus(bookId);
@@ -452,7 +454,8 @@ export default function BookPage({ book, refetchBook }) {
       setNoDate(false);
       dbSetStatus("read", { finished_at: now }, { book_title: book.t || book.title, book_author: book.a || book.authors, cover_url: book.c || book.cover_url });
     }
-    if (refetchBook) refetchBook();
+    bookQueryClient.invalidateQueries({ queryKey: ["book", book.slug || book._supabase?.slug] });
+    bookQueryClient.invalidateQueries({ queryKey: ["profileData"] });
   };
 
   const handlePublishReview = async () => {
@@ -528,7 +531,7 @@ export default function BookPage({ book, refetchBook }) {
           onClose={() => setShowEnrichModal(false)}
           onSaved={() => {
             setShowEnrichModal(false);
-            if (refetchBook) refetchBook();
+            bookQueryClient.invalidateQueries({ queryKey: ["book", book.slug || book._supabase?.slug] });
             setEnrichToast(true);
             setTimeout(() => setEnrichToast(false), 3000);
           }}
