@@ -216,12 +216,21 @@ function FavNote({ note, isOwner, onSave }) {
 }
 
 function FavoritesSection({ favorites, isOwner, go, onAdd, onRemove, onSwap, onUpdateNote }) {
-  const [dragFrom, setDragFrom] = useState(null);
+  // dragFrom/dragOver: both state (for renders) and ref (for closures/passive listeners)
+  const [dragFrom, _setDragFrom] = useState(null);
+  const dragFromRef = useRef(null);
+  const setDragFrom = (v) => { dragFromRef.current = v; _setDragFrom(v); };
+
   const [dragOver, _setDragOver] = useState(null);
   const dragOverRef = useRef(null);
   const setDragOver = (v) => { dragOverRef.current = v; _setDragOver(v); };
+
   const [poppingPos, setPoppingPos] = useState(null);
   const prevFavsRef = useRef(favorites);
+  const gridRef = useRef(null);
+  const longPressTimer = useRef(null);
+  const touchOrigin = useRef(null);
+
   useEffect(() => {
     const prev = prevFavsRef.current;
     const newPos = [1, 2, 3, 4].find(pos => {
@@ -233,7 +242,52 @@ function FavoritesSection({ favorites, isOwner, go, onAdd, onRemove, onSwap, onU
     prevFavsRef.current = favorites;
   }, [favorites]);
 
-  // HTML5 drag (triggered from handle only)
+  // Touch drag: passive:false touchmove on grid when drag is active (prevents scroll)
+  useEffect(() => {
+    if (dragFrom === null) return;
+    const grid = gridRef.current;
+    if (!grid) return;
+    const onMove = (e) => {
+      e.preventDefault();
+      const touch = e.touches[0];
+      if (!touch) return;
+      const el = document.elementFromPoint(touch.clientX, touch.clientY);
+      const slot = el?.closest("[data-fav-pos]");
+      const p = slot ? parseInt(slot.dataset.favPos, 10) : null;
+      if (p !== dragOverRef.current) setDragOver(p !== dragFromRef.current ? p : null);
+    };
+    grid.addEventListener("touchmove", onMove, { passive: false });
+    return () => grid.removeEventListener("touchmove", onMove);
+  }, [dragFrom]);
+
+  const handleTouchStart = (e, pos) => {
+    touchOrigin.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+    longPressTimer.current = setTimeout(() => {
+      setDragFrom(pos);
+      navigator.vibrate?.(50);
+    }, 400);
+  };
+  const handleTouchMoveCancel = (e) => {
+    if (dragFromRef.current !== null) return; // drag active — handled by passive listener
+    const t = e.touches[0];
+    const o = touchOrigin.current;
+    if (!o) return;
+    if (Math.abs(t.clientX - o.x) > 8 || Math.abs(t.clientY - o.y) > 8) {
+      clearTimeout(longPressTimer.current);
+    }
+  };
+  const handleTouchEnd = () => {
+    clearTimeout(longPressTimer.current);
+    const from = dragFromRef.current;
+    const to = dragOverRef.current;
+    if (from !== null) {
+      if (to !== null && to !== from) onSwap(from, to);
+      setDragFrom(null);
+      setDragOver(null);
+    }
+  };
+
+  // HTML5 drag (desktop, triggered from grip handle only)
   const handleDragStart = (e, pos) => {
     setDragFrom(pos);
     e.dataTransfer.effectAllowed = "move";
@@ -242,11 +296,11 @@ function FavoritesSection({ favorites, isOwner, go, onAdd, onRemove, onSwap, onU
   const handleDragOver = (e, pos) => {
     e.preventDefault();
     e.dataTransfer.dropEffect = "move";
-    if (pos !== dragOver) setDragOver(pos);
+    if (pos !== dragOverRef.current) setDragOver(pos);
   };
   const handleDrop = (e, pos) => {
     e.preventDefault();
-    if (dragFrom !== null && dragFrom !== pos) onSwap(dragFrom, pos);
+    if (dragFromRef.current !== null && dragFromRef.current !== pos) onSwap(dragFromRef.current, pos);
     setDragFrom(null);
     setDragOver(null);
   };
@@ -257,7 +311,7 @@ function FavoritesSection({ favorites, isOwner, go, onAdd, onRemove, onSwap, onU
       <div className="mb-3">
         <div className="text-[10px] font-semibold uppercase tracking-[2px] font-body" style={{ color: "var(--text-tertiary)" }}>Quatre favoris</div>
       </div>
-      <div className="grid grid-cols-4 gap-4">
+      <div ref={gridRef} className="grid grid-cols-4 gap-4">
         {[1, 2, 3, 4].map(pos => {
           const fav = favorites.find(f => f.position === pos);
           const isDragging = dragFrom === pos;
@@ -272,18 +326,23 @@ function FavoritesSection({ favorites, isOwner, go, onAdd, onRemove, onSwap, onU
                   onDragOver={isOwner ? e => handleDragOver(e, pos) : undefined}
                   onDrop={isOwner ? e => handleDrop(e, pos) : undefined}
                   onDragLeave={isOwner ? () => setDragOver(null) : undefined}
+                  onTouchStart={isOwner ? e => handleTouchStart(e, pos) : undefined}
+                  onTouchMove={isOwner ? handleTouchMoveCancel : undefined}
+                  onTouchEnd={isOwner ? handleTouchEnd : undefined}
                   style={{
                     opacity: isDragging ? 0.4 : 1,
                     transform: isDragging ? "scale(0.95)" : "scale(1)",
                     boxShadow: isDragging ? "0 8px 24px rgba(0,0,0,0.15)" : "none",
                     borderRadius: 3,
                     transition: "opacity 150ms, box-shadow 150ms, transform 150ms",
+                    userSelect: "none",
+                    WebkitUserSelect: "none",
                   }}
                 >
                   <Img
                     book={fav.book}
                     w={999} h={999}
-                    onClick={() => go(fav.book)}
+                    onClick={() => { if (dragFrom === null) go(fav.book); }}
                     className="w-full h-auto aspect-[2/3]"
                   />
 
