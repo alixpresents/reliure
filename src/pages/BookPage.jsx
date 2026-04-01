@@ -347,7 +347,7 @@ export default function BookPage({ book }) {
         .neq("id", bookId)
         .order("rating_count", { ascending: false })
         .limit(6);
-      if (genres?.length) query = query.contains("genres", [genres[0]]);
+      if (genres?.length) query = query.filter("genres", "cs", `["${genres[0]}"]`);
       const { data } = await query;
       if (data?.length) setSimilarBooks(data);
     })();

@@ -106,7 +106,7 @@ export function useUserRating(bookId) {
       .select("rating")
       .eq("user_id", user.id)
       .eq("book_id", bookId)
-      .single()
+      .maybeSingle()
       .then(({ data }) => {
         setRatingState(data?.rating ?? 0);
         setLoading(false);
