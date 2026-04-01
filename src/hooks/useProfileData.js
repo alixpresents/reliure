@@ -26,45 +26,49 @@ export function useProfileData(profileUserId) {
     const yearStart = new Date(currentYear, 0, 1);
     const yearEnd = new Date(currentYear + 1, 0, 1);
 
-    // All statuses with books (for library view — all statuses)
-    const { data: allStatuses } = await supabase
-      .from("reading_status")
-      .select("*, books(id, title, authors, cover_url, slug, publication_date, page_count, avg_rating)")
-      .eq("user_id", targetId)
-      .order("created_at", { ascending: false })
-      .limit(500);
+    const [statusesRes, diaryRes, readRes, reviewsRes] = await Promise.allSettled([
+      // All statuses with books (for library view — all statuses)
+      supabase
+        .from("reading_status")
+        .select("*, books(id, title, authors, cover_url, slug, publication_date, page_count, avg_rating)")
+        .eq("user_id", targetId)
+        .order("created_at", { ascending: false })
+        .limit(500),
+      // Diary: read books WITH date only (for journal/diary calendar)
+      supabase
+        .from("reading_status")
+        .select("*, books(id, title, authors, cover_url, slug, publication_date, page_count, avg_rating)")
+        .eq("user_id", targetId)
+        .eq("status", "read")
+        .not("finished_at", "is", null)
+        .order("finished_at", { ascending: false })
+        .limit(500),
+      // All read books: with OR without date (for stats, bilan, topRated)
+      supabase
+        .from("reading_status")
+        .select("*, books(id, title, authors, cover_url, slug, publication_date, page_count, avg_rating)")
+        .eq("user_id", targetId)
+        .eq("status", "read")
+        .order("created_at", { ascending: false })
+        .limit(500),
+      // All user reviews
+      supabase
+        .from("reviews")
+        .select("id, book_id, rating, created_at")
+        .eq("user_id", targetId)
+        .order("created_at", { ascending: false })
+        .limit(200),
+    ]);
 
-    // Diary: read books WITH date only (for journal/diary calendar)
-    const { data: diaryBooks } = await supabase
-      .from("reading_status")
-      .select("*, books(id, title, authors, cover_url, slug, publication_date, page_count, avg_rating)")
-      .eq("user_id", targetId)
-      .eq("status", "read")
-      .not("finished_at", "is", null)
-      .order("finished_at", { ascending: false })
-      .limit(500);
+    if (statusesRes.status === "rejected") console.error("[useProfileData] allStatuses:", statusesRes.reason);
+    if (diaryRes.status === "rejected") console.error("[useProfileData] diaryBooks:", diaryRes.reason);
+    if (readRes.status === "rejected") console.error("[useProfileData] allReadBooks:", readRes.reason);
+    if (reviewsRes.status === "rejected") console.error("[useProfileData] reviews:", reviewsRes.reason);
 
-    // All read books: with OR without date (for stats, bilan, topRated)
-    const { data: allReadBooks } = await supabase
-      .from("reading_status")
-      .select("*, books(id, title, authors, cover_url, slug, publication_date, page_count, avg_rating)")
-      .eq("user_id", targetId)
-      .eq("status", "read")
-      .order("created_at", { ascending: false })
-      .limit(500);
-
-    // All user reviews
-    const { data: reviews } = await supabase
-      .from("reviews")
-      .select("id, book_id, rating, created_at")
-      .eq("user_id", targetId)
-      .order("created_at", { ascending: false })
-      .limit(200);
-
-    const statuses = allStatuses || [];
-    const diary = diaryBooks || [];
-    const allRead = allReadBooks || [];
-    const revs = reviews || [];
+    const statuses = statusesRes.status === "fulfilled" ? (statusesRes.value.data || []) : [];
+    const diary = diaryRes.status === "fulfilled" ? (diaryRes.value.data || []) : [];
+    const allRead = readRes.status === "fulfilled" ? (readRes.value.data || []) : [];
+    const revs = reviewsRes.status === "fulfilled" ? (reviewsRes.value.data || []) : [];
 
     // Stats: count ALL read books, not just those with dates
     const total = statuses.length;
