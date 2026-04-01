@@ -1,34 +1,37 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, lazy, Suspense } from "react";
 import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
 import { FONT_URL } from "./data";
 import { useAuth } from "./lib/AuthContext";
 import { useProfile } from "./hooks/useProfile";
 import Header from "./components/Header";
 import AnnouncementBanner from "./components/AnnouncementBanner";
-
 import ScrollToTop from "./components/ScrollToTop";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { NavigationProvider } from "./lib/NavigationContext";
-import LoginPage from "./pages/LoginPage";
-import OnboardingPage from "./pages/OnboardingPage";
-import ExplorePage from "./pages/ExplorePage";
-import FeedPage from "./pages/FeedPage";
-import CitationsPage from "./pages/CitationsPage";
-import JournalPage from "./pages/JournalPage";
-import ArticlePage from "./pages/ArticlePage";
-import ChallengesPage from "./pages/ChallengesPage";
-import BookPageRoute from "./pages/BookPageRoute";
-import ProfilePageRoute from "./pages/ProfilePageRoute";
-import ListPage from "./pages/ListPage";
-import TagPage from "./pages/TagPage";
-import BackfillPage from "./pages/BackfillPage";
-import SettingsPage from "./pages/SettingsPage";
-import NotFoundPage from "./pages/NotFoundPage";
 import JoinBanner from "./components/JoinBanner";
 import OnboardingTooltip from "./components/OnboardingTooltip";
 import Toast from "./components/Toast";
 import { useToast } from "./hooks/useToast";
 import { useTheme } from "./hooks/useTheme";
+
+// Landing page — chargée immédiatement (route par défaut)
+import ExplorePage from "./pages/ExplorePage";
+
+// Pages lazy-loadées — chargées à la demande
+const BookPageRoute = lazy(() => import("./pages/BookPageRoute"));
+const ProfilePageRoute = lazy(() => import("./pages/ProfilePageRoute"));
+const FeedPage = lazy(() => import("./pages/FeedPage"));
+const CitationsPage = lazy(() => import("./pages/CitationsPage"));
+const ListPage = lazy(() => import("./pages/ListPage"));
+const TagPage = lazy(() => import("./pages/TagPage"));
+const BackfillPage = lazy(() => import("./pages/BackfillPage"));
+const SettingsPage = lazy(() => import("./pages/SettingsPage"));
+const ChallengesPage = lazy(() => import("./pages/ChallengesPage"));
+const JournalPage = lazy(() => import("./pages/JournalPage"));
+const ArticlePage = lazy(() => import("./pages/ArticlePage"));
+const LoginPage = lazy(() => import("./pages/LoginPage"));
+const OnboardingPage = lazy(() => import("./pages/OnboardingPage"));
+const NotFoundPage = lazy(() => import("./pages/NotFoundPage"));
 
 export default function App() {
   const { user, loading: authLoading } = useAuth();
@@ -99,11 +102,13 @@ export default function App() {
     return (
       <div className="min-h-screen font-body" style={{ backgroundColor: "var(--bg-primary)", color: "var(--text-primary)" }}>
         <link href={FONT_URL} rel="stylesheet" />
-        <OnboardingPage onComplete={(uname) => {
-          refetch();
-          navigate(uname ? `/${uname}` : "/explorer");
-          setWalkthroughActive(true);
-        }} />
+        <Suspense fallback={null}>
+          <OnboardingPage onComplete={(uname) => {
+            refetch();
+            navigate(uname ? `/${uname}` : "/explorer");
+            setWalkthroughActive(true);
+          }} />
+        </Suspense>
       </div>
     );
   }
@@ -138,25 +143,27 @@ export default function App() {
       />
       <NavigationProvider openSearchFor={openSearchFor}>
       <div className={`max-w-[760px] mx-auto px-4 sm:px-6 ${isLoggedIn ? "pb-20" : "pb-32"}`}>
-        <Routes>
-          <Route path="/" element={<Navigate to="/explorer" replace />} />
-          <Route path="/explorer" element={<ExplorePage />} />
-          <Route path="/explorer/theme/:tag" element={<TagPage />} />
-          <Route path="/citations" element={<CitationsPage />} />
-          <Route path="/fil" element={<ProtectedRoute><FeedPage /></ProtectedRoute>} />
-          <Route path="/defis" element={<ChallengesPage />} />
-          <Route path="/la-revue" element={<JournalPage />} />
-          <Route path="/la-revue/:slug" element={<ArticlePage />} />
-          <Route path="/livre/:slug" element={<BookPageRoute />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/parametres" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
-          <Route path="/backfill" element={<ProtectedRoute><BackfillPage /></ProtectedRoute>} />
-          {/* Profile routes — MUST be after all global routes */}
-          <Route path="/:username/listes/:slug" element={<ListPage />} />
-          <Route path="/:username" element={<ProfilePageRoute />} />
-          <Route path="/:username/:tab" element={<ProfilePageRoute />} />
-          <Route path="*" element={<NotFoundPage />} />
-        </Routes>
+        <Suspense fallback={null}>
+          <Routes>
+            <Route path="/" element={<Navigate to="/explorer" replace />} />
+            <Route path="/explorer" element={<ExplorePage />} />
+            <Route path="/explorer/theme/:tag" element={<TagPage />} />
+            <Route path="/citations" element={<CitationsPage />} />
+            <Route path="/fil" element={<ProtectedRoute><FeedPage /></ProtectedRoute>} />
+            <Route path="/defis" element={<ChallengesPage />} />
+            <Route path="/la-revue" element={<JournalPage />} />
+            <Route path="/la-revue/:slug" element={<ArticlePage />} />
+            <Route path="/livre/:slug" element={<BookPageRoute />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/parametres" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
+            <Route path="/backfill" element={<ProtectedRoute><BackfillPage /></ProtectedRoute>} />
+            {/* Profile routes — MUST be after all global routes */}
+            <Route path="/:username/listes/:slug" element={<ListPage />} />
+            <Route path="/:username" element={<ProfilePageRoute />} />
+            <Route path="/:username/:tab" element={<ProfilePageRoute />} />
+            <Route path="*" element={<NotFoundPage />} />
+          </Routes>
+        </Suspense>
       </div>
       </NavigationProvider>
       {!isLoggedIn && <JoinBanner />}
