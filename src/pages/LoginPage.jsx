@@ -59,7 +59,7 @@ export default function LoginPage() {
       <div className="w-full max-w-[400px]">
         {/* Logo */}
         <div className="flex items-center justify-center gap-1.5 mb-8">
-          <span className="text-[20px] font-bold tracking-tight font-body">reliure</span>
+          <span className="text-[20px] font-bold tracking-tight font-body" style={{ color: "var(--text-primary)" }}>reliure</span>
           <span className="text-[8px] font-semibold rounded-[3px] px-[5px] py-[2px] font-body" style={{ backgroundColor: "var(--text-primary)", color: "var(--bg-primary)" }}>
             BETA
           </span>

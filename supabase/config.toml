@@ -1,0 +1,5 @@
+[functions.book_ai_enrich]
+verify_jwt = true
+
+[functions.find_cover]
+verify_jwt = true

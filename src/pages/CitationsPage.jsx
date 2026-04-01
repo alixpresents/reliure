@@ -4,6 +4,7 @@ import Img from "../components/Img";
 import Heading from "../components/Heading";
 import LikeButton from "../components/LikeButton";
 import UserName from "../components/UserName";
+import { Link } from "react-router-dom";
 import { useNav } from "../lib/NavigationContext";
 import { useCommunityQuotes, useMyQuotes } from "../hooks/useQuotes";
 import { useLikes } from "../hooks/useLikes";
@@ -270,9 +271,21 @@ export default function CitationsPage() {
                 <ContentMenu type="quote" item={q} onDelete={() => refetch()} onEdit={() => refetch()} />
               </div>
               <div className="flex items-center gap-3">
-                {bookObj && <Img book={bookObj} w={36} h={52} onClick={() => go(bookObj)} />}
+                {bookObj && (
+                  <Link to={`/livre/${bookObj.slug || bookObj.id}`}>
+                    <Img book={bookObj} w={36} h={52} />
+                  </Link>
+                )}
                 <div className="flex-1">
-                  {bookObj && <div className="text-[13px] font-medium font-body">{bookObj.t}</div>}
+                  {bookObj && (
+                    <Link
+                      to={`/livre/${bookObj.slug || bookObj.id}`}
+                      className="text-[13px] font-medium font-body hover:underline"
+                      style={{ color: "var(--text-primary)", textDecoration: "none" }}
+                    >
+                      {bookObj.t}
+                    </Link>
+                  )}
                   {bookObj && <div className="text-xs font-body" style={{ color: "var(--text-tertiary)" }}>{bookObj.a}</div>}
                 </div>
                 <div className="text-right">
@@ -290,9 +303,17 @@ export default function CitationsPage() {
               « {q.txt} »
             </div>
             <div className="flex items-center gap-3">
-              <Img book={q.b} w={36} h={52} onClick={() => go(q.b)} />
+              <Link to={`/livre/${q.b.slug || q.b.id}`}>
+                <Img book={q.b} w={36} h={52} />
+              </Link>
               <div className="flex-1">
-                <div className="text-[13px] font-medium font-body">{q.b.t}</div>
+                <Link
+                  to={`/livre/${q.b.slug || q.b.id}`}
+                  className="text-[13px] font-medium font-body hover:underline"
+                  style={{ color: "var(--text-primary)", textDecoration: "none" }}
+                >
+                  {q.b.t}
+                </Link>
                 <div className="text-xs font-body" style={{ color: "var(--text-tertiary)" }}>{q.b.a}</div>
               </div>
               <div className="text-right">

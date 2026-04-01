@@ -55,7 +55,7 @@ function StepWelcome({ onNext }) {
   return (
     <div className="text-center">
       <div className="flex items-center justify-center gap-1.5 mb-10">
-        <span className="text-[28px] font-bold tracking-tight font-body">reliure</span>
+        <span className="text-[28px] font-bold tracking-tight font-body" style={{ color: "var(--text-primary)" }}>reliure</span>
         <span className="text-[9px] font-semibold rounded-[3px] px-[5px] py-[2px] font-body" style={{ backgroundColor: "var(--text-primary)", color: "var(--bg-primary)" }}>
           BETA
         </span>
@@ -413,7 +413,7 @@ export default function OnboardingPage({ onComplete }) {
         {/* Logo — hidden on welcome (it has its own) */}
         {step > 0 && (
           <div className="flex items-center justify-center gap-1.5 mb-8">
-            <span className="text-[20px] font-bold tracking-tight font-body">reliure</span>
+            <span className="text-[20px] font-bold tracking-tight font-body" style={{ color: "var(--text-primary)" }}>reliure</span>
             <span className="text-[8px] font-semibold rounded-[3px] px-[5px] py-[2px] font-body" style={{ backgroundColor: "var(--text-primary)", color: "var(--bg-primary)" }}>
               BETA
             </span>

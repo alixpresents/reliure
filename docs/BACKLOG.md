@@ -467,7 +467,7 @@ Actuellement : une critique par livre par utilisateur (upsert sur `user_id` + `b
 
 ### Architecture DB-first (implémentée)
 
-La base locale (3700+ livres) est la source primaire. Google Books sert uniquement à la découverte de nouveaux livres.
+La base locale (3830+ livres) est la source primaire. Google Books sert uniquement à la découverte de nouveaux livres.
 
 **`searchBooks(query)`** lance en parallèle :
 1. **RPC `search_books_v2`** (Supabase) — gère apostrophes françaises, accents, matching titre + auteurs, tri par `rating_count DESC`. Résultats affichés en premier, jamais supprimés.
@@ -1370,4 +1370,77 @@ Zéro hex hardcodé dans l'ensemble des composants et pages. Tous les fichiers u
 
 ---
 
-*Dernière mise à jour : 31 mars 2026*
+## Enrichissement proactif de la base locale (Agent 5)
+
+**Statut :** ✅ Fait — 93 livres importés via BnF+OL, 0 appel Google (mars 2026)
+**Portée :** Scripts batch dans `scripts/`, rapports dans `reports/`
+
+### Contexte
+
+La base locale (~3737 livres) est la source primaire de recherche. Plus elle est complète, moins on dépend du quota Google Books (1000 req/jour). L'objectif : identifier les livres manquants les plus recherchés et les pré-importer.
+
+### Pipeline réalisé
+
+1. **Identification** (`scripts/identify-missing-books.mjs`) : liste curatée de ~200 livres FR incontournables (classiques, Goncourt, francophonie, mangas, essais) + extraction des queries `search_cache` sans résultat DB. Résultat : 118 livres manquants.
+2. **Validation ISBN** (`scripts/validate-isbn.mjs`) : vérification de chaque ISBN via checksum + Open Library + BnF SRU. Leçon critique : 88% des ISBN générés par LLM étaient hallucités. Le script nullifie les ISBN invalides avec `--apply`.
+3. **Résolution ISBN BnF** (`scripts/resolve-isbn-bnf.mjs`) : recherche BnF SRU par titre + auteur (CQL, UNIMARC zones 010/200/700), validation checksum ISBN-13, matching titre fuzzy (60% token overlap). Résultat : 84 ISBN résolus sur 107 (78,5%).
+4. **Import batch** (`scripts/batch-import-missing.mjs`) : 3 modes (`--source edge|direct|google`). Mode `direct` = BnF + Open Library, 0 appel Google. Résultat : 93 livres importés, 0 erreur.
+
+### Résultat
+
+- Base passée de ~3737 à ~3830 livres
+- 23 livres toujours sans ISBN (titres obscurs, classiques pré-ISBN, mangas très récents)
+- Estimation : ~5-8% de recherches Google supplémentaires évitées grâce aux livres ajoutés
+
+### Leçons
+
+- **Ne jamais faire confiance aux ISBN générés par un LLM** — toujours valider via source externe (BnF, Open Library)
+- **BnF SRU est excellente pour la résolution ISBN** (78,5% de taux) mais inutilisable en recherche libre temps réel (1,4s P50, pas de couvertures)
+- **Open Library est inutilisable pour le catalogue FR** (1/10 recall sur les titres populaires FR, 5s+ de latence)
+
+### Benchmark sources alternatives (détaillé dans `reports/alternative-sources-benchmark.md`)
+
+| Source | Recall@3 | P50 latence | Couvertures | Verdict |
+|--------|----------|-------------|-------------|---------|
+| Google Books | 80% | 828ms | 83% | Reste primaire |
+| BnF SRU | 70% | 1365ms | ~0% | Enrichissement async uniquement |
+| Open Library | 53% | 4104ms | 42% | Inutilisable FR |
+
+---
+
+## Scripts d'enrichissement continu (seeds/)
+
+**Statut :** Opérationnel — avril 2026
+**Portée :** Qualité des données livres (couvertures, descriptions, métadonnées)
+
+### Contexte
+
+La base locale contient ~12 500 livres mais beaucoup ont des métadonnées incomplètes (~76% sans description, ~5% sans couverture). Plutôt que d'enrichir un par un, des scripts batch permettent de combler les trous en interrogeant Google Books et Open Library par titre+auteur.
+
+### Scripts disponibles
+
+| Script | Cible | Sources | Notes |
+|--------|-------|---------|-------|
+| `seeds/enrich-incomplete-books.js` | Livres avec ISBN mais sans cover/description | Edge function `book_import` | Repasse les livres dans le pipeline d'import standard |
+| `seeds/recover-covers.js` | Livres sans `cover_url` | Google Books → Open Library | Recherche par titre+auteur, pas par ISBN |
+| `seeds/recover-descriptions.js` | Livres sans `description` | Google Books → Open Library (work detail) | Seuil 50 chars, fallback OL via `/works/{key}.json` |
+| `seeds/scrape-sc-list.js` | Listes SensCritique | Playwright (headless) | Scrape titres/auteurs, ISBN optionnel, merge |
+
+### Conventions communes
+
+- Tous utilisent `@supabase/supabase-js` + `node --env-file=.env`
+- **Dry-run par défaut** (sans `--apply` = aperçu uniquement)
+- Options : `--limit N`, `--offset N` (pour reprendre le lendemain après quota)
+- Détection auto du quota Google Books (HTTP 429 → bascule Open Library uniquement)
+- Warning à 900 appels Google (quota 1000/jour)
+- Nettoyage titre partagé : suppression suffixes parasites "(French Edition)", sous-titres après ":", séries "(Naruto, #27)", nom d'auteur en fin de titre
+
+### Ce qu'on ne fait PAS
+
+- Pas d'enrichissement automatique déclenché par l'app (toujours manuel via scripts)
+- Pas de scraping Google Books (API uniquement, respect ToS)
+- Pas de réécriture des données existantes (UPDATE uniquement si le champ est NULL)
+
+---
+
+*Dernière mise à jour : 1 avril 2026*

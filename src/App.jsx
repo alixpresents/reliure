@@ -91,16 +91,6 @@ export default function App() {
 
   const searchGo = searchCb || goToBook;
 
-  // Loading
-  if (authLoading || (user && profileLoading)) {
-    return (
-      <div className="min-h-screen flex items-center justify-center font-body" style={{ backgroundColor: "var(--bg-primary)" }}>
-        <link href={FONT_URL} rel="stylesheet" />
-        <span className="text-[17px] font-bold tracking-tight">reliure</span>
-      </div>
-    );
-  }
-
   // Not logged in — show public pages with header, login for protected
   const isLoggedIn = !!user;
   const needsOnboarding = isLoggedIn && !profile && !localStorage.getItem("reliure_onboarding_done");

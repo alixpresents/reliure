@@ -203,6 +203,16 @@ Scripts dans `scripts/`, rapports dans `reports/`. Pipeline exécuté en mars 20
 
 **Leçon critique** : ne jamais faire confiance aux ISBN générés par un LLM (88% d'hallucinations constatées). Toujours valider via source externe.
 
+### Scripts d'enrichissement continu (seeds/)
+
+Scripts autonomes dans `seeds/` pour enrichir les métadonnées des livres existants. Tous utilisent `@supabase/supabase-js`, env via `node --env-file=.env`. Dry-run par défaut, `--apply` pour exécuter. Options communes : `--limit N`, `--offset N`.
+
+- `seeds/enrich-incomplete-books.js` — enrichit les livres avec ISBN mais sans cover ou description en les repassant dans l'edge function `book_import`. Options : `--cover-only`.
+- `seeds/recover-covers.js` — récupère les couvertures manquantes par recherche titre+auteur sur Google Books puis Open Library (fallback). Nettoyage titre (suffixes parasites, sous-titres, séries). Détection auto quota Google (429 → bascule OL-only).
+- `seeds/recover-descriptions.js` — récupère les descriptions manquantes par recherche titre+auteur sur Google Books puis Open Library (fallback via work detail). Seuil minimum 50 chars. Warning à 900 appels Google (quota 1000/jour).
+- `seeds/generate-descriptions.js` — génère des descriptions FR via Claude Haiku (API Anthropic directe). 5 appels parallèles, 50ms entre chaque. Checkpoint `descriptions-progress.json` toutes les 200 requêtes. Options : `--cost-only`. Coût estimé : ~$0.0005/livre.
+- `seeds/scrape-sc-list.js` — scrape une liste SensCritique via Playwright (headless). Gère infinite scroll, ISBN optionnel, merge, checkpoint Ctrl+C.
+
 ## Architecture de données
 
 ### Tables principales
