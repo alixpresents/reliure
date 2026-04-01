@@ -450,7 +450,9 @@ export default function ExplorePage() {
         <div className="border-t border-border-light py-6">
           <Heading>Listes populaires</Heading>
           {lists.map(l => {
-            const listUrl = `/${l.users?.username}/listes/${l.slug}`;
+            const listUrl = `/${l.username}/listes/${l.slug}`;
+            const userName = l.display_name || l.username || "?";
+            const initials = userName.split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2);
             return (
               <div
                 key={l.id}
@@ -461,10 +463,12 @@ export default function ExplorePage() {
                 className="py-5 border-b border-border-light cursor-pointer hover:bg-surface transition-colors duration-100"
               >
                 <div className="flex gap-2 mb-3.5 p-3.5 px-4 bg-surface rounded-lg overflow-x-auto">
-                  {l.previewBooks.map(b => <Img key={b.id} book={b} w={68} h={102} />)}
-                  {l.bookCount > 4 && (
+                  {(l.covers || []).map((url, i) => (
+                    <img key={i} src={url} alt="" className="w-[68px] h-[102px] rounded-[3px] object-cover shrink-0" style={{ boxShadow: "var(--shadow-cover)" }} />
+                  ))}
+                  {l.book_count > 4 && (
                     <div className="w-[68px] h-[102px] rounded-[3px] bg-avatar-bg flex items-center justify-center text-xs shrink-0 font-body" style={{ color: "var(--text-tertiary)" }}>
-                      +{l.bookCount - 4}
+                      +{l.book_count - 4}
                     </div>
                   )}
                 </div>
@@ -475,9 +479,9 @@ export default function ExplorePage() {
                   </div>
                 )}
                 <div className="flex items-center gap-2 mt-[5px]">
-                  <Avatar i={(l.userName || "?").split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2)} s={20} />
-                  <UserName user={l.users} className="text-xs" />
-                  <span className="text-xs font-body" style={{ color: "var(--text-tertiary)" }}>· {l.bookCount} livres</span>
+                  <Avatar i={initials} s={20} />
+                  <span className="text-xs font-body font-medium" style={{ color: "var(--text-primary)" }}>{userName}</span>
+                  <span className="text-xs font-body" style={{ color: "var(--text-tertiary)" }}>· {l.book_count} livres</span>
                   <span className="text-xs font-body" onClick={e => e.stopPropagation()}>
                     <LikeButton
                       count={l.likes_count || 0}

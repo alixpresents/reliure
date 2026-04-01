@@ -93,48 +93,8 @@ export function usePopularLists() {
 
   useEffect(() => {
     (async () => {
-      const { data } = await supabase
-        .from("lists")
-        .select("id, title, description, slug, user_id, likes_count, users(username, display_name)")
-        .eq("is_public", true)
-        .order("likes_count", { ascending: false })
-        .limit(4);
-
-      if (!data || data.length === 0) { setLists([]); setLoading(false); return; }
-
-      // Fetch preview books for each list
-      const listIds = data.map(l => l.id);
-      const { data: items } = await supabase
-        .from("list_items")
-        .select("list_id, position, books(id, title, cover_url, authors)")
-        .in("list_id", listIds)
-        .order("position", { ascending: true });
-
-      const itemsByList = {};
-      for (const item of (items ?? [])) {
-        if (!itemsByList[item.list_id]) itemsByList[item.list_id] = [];
-        if (itemsByList[item.list_id].length < 4 && item.books) {
-          itemsByList[item.list_id].push(normalizeBook(item.books));
-        }
-      }
-
-      // Count items per list
-      const { data: counts } = await supabase
-        .from("list_items")
-        .select("list_id", { count: "exact", head: false })
-        .in("list_id", listIds);
-
-      const countMap = {};
-      for (const c of (counts ?? [])) {
-        countMap[c.list_id] = (countMap[c.list_id] || 0) + 1;
-      }
-
-      setLists(data.map(l => ({
-        ...l,
-        userName: l.users?.display_name || l.users?.username || "?",
-        previewBooks: itemsByList[l.id] || [],
-        bookCount: countMap[l.id] || 0,
-      })));
+      const { data } = await supabase.rpc("popular_lists_with_covers", { result_limit: 6 });
+      setLists(data ?? []);
       setLoading(false);
     })();
   }, []);
