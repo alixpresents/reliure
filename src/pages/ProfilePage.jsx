@@ -273,12 +273,11 @@ function FavoritesSection({ favorites, isOwner, go, onAdd, onRemove, onSwap, onU
                   onDrop={isOwner ? e => handleDrop(e, pos) : undefined}
                   onDragLeave={isOwner ? () => setDragOver(null) : undefined}
                   style={{
-                    opacity: isDragging ? 0.6 : 1,
+                    opacity: isDragging ? 0.4 : 1,
+                    transform: isDragging ? "scale(0.95)" : "scale(1)",
                     boxShadow: isDragging ? "0 8px 24px rgba(0,0,0,0.15)" : "none",
                     borderRadius: 3,
-                    outline: isDropTarget ? "2px dashed var(--border-default)" : "none",
-                    outlineOffset: isDropTarget ? 2 : 0,
-                    transition: "opacity 150ms, box-shadow 150ms",
+                    transition: "opacity 150ms, box-shadow 150ms, transform 150ms",
                   }}
                 >
                   <Img
@@ -288,16 +287,26 @@ function FavoritesSection({ favorites, isOwner, go, onAdd, onRemove, onSwap, onU
                     className="w-full h-auto aspect-[2/3]"
                   />
 
-                  {/* Drag handle — top-left */}
+                  {/* Drop target overlay */}
+                  {isDropTarget && (
+                    <div style={{ position: "absolute", inset: 0, borderRadius: 3, border: "2px dashed var(--text-muted)", backgroundColor: "rgba(0,0,0,0.12)", pointerEvents: "none", zIndex: 10 }} />
+                  )}
+
+                  {/* Drag handle — top-right */}
                   {isOwner && (
                     <div
                       draggable
                       onDragStart={e => handleDragStart(e, pos)}
                       onDragEnd={handleDragEnd}
-                      className="absolute top-1 left-1 flex items-center justify-center cursor-grab active:cursor-grabbing opacity-0 group-hover/fav:opacity-100 transition-opacity duration-150 select-none"
+                      className="absolute top-1.5 right-1.5 cursor-grab active:cursor-grabbing opacity-70 group-hover/fav:opacity-100 transition-opacity duration-150 select-none"
                       title="Glisser pour réordonner"
+                      style={{ backgroundColor: "rgba(0,0,0,0.55)", backdropFilter: "blur(4px)", borderRadius: 6, padding: "4px 6px" }}
                     >
-                      <span className="text-[10px] leading-none text-white" style={{ textShadow: "0 1px 3px rgba(0,0,0,0.4)" }}>⠿</span>
+                      <svg width="10" height="14" viewBox="0 0 10 14" fill="white" aria-hidden="true">
+                        <circle cx="2" cy="2" r="1.5"/><circle cx="8" cy="2" r="1.5"/>
+                        <circle cx="2" cy="7" r="1.5"/><circle cx="8" cy="7" r="1.5"/>
+                        <circle cx="2" cy="12" r="1.5"/><circle cx="8" cy="12" r="1.5"/>
+                      </svg>
                     </div>
                   )}
 
