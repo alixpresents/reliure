@@ -298,14 +298,12 @@ function FavoritesSection({ favorites, isOwner, go, onAdd, onRemove, onSwap, onU
   const handleDragOver = (e, pos) => {
     e.preventDefault();
     e.dataTransfer.dropEffect = "move";
-    console.log("dragover", pos);
     if (pos !== dragOverRef.current) setDragOver(pos);
   };
   const handleDrop = (e, pos) => {
     e.preventDefault();
     const raw = e.dataTransfer.getData("text/plain");
     const from = raw ? parseInt(raw, 10) : dragFromRef.current;
-    console.log("drop", { from, to: pos });
     if (from !== null && !isNaN(from) && from !== pos) onSwap(from, pos);
     setDragFrom(null);
     setDragOver(null);
