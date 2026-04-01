@@ -300,7 +300,9 @@ function FavoritesSection({ favorites, isOwner, go, onAdd, onRemove, onSwap, onU
   };
   const handleDrop = (e, pos) => {
     e.preventDefault();
-    if (dragFromRef.current !== null && dragFromRef.current !== pos) onSwap(dragFromRef.current, pos);
+    const from = dragFromRef.current;
+    console.log("[fav-drag] drop", { from, to: pos });
+    if (from !== null && from !== pos) onSwap(from, pos);
     setDragFrom(null);
     setDragOver(null);
   };
