@@ -302,8 +302,10 @@ function FavoritesSection({ favorites, isOwner, go, onAdd, onRemove, onSwap, onU
   };
   const handleDrop = (e, pos) => {
     e.preventDefault();
-    const from = dragFromRef.current;
-    if (from !== null && from !== pos) onSwap(from, pos);
+    // Read from dataTransfer — survives any dragend/ref timing issue
+    const raw = e.dataTransfer.getData("text/plain");
+    const from = raw ? parseInt(raw, 10) : dragFromRef.current;
+    if (from !== null && !isNaN(from) && from !== pos) onSwap(from, pos);
     setDragFrom(null);
     setDragOver(null);
   };
