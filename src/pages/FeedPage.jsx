@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import Stars from "../components/Stars";
 import Avatar from "../components/Avatar";
 import Heading from "../components/Heading";
@@ -53,8 +53,8 @@ function MiniCover({ url, title, onClick }) {
 export default function FeedPage() {
   const nav = useNavigate();
   const { items, loading, refetch: refetchFeed } = useFeed();
-  const reviewIds = items.filter(i => i.action_type === "review").map(i => i.target_id);
-  const quoteIds = items.filter(i => i.action_type === "quote").map(i => i.target_id);
+  const reviewIds = useMemo(() => items.filter(i => i.action_type === "review").map(i => i.target_id), [items]);
+  const quoteIds = useMemo(() => items.filter(i => i.action_type === "quote").map(i => i.target_id), [items]);
   const { likedSet: likedReviews, initialSet: initLikedReviews, toggle: toggleReviewLike } = useLikes(reviewIds, "review");
   const { likedSet: likedQuotes, initialSet: initLikedQuotes, toggle: toggleQuoteLike } = useLikes(quoteIds, "quote");
   const { toast, showToast } = useToast();

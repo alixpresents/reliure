@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { QUOTES } from "../data";
 import Img from "../components/Img";
 import Heading from "../components/Heading";
@@ -222,7 +222,8 @@ export default function CitationsPage() {
   const { user } = useAuth();
   const { quotes: dbQuotes, loading, refetch } = useCommunityQuotes();
   const { quotes: myQuotes, loading: myQuotesLoading } = useMyQuotes(user?.id);
-  const { likedSet, initialSet, toggle } = useLikes(dbQuotes.map(q => q.id), "quote");
+  const quoteIds = useMemo(() => dbQuotes.map(q => q.id), [dbQuotes]);
+  const { likedSet, initialSet, toggle } = useLikes(quoteIds, "quote");
   const [modalOpen, setModalOpen] = useState(false);
   const { toast, showToast } = useToast();
 

@@ -40,9 +40,9 @@ export function useFeed() {
     const quoteIds  = deduped.filter(i => i.target_type === "quote").map(i => i.target_id);
     const listIds   = deduped.filter(i => i.target_type === "list").map(i => i.target_id);
     const [{ data: existingReviews }, { data: existingQuotes }, { data: existingLists }] = await Promise.all([
-      reviewIds.length ? supabase.from("reviews").select("id").in("id", reviewIds) : Promise.resolve({ data: [] }),
-      quoteIds.length  ? supabase.from("quotes").select("id").in("id", quoteIds)   : Promise.resolve({ data: [] }),
-      listIds.length   ? supabase.from("lists").select("id").in("id", listIds)     : Promise.resolve({ data: [] }),
+      reviewIds.length ? supabase.from("reviews").select("id").in("id", reviewIds).limit(50) : Promise.resolve({ data: [] }),
+      quoteIds.length  ? supabase.from("quotes").select("id").in("id", quoteIds).limit(50)   : Promise.resolve({ data: [] }),
+      listIds.length   ? supabase.from("lists").select("id").in("id", listIds).limit(50)     : Promise.resolve({ data: [] }),
     ]);
     const reviewSet = new Set((existingReviews ?? []).map(r => r.id));
     const quoteSet  = new Set((existingQuotes  ?? []).map(q => q.id));

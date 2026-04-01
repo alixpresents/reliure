@@ -1,6 +1,5 @@
 import { useState, useEffect, lazy, Suspense } from "react";
 import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
-import { FONT_URL } from "./data";
 import { useAuth } from "./lib/AuthContext";
 import { useProfile } from "./hooks/useProfile";
 import Header from "./components/Header";
@@ -102,7 +101,6 @@ export default function App() {
   if (needsOnboarding) {
     return (
       <div className="min-h-screen font-body" style={{ backgroundColor: "var(--bg-primary)", color: "var(--text-primary)" }}>
-        <link href={FONT_URL} rel="stylesheet" />
         <Suspense fallback={null}>
           <OnboardingPage onComplete={(uname) => {
             refetch();
@@ -120,7 +118,6 @@ export default function App() {
 
   return (
     <div className="min-h-screen font-body" style={{ backgroundColor: "var(--bg-primary)", color: "var(--text-primary)" }}>
-      <link href={FONT_URL} rel="stylesheet" />
       <ScrollToTop />
       <AnnouncementBanner
         pill="Bêta"

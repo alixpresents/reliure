@@ -1,4 +1,9 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
+
+const S_MODAL_OVERLAY = { position: "fixed", inset: 0, zIndex: 9998, backgroundColor: "rgba(0,0,0,0.4)" };
+const S_MODAL_CONTAINER = { position: "fixed", inset: 0, zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 16px" };
+const S_COVER_MINI = { width: 40, height: 60, objectFit: "cover", borderRadius: 3 };
+const S_FILE_BTN = { color: "var(--text-primary)", borderWidth: 1, borderStyle: "solid", borderColor: "var(--border-default)" };
 import Img from "../components/Img";
 import Stars from "../components/Stars";
 import Avatar from "../components/Avatar";
@@ -33,8 +38,8 @@ function LoginModal({ book, onClose, onNavigate }) {
 
   return (
     <>
-      <div onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: 9998, backgroundColor: "rgba(0,0,0,0.4)" }} />
-      <div style={{ position: "fixed", inset: 0, zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 16px" }}>
+      <div onClick={onClose} style={S_MODAL_OVERLAY} />
+      <div style={S_MODAL_CONTAINER}>
         <div onClick={e => e.stopPropagation()} style={{ width: "100%", maxWidth: 360, background: "var(--bg-primary)", borderRadius: 16, boxShadow: "0 12px 48px rgba(0,0,0,0.16)", padding: "28px 24px 24px", textAlign: "center" }}>
           {/* Cover */}
           {(book.c || book.cover_url) && (
@@ -141,8 +146,8 @@ function EnrichModal({ bookId, onClose, onSaved, initialDescription, initialPage
 
   return (
     <>
-      <div onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: 9998, backgroundColor: "rgba(0,0,0,0.4)" }} />
-      <div style={{ position: "fixed", inset: 0, zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 16px" }}>
+      <div onClick={onClose} style={S_MODAL_OVERLAY} />
+      <div style={S_MODAL_CONTAINER}>
         <div onClick={e => e.stopPropagation()} style={{ width: "100%", maxWidth: 440, background: "var(--bg-primary)", borderRadius: 16, boxShadow: "0 12px 48px rgba(0,0,0,0.16)", padding: "28px 24px 24px", maxHeight: "90vh", overflowY: "auto" }}>
           <h2 className="font-display italic text-[20px] font-normal m-0 mb-1">Compléter cette fiche</h2>
           <div className="text-[11px] font-body mb-5" style={{ color: "var(--text-tertiary)" }}>Les modifications sont appliquées immédiatement.</div>
@@ -152,21 +157,21 @@ function EnrichModal({ bookId, onClose, onSaved, initialDescription, initialPage
             <div className="text-[12px] font-body mb-2" style={{ color: "var(--text-tertiary)" }}>Couverture</div>
             {coverPreview ? (
               <div className="flex items-start gap-3">
-                <img src={coverPreview} alt="" style={{ width: 40, height: 60, objectFit: "cover", borderRadius: 3 }} />
+                <img src={coverPreview} alt="" style={S_COVER_MINI} />
                 <button onClick={() => { setCoverFile(null); setCoverPreview(null); }} className="text-[12px] font-body bg-transparent border-none cursor-pointer transition-colors duration-150 mt-1" style={{ color: "var(--text-tertiary)" }}>Supprimer</button>
               </div>
             ) : initialCoverUrl ? (
               <div className="flex items-center gap-3">
-                <img src={initialCoverUrl} alt="" style={{ width: 40, height: 60, objectFit: "cover", borderRadius: 3 }} />
+                <img src={initialCoverUrl} alt="" style={S_COVER_MINI} />
                 <label className="flex items-center gap-2 cursor-pointer">
-                  <span className="px-3 py-1.5 rounded-md text-[12px] font-body bg-surface hover:bg-tag-bg transition-colors duration-150" style={{ color: "var(--text-primary)", borderWidth: 1, borderStyle: "solid", borderColor: "var(--border-default)" }}>Remplacer</span>
+                  <span className="px-3 py-1.5 rounded-md text-[12px] font-body bg-surface hover:bg-tag-bg transition-colors duration-150" style={S_FILE_BTN}>Remplacer</span>
                   <span className="text-[11px] font-body" style={{ color: "var(--text-tertiary)" }}>jpg/png, max 2 Mo</span>
                   <input type="file" accept="image/jpeg,image/png" onChange={handleFileChange} className="hidden" />
                 </label>
               </div>
             ) : (
               <label className="flex items-center gap-2 cursor-pointer">
-                <span className="px-3 py-1.5 rounded-md text-[12px] font-body bg-surface hover:bg-tag-bg transition-colors duration-150" style={{ color: "var(--text-primary)", borderWidth: 1, borderStyle: "solid", borderColor: "var(--border-default)" }}>Choisir une image</span>
+                <span className="px-3 py-1.5 rounded-md text-[12px] font-body bg-surface hover:bg-tag-bg transition-colors duration-150" style={S_FILE_BTN}>Choisir une image</span>
                 <span className="text-[11px] font-body" style={{ color: "var(--text-tertiary)" }}>jpg/png, max 2 Mo</span>
                 <input type="file" accept="image/jpeg,image/png" onChange={handleFileChange} className="hidden" />
               </label>
@@ -232,8 +237,10 @@ export default function BookPage({ book, refetchBook }) {
   const { reviews: dbReviews, loading: reviewsLoading, refetch: refetchReviews } = useBookReviews(bookId);
   const { quotes: dbQuotes, loading: quotesLoading, refetch: refetchQuotes } = useBookQuotes(bookId);
   const { user } = useAuth();
-  const { likedSet: likedReviews, initialSet: initLikedReviews, toggle: toggleReviewLike } = useLikes(dbReviews.map(r => r.id), "review");
-  const { likedSet: likedQuotes, initialSet: initLikedQuotes, toggle: toggleQuoteLike } = useLikes(dbQuotes.map(q => q.id), "quote");
+  const reviewIds = useMemo(() => dbReviews.map(r => r.id), [dbReviews]);
+  const quoteIds = useMemo(() => dbQuotes.map(q => q.id), [dbQuotes]);
+  const { likedSet: likedReviews, initialSet: initLikedReviews, toggle: toggleReviewLike } = useLikes(reviewIds, "review");
+  const { likedSet: likedQuotes, initialSet: initLikedQuotes, toggle: toggleQuoteLike } = useLikes(quoteIds, "quote");
   const userReview = dbReviews.find(rv => rv.user_id === user?.id && rv.body);
   const { toast, showToast } = useToast();
 

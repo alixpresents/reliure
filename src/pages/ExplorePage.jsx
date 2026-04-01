@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { Link } from "react-router-dom";
 import Img from "../components/Img";
 import Avatar from "../components/Avatar";
@@ -51,9 +51,12 @@ export default function ExplorePage() {
   const { reviews, loading: loadingReviews, refetch: refetchReviews } = usePopularReviews();
   const { quotes, loading: loadingQuotes, refetch: refetchQuotes } = usePopularQuotes();
   const { lists, loading: loadingLists } = usePopularLists();
-  const { likedSet: likedReviews, initialSet: initLikedReviews, toggle: toggleReviewLike } = useLikes(reviews.map(r => r.id), "review");
-  const { likedSet, initialSet, toggle: toggleQuoteLike } = useLikes(quotes.map(q => q.id), "quote");
-  const { likedSet: likedLists, initialSet: initLikedLists, toggle: toggleListLike } = useLikes(lists.map(l => l.id), "list");
+  const reviewIds = useMemo(() => reviews.map(r => r.id), [reviews]);
+  const quoteIds = useMemo(() => quotes.map(q => q.id), [quotes]);
+  const listIds = useMemo(() => lists.map(l => l.id), [lists]);
+  const { likedSet: likedReviews, initialSet: initLikedReviews, toggle: toggleReviewLike } = useLikes(reviewIds, "review");
+  const { likedSet, initialSet, toggle: toggleQuoteLike } = useLikes(quoteIds, "quote");
+  const { likedSet: likedLists, initialSet: initLikedLists, toggle: toggleListLike } = useLikes(listIds, "list");
   const { toast, showToast } = useToast();
 
   // Debounced search

@@ -1,5 +1,3 @@
-export const FONT_URL = "https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600;700&display=swap";
-
 export const B = [
   { id:1, t:"2666", a:"Roberto Bolaño", c:"https://covers.openlibrary.org/b/isbn/9780312429218-L.jpg", y:2004, r:4.5, p:898, rt:1247, tags:["maximalism","violence","désert","Mexique","postmoderne"], awards:[{name:"National Book Critics Circle Award",year:2008}], desc:"Cinq parties, cinq mondes reliés par un fil invisible. Des critiques littéraires européens obsédés par un auteur allemand disparu, une ville ravagée par les féminicides, et la grande spirale de la violence du XXe siècle." },
   { id:2, t:"Les Détectives sauvages", a:"Roberto Bolaño", c:"https://covers.openlibrary.org/b/isbn/9780312427481-L.jpg", y:1998, r:4.5, p:577, rt:892, tags:["poésie","Mexico","road novel","jeunesse"], desc:"Mexico, 1975. Deux jeunes poètes partent à la recherche d'une poétesse disparue. Un roman-fleuve qui traverse les continents et les décennies, porté par une galerie de voix inoubliables." },
@@ -15,20 +13,6 @@ export const B = [
   { id:12, t:"Les Choses", a:"Georges Perec", c:"https://covers.openlibrary.org/b/isbn/9782260000068-L.jpg", y:1965, r:3.9, p:160, rt:432, tags:["consommation","Paris","années 60","sociologie"], desc:"Jérôme et Sylvie, un jeune couple parisien des années 60, rêvent d'une vie de confort matériel. Perec dissèque avec précision chirurgicale le désir de possession et le vide qu'il laisse." },
 ];
 
-export const DIARY = [
-  { b:B[0], d:"26", m:"Mars", r:4.5, lk:true },{ b:B[4], d:"22", m:"Mars", r:4.0, lk:true },
-  { b:B[8], d:"18", m:"Mars", r:4.5, lk:true },{ b:B[3], d:"14", m:"Mars", r:3.5, lk:false },
-  { b:B[11], d:"10", m:"Mars", r:4.0, lk:true },{ b:B[6], d:"5", m:"Mars", r:5.0, lk:true },
-  { b:B[9], d:"28", m:"Fév", r:4.0, lk:true },{ b:B[2], d:"20", m:"Fév", r:4.5, lk:true },
-  { b:B[1], d:"12", m:"Fév", r:4.5, lk:true },{ b:B[7], d:"5", m:"Fév", r:4.0, lk:false },
-  { b:B[10], d:"25", m:"Jan", r:3.5, lk:false },{ b:B[5], d:"15", m:"Jan", r:4.0, lk:true },
-];
-
-export const REVIEWS = [
-  { b:B[0], r:4.5, txt:"Un chef-d'oeuvre absolu. Bolaño construit un labyrinthe dont on ne veut jamais sortir. Chaque partie est un roman en soi.", sp:false, lk:24, d:"26 mars" },
-  { b:B[6], r:5.0, txt:"Borges invente des mondes dans chaque nouvelle. Vertigineux. Relecture qui ne déçoit jamais.", sp:false, lk:18, d:"5 mars" },
-  { b:B[2], r:4.5, txt:"Morrison écrit avec une intensité rare. Le passage avec la révélation de Beloved est dévastateur, impossible de s'en remettre.", sp:true, lk:31, d:"20 fév" },
-];
 
 export const QUOTES = [
   { id:1, txt:"Le secret du bonheur en amour, ce n'est pas d'être aveugle mais de savoir fermer les yeux quand il le faut.", b:B[3], u:"Margaux L.", lk:89 },
@@ -39,20 +23,6 @@ export const QUOTES = [
   { id:6, txt:"Il n'y a pas de honte à préférer le bonheur.", b:B[7], u:"Margaux L.", lk:76 },
 ];
 
-export const ACTIVITY = [
-  { id:1, u:"Margaux L.", av:"ML", ty:"review", b:B[0], r:5, txt:"Un chef-d'oeuvre absolu. Bolaño construit un labyrinthe dont on ne veut jamais sortir.", tm:"2h", lk:24 },
-  { id:2, u:"Théo B.", av:"TB", ty:"quote", b:B[6], r:0, txt:"Les miroirs et la copulation sont abominables car ils multiplient le nombre des hommes.", tm:"5h", lk:18 },
-  { id:3, u:"Camille D.", av:"CD", ty:"review", b:B[2], r:5, txt:"Morrison écrit avec une intensité rare. Lecture indispensable.", tm:"8h", lk:31 },
-  { id:4, u:"Samir K.", av:"SK", ty:"added", b:B[8], r:0, txt:"", tm:"12h", lk:0 },
-  { id:5, u:"Louise R.", av:"LR", ty:"review", b:B[4], r:4.5, txt:"124 pages de pure magie. Rulfo a capturé quelque chose d'éternel.", tm:"1j", lk:22 },
-];
-
-export const LISTS = [
-  { id:1, t:"Romans latino-américains essentiels", u:"Margaux L.", n:24, lk:89, cv:[B[0],B[4],B[6],B[1]] },
-  { id:2, t:"Existentialisme français", u:"Théo B.", n:18, lk:54, cv:[B[3],B[7],B[11]] },
-  { id:3, t:"Modernisme européen", u:"Camille D.", n:32, lk:112, cv:[B[10],B[5],B[9],B[8]] },
-  { id:4, t:"Moins de 200 pages, impact max", u:"Samir K.", n:15, lk:67, cv:[B[3],B[4],B[11]] },
-];
 
 export const JARTICLES = [
   { id:1, t:"Lire Bolaño en 2026 : pourquoi 2666 reste indépassable", st:"Vingt ans après, le roman-monde de Bolaño continue de hanter la littérature.", a:"Éloïse Garnier", d:"24 mars 2026", rt:"12 min", cv:B[0], tag:"Essai",
