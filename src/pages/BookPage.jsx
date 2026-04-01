@@ -87,12 +87,22 @@ function EnrichModal({ bookId, onClose, onSaved, initialDescription, initialPage
 
   const [coverFile, setCoverFile] = useState(null);
   const [coverPreview, setCoverPreview] = useState(null);
+  const [coverMode, setCoverMode] = useState("upload");
+  const [coverUrl, setCoverUrl] = useState("");
+  const [coverUrlValid, setCoverUrlValid] = useState(null); // null | true | false
+  const [coverUrlDebounced, setCoverUrlDebounced] = useState("");
   const [description, setDescription] = useState(initialDescription || "");
   const [pages, setPages] = useState(initialPages ? String(initialPages) : "");
   const [publisher, setPublisher] = useState(initialPublisher || "");
   const [pubDate, setPubDate] = useState(initialPubDate || "");
   const [saving, setSaving] = useState(false);
   const [fileError, setFileError] = useState(null);
+
+  useEffect(() => {
+    if (coverMode !== "url") return;
+    const t = setTimeout(() => setCoverUrlDebounced(coverUrl.trim()), 600);
+    return () => clearTimeout(t);
+  }, [coverUrl, coverMode]);
 
   const handleFileChange = e => {
     const file = e.target.files?.[0];
@@ -105,10 +115,11 @@ function EnrichModal({ bookId, onClose, onSaved, initialDescription, initialPage
   };
 
   const handleSubmit = async () => {
+    if (coverMode === "url" && coverUrl.trim() && coverUrlValid !== true) return;
     setSaving(true);
     const updates = {};
     try {
-      if (coverFile) {
+      if (coverMode === "upload" && coverFile) {
         const ext = coverFile.name.split(".").pop();
         const filePath = `${bookId}/${Date.now()}.${ext}`;
         const { error: uploadError } = await supabase.storage
@@ -122,6 +133,9 @@ function EnrichModal({ bookId, onClose, onSaved, initialDescription, initialPage
             updates.cover_url = publicUrl;
           }
         }
+      } else if (coverMode === "url" && coverUrlValid === true) {
+        await supabase.from("books").update({ cover_url: coverUrl.trim() }).eq("id", bookId);
+        updates.cover_url = coverUrl.trim();
       }
 
       const pubDateStr = pubDate ? String(pubDate).trim() : null;
@@ -143,7 +157,12 @@ function EnrichModal({ bookId, onClose, onSaved, initialDescription, initialPage
     }
   };
 
-  const hasContent = coverFile || description.trim() || pages || publisher.trim() || pubDate.trim();
+  const coverHasChange = coverMode === "upload" ? !!coverFile : (coverUrlValid === true);
+  const hasContent = coverHasChange || description.trim() || pages || publisher.trim() || pubDate.trim();
+  const saveBlocked = coverMode === "url" && coverUrl.trim() && coverUrlValid !== true;
+
+  const S_TAB_ACTIVE = { backgroundColor: "var(--text-primary)", color: "var(--bg-primary)", borderRadius: 20, fontSize: 11, padding: "4px 12px", border: "none", cursor: "pointer", fontFamily: "inherit" };
+  const S_TAB_INACTIVE = { backgroundColor: "transparent", color: "#999", borderRadius: 20, fontSize: 11, padding: "4px 12px", border: "1px solid var(--border-default)", cursor: "pointer", fontFamily: "inherit" };
 
   return (
     <>
@@ -156,28 +175,65 @@ function EnrichModal({ bookId, onClose, onSaved, initialDescription, initialPage
           {/* Couverture */}
           <div className="mb-4">
             <div className="text-[12px] font-body mb-2" style={{ color: "var(--text-tertiary)" }}>Couverture</div>
-            {coverPreview ? (
-              <div className="flex items-start gap-3">
-                <img src={coverPreview} alt="" style={S_COVER_MINI} />
-                <button onClick={() => { setCoverFile(null); setCoverPreview(null); }} className="text-[12px] font-body bg-transparent border-none cursor-pointer transition-colors duration-150 mt-1" style={{ color: "var(--text-tertiary)" }}>Supprimer</button>
-              </div>
-            ) : initialCoverUrl ? (
-              <div className="flex items-center gap-3">
-                <img src={initialCoverUrl} alt="" style={S_COVER_MINI} />
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <span className="px-3 py-1.5 rounded-md text-[12px] font-body bg-surface hover:bg-tag-bg transition-colors duration-150" style={S_FILE_BTN}>Remplacer</span>
-                  <span className="text-[11px] font-body" style={{ color: "var(--text-tertiary)" }}>jpg/png, max 2 Mo</span>
-                  <input type="file" accept="image/jpeg,image/png" onChange={handleFileChange} className="hidden" />
-                </label>
-              </div>
+
+            {/* Onglets mode */}
+            <div className="flex gap-1.5 mb-3">
+              <button style={coverMode === "upload" ? S_TAB_ACTIVE : S_TAB_INACTIVE} onClick={() => setCoverMode("upload")}>Importer un fichier</button>
+              <button style={coverMode === "url" ? S_TAB_ACTIVE : S_TAB_INACTIVE} onClick={() => setCoverMode("url")}>Coller une URL</button>
+            </div>
+
+            {coverMode === "upload" ? (
+              <>
+                {coverPreview ? (
+                  <div className="flex items-start gap-3">
+                    <img src={coverPreview} alt="" style={S_COVER_MINI} />
+                    <button onClick={() => { setCoverFile(null); setCoverPreview(null); }} className="text-[12px] font-body bg-transparent border-none cursor-pointer transition-colors duration-150 mt-1" style={{ color: "var(--text-tertiary)" }}>Supprimer</button>
+                  </div>
+                ) : initialCoverUrl ? (
+                  <div className="flex items-center gap-3">
+                    <img src={initialCoverUrl} alt="" style={S_COVER_MINI} />
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <span className="px-3 py-1.5 rounded-md text-[12px] font-body bg-surface hover:bg-tag-bg transition-colors duration-150" style={S_FILE_BTN}>Remplacer</span>
+                      <span className="text-[11px] font-body" style={{ color: "var(--text-tertiary)" }}>jpg/png, max 2 Mo</span>
+                      <input type="file" accept="image/jpeg,image/png" onChange={handleFileChange} className="hidden" />
+                    </label>
+                  </div>
+                ) : (
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <span className="px-3 py-1.5 rounded-md text-[12px] font-body bg-surface hover:bg-tag-bg transition-colors duration-150" style={S_FILE_BTN}>Choisir une image</span>
+                    <span className="text-[11px] font-body" style={{ color: "var(--text-tertiary)" }}>jpg/png, max 2 Mo</span>
+                    <input type="file" accept="image/jpeg,image/png" onChange={handleFileChange} className="hidden" />
+                  </label>
+                )}
+                {fileError && <div className="text-[11px] text-spoiler font-body mt-1">{fileError}</div>}
+              </>
             ) : (
-              <label className="flex items-center gap-2 cursor-pointer">
-                <span className="px-3 py-1.5 rounded-md text-[12px] font-body bg-surface hover:bg-tag-bg transition-colors duration-150" style={S_FILE_BTN}>Choisir une image</span>
-                <span className="text-[11px] font-body" style={{ color: "var(--text-tertiary)" }}>jpg/png, max 2 Mo</span>
-                <input type="file" accept="image/jpeg,image/png" onChange={handleFileChange} className="hidden" />
-              </label>
+              <>
+                <input
+                  type="url"
+                  value={coverUrl}
+                  onChange={e => { setCoverUrl(e.target.value); setCoverUrlValid(null); }}
+                  onBlur={() => setCoverUrlDebounced(coverUrl.trim())}
+                  placeholder="https://…"
+                  className="w-full py-2 px-3 bg-surface border rounded-lg outline-none text-[13px] font-body placeholder:text-[var(--text-tertiary)] focus:border-[var(--text-tertiary)] transition-[border] duration-150"
+                  style={{ color: "var(--text-primary)", borderColor: coverUrlValid === false ? "var(--color-error)" : "var(--border-default)" }}
+                />
+                {coverUrlDebounced && (
+                  <div className="mt-2">
+                    <img
+                      src={coverUrlDebounced}
+                      alt=""
+                      style={{ ...S_COVER_MINI, display: coverUrlValid === false ? "none" : "block" }}
+                      onLoad={() => setCoverUrlValid(true)}
+                      onError={() => setCoverUrlValid(false)}
+                    />
+                    {coverUrlValid === false && (
+                      <div className="text-[11px] font-body mt-1" style={{ color: "var(--color-error)" }}>Cette URL ne pointe pas vers une image valide</div>
+                    )}
+                  </div>
+                )}
+              </>
             )}
-            {fileError && <div className="text-[11px] text-spoiler font-body mt-1">{fileError}</div>}
           </div>
 
           {/* Résumé */}
@@ -216,9 +272,9 @@ function EnrichModal({ bookId, onClose, onSaved, initialDescription, initialPage
             <button onClick={onClose} className="px-4 py-2 text-[13px] font-body bg-transparent border-none cursor-pointer transition-colors duration-150" style={{ color: "var(--text-tertiary)" }}>Annuler</button>
             <button
               onClick={handleSubmit}
-              disabled={!hasContent || saving}
-              className={`px-5 py-2 rounded-lg text-[13px] font-medium font-body border-none transition-all duration-150 ${hasContent && !saving ? "cursor-pointer hover:opacity-80" : "bg-avatar-bg cursor-not-allowed"}`}
-              style={hasContent && !saving ? { backgroundColor: "var(--text-primary)", color: "var(--bg-primary)" } : { color: "var(--text-tertiary)" }}
+              disabled={!hasContent || saving || saveBlocked}
+              className={`px-5 py-2 rounded-lg text-[13px] font-medium font-body border-none transition-all duration-150 ${hasContent && !saving && !saveBlocked ? "cursor-pointer hover:opacity-80" : "bg-avatar-bg cursor-not-allowed"}`}
+              style={hasContent && !saving && !saveBlocked ? { backgroundColor: "var(--text-primary)", color: "var(--bg-primary)" } : { color: "var(--text-tertiary)" }}
             >
               {saving ? "Enregistrement..." : "Enregistrer"}
             </button>
