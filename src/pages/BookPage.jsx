@@ -606,7 +606,7 @@ export default function BookPage({ book }) {
       </button>
 
       {/* Hero */}
-      <div className="flex flex-col sm:flex-row gap-8 py-2 pb-6 items-center sm:items-start">
+      <div className="flex flex-col sm:flex-row gap-8 py-2 pb-6 sm:items-start">
         <div className="flex flex-col items-center gap-2">
           <Img book={displayBook} w={180} h={270} />
           {book._supabase?.source === "ai_enriched" && book._supabase?.ai_confidence < 0.7 && (
