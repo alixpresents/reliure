@@ -3,3 +3,9 @@ verify_jwt = true
 
 [functions.find_cover]
 verify_jwt = true
+
+[functions.smart-search]
+verify_jwt = false
+
+[functions.book_import]
+verify_jwt = false
