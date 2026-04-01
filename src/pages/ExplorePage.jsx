@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo, memo } from "react";
 import { Link } from "react-router-dom";
 import Img from "../components/Img";
 import Avatar from "../components/Avatar";
@@ -33,6 +33,77 @@ function normalizeQuoteBook(q) {
   if (!q.books) return null;
   return { id: q.book_id, t: q.books.title, a: Array.isArray(q.books.authors) ? q.books.authors.join(", ") : "", c: q.books.cover_url, slug: q.books.slug, _supabase: q.books };
 }
+
+const ExploreReviewItem = memo(function ExploreReviewItem({ rv, liked, initialLiked, toggleLike, go, showToast, refetchReviews }) {
+  const bookObj = rv.books ? {
+    id: rv.book_id, t: rv.books.title,
+    a: Array.isArray(rv.books.authors) ? rv.books.authors.join(", ") : (rv.books.authors || ""),
+    c: rv.books.cover_url,
+    y: rv.books.publication_date ? parseInt(rv.books.publication_date) : null,
+    slug: rv.books.slug, _supabase: rv.books,
+  } : null;
+  return (
+    <div className="group flex gap-3.5 py-5 border-b border-[var(--border-subtle)] relative">
+      {bookObj && <Img book={bookObj} w={72} h={108} onClick={() => go(bookObj)} className="shrink-0" />}
+      <div className="flex-1 min-w-0">
+        <div className="flex items-start justify-between gap-2">
+          <div>
+            {bookObj && <div className="text-[15px] font-medium font-body">{bookObj.t}</div>}
+            {bookObj && <div className="text-xs font-body mt-0.5" style={{ color: "var(--text-tertiary)" }}>{bookObj.a}{bookObj.y ? `, ${bookObj.y}` : ""}</div>}
+          </div>
+          <ContentMenu type="review" item={rv} onDelete={refetchReviews} onEdit={refetchReviews} />
+        </div>
+        {rv.rating > 0 && <div className="mt-1"><Stars r={rv.rating} s={11} /></div>}
+        <div className="mt-1.5">
+          {rv.contains_spoilers ? (
+            <details>
+              <summary className="text-[11px] text-spoiler cursor-pointer font-medium font-body">Cette critique contient des spoilers</summary>
+              <p className="text-[14px] leading-[1.65] mt-1 font-body m-0" style={{ color: "var(--text-body)" }}>{rv.body}</p>
+            </details>
+          ) : (
+            <p className="text-[14px] leading-[1.65] font-body m-0" style={{ color: "var(--text-body)", display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{rv.body}</p>
+          )}
+        </div>
+        <div className="flex items-center gap-1 mt-2 text-xs font-body" style={{ color: "var(--text-tertiary)" }}>
+          <UserName user={rv.users} className="text-xs" />
+          <span>·</span>
+          <LikeButton
+            count={rv.likes_count || 0}
+            liked={liked}
+            initialLiked={initialLiked}
+            onToggle={() => toggleLike(rv.id, () => showToast("Une erreur est survenue"))}
+          />
+        </div>
+      </div>
+    </div>
+  );
+});
+
+const ExploreQuoteItem = memo(function ExploreQuoteItem({ q, liked, initialLiked, toggleLike, go, showToast, refetchQuotes }) {
+  const bookObj = normalizeQuoteBook(q);
+  return (
+    <div className="group py-4 border-b border-border-light relative">
+      <div className="flex items-start justify-between gap-2">
+        <div className="text-[15px] italic leading-[1.7] border-l-[3px] border-l-cover-fallback pl-3.5 mb-2.5 font-display flex-1" style={{ color: "var(--text-primary)" }}>
+          « {q.text} »
+        </div>
+        <ContentMenu type="quote" item={q} onDelete={refetchQuotes} onEdit={refetchQuotes} />
+      </div>
+      <div className="flex items-center gap-2">
+        {bookObj && <Img book={bookObj} w={24} h={34} onClick={() => go(bookObj)} />}
+        {bookObj && <span className="text-xs font-body" style={{ color: "var(--text-tertiary)" }}>{bookObj.t}</span>}
+        <span className="text-[11px] font-body" style={{ color: "var(--text-tertiary)" }}>· <UserName user={q.users} className="text-[11px]" /></span>
+        <LikeButton
+          count={q.likes_count || 0}
+          liked={liked}
+          initialLiked={initialLiked}
+          onToggle={() => toggleLike(q.id, () => showToast("Une erreur est survenue"))}
+          className="ml-auto text-[11px] font-body"
+        />
+      </div>
+    </div>
+  );
+});
 
 export default function ExplorePage() {
   const [query, setQuery] = useState("");
@@ -312,50 +383,18 @@ export default function ExplorePage() {
       {!loadingReviews && reviews.length > 0 && (
         <div className="border-t border-border-light py-6">
           <Heading>Critiques populaires</Heading>
-          {reviews.map(rv => {
-            const bookObj = rv.books ? {
-              id: rv.book_id, t: rv.books.title,
-              a: Array.isArray(rv.books.authors) ? rv.books.authors.join(", ") : (rv.books.authors || ""),
-              c: rv.books.cover_url,
-              y: rv.books.publication_date ? parseInt(rv.books.publication_date) : null,
-              slug: rv.books.slug, _supabase: rv.books,
-            } : null;
-            return (
-              <div key={rv.id} className="group flex gap-3.5 py-5 border-b border-[var(--border-subtle)] relative">
-                {bookObj && <Img book={bookObj} w={72} h={108} onClick={() => go(bookObj)} className="shrink-0" />}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-start justify-between gap-2">
-                    <div>
-                      {bookObj && <div className="text-[15px] font-medium font-body">{bookObj.t}</div>}
-                      {bookObj && <div className="text-xs font-body mt-0.5" style={{ color: "var(--text-tertiary)" }}>{bookObj.a}{bookObj.y ? `, ${bookObj.y}` : ""}</div>}
-                    </div>
-                    <ContentMenu type="review" item={rv} onDelete={refetchReviews} onEdit={refetchReviews} />
-                  </div>
-                  {rv.rating > 0 && <div className="mt-1"><Stars r={rv.rating} s={11} /></div>}
-                  <div className="mt-1.5">
-                    {rv.contains_spoilers ? (
-                      <details>
-                        <summary className="text-[11px] text-spoiler cursor-pointer font-medium font-body">Cette critique contient des spoilers</summary>
-                        <p className="text-[14px] leading-[1.65] mt-1 font-body m-0" style={{ color: "var(--text-body)" }}>{rv.body}</p>
-                      </details>
-                    ) : (
-                      <p className="text-[14px] leading-[1.65] font-body m-0" style={{ color: "var(--text-body)", display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{rv.body}</p>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-1 mt-2 text-xs font-body" style={{ color: "var(--text-tertiary)" }}>
-                    <UserName user={rv.users} className="text-xs" />
-                    <span>·</span>
-                    <LikeButton
-                      count={rv.likes_count || 0}
-                      liked={likedReviews.has(rv.id)}
-                      initialLiked={initLikedReviews.has(rv.id)}
-                      onToggle={() => toggleReviewLike(rv.id, () => showToast("Une erreur est survenue"))}
-                    />
-                  </div>
-                </div>
-              </div>
-            );
-          })}
+          {reviews.map(rv => (
+            <ExploreReviewItem
+              key={rv.id}
+              rv={rv}
+              liked={likedReviews.has(rv.id)}
+              initialLiked={initLikedReviews.has(rv.id)}
+              toggleLike={toggleReviewLike}
+              go={go}
+              showToast={showToast}
+              refetchReviews={refetchReviews}
+            />
+          ))}
         </div>
       )}
 
@@ -377,31 +416,18 @@ export default function ExplorePage() {
       {!loadingQuotes && quotes.length > 0 && (
         <div className="border-t border-border-light py-6">
           <Heading>Citations populaires</Heading>
-          {quotes.map(q => {
-            const bookObj = normalizeQuoteBook(q);
-            return (
-              <div key={q.id} className="group py-4 border-b border-border-light relative">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="text-[15px] italic leading-[1.7] border-l-[3px] border-l-cover-fallback pl-3.5 mb-2.5 font-display flex-1" style={{ color: "var(--text-primary)" }}>
-                    « {q.text} »
-                  </div>
-                  <ContentMenu type="quote" item={q} onDelete={refetchQuotes} onEdit={refetchQuotes} />
-                </div>
-                <div className="flex items-center gap-2">
-                  {bookObj && <Img book={bookObj} w={24} h={34} onClick={() => go(bookObj)} />}
-                  {bookObj && <span className="text-xs font-body" style={{ color: "var(--text-tertiary)" }}>{bookObj.t}</span>}
-                  <span className="text-[11px] font-body" style={{ color: "var(--text-tertiary)" }}>· <UserName user={q.users} className="text-[11px]" /></span>
-                  <LikeButton
-                    count={q.likes_count || 0}
-                    liked={likedSet.has(q.id)}
-                    initialLiked={initialSet.has(q.id)}
-                    onToggle={() => toggleQuoteLike(q.id, () => showToast("Une erreur est survenue"))}
-                    className="ml-auto text-[11px] font-body"
-                  />
-                </div>
-              </div>
-            );
-          })}
+          {quotes.map(q => (
+            <ExploreQuoteItem
+              key={q.id}
+              q={q}
+              liked={likedSet.has(q.id)}
+              initialLiked={initialSet.has(q.id)}
+              toggleLike={toggleQuoteLike}
+              go={go}
+              showToast={showToast}
+              refetchQuotes={refetchQuotes}
+            />
+          ))}
         </div>
       )}
 

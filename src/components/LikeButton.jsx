@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, memo } from "react";
 
 /**
  * @param {number} count - likes_count from DB (stale, not updated optimistically)
@@ -6,7 +6,8 @@ import { useState, useRef, useEffect } from "react";
  * @param {boolean} initialLiked - whether user had liked at fetch time (from useLikes initial Set)
  * @param {function} onToggle - toggle callback
  */
-export default function LikeButton({ count = 0, liked = false, initialLiked = false, onToggle, className = "" }) {
+// TODO: onToggle is often an inline arrow in callers — memo only helps if callers wrap it in useCallback
+export default memo(function LikeButton({ count = 0, liked = false, initialLiked = false, onToggle, className = "" }) {
   const [pop, setPop] = useState(false);
   const popTimer = useRef(null);
 
@@ -39,4 +40,4 @@ export default function LikeButton({ count = 0, liked = false, initialLiked = fa
       {displayCount > 0 && <span>{displayCount}</span>}
     </span>
   );
-}
+});

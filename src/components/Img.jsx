@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, memo } from "react";
 
-export default function Img({ book, w, h, onClick, className = "", priority = false }) {
+export default memo(function Img({ book, w, h, onClick, className = "", priority = false }) {
   const hasOverride = className.includes("w-full");
   const [imgFailed, setImgFailed] = useState(false);
   const src = book.c;
@@ -34,4 +34,4 @@ export default function Img({ book, w, h, onClick, className = "", priority = fa
       )}
     </div>
   );
-}
+});

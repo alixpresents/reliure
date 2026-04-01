@@ -7,11 +7,15 @@ export function useLikes(targetIds, targetType) {
   const { user } = useAuth();
   const [likedSet, setLikedSet] = useState(new Set());
   const initialSet = useRef(new Set());
+  // Ref mirrors likedSet so that stable `toggle` can read current state without closing over it
+  const likedSetRef = useRef(new Set());
   const idsKey = targetIds.join(",");
 
   const fetch = useCallback(async () => {
     if (!user || !targetIds.length) {
-      setLikedSet(new Set());
+      const empty = new Set();
+      likedSetRef.current = empty;
+      setLikedSet(empty);
       initialSet.current = new Set();
       return;
     }
@@ -23,21 +27,26 @@ export function useLikes(targetIds, targetType) {
       .in("target_id", targetIds);
     const s = new Set((data ?? []).map(d => d.target_id));
     initialSet.current = new Set(s);
+    likedSetRef.current = s;
     setLikedSet(s);
   }, [user, idsKey, targetType]);
 
   useEffect(() => { fetch(); }, [fetch]);
 
-  const toggle = (targetId, onError) => {
+  // Stable toggle — reads current state from ref, doesn't close over likedSet
+  const toggle = useCallback((targetId, onError) => {
     if (!user) return;
-    const wasLiked = likedSet.has(targetId);
+    const wasLiked = likedSetRef.current.has(targetId);
 
-    const applyToggle = (liked) => setLikedSet(prev => {
-      const next = new Set(prev);
-      if (liked) next.add(targetId);
-      else next.delete(targetId);
-      return next;
-    });
+    const applyToggle = (liked) => {
+      setLikedSet(prev => {
+        const next = new Set(prev);
+        if (liked) next.add(targetId);
+        else next.delete(targetId);
+        likedSetRef.current = next;
+        return next;
+      });
+    };
 
     return safeMutation({
       onOptimistic: () => applyToggle(!wasLiked),
@@ -58,7 +67,7 @@ export function useLikes(targetIds, targetType) {
       onError,
       errorMessage: "toggleLike error",
     });
-  };
+  }, [user, targetType]);
 
   return { likedSet, initialSet: initialSet.current, toggle };
 }

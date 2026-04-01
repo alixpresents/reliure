@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useMemo } from "react";
+import { useState, useRef, useEffect, useMemo, memo } from "react";
 
 const S_MODAL_OVERLAY = { position: "fixed", inset: 0, zIndex: 9998, backgroundColor: "rgba(0,0,0,0.4)" };
 const S_MODAL_CONTAINER = { position: "fixed", inset: 0, zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 16px" };
@@ -227,6 +227,61 @@ function EnrichModal({ bookId, onClose, onSaved, initialDescription, initialPage
     </>
   );
 }
+
+const BookReviewItem = memo(function BookReviewItem({ rv, liked, initialLiked, toggleLike, showToast, refetchReviews, navigate, anchorRef }) {
+  const displayName = rv.users?.display_name || rv.users?.username || "?";
+  const initials = displayName.split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2);
+  return (
+    <div ref={anchorRef} className="group py-4 border-b border-border-light relative">
+      <div className="flex items-center gap-2.5 mb-2">
+        <div className={rv.users?.username ? "cursor-pointer" : ""} onClick={() => rv.users?.username && navigate(`/${rv.users.username}`)}>
+          <Avatar i={initials} s={26} src={rv.users?.avatar_url} />
+        </div>
+        <UserName user={rv.users} className="text-[13px]" />
+        {rv.rating > 0 && <Stars r={rv.rating} s={11} />}
+        <div className="ml-auto"><ContentMenu type="review" item={rv} onDelete={refetchReviews} onEdit={refetchReviews} /></div>
+      </div>
+      {rv.contains_spoilers ? (
+        <details>
+          <summary className="text-[11px] text-spoiler cursor-pointer font-medium font-body">Cette critique contient des spoilers</summary>
+          <p className="text-[15px] leading-[1.7] mt-2 font-body" style={{ color: "var(--text-body)" }}>{rv.body}</p>
+        </details>
+      ) : (
+        <p className="text-[15px] leading-[1.7] m-0 font-body" style={{ color: "var(--text-body)" }}>{rv.body}</p>
+      )}
+      <div className="mt-2 text-[11px] font-body">
+        <LikeButton
+          count={rv.likes_count || 0}
+          liked={liked}
+          initialLiked={initialLiked}
+          onToggle={() => toggleLike(rv.id, () => showToast("Une erreur est survenue"))}
+        />
+      </div>
+    </div>
+  );
+});
+
+const BookQuoteItem = memo(function BookQuoteItem({ q, liked, initialLiked, toggleLike, showToast, refetchQuotes, anchorRef }) {
+  return (
+    <div ref={anchorRef} className="group py-[18px] border-b border-border-light relative">
+      <div className="text-[15px] italic leading-[1.7] border-l-[3px] border-l-cover-fallback pl-4 font-display" style={{ color: "var(--text-primary)" }}>
+        « {q.text} »
+      </div>
+      <div className="flex items-center gap-2 mt-2.5">
+        <UserName user={q.users} className="text-xs" />
+        <span className="text-[11px] font-body">
+          <LikeButton
+            count={q.likes_count || 0}
+            liked={liked}
+            initialLiked={initialLiked}
+            onToggle={() => toggleLike(q.id, () => showToast("Une erreur est survenue"))}
+          />
+        </span>
+        <div className="ml-auto"><ContentMenu type="quote" item={q} onDelete={refetchQuotes} onEdit={refetchQuotes} /></div>
+      </div>
+    </div>
+  );
+});
 
 export default function BookPage({ book, refetchBook }) {
   const navigate = useNavigate();
@@ -854,39 +909,22 @@ export default function BookPage({ book, refetchBook }) {
             {reviewsLoading ? (
               <div className="py-6 text-center text-[13px] font-body" style={{ color: "var(--text-tertiary)" }}>Chargement...</div>
             ) : dbReviews.length > 0 ? (
-              dbReviews.map((rv, i) => {
-                const displayName = rv.users?.display_name || rv.users?.username || "?";
-                const initials = displayName.split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2);
-                const isOwn = rv.user_id === user?.id;
-                return (
-                  <div key={rv.id} ref={isOwn && i === dbReviews.findIndex(r => r.user_id === user?.id) ? newReviewRef : undefined} className="group py-4 border-b border-border-light relative">
-                    <div className="flex items-center gap-2.5 mb-2">
-                      <div className={rv.users?.username ? "cursor-pointer" : ""} onClick={() => rv.users?.username && navigate(`/${rv.users.username}`)}>
-                        <Avatar i={initials} s={26} src={rv.users?.avatar_url} />
-                      </div>
-                      <UserName user={rv.users} className="text-[13px]" />
-                      {rv.rating > 0 && <Stars r={rv.rating} s={11} />}
-                      <div className="ml-auto"><ContentMenu type="review" item={rv} onDelete={() => refetchReviews()} onEdit={() => refetchReviews()} /></div>
-                    </div>
-                    {rv.contains_spoilers ? (
-                      <details>
-                        <summary className="text-[11px] text-spoiler cursor-pointer font-medium font-body">Cette critique contient des spoilers</summary>
-                        <p className="text-[15px] leading-[1.7] mt-2 font-body" style={{ color: "var(--text-body)" }}>{rv.body}</p>
-                      </details>
-                    ) : (
-                      <p className="text-[15px] leading-[1.7] m-0 font-body" style={{ color: "var(--text-body)" }}>{rv.body}</p>
-                    )}
-                    <div className="mt-2 text-[11px] font-body">
-                      <LikeButton
-                        count={rv.likes_count || 0}
-                        liked={likedReviews.has(rv.id)}
-                        initialLiked={initLikedReviews.has(rv.id)}
-                        onToggle={() => toggleReviewLike(rv.id, () => showToast("Une erreur est survenue"))}
-                      />
-                    </div>
-                  </div>
-                );
-              })
+              (() => {
+                const ownReviewIdx = dbReviews.findIndex(r => r.user_id === user?.id);
+                return dbReviews.map((rv, i) => (
+                  <BookReviewItem
+                    key={rv.id}
+                    rv={rv}
+                    liked={likedReviews.has(rv.id)}
+                    initialLiked={initLikedReviews.has(rv.id)}
+                    toggleLike={toggleReviewLike}
+                    showToast={showToast}
+                    refetchReviews={refetchReviews}
+                    navigate={navigate}
+                    anchorRef={i === ownReviewIdx ? newReviewRef : null}
+                  />
+                ));
+              })()
             ) : (
               <div className="py-6 text-center text-[13px] font-body" style={{ color: "var(--text-tertiary)" }}>Pas encore de critiques. Soyez le premier !</div>
             )}
@@ -941,28 +979,21 @@ export default function BookPage({ book, refetchBook }) {
             {quotesLoading ? (
               <div className="py-6 text-center text-[13px] font-body" style={{ color: "var(--text-tertiary)" }}>Chargement...</div>
             ) : dbQuotes.length > 0 ? (
-              dbQuotes.map((q, i) => {
-                const isOwn = q.user_id === user?.id;
-                return (
-                  <div key={q.id} ref={isOwn && i === dbQuotes.findIndex(qt => qt.user_id === user?.id) ? newQuoteRef : undefined} className="group py-[18px] border-b border-border-light relative">
-                    <div className="text-[15px] italic leading-[1.7] border-l-[3px] border-l-cover-fallback pl-4 font-display" style={{ color: "var(--text-primary)" }}>
-                      « {q.text} »
-                    </div>
-                    <div className="flex items-center gap-2 mt-2.5">
-                      <UserName user={q.users} className="text-xs" />
-                      <span className="text-[11px] font-body">
-                        <LikeButton
-                          count={q.likes_count || 0}
-                          liked={likedQuotes.has(q.id)}
-                          initialLiked={initLikedQuotes.has(q.id)}
-                          onToggle={() => toggleQuoteLike(q.id, () => showToast("Une erreur est survenue"))}
-                        />
-                      </span>
-                      <div className="ml-auto"><ContentMenu type="quote" item={q} onDelete={() => refetchQuotes()} onEdit={() => refetchQuotes()} /></div>
-                    </div>
-                  </div>
-                );
-              })
+              (() => {
+                const ownQuoteIdx = dbQuotes.findIndex(qt => qt.user_id === user?.id);
+                return dbQuotes.map((q, i) => (
+                  <BookQuoteItem
+                    key={q.id}
+                    q={q}
+                    liked={likedQuotes.has(q.id)}
+                    initialLiked={initLikedQuotes.has(q.id)}
+                    toggleLike={toggleQuoteLike}
+                    showToast={showToast}
+                    refetchQuotes={refetchQuotes}
+                    anchorRef={i === ownQuoteIdx ? newQuoteRef : null}
+                  />
+                ));
+              })()
             ) : (
               <div className="py-8 text-center">
                 <div className="text-[14px] font-body mb-1" style={{ color: "var(--text-tertiary)" }}>Aucune citation pour ce livre.</div>
