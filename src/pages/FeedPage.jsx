@@ -5,6 +5,7 @@ import Avatar from "../components/Avatar";
 import Heading from "../components/Heading";
 import LikeButton from "../components/LikeButton";
 import { useFeed } from "../hooks/useActivity";
+import { useTopContributors } from "../hooks/useUserPoints";
 import { useLikes } from "../hooks/useLikes";
 import { supabase } from "../lib/supabase";
 import UserName from "../components/UserName";
@@ -57,6 +58,7 @@ const FeedItem = memo(function FeedItem({
   listPreview, isLoadingBook,
   goToBook, nav,
   showToast, refetchFeed,
+  isTopContributor,
 }) {
   const displayName = it.users?.display_name || it.users?.username || "?";
   const initials = displayName.split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2);
@@ -80,6 +82,9 @@ const FeedItem = memo(function FeedItem({
         <div className="flex-1 min-w-0">
           <p className="text-[13px] leading-normal font-body m-0">
             <UserName user={it.users} className="text-[13px]" />
+            {isTopContributor && (
+              <span title="Top Contributeur" className="inline-block align-middle ml-0.5" style={{ fontSize: 12, color: "#C9A84C" }}>★</span>
+            )}
             {" "}
             <span style={{ color: "var(--text-tertiary)" }}>{actionLabel(it.action_type, meta)}</span>
             {" "}
@@ -195,6 +200,7 @@ const FeedItem = memo(function FeedItem({
 export default function FeedPage() {
   const nav = useNavigate();
   const { items, loading, refetch: refetchFeed } = useFeed();
+  const topContributorIds = useTopContributors();
   const reviewIds = useMemo(() => items.filter(i => i.action_type === "review").map(i => i.target_id), [items]);
   const quoteIds = useMemo(() => items.filter(i => i.action_type === "quote").map(i => i.target_id), [items]);
   const { likedSet: likedReviews, initialSet: initLikedReviews, toggle: toggleReviewLike } = useLikes(reviewIds, "review");
@@ -262,6 +268,7 @@ export default function FeedPage() {
             nav={nav}
             showToast={showToast}
             refetchFeed={refetchFeed}
+            isTopContributor={topContributorIds.has(it.user_id)}
           />
         ))}</div>
       ) : (

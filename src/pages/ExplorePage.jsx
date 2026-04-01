@@ -13,6 +13,7 @@ import ContentMenu from "../components/ContentMenu";
 import { useNav } from "../lib/NavigationContext";
 import { useNavigate } from "react-router-dom";
 import { usePopularBooks, usePopularReviews, usePopularQuotes, usePopularLists } from "../hooks/useExplore";
+import { useClassement } from "../hooks/useClassement";
 import { searchBooks } from "../lib/googleBooks";
 import { importBook } from "../lib/importBook";
 import Toast from "../components/Toast";
@@ -122,6 +123,7 @@ export default function ExplorePage() {
   const { reviews, loading: loadingReviews, refetch: refetchReviews } = usePopularReviews();
   const { quotes, loading: loadingQuotes, refetch: refetchQuotes } = usePopularQuotes();
   const { lists, loading: loadingLists } = usePopularLists();
+  const { rankings: top3, loading: loadingRanking } = useClassement("alltime", null);
   const reviewIds = useMemo(() => reviews.map(r => r.id), [reviews]);
   const quoteIds = useMemo(() => quotes.map(q => q.id), [quotes]);
   const listIds = useMemo(() => lists.map(l => l.id), [lists]);
@@ -446,6 +448,36 @@ export default function ExplorePage() {
           ))}
         </div>
       )}
+      {/* Top contributeurs */}
+      {!loadingRanking && top3.length > 0 && (
+        <div className="border-t border-border-light py-6">
+          <div className="flex items-baseline justify-between mb-4">
+            <span className="font-display italic text-[18px] font-normal" style={{ color: "var(--text-primary)" }}>Top contributeurs</span>
+            <Link to="/classement" className="text-[12px] font-body no-underline hover:underline" style={{ color: "var(--text-tertiary)" }}>
+              Voir le classement ›
+            </Link>
+          </div>
+          <div className="flex flex-col gap-3">
+            {top3.slice(0, 3).map((entry, i) => {
+              const name = entry.display_name || entry.username || "?";
+              const ini = name.split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2);
+              return (
+                <div key={entry.user_id} className="flex items-center gap-3">
+                  <span className="font-display italic text-[14px] shrink-0" style={{ color: i === 0 ? "#C9A84C" : "var(--text-muted)", minWidth: 20 }}>{i + 1}</span>
+                  <Link to={`/${entry.username}`} className="shrink-0">
+                    <Avatar i={ini} s={30} src={entry.avatar_url || null} />
+                  </Link>
+                  <Link to={`/${entry.username}`} className="flex-1 min-w-0 text-[13px] font-medium font-body no-underline hover:underline truncate" style={{ color: "var(--text-primary)" }}>
+                    {name}
+                  </Link>
+                  <span className="text-[12px] font-body shrink-0" style={{ color: "var(--text-muted)" }}>{entry.total_points} encre</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {!loadingLists && lists.length > 0 && (
         <div className="border-t border-border-light py-6">
           <Heading>Listes populaires</Heading>

@@ -63,6 +63,24 @@ export function useUserPoints(userId) {
   };
 }
 
+export function useTopContributors() {
+  const { data: ids = new Set() } = useQuery({
+    queryKey: ["topContributors"],
+    queryFn: async () => {
+      const now = new Date().toISOString();
+      const { data } = await supabase
+        .from("user_badges")
+        .select("user_id")
+        .eq("badge_id", "top_contributor")
+        .or(`expires_at.is.null,expires_at.gt.${now}`)
+        .limit(200);
+      return new Set((data ?? []).map(r => r.user_id));
+    },
+    staleTime: 10 * 60 * 1000,
+  });
+  return ids;
+}
+
 export function useAllBadgeDefinitions() {
   const { data: definitions = [], isLoading: loading } = useQuery({
     queryKey: ["badgeDefinitions"],

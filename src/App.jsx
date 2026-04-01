@@ -25,6 +25,8 @@ const ListPage = lazy(() => import("./pages/ListPage"));
 const TagPage = lazy(() => import("./pages/TagPage"));
 const BackfillPage = lazy(() => import("./pages/BackfillPage"));
 const SettingsPage = lazy(() => import("./pages/SettingsPage"));
+const BadgesPage = lazy(() => import("./pages/BadgesPage"));
+const ClassementPage = lazy(() => import("./pages/ClassementPage"));
 const ChallengesPage = lazy(() => import("./pages/ChallengesPage"));
 const JournalPage = lazy(() => import("./pages/JournalPage"));
 const ArticlePage = lazy(() => import("./pages/ArticlePage"));
@@ -149,6 +151,7 @@ export default function App() {
             <Route path="/citations" element={<CitationsPage />} />
             <Route path="/fil" element={<ProtectedRoute><FeedPage /></ProtectedRoute>} />
             <Route path="/defis" element={<ChallengesPage />} />
+            <Route path="/classement" element={<ClassementPage />} />
             <Route path="/la-revue" element={<JournalPage />} />
             <Route path="/la-revue/:slug" element={<ArticlePage />} />
             <Route path="/livre/:slug" element={<BookPageRoute />} />
@@ -157,6 +160,7 @@ export default function App() {
             <Route path="/backfill" element={<ProtectedRoute><BackfillPage /></ProtectedRoute>} />
             {/* Profile routes — MUST be after all global routes */}
             <Route path="/:username/listes/:slug" element={<ListPage />} />
+            <Route path="/:username/badges" element={<BadgesPage />} />
             <Route path="/:username" element={<ProfilePageRoute />} />
             <Route path="/:username/:tab" element={<ProfilePageRoute />} />
             <Route path="*" element={<NotFoundPage />} />
