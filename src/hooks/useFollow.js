@@ -1,10 +1,12 @@
 import { useState, useEffect, useCallback } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../lib/AuthContext";
 import { safeMutation, unwrapSupabase } from "../lib/safeMutation";
 
 export function useFollow(targetUserId) {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [following, setFollowing] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -22,6 +24,12 @@ export function useFollow(targetUserId) {
       });
   }, [user, targetUserId]);
 
+  const invalidateCaches = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ["profileData"] });
+    queryClient.invalidateQueries({ queryKey: ["followCounts"] });
+    queryClient.invalidateQueries({ queryKey: ["feed"] });
+  }, [queryClient]);
+
   const follow = (onError) => {
     if (!user || !targetUserId) return;
     return safeMutation({
@@ -31,6 +39,7 @@ export function useFollow(targetUserId) {
         "follow"
       ),
       onRevert: () => setFollowing(false),
+      onSuccess: invalidateCaches,
       onError,
       errorMessage: "follow error",
     });
@@ -45,6 +54,7 @@ export function useFollow(targetUserId) {
         "unfollow"
       ),
       onRevert: () => setFollowing(true),
+      onSuccess: invalidateCaches,
       onError,
       errorMessage: "unfollow error",
     });
@@ -54,20 +64,17 @@ export function useFollow(targetUserId) {
 }
 
 export function useFollowCounts(userId) {
-  const [counts, setCounts] = useState({ followers: 0, following: 0 });
-  const [loading, setLoading] = useState(true);
+  const { data: counts = { followers: 0, following: 0 }, isLoading: loading } = useQuery({
+    queryKey: ["followCounts", userId],
+    queryFn: async () => {
+      const [{ count: followers }, { count: following }] = await Promise.all([
+        supabase.from("follows").select("*", { count: "exact", head: true }).eq("following_id", userId),
+        supabase.from("follows").select("*", { count: "exact", head: true }).eq("follower_id", userId),
+      ]);
+      return { followers: followers || 0, following: following || 0 };
+    },
+    enabled: !!userId,
+  });
 
-  const fetch = useCallback(async () => {
-    if (!userId) { setLoading(false); return; }
-    const [{ count: followers }, { count: following }] = await Promise.all([
-      supabase.from("follows").select("*", { count: "exact", head: true }).eq("following_id", userId),
-      supabase.from("follows").select("*", { count: "exact", head: true }).eq("follower_id", userId),
-    ]);
-    setCounts({ followers: followers || 0, following: following || 0 });
-    setLoading(false);
-  }, [userId]);
-
-  useEffect(() => { fetch(); }, [fetch]);
-
-  return { ...counts, loading, refetch: fetch };
+  return { ...counts, loading };
 }

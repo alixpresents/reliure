@@ -485,7 +485,7 @@ export default function ProfilePage({ viewedProfile, initialTab }) {
   const profileData = useProfileData(profileId);
   const { reviews: myReviews, refetch: refetchReviews } = useMyReviews(profileId);
   const { quotes: myQuotes, refetch: refetchQuotes } = useMyQuotes(profileId);
-  const { followers, following: followingCount, refetch: refetchCounts } = useFollowCounts(profileId);
+  const { followers, following: followingCount } = useFollowCounts(profileId);
   const { following: isFollowing, follow, unfollow } = useFollow(!isOwnProfile ? profileId : null);
   const { favorites, loading: favoritesLoading, setFavorite, removeFavorite, swapPositions, updateNote } = useFavorites(profileId);
   const { lists: myLists, refetch: refetchLists } = useMyLists(profileId);
@@ -645,7 +645,7 @@ export default function ProfilePage({ viewedProfile, initialTab }) {
               onClick={() => {
                 if (!user) { navigate("/login"); return; }
                 const action = isFollowing ? unfollow : follow;
-                action(() => showToast("Une erreur est survenue")).then(() => refetchCounts());
+                action(() => showToast("Une erreur est survenue"));
               }}
               className="shrink-0 px-4 py-1.5 rounded-full text-[13px] font-medium font-body border transition-colors duration-150 hover:opacity-80"
               style={isFollowing

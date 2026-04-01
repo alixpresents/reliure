@@ -1,10 +1,12 @@
 import { useState, useEffect, useCallback, useRef } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../lib/AuthContext";
 import { safeMutation, unwrapSupabase } from "../lib/safeMutation";
 
 export function useLikes(targetIds, targetType) {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [likedSet, setLikedSet] = useState(new Set());
   const initialSet = useRef(new Set());
   // Ref mirrors likedSet so that stable `toggle` can read current state without closing over it
@@ -64,10 +66,17 @@ export function useLikes(targetIds, targetType) {
         );
       },
       onRevert: () => applyToggle(wasLiked),
+      onSuccess: () => {
+        // Invalidate caches that display like counts
+        queryClient.invalidateQueries({ queryKey: ["popularReviews"] });
+        queryClient.invalidateQueries({ queryKey: ["popularQuotes"] });
+        queryClient.invalidateQueries({ queryKey: ["myReviews"] });
+        queryClient.invalidateQueries({ queryKey: ["myQuotes"] });
+      },
       onError,
       errorMessage: "toggleLike error",
     });
-  }, [user, targetType]);
+  }, [user, targetType, queryClient]);
 
   return { likedSet, initialSet: initialSet.current, toggle };
 }

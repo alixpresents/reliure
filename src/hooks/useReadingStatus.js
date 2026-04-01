@@ -1,10 +1,12 @@
 import { useState, useEffect, useCallback, useRef } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../lib/AuthContext";
 import { logActivity } from "./useActivity";
 
 export function useReadingStatus(bookId) {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [status, setStatusState] = useState(null); // full row or null
   const [loading, setLoading] = useState(true);
   const [alreadyRead, setAlreadyRead] = useState(false);
@@ -26,6 +28,12 @@ export function useReadingStatus(bookId) {
   }, [user, bookId]);
 
   useEffect(() => { fetch(); }, [fetch]);
+
+  const invalidateCaches = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ["profileData"] });
+    queryClient.invalidateQueries({ queryKey: ["popularBooks"] });
+    queryClient.invalidateQueries({ queryKey: ["feed"] });
+  }, [queryClient]);
 
   const setStatus = async (newStatus, extras = {}, meta = {}) => {
     if (!user || !bookId) return;
@@ -54,6 +62,7 @@ export function useReadingStatus(bookId) {
           logActivity(user.id, "reading_status", data.id, "reading_status", activityMeta);
         }
       }
+      invalidateCaches();
     } catch (err) {
       if (requestId === latestRequestRef.current) {
         setStatusState(prevStatus);
@@ -65,6 +74,7 @@ export function useReadingStatus(bookId) {
     if (!user || !status?.id) return;
     await supabase.from("reading_status").delete().eq("id", status.id);
     setStatusState(null);
+    invalidateCaches();
   };
 
   const updatePage = async (page) => {
@@ -77,6 +87,7 @@ export function useReadingStatus(bookId) {
     if (!status?.id) return;
     await supabase.from("reading_status").update(fields).eq("id", status.id);
     setStatusState(prev => ({ ...prev, ...fields }));
+    invalidateCaches();
   };
 
   return { status, loading, alreadyRead, setStatus, removeStatus, updatePage, updateFields, refetch: fetch };
@@ -84,6 +95,7 @@ export function useReadingStatus(bookId) {
 
 export function useUserRating(bookId) {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [rating, setRatingState] = useState(0);
   const [loading, setLoading] = useState(true);
 
@@ -100,6 +112,11 @@ export function useUserRating(bookId) {
         setLoading(false);
       });
   }, [user, bookId]);
+
+  const invalidateCaches = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ["profileData"] });
+    queryClient.invalidateQueries({ queryKey: ["myReviews"] });
+  }, [queryClient]);
 
   const setRating = async (newRating) => {
     if (!user || !bookId) return;
@@ -125,32 +142,36 @@ export function useUserRating(bookId) {
         { onConflict: "user_id,book_id" }
       );
     }
+    invalidateCaches();
   };
 
-  return { rating, loading: loading, setRating };
+  return { rating, loading, setRating };
 }
 
 export function useReadingList(statusFilter, profileUserId) {
   const { user } = useAuth();
   const targetId = profileUserId || user?.id;
+  const queryClient = useQueryClient();
 
-  const [books, setBooks] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { data: books = [], isLoading: loading } = useQuery({
+    queryKey: ["readingList", statusFilter, targetId],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("reading_status")
+        .select("*, books(id, title, authors, cover_url, slug, publication_date, page_count, avg_rating)")
+        .eq("user_id", targetId)
+        .eq("status", statusFilter)
+        .order("created_at", { ascending: false })
+        .limit(200);
+      return data ?? [];
+    },
+    enabled: !!targetId,
+  });
 
-  const fetch = useCallback(async () => {
-    if (!targetId) { setBooks([]); setLoading(false); return; }
-    const { data } = await supabase
-      .from("reading_status")
-      .select("*, books(id, title, authors, cover_url, slug, publication_date, page_count, avg_rating)")
-      .eq("user_id", targetId)
-      .eq("status", statusFilter)
-      .order("created_at", { ascending: false })
-      .limit(200);
-    setBooks(data ?? []);
-    setLoading(false);
-  }, [targetId, statusFilter]);
+  const refetch = useCallback(
+    () => queryClient.invalidateQueries({ queryKey: ["readingList", statusFilter, targetId] }),
+    [queryClient, statusFilter, targetId]
+  );
 
-  useEffect(() => { fetch(); }, [fetch]);
-
-  return { books, loading, refetch: fetch };
+  return { books, loading, refetch };
 }
