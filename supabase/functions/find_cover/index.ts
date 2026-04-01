@@ -11,7 +11,7 @@ serve(async (req) => {
   async function isValidImageUrl(url: string): Promise<boolean> {
     try {
       const res = await fetch(url, {
-        method: 'GET',
+        method: 'HEAD',
         signal: AbortSignal.timeout(4000),
         redirect: 'follow'
       })
