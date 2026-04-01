@@ -989,12 +989,13 @@ Coût estimé : ~$0.001 par synthèse.
 `EnrichModal` sur BookPage : tout utilisateur connecté peut modifier directement une fiche, sans file de modération (MVP simplifié). Déclenché via le bouton "Modifier la fiche" dans la section hero.
 
 Ce qu'on peut modifier aujourd'hui :
-- Couverture (upload vers Supabase Storage bucket `book-covers`, URL mise à jour dans `books.cover_url`)
+- Couverture — deux modes :
+  - **Upload fichier** (jpg/png, max 2 Mo) → Supabase Storage bucket `book-covers`
+  - **Coller une URL** → preview live avec debounce 600ms, validation `onLoad`/`onError`, sauvegarde directe dans `books.cover_url` sans passer par Storage
 - Description
 - Nombre de pages
 - Date de publication
 - Éditeur
-- Genres / thèmes
 
 La modification est appliquée immédiatement (UPDATE dans `books`). Pas de file de modération en v1.
 
@@ -1254,6 +1255,58 @@ listIds   → supabase.from("lists").select("id").in(...)
 
 ---
 
+## Sprint Performance P1 — Avril 2026
+
+**Statut :** ✅ Terminé
+
+Série d'optimisations ciblées suite aux audits de performance (rapports `reports/audit-*.md`).
+
+### P1-C : React.memo sur les composants en boucle
+- `Img`, `LikeButton` enveloppés dans `memo()`
+- `FeedItem`, `BookReviewItem`, `BookQuoteItem`, `ExploreReviewItem`, `ExploreQuoteItem` extraits comme composants memo'd avec props primitives
+- `useLikes.toggle` stabilisé via `useCallback` + `likedSetRef` (pattern ref pour éviter que `memo` soit inutile)
+
+### P1-D : RPC `popular_lists_with_covers`
+- Remplace 3 requêtes séquentielles (listes + items + covers) par 1 seule RPC PostgreSQL avec sous-requête corrélée (`ARRAY(SELECT...)`)
+- Migration : `supabase/migrations/011_popular_lists_rpc.sql`
+
+### P1-E : Circuit breaker Google Books
+- HTTP 429 → désactivation de l'API pendant 15 minutes (module-level `googleBooksDisabledUntil`)
+- Skip reason `circuit_breaker` dans les analytics search
+- Fichier : `src/lib/googleBooks.js`
+
+### P1-F à P1-H : Migration complète vers TanStack Query
+Tous les hooks de lecture et de mutation migrés vers `useQuery` / invalidation cross-cache.
+
+**Hooks de lecture migrés :**
+- `useProfileData` — `["profileData", userId]`
+- `useBookBySlug` — `["book", slug]`
+- `usePopularBooks/Reviews/Quotes/Lists` — `["popular*"]`
+- `useAvailableGenres`, `useBooksByGenre` — `["availableGenres"]`, `["booksByGenre", genre]`
+- `useMyReviews` — `["myReviews", userId]`
+- `useMyLists` — `["myLists", userId]`
+- `useFavorites` — `["favorites", userId]`
+- `useMyQuotes` — `["myQuotes", userId]`
+- `useFollowCounts` — `["followCounts", userId]`
+- `useReadingList` — `["readingList", statusFilter, userId]`
+- `useFeed` — `["feed"]`
+
+**Mutations : invalidation cross-cache ajoutée :**
+- `useLikes.toggle` → invalide `["popularReviews"]`, `["popularQuotes"]`, `["myReviews"]`, `["myQuotes"]`
+- `useFollow.follow/unfollow` → invalide `["profileData"]`, `["followCounts"]`, `["feed"]`
+- `useReadingStatus.setStatus/removeStatus` → invalide `["profileData"]`, `["popularBooks"]`, `["feed"]`
+- `useUserRating.setRating` → invalide `["profileData"]`, `["myReviews"]`
+
+**Config globale** (`src/main.jsx`) : `staleTime: 5min`, `gcTime: 30min`, `refetchOnWindowFocus: false`, `retry: 1`.
+
+### Fixes associés
+- `useUserRating` : `.single()` → `.maybeSingle()` (406 quand pas encore de note)
+- `BookPage` livres similaires : `.contains("genres", [...])` → `.filter("genres", "cs", ...)` (400 JSONB)
+- Edge functions CORS : accepte `*.vercel.app` pour les previews Vercel
+- `smart-search` et `book_import` : `verify_jwt = false` (accessibles aux visiteurs non connectés)
+
+---
+
 ## Retours bêta — Mars 2026
 
 ### B1. Couvertures manquantes — thème Manga
@@ -1443,4 +1496,4 @@ La base locale contient ~12 500 livres mais beaucoup ont des métadonnées incom
 
 ---
 
-*Dernière mise à jour : 1 avril 2026*
+*Dernière mise à jour : 1 avril 2026 — Sprint Performance P1 + TanStack Query migration*

@@ -71,6 +71,7 @@ L'app ne doit jamais ressembler à un tableur ou à un webzine. C'est un objet c
 - **Frontend** : React + Vite + React Router (BrowserRouter)
 - **Backend** : Supabase (auth, PostgreSQL, storage, realtime, edge functions)
 - **Styling** : Tailwind CSS (migré depuis CSS-in-JS)
+- **Data fetching / cache** : TanStack Query (`@tanstack/react-query`) — tous les hooks de lecture utilisent `useQuery`, invalidation cross-cache après mutations. Config globale : `staleTime: 5min`, `gcTime: 30min`, `refetchOnWindowFocus: false`. QueryClient initialisé dans `src/main.jsx`.
 - **Routing** : React Router v7, convention URLs Letterboxd (/:username, /livre/:slug, /explorer, etc.)
 - **Déploiement** : Vercel (vercel.json rewrite SPA)
 - **Jobs asynchrones** : pg_cron (stats agrégées, trending, cache invalidation)
@@ -149,7 +150,7 @@ Architecture DB-first : la base locale (3830+ livres) est la source primaire, Go
    - Si query est un ISBN et RPC retourne ≥ 1 résultat → skip Google (`isbn_found`)
    - Sinon → appel Google Books pour découverte
    - Le tableau retourné porte `_skippedGoogle` et `_skipReason` en propriétés
-3. **Google Books** (conditionnel) : une seule requête (`langRestrict=fr`, max 15 résultats), filtrée (sans couverture, sans ISBN, éditeurs parasites, mots-clés parasites exclus), limitée à 8 résultats après filtre.
+3. **Google Books** (conditionnel) : une seule requête (`langRestrict=fr`, max 15 résultats), filtrée (sans couverture, sans ISBN, éditeurs parasites, mots-clés parasites exclus), limitée à 8 résultats après filtre. **Circuit breaker** : si Google Books retourne HTTP 429, l'API est désactivée pendant 15 minutes (module-level `googleBooksDisabledUntil`). Skip reason `circuit_breaker` loggé dans les analytics.
 
 **Logging** : chaque appel `searchBooks()` émet un `console.log('[search-analytics]', JSON.stringify({...}))` avec les compteurs DB, Google, skip. Greppable dans les logs Vercel.
 
@@ -347,6 +348,25 @@ Toutes les couleurs UI sont gérées via CSS custom properties dans `src/index.c
   - Des colonnes explicites (jamais `select('*')` ni `books(*)`)
   - Un `.limit()` explicite
 
+### Conventions TanStack Query
+
+- **Tous les hooks de lecture** utilisent `useQuery`. Plus de `useState` + `useEffect` + fetch manuel pour les données serveur.
+- **Conventions de queryKey** :
+  - `["book", slug]` — fiche livre
+  - `["profileData", userId]` — données profil complètes (statuts, diary, stats, bilan)
+  - `["myReviews", userId]` — critiques d'un utilisateur
+  - `["myQuotes", userId]` — citations d'un utilisateur
+  - `["myLists", userId]` — listes d'un utilisateur
+  - `["favorites", userId]` — quatre favoris
+  - `["followCounts", userId]` — compteurs abonnés/abonnements
+  - `["readingList", statusFilter, userId]` — liste de lecture par statut
+  - `["popularBooks"]`, `["popularReviews"]`, `["popularQuotes"]`, `["popularLists"]` — Explorer
+  - `["booksByGenre", genre]` — livres par genre
+  - `["feed"]` — fil d'activité
+- **Invalidation cross-cache** : après une mutation, invalider toutes les queryKeys affectées. Ex : noter un livre invalide `["profileData"]` et `["myReviews"]`.
+- **Optimistic UI** : préserver le pattern `safeMutation` + `useRef` existant pour les toggles likes (stabilité référentielle pour `React.memo`). Ne pas remplacer par `useMutation` de TanStack si ça casserait la stabilité des props.
+- **`refetch` exposé** : quand un consommateur a besoin de déclencher un refresh manuellement, exposer `refetch = () => queryClient.invalidateQueries({ queryKey: [...] })` depuis le hook.
+
 ## Conventions
 
 ### Langue
@@ -406,7 +426,7 @@ Chaque onglet a sa propre URL (`/:username/critiques`, etc.).
 - Tags personnels avec autocomplétion accent-insensitive (max 5)
 - Likes sur critiques et citations — persistés via `useLikes`
 - Navigation vers les livres par slug (`/livre/:slug`)
-- **Modifier la fiche** (EnrichModal) : bouton pill dans le hero sous les métadonnées, visible pour tous les users connectés sur les livres à UUID. Modal avec couverture (upload Supabase Storage bucket `book-covers`), description, pages, éditeur, date de publication. UPDATE immédiat en base, refetch post-save, toast confirmation.
+- **Modifier la fiche** (EnrichModal) : bouton pill dans le hero sous les métadonnées, visible pour tous les users connectés sur les livres à UUID. Modal avec couverture (deux modes : upload fichier vers Supabase Storage `book-covers`, ou coller une URL directe avec aperçu live + validation onLoad/onError), description, pages, éditeur, date de publication. UPDATE immédiat en base, invalidation TanStack Query post-save, toast confirmation.
 - **ContentMenu** sur les critiques et citations : édition/suppression inline, refetch après modification
 
 #### Profil
