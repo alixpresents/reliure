@@ -85,8 +85,7 @@ export function useFavorites(profileUserId) {
     if (!user || fromPos === toPos) return;
     const fromFav = favorites.find(f => f.position === fromPos);
     const toFav = favorites.find(f => f.position === toPos);
-    console.log("[fav-swap] start", { fromPos, toPos, fromFav: fromFav?.bookId, toFav: toFav?.bookId, userId: user.id });
-    if (!fromFav) { console.warn("[fav-swap] fromFav not found, aborting"); return; }
+    if (!fromFav) return;
 
     // Optimistic update
     queryClient.setQueryData(["favorites", targetId], prev =>
@@ -99,17 +98,16 @@ export function useFavorites(profileUserId) {
 
     if (toFav) {
       const { error: delErr } = await supabase.from("user_favorites").delete().eq("user_id", user.id).in("position", [fromPos, toPos]);
-      if (delErr) console.error("[fav-swap] delete error", delErr);
+      if (delErr) return;
       const { error: insErr } = await supabase.from("user_favorites").insert([
         { user_id: user.id, book_id: fromFav.bookId, position: toPos, note: fromFav.note || null },
         { user_id: user.id, book_id: toFav.bookId, position: fromPos, note: toFav.note || null },
       ]);
-      if (insErr) console.error("[fav-swap] insert error", insErr);
+      if (insErr) return;
     } else {
       const { error: updErr } = await supabase.from("user_favorites").update({ position: toPos }).eq("user_id", user.id).eq("book_id", fromFav.bookId);
-      if (updErr) console.error("[fav-swap] update error", updErr);
+      if (updErr) return;
     }
-    console.log("[fav-swap] done, invalidating");
     await invalidate();
   };
 

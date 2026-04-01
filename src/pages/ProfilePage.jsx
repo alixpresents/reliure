@@ -27,6 +27,8 @@ import LevelBadge from "../components/LevelBadge";
 import { useToast } from "../hooks/useToast";
 import { useUserRole } from "../hooks/useUserRole";
 import { useUserPoints } from "../hooks/useUserPoints";
+import { useUserBadges } from "../hooks/useUserBadges";
+import CreatorBadge from "../components/CreatorBadge";
 
 function ReadingItem({ book, go, onFinish, initialPage = 0, statusId = null, isOwner = true }) {
   const [currentPage, setCurrentPage] = useState(initialPage);
@@ -301,7 +303,6 @@ function FavoritesSection({ favorites, isOwner, go, onAdd, onRemove, onSwap, onU
   const handleDrop = (e, pos) => {
     e.preventDefault();
     const from = dragFromRef.current;
-    console.log("[fav-drag] drop", { from, to: pos });
     if (from !== null && from !== pos) onSwap(from, pos);
     setDragFrom(null);
     setDragOver(null);
@@ -562,6 +563,7 @@ export default function ProfilePage({ viewedProfile, initialTab }) {
   const { following: isFollowing, follow, unfollow } = useFollow(!isOwnProfile ? profileId : null);
   const { favorites, loading: favoritesLoading, setFavorite, removeFavorite, swapPositions, updateNote } = useFavorites(profileId);
   const { lists: myLists, refetch: refetchLists } = useMyLists(profileId);
+  const { hasCreator } = useUserBadges(profileId);
   const listIds = myLists.map(l => l.id);
   const { likedSet: listLikedSet, initialSet: listInitialSet, toggle: toggleListLike } = useLikes(listIds, "list");
   const [showCreateList, setShowCreateList] = useState(false);
@@ -705,6 +707,7 @@ export default function ProfilePage({ viewedProfile, initialTab }) {
             )}
             <div className="flex items-center gap-2 flex-wrap">
               <span className="text-xs font-body" style={{ color: "var(--text-tertiary)" }}>@{profile.username}</span>
+              {hasCreator && <CreatorBadge />}
               {role && <RoleBadge role={role} />}
             </div>
             {totalPoints > 0 && <LevelBadge levelName={levelName} totalPoints={totalPoints} monthlyPoints={isOwnProfile ? monthlyPoints : 0} />}

@@ -17,6 +17,7 @@ import { safeMutation, unwrapSupabase } from "../lib/safeMutation";
 import ContentMenu from "../components/ContentMenu";
 import Toast from "../components/Toast";
 import { useToast } from "../hooks/useToast";
+import { useCreatorIds } from "../hooks/useUserBadges";
 
 function AddQuoteModal({ onClose, onPublished }) {
   const { user } = useAuth();
@@ -224,6 +225,7 @@ export default function CitationsPage() {
   const { quotes: myQuotes, loading: myQuotesLoading } = useMyQuotes(user?.id);
   const quoteIds = useMemo(() => dbQuotes.map(q => q.id), [dbQuotes]);
   const { likedSet, initialSet, toggle } = useLikes(quoteIds, "quote");
+  const creatorIds = useCreatorIds();
   const [modalOpen, setModalOpen] = useState(false);
   const { toast, showToast } = useToast();
 
@@ -290,7 +292,7 @@ export default function CitationsPage() {
                   {bookObj && <div className="text-xs font-body" style={{ color: "var(--text-tertiary)" }}>{bookObj.a}</div>}
                 </div>
                 <div className="text-right">
-                  <div className="text-xs font-body"><UserName user={q.users} className="text-xs" /></div>
+                  <div className="text-xs font-body"><UserName user={q.users} className="text-xs" isCreator={creatorIds?.has(q.user_id)} /></div>
                   <div className="text-xs mt-0.5 font-body" style={{ color: "var(--text-tertiary)" }}><LikeButton count={q.likes_count || 0} liked={likedSet.has(q.id)} initialLiked={initialSet.has(q.id)} onToggle={() => toggle(q.id, () => showToast("Une erreur est survenue"))} /></div>
                 </div>
               </div>

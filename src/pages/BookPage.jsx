@@ -22,6 +22,7 @@ import { logActivity } from "../hooks/useActivity";
 import { resetIOSZoom } from "../lib/resetZoom";
 import { useLikes } from "../hooks/useLikes";
 import UserName from "../components/UserName";
+import { useCreatorIds } from "../hooks/useUserBadges";
 import { useNavigate, Link } from "react-router-dom";
 import { useNav } from "../lib/NavigationContext";
 import { useBookLists } from "../hooks/useBookLists";
@@ -285,7 +286,7 @@ function EnrichModal({ bookId, onClose, onSaved, initialDescription, initialPage
   );
 }
 
-const BookReviewItem = memo(function BookReviewItem({ rv, liked, initialLiked, toggleLike, showToast, refetchReviews, navigate, anchorRef }) {
+const BookReviewItem = memo(function BookReviewItem({ rv, liked, initialLiked, toggleLike, showToast, refetchReviews, navigate, anchorRef, creatorIds }) {
   const displayName = rv.users?.display_name || rv.users?.username || "?";
   const initials = displayName.split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2);
   return (
@@ -294,7 +295,7 @@ const BookReviewItem = memo(function BookReviewItem({ rv, liked, initialLiked, t
         <div className={rv.users?.username ? "cursor-pointer" : ""} onClick={() => rv.users?.username && navigate(`/${rv.users.username}`)}>
           <Avatar i={initials} s={26} src={rv.users?.avatar_url} />
         </div>
-        <UserName user={rv.users} className="text-[13px]" />
+        <UserName user={rv.users} className="text-[13px]" isCreator={creatorIds?.has(rv.user_id)} />
         {rv.rating > 0 && <Stars r={rv.rating} s={11} />}
         <div className="ml-auto"><ContentMenu type="review" item={rv} onDelete={refetchReviews} onEdit={refetchReviews} /></div>
       </div>
@@ -318,14 +319,14 @@ const BookReviewItem = memo(function BookReviewItem({ rv, liked, initialLiked, t
   );
 });
 
-const BookQuoteItem = memo(function BookQuoteItem({ q, liked, initialLiked, toggleLike, showToast, refetchQuotes, anchorRef }) {
+const BookQuoteItem = memo(function BookQuoteItem({ q, liked, initialLiked, toggleLike, showToast, refetchQuotes, anchorRef, creatorIds }) {
   return (
     <div ref={anchorRef} className="group py-[18px] border-b border-border-light relative">
       <div className="text-[15px] italic leading-[1.7] border-l-[3px] border-l-cover-fallback pl-4 font-display" style={{ color: "var(--text-primary)" }}>
         « {q.text} »
       </div>
       <div className="flex items-center gap-2 mt-2.5">
-        <UserName user={q.users} className="text-xs" />
+        <UserName user={q.users} className="text-xs" isCreator={creatorIds?.has(q.user_id)} />
         <span className="text-[11px] font-body">
           <LikeButton
             count={q.likes_count || 0}
@@ -350,6 +351,7 @@ export default function BookPage({ book }) {
   const { reviews: dbReviews, loading: reviewsLoading, refetch: refetchReviews } = useBookReviews(bookId);
   const { quotes: dbQuotes, loading: quotesLoading, refetch: refetchQuotes } = useBookQuotes(bookId);
   const { user } = useAuth();
+  const creatorIds = useCreatorIds();
   const reviewIds = useMemo(() => dbReviews.map(r => r.id), [dbReviews]);
   const quoteIds = useMemo(() => dbQuotes.map(q => q.id), [dbQuotes]);
   const { likedSet: likedReviews, initialSet: initLikedReviews, toggle: toggleReviewLike } = useLikes(reviewIds, "review");
@@ -981,6 +983,7 @@ export default function BookPage({ book }) {
                     refetchReviews={refetchReviews}
                     navigate={navigate}
                     anchorRef={i === ownReviewIdx ? newReviewRef : null}
+                    creatorIds={creatorIds}
                   />
                 ));
               })()
@@ -1050,6 +1053,7 @@ export default function BookPage({ book }) {
                     showToast={showToast}
                     refetchQuotes={refetchQuotes}
                     anchorRef={i === ownQuoteIdx ? newQuoteRef : null}
+                    creatorIds={creatorIds}
                   />
                 ));
               })()

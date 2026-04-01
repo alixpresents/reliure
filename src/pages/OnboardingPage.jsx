@@ -81,8 +81,8 @@ function StepWelcome({ onNext }) {
 }
 
 /* ─── Step 1: Username ─── */
-function StepUsername({ username, setUsername, bio, setBio, onNext, error: externalError }) {
-  const [status, setStatus] = useState(null);
+function StepUsername({ username, setUsername, bio, setBio, onNext, error: externalError, userEmail }) {
+  const [status, setStatus] = useState(null); // null | 'available' | 'reserved_for_you' | 'reserved' | 'taken' | 'invalid'
   const [saving, setSaving] = useState(false);
   const timer = useRef(null);
 
@@ -92,21 +92,18 @@ function StepUsername({ username, setUsername, bio, setBio, onNext, error: exter
     if (!/^[a-z0-9_]+$/.test(username)) { setStatus("invalid"); return; }
     if (RESERVED_USERNAMES.has(username)) { setStatus("reserved"); return; }
     timer.current = setTimeout(async () => {
-      const { data, error } = await supabase
-        .from("users")
-        .select("username")
-        .eq("username", username.toLowerCase())
-        .single();
-      if (error?.code === "PGRST116") setStatus("available");
-      else if (data) setStatus("taken");
-      else setStatus("available");
+      const { data } = await supabase.rpc("check_username_availability", {
+        p_username: username.toLowerCase(),
+        p_email: userEmail || "",
+      });
+      setStatus(data || "available");
     }, 300);
     return () => clearTimeout(timer.current);
-  }, [username]);
+  }, [username, userEmail]);
 
-  const valid = username.length >= 2 && status === "available" && !saving;
+  const valid = username.length >= 2 && (status === "available" || status === "reserved_for_you") && !saving;
 
-  const borderColor = status === "available" ? "border-[var(--color-success)]"
+  const borderColor = (status === "available" || status === "reserved_for_you") ? "border-[var(--color-success)]"
     : (status === "taken" || status === "reserved" || status === "invalid") ? "border-spoiler"
     : "border-[var(--border-default)] focus-within:border-[var(--text-primary)]";
 
@@ -137,8 +134,13 @@ function StepUsername({ username, setUsername, bio, setBio, onNext, error: exter
             className="w-full py-3 px-1 text-[17px] bg-transparent border-none outline-none font-body"
             style={{ color: "var(--text-primary)" }}
           />
-          {status === "available" && <span className="text-sm font-medium shrink-0" style={{ color: "var(--color-success)" }}>✓</span>}
+          {(status === "available" || status === "reserved_for_you") && <span className="text-sm font-medium shrink-0" style={{ color: "var(--color-success)" }}>✓</span>}
         </div>
+        {status === "reserved_for_you" && (
+          <p className="text-xs mt-1.5 font-body" style={{ color: "var(--color-success)" }}>
+            Ce pseudo t'est réservé ✦
+          </p>
+        )}
         {(status === "taken" || status === "reserved" || status === "invalid" || externalError) && (
           <p className="text-xs text-spoiler mt-1.5 font-body">
             {externalError || (status === "reserved" ? "Ce pseudo est réservé" : status === "invalid" ? "Lettres minuscules, chiffres et _ uniquement" : "Ce pseudo est déjà pris")}
@@ -352,9 +354,10 @@ export default function OnboardingPage({ onComplete }) {
 
   const handleUsernameNext = async () => {
     setStep1Error(null);
+    const uname = username.toLowerCase();
     const { error } = await supabase.from("users").insert({
       id: user.id,
-      username: username.toLowerCase(),
+      username: uname,
       display_name: username,
       bio: bio || null,
     });
@@ -366,6 +369,8 @@ export default function OnboardingPage({ onComplete }) {
       }
       return;
     }
+    // Claim reserved username if applicable
+    await supabase.rpc("claim_reserved_username", { p_username: uname });
     transition(() => setStep(2));
   };
 
@@ -436,6 +441,7 @@ export default function OnboardingPage({ onComplete }) {
               setBio={setBio}
               onNext={handleUsernameNext}
               error={step1Error}
+              userEmail={user?.email}
             />
           )}
           {step === 2 && (

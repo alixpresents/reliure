@@ -9,6 +9,7 @@ import HScroll from "../components/HScroll";
 import LikeButton from "../components/LikeButton";
 import Stars from "../components/Stars";
 import UserName from "../components/UserName";
+import { useCreatorIds } from "../hooks/useUserBadges";
 import ContentMenu from "../components/ContentMenu";
 import { useNav } from "../lib/NavigationContext";
 import { useNavigate } from "react-router-dom";
@@ -35,7 +36,7 @@ function normalizeQuoteBook(q) {
   return { id: q.book_id, t: q.books.title, a: Array.isArray(q.books.authors) ? q.books.authors.join(", ") : "", c: q.books.cover_url, slug: q.books.slug, _supabase: q.books };
 }
 
-const ExploreReviewItem = memo(function ExploreReviewItem({ rv, liked, initialLiked, toggleLike, go, showToast, refetchReviews }) {
+const ExploreReviewItem = memo(function ExploreReviewItem({ rv, liked, initialLiked, toggleLike, go, showToast, refetchReviews, creatorIds }) {
   const bookObj = rv.books ? {
     id: rv.book_id, t: rv.books.title,
     a: Array.isArray(rv.books.authors) ? rv.books.authors.join(", ") : (rv.books.authors || ""),
@@ -66,7 +67,7 @@ const ExploreReviewItem = memo(function ExploreReviewItem({ rv, liked, initialLi
           )}
         </div>
         <div className="flex items-center gap-1 mt-2 text-xs font-body" style={{ color: "var(--text-tertiary)" }}>
-          <UserName user={rv.users} className="text-xs" />
+          <UserName user={rv.users} className="text-xs" isCreator={creatorIds?.has(rv.user_id)} />
           <span>·</span>
           <LikeButton
             count={rv.likes_count || 0}
@@ -80,7 +81,7 @@ const ExploreReviewItem = memo(function ExploreReviewItem({ rv, liked, initialLi
   );
 });
 
-const ExploreQuoteItem = memo(function ExploreQuoteItem({ q, liked, initialLiked, toggleLike, go, showToast, refetchQuotes }) {
+const ExploreQuoteItem = memo(function ExploreQuoteItem({ q, liked, initialLiked, toggleLike, go, showToast, refetchQuotes, creatorIds }) {
   const bookObj = normalizeQuoteBook(q);
   return (
     <div className="group py-4 border-b border-border-light relative">
@@ -93,7 +94,7 @@ const ExploreQuoteItem = memo(function ExploreQuoteItem({ q, liked, initialLiked
       <div className="flex items-center gap-2">
         {bookObj && <Img book={bookObj} w={24} h={34} onClick={() => go(bookObj)} />}
         {bookObj && <span className="text-xs font-body" style={{ color: "var(--text-tertiary)" }}>{bookObj.t}</span>}
-        <span className="text-[11px] font-body" style={{ color: "var(--text-tertiary)" }}>· <UserName user={q.users} className="text-[11px]" /></span>
+        <span className="text-[11px] font-body" style={{ color: "var(--text-tertiary)" }}>· <UserName user={q.users} className="text-[11px]" isCreator={creatorIds?.has(q.user_id)} /></span>
         <LikeButton
           count={q.likes_count || 0}
           liked={liked}
@@ -119,6 +120,7 @@ export default function ExplorePage() {
   const { goToBook: go } = useNav();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const creatorIds = useCreatorIds();
   const { books: popular, loading: loadingBooks } = usePopularBooks();
   const { reviews, loading: loadingReviews, refetch: refetchReviews } = usePopularReviews();
   const { quotes, loading: loadingQuotes, refetch: refetchQuotes } = usePopularQuotes();
@@ -395,6 +397,7 @@ export default function ExplorePage() {
               go={go}
               showToast={showToast}
               refetchReviews={refetchReviews}
+              creatorIds={creatorIds}
             />
           ))}
         </div>
@@ -428,6 +431,7 @@ export default function ExplorePage() {
               go={go}
               showToast={showToast}
               refetchQuotes={refetchQuotes}
+              creatorIds={creatorIds}
             />
           ))}
         </div>

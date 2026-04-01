@@ -45,6 +45,9 @@
   --color-wip-text: #8B6914;
   --color-wip-bg: #faf6f0;
   --color-wip-border: #e8dfd2;
+  --creator-bg: #FBF5E9;
+  --creator-text: #9A7340;
+  --creator-border: #C9A96E;
 }
 
 [data-theme="dark"] {
@@ -80,6 +83,9 @@
   --color-wip-text: #d4a843;
   --color-wip-bg: #231f15;
   --color-wip-border: #3d3520;
+  --creator-bg: #2a2315;
+  --creator-text: #d4a843;
+  --creator-border: #8B6914;
 }
 
 @layer base {
