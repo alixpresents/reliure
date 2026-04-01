@@ -57,6 +57,22 @@ function setCache(q, results) {
 }
 
 // ═══════════════════════════════════════════════
+// Circuit breaker — Google Books API
+// ═══════════════════════════════════════════════
+
+let googleBooksDisabledUntil = 0; // timestamp ms
+
+function isGoogleBooksAvailable() {
+  return Date.now() > googleBooksDisabledUntil;
+}
+
+function disableGoogleBooks(durationMs = 15 * 60 * 1000) {
+  googleBooksDisabledUntil = Date.now() + durationMs;
+  console.warn('[google-books] Circuit breaker tripped, disabled for',
+    Math.round(durationMs / 60000), 'min');
+}
+
+// ═══════════════════════════════════════════════
 // TIER 1 : Recherche base locale
 // ═══════════════════════════════════════════════
 // Pas de RPC. Requêtes Supabase directes, simples, fiables.
@@ -125,6 +141,7 @@ async function fetchGoogleBooks(query) {
 
   try {
     const res = await fetch(url);
+    if (res.status === 429) { disableGoogleBooks(); return []; }
     if (!res.ok) return [];
     const data = await res.json();
     const items = data.items || [];
@@ -210,14 +227,16 @@ export async function searchBooks(query) {
   const isISBN = digits.length >= 10 && digits.length <= 13;
   const dbSufficient = dbResults.length >= 3;
   const isbnFound = isISBN && dbResults.length >= 1;
-  const skipGoogle = dbSufficient || isbnFound;
+  const skipGoogle = dbSufficient || isbnFound || !isGoogleBooksAvailable();
 
   let googleResults = [];
   let googleRaw = 0;
   let skipReason = null;
 
   if (skipGoogle) {
-    skipReason = isbnFound ? "isbn_found" : "db_sufficient";
+    if (isbnFound) skipReason = "isbn_found";
+    else if (dbSufficient) skipReason = "db_sufficient";
+    else skipReason = "circuit_breaker";
   } else {
     // Étape 2 : Google Books (seulement si nécessaire)
     googleResults = await fetchGoogleBooks(query);
@@ -244,6 +263,7 @@ export async function searchBooks(query) {
     googleUseful,
     skipped: skipGoogle,
     skipReason,
+    circuitBreakerActive: !isGoogleBooksAvailable(),
   }));
 
   setCache(query, final);
