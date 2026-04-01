@@ -329,12 +329,16 @@ function FavoritesSection({ favorites, isOwner, go, onAdd, onRemove, onSwap, onU
                 key={pos}
                 className="group/fav"
                 data-fav-pos={pos}
+                draggable={isOwner ? true : undefined}
+                onDragStart={isOwner ? e => handleDragStart(e, pos) : undefined}
+                onDragEnd={isOwner ? handleDragEnd : undefined}
                 onDragOver={isOwner ? e => handleDragOver(e, pos) : undefined}
                 onDrop={isOwner ? e => handleDrop(e, pos) : undefined}
                 onDragLeave={isOwner ? () => setDragOver(null) : undefined}
                 onTouchStart={isOwner ? e => handleTouchStart(e, pos) : undefined}
                 onTouchMove={isOwner ? handleTouchMoveCancel : undefined}
                 onTouchEnd={isOwner ? handleTouchEnd : undefined}
+                style={{ cursor: isOwner ? "grab" : "default" }}
               >
                 <div
                   className={`relative ${poppingPos === pos ? "animate-confirm-pop" : ""}`}
@@ -361,17 +365,14 @@ function FavoritesSection({ favorites, isOwner, go, onAdd, onRemove, onSwap, onU
                     <div style={{ position: "absolute", inset: 0, borderRadius: 3, border: "2px dashed var(--text-muted)", backgroundColor: "rgba(0,0,0,0.12)", pointerEvents: "none", zIndex: 10 }} />
                   )}
 
-                  {/* Drag handle — top-right */}
+                  {/* Drag handle — visual indicator only, drag is on the outer div */}
                   {isOwner && (
                     <div
-                      draggable
-                      onDragStart={e => handleDragStart(e, pos)}
-                      onDragEnd={handleDragEnd}
-                      className="absolute top-1.5 right-1.5 cursor-grab active:cursor-grabbing opacity-70 group-hover/fav:opacity-100 transition-opacity duration-150 select-none"
-                      title="Glisser pour réordonner"
+                      className="absolute top-1.5 right-1.5 opacity-70 group-hover/fav:opacity-100 transition-opacity duration-150 select-none pointer-events-none"
+                      aria-hidden="true"
                       style={{ backgroundColor: "rgba(0,0,0,0.55)", backdropFilter: "blur(4px)", borderRadius: 6, padding: "4px 6px" }}
                     >
-                      <svg width="10" height="14" viewBox="0 0 10 14" fill="white" aria-hidden="true">
+                      <svg width="10" height="14" viewBox="0 0 10 14" fill="white">
                         <circle cx="2" cy="2" r="1.5"/><circle cx="8" cy="2" r="1.5"/>
                         <circle cx="2" cy="7" r="1.5"/><circle cx="8" cy="7" r="1.5"/>
                         <circle cx="2" cy="12" r="1.5"/><circle cx="8" cy="12" r="1.5"/>
