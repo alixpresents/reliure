@@ -25,6 +25,7 @@ export function useBookBySlug(slug) {
 
   const fetchBook = useCallback(async () => {
     if (!slug) { setLoading(false); setNotFound(true); return; }
+    const _t0 = performance.now();
     // Try slug first, then fallback to ID
     let { data, error } = await supabase.from("books").select("*").eq("slug", slug).single();
     if (error || !data) {
@@ -36,6 +37,7 @@ export function useBookBySlug(slug) {
     } else {
       setNotFound(true);
     }
+    console.log('[perf] useBookBySlug:', Math.round(performance.now() - _t0), 'ms');
     setLoading(false);
   }, [slug]);
 

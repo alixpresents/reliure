@@ -45,6 +45,7 @@ export default function App() {
   const { theme, toggleTheme } = useTheme();
 
   useEffect(() => {
+    console.log('[perf] App mounted at', Math.round(performance.now()), 'ms');
     const splash = document.getElementById('splash');
     if (splash) {
       splash.style.opacity = '0';

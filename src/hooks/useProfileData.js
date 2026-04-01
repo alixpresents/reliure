@@ -23,6 +23,7 @@ export function useProfileData(profileUserId) {
 
   const fetch = useCallback(async () => {
     if (!targetId) { setLoading(false); return; }
+    const _t0 = performance.now();
     const yearStart = new Date(currentYear, 0, 1);
     const yearEnd = new Date(currentYear + 1, 0, 1);
 
@@ -122,6 +123,7 @@ export function useProfileData(profileUserId) {
       chronology,
       topRated,
     });
+    console.log('[perf] useProfileData:', Math.round(performance.now() - _t0), 'ms');
     setLoading(false);
   }, [targetId, currentYear]);
 
