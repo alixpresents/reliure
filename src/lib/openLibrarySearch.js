@@ -59,13 +59,21 @@ function isBadPublisher(publisher) {
 // Converter : OL doc → Reliure unified format
 // ═══════════════════════════════════════════════
 
+function cleanTitle(raw) {
+  if (!raw) return raw;
+  return raw
+    .replace(/\s*[-–]\s*(nouveau\s+roman|roman|thriller|policier|essai|récit|\d{4}).*$/i, "")
+    .replace(/\s*\([^)]*\)\s*$/, "")
+    .trim();
+}
+
 function docToBook(doc) {
   return {
     googleId:      null,
     _source:       "openlibrary",
     dbId:          null,
     slug:          null,
-    title:         doc.title,
+    title:         cleanTitle(doc.title),
     subtitle:      null,
     authors:       doc.author_name || [],
     publisher:     doc.publisher?.[0] || null,
@@ -90,7 +98,7 @@ export async function searchOpenLibrary(query, maxResults = 8) {
   const url = `${OL_SEARCH}?q=${enc}&fields=${OL_FIELDS}&limit=${maxResults + 4}`;
 
   try {
-    const res = await fetch(url, { signal: AbortSignal.timeout(4000) });
+    const res = await fetch(url, { signal: AbortSignal.timeout(1500) });
     if (!res.ok) return [];
 
     const data = await res.json();
@@ -124,7 +132,7 @@ export async function searchOpenLibraryByISBN(isbn) {
 
   try {
     const res = await fetch(`${OL_ISBN}/${clean}.json`, {
-      signal: AbortSignal.timeout(3000),
+      signal: AbortSignal.timeout(1500),
     });
     if (!res.ok) return null;
 
