@@ -1,0 +1,177 @@
+{
+  "mode": "import",
+  "generatedAt": "2026-04-02T00:29:03.624Z",
+  "stats": {
+    "processed": 10,
+    "imported": 8,
+    "enrichedEdge": 0,
+    "enrichedDirect": 0,
+    "skipped": 2,
+    "errors": 0
+  },
+  "log": [
+    {
+      "qid": "Q180736",
+      "title": "Le Livre de l'intranquillité",
+      "author": "Fernando Pessoa",
+      "status": "would_import",
+      "wikidataData": {
+        "title": "Les Misérables",
+        "authors": [
+          "Victor Hugo"
+        ],
+        "description": "roman de Victor Hugo",
+        "genres": [
+          "tragédie",
+          "fiction historique"
+        ],
+        "publication_date": "1862-01-01",
+        "publisher": null,
+        "isbn13": null
+      },
+      "method": "direct_wikidata"
+    },
+    {
+      "qid": "Q208460",
+      "title": "Cent ans de solitude",
+      "author": "Gabriel García Márquez",
+      "status": "already_exists",
+      "dbId": "d0562daa-16b8-4c75-8d9d-a9057125fc8e",
+      "dbTitle": "1984"
+    },
+    {
+      "qid": "Q40901",
+      "title": "Ulysse",
+      "author": "James Joyce",
+      "status": "would_import",
+      "wikidataData": {
+        "title": "Arès",
+        "authors": [
+          "James Joyce"
+        ],
+        "description": "dieu de la guerre dans la religion et la mythologie grecque antique",
+        "genres": [],
+        "publication_date": null,
+        "publisher": null,
+        "isbn13": null
+      },
+      "method": "direct_wikidata"
+    },
+    {
+      "qid": "Q215356",
+      "title": "La Montagne magique",
+      "author": "Thomas Mann",
+      "status": "would_import",
+      "wikidataData": {
+        "title": "Série de championnat de la Ligue américaine de baseball 2011",
+        "authors": [
+          "Thomas Mann"
+        ],
+        "description": "42nd edition of Major League Baseball's American League Championship Series",
+        "genres": [],
+        "publication_date": null,
+        "publisher": null,
+        "isbn13": null
+      },
+      "method": "direct_wikidata"
+    },
+    {
+      "qid": "Q191154",
+      "title": "À la recherche du temps perdu",
+      "author": "Marcel Proust",
+      "status": "would_import",
+      "wikidataData": {
+        "title": "tensioactif",
+        "authors": [
+          "Marcel Proust"
+        ],
+        "description": "groupe de substances chimiques",
+        "genres": [],
+        "publication_date": null,
+        "publisher": null,
+        "isbn13": null
+      },
+      "method": "direct_wikidata"
+    },
+    {
+      "qid": "Q131539",
+      "title": "Don Quichotte",
+      "author": "Miguel de Cervantes",
+      "status": "would_import",
+      "wikidataData": {
+        "title": "littérature d'enfance",
+        "authors": [
+          "Miguel de Cervantes"
+        ],
+        "description": "littérature (livres, histoires, poèmes) destinée aux enfants",
+        "genres": [],
+        "publication_date": null,
+        "publisher": null,
+        "isbn13": null
+      },
+      "method": "direct_wikidata"
+    },
+    {
+      "qid": "Q131961",
+      "title": "Les Frères Karamazov",
+      "author": "Fiodor Dostoïevski",
+      "status": "would_import",
+      "wikidataData": {
+        "title": "Lilium amoenum",
+        "authors": [
+          "Fiodor Dostoïevski"
+        ],
+        "description": "espèce de plantes",
+        "genres": [],
+        "publication_date": null,
+        "publisher": null,
+        "isbn13": null
+      },
+      "method": "direct_wikidata"
+    },
+    {
+      "qid": "Q220506",
+      "title": "L'Homme sans qualités",
+      "author": "Robert Musil",
+      "status": "would_import",
+      "wikidataData": {
+        "title": "Zoran Filipović",
+        "authors": [
+          "Robert Musil"
+        ],
+        "description": "joueur de football monténégrin",
+        "genres": [],
+        "publication_date": null,
+        "publisher": null,
+        "isbn13": null
+      },
+      "method": "direct_wikidata"
+    },
+    {
+      "qid": "Q131768",
+      "title": "Guerre et Paix",
+      "author": "Léon Tolstoï",
+      "status": "would_import",
+      "wikidataData": {
+        "title": "Rhynchosauria",
+        "authors": [
+          "Léon Tolstoï"
+        ],
+        "description": "Taxonomie : Espèce animale herbivore éteinte",
+        "genres": [],
+        "publication_date": null,
+        "publisher": null,
+        "isbn13": null
+      },
+      "method": "direct_wikidata"
+    },
+    {
+      "qid": "Q170583",
+      "title": "Anna Karénine",
+      "author": "Léon Tolstoï",
+      "status": "already_exists",
+      "dbId": "dcb45a57-2558-49c7-a5ef-f8e50b541238",
+      "dbTitle": "Orgueil et préjugés"
+    }
+  ]
+}
