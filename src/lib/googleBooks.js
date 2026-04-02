@@ -79,10 +79,13 @@ function disableGoogleBooks(durationMs = 15 * 60 * 1000) {
 async function searchLocalBooks(query) {
   try {
     if (!query || query.trim().length < 2) return [];
+    const t_rpc = performance.now();
+    console.log("[rpc-timing] search_books_v2 start");
     const { data, error } = await supabase.rpc("search_books_v2", {
       q: query.trim(),
       n: 10,
     });
+    console.log("[rpc-timing] search_books_v2 done", Math.round(performance.now() - t_rpc), "ms →", (data?.length ?? 0), "results");
     if (error) {
       console.error("[searchLocalBooks] RPC error:", error);
       return [];

@@ -48,7 +48,7 @@ Deno.serve(async (req) => {
 
     let response = null;
     for (const key of KEYS) {
-      const res = await fetch(`${base}&key=${key}`, { signal: AbortSignal.timeout(5000) });
+      const res = await fetch(`${base}&key=${key}`, { signal: AbortSignal.timeout(8000) });
       if (res.status === 429) continue;
       if (res.ok) {
         response = await res.json();
@@ -58,7 +58,7 @@ Deno.serve(async (req) => {
 
     // Fallback: anonymous (IP-based quota)
     if (!response) {
-      const res = await fetch(base, { signal: AbortSignal.timeout(5000) });
+      const res = await fetch(base, { signal: AbortSignal.timeout(8000) });
       if (res.status === 429) {
         return new Response(JSON.stringify({ items: [] }), {
           status: 429,
