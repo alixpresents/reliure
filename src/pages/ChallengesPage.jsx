@@ -1,3 +1,15 @@
+export function meta() {
+  return [
+    { title: "Défis de lecture — Reliure" },
+    { name: "description", content: "Participez aux défis de lecture de la communauté Reliure." },
+    { property: "og:title", content: "Défis de lecture — Reliure" },
+    { property: "og:description", content: "Participez aux défis de lecture de la communauté Reliure." },
+    { property: "og:type", content: "website" },
+    { property: "og:site_name", content: "Reliure" },
+    { name: "twitter:card", content: "summary_large_image" },
+  ];
+}
+
 import { useState } from "react";
 import { CHALLENGE, CHALLENGES_LIST } from "../data/challenges";
 import Avatar from "../components/Avatar";

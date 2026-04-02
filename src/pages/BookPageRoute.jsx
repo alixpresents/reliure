@@ -1,3 +1,15 @@
+export function meta({ params }) {
+  return [
+    { title: `${params.slug} — Reliure` },
+    { name: "description", content: "Découvrez ce livre sur Reliure — critiques, citations et avis de lecteurs." },
+    { property: "og:title", content: `${params.slug} — Reliure` },
+    { property: "og:description", content: "Découvrez ce livre sur Reliure — critiques, citations et avis de lecteurs." },
+    { property: "og:type", content: "book" },
+    { property: "og:site_name", content: "Reliure" },
+    { name: "twitter:card", content: "summary_large_image" },
+  ];
+}
+
 import { useParams } from "react-router-dom";
 import { useBookBySlug } from "../hooks/useBookBySlug";
 import BookPage from "./BookPage";

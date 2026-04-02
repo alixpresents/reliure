@@ -1,3 +1,15 @@
+export function meta({ params }) {
+  return [
+    { title: `@${params.username} — Reliure` },
+    { name: "description", content: `Profil de @${params.username} sur Reliure — critiques, citations et listes de lecture.` },
+    { property: "og:title", content: `@${params.username} — Reliure` },
+    { property: "og:description", content: `Profil de @${params.username} sur Reliure — critiques, citations et listes de lecture.` },
+    { property: "og:type", content: "profile" },
+    { property: "og:site_name", content: "Reliure" },
+    { name: "twitter:card", content: "summary_large_image" },
+  ];
+}
+
 import { useParams, useLocation } from "react-router-dom";
 import { useAuth } from "../lib/AuthContext";
 import { usePublicProfile } from "../hooks/usePublicProfile";

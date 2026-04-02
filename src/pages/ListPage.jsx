@@ -1,3 +1,15 @@
+export function meta() {
+  return [
+    { title: "Liste — Reliure" },
+    { name: "description", content: "Une liste de lecture sur Reliure." },
+    { property: "og:title", content: "Liste — Reliure" },
+    { property: "og:description", content: "Une liste de lecture sur Reliure." },
+    { property: "og:type", content: "website" },
+    { property: "og:site_name", content: "Reliure" },
+    { name: "twitter:card", content: "summary_large_image" },
+  ];
+}
+
 import { useState, useRef, useEffect, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useListBySlug, deleteList } from "../hooks/useLists";

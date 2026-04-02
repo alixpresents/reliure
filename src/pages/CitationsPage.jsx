@@ -1,3 +1,15 @@
+export function meta() {
+  return [
+    { title: "Citations — Reliure" },
+    { name: "description", content: "Les plus belles citations littéraires partagées par la communauté Reliure." },
+    { property: "og:title", content: "Citations — Reliure" },
+    { property: "og:description", content: "Les plus belles citations littéraires partagées par la communauté Reliure." },
+    { property: "og:type", content: "website" },
+    { property: "og:site_name", content: "Reliure" },
+    { name: "twitter:card", content: "summary_large_image" },
+  ];
+}
+
 import { useMemo } from "react";
 import { QUOTES } from "../data";
 import Img from "../components/Img";

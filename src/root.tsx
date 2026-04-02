@@ -5,6 +5,16 @@ import {
   Scripts,
   ScrollRestoration,
 } from "react-router";
+
+export function meta() {
+  return [
+    { title: "Reliure — Le réseau social de lecture francophone" },
+    { name: "description", content: "Reliure est une bibliothèque personnelle et un réseau social littéraire pour la communauté francophone. Critiques, citations, listes et journal de lecture." },
+    { property: "og:site_name", content: "Reliure" },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary_large_image" },
+  ];
+}
 import { useState, useEffect, lazy, Suspense } from "react";
 import { useNavigate } from "react-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -46,7 +56,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
         <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:wght@400;500;600&family=Geist:wght@400;500;600;700&display=swap" rel="stylesheet" />
-        <title>reliure</title>
         <script dangerouslySetInnerHTML={{ __html: `
           if (localStorage.getItem('reliure-theme') === 'dark') {
             document.documentElement.setAttribute('data-theme', 'dark');

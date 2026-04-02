@@ -1,3 +1,15 @@
+export function meta() {
+  return [
+    { title: "La Revue — Reliure" },
+    { name: "description", content: "Un article de La Revue sur Reliure." },
+    { property: "og:title", content: "La Revue — Reliure" },
+    { property: "og:description", content: "Un article de La Revue sur Reliure." },
+    { property: "og:type", content: "article" },
+    { property: "og:site_name", content: "Reliure" },
+    { name: "twitter:card", content: "summary_large_image" },
+  ];
+}
+
 import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { JARTICLES } from "../data";

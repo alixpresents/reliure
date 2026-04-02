@@ -1,3 +1,15 @@
+export function meta() {
+  return [
+    { title: "Se connecter — Reliure" },
+    { name: "description", content: "Rejoignez Reliure, le réseau social de lecture francophone." },
+    { property: "og:title", content: "Se connecter — Reliure" },
+    { property: "og:description", content: "Rejoignez Reliure, le réseau social de lecture francophone." },
+    { property: "og:type", content: "website" },
+    { property: "og:site_name", content: "Reliure" },
+    { name: "twitter:card", content: "summary_large_image" },
+  ];
+}
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
