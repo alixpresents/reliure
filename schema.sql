@@ -531,3 +531,44 @@ create policy "user_badges public read" on public.user_badges for select using (
 -- RPCs sélections curées (migration supabase/migrations/018_curated_selections.sql)
 -- curated_selections() → id, title, description, slug, curator_*, published_at, likes_count, book_count, covers jsonb
 -- curated_selection_by_slug(p_slug) → idem + items jsonb (position, note, book_id, title, authors, cover_url, slug, ...)
+
+-- ─── Notifications ──────────────────────────
+-- migration 025_notifications.sql
+
+do $$ begin
+  create type notification_type as enum ('follow', 'like_review', 'like_quote', 'like_list', 'badge', 'reply');
+exception when duplicate_object then null;
+end $$;
+
+create table if not exists public.notifications (
+  id          uuid primary key default gen_random_uuid(),
+  user_id     uuid not null references public.users(id) on delete cascade,
+  actor_id    uuid references public.users(id) on delete cascade,
+  type        notification_type not null,
+  target_id   uuid,
+  target_type text,
+  metadata    jsonb not null default '{}'::jsonb,
+  is_read     boolean not null default false,
+  created_at  timestamptz not null default now(),
+  constraint no_self_notification check (user_id != actor_id)
+);
+
+create index if not exists notifications_user_unread_idx on public.notifications (user_id, is_read, created_at desc);
+create index if not exists notifications_user_created_idx on public.notifications (user_id, created_at desc);
+create index if not exists notifications_dedup_idx on public.notifications (actor_id, type, target_id);
+
+alter table public.notifications enable row level security;
+create policy "Lire ses notifications" on public.notifications for select using (auth.uid() = user_id);
+create policy "Mettre à jour ses notifications" on public.notifications for update using (auth.uid() = user_id) with check (auth.uid() = user_id);
+create policy "Supprimer ses notifications" on public.notifications for delete using (auth.uid() = user_id);
+-- Pas de policy INSERT pour authenticated — les INSERT passent par create_notification() SECURITY DEFINER
+
+-- RPCs notifications (migration 025_notifications.sql)
+-- create_notification(p_user_id, p_actor_id, p_type, p_target_id, p_target_type, p_metadata) → uuid (SECURITY DEFINER, anti-spam 5min)
+-- get_notifications(p_limit, p_offset) → id, type, actor_*, target_*, metadata, is_read, created_at
+-- get_unread_notification_count() → int
+-- mark_notifications_read(p_ids uuid[]) → void (NULL = tout marquer lu)
+
+-- Triggers : trg_notify_follow (follows), trg_notify_like (likes), trg_notify_badge (user_badges)
+-- Nettoyage : pg_cron cleanup-old-notifications (>90 jours, dimanche 3h)
+-- Realtime : ALTER PUBLICATION supabase_realtime ADD TABLE public.notifications

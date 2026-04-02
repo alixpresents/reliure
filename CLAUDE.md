@@ -249,6 +249,7 @@ Scripts autonomes dans `seeds/` pour enrichir les métadonnées des livres exist
 - `user_points` — user_id (PK), total_points, level, updated_at. Dénormalisé. Lecture publique.
 - `point_events` — id, user_id, event_type, points, reason, metadata (jsonb), created_at. Log immuable. Lecture owner only. RPCs : `get_monthly_ranking()`, `get_alltime_ranking()` (migrations 015, 016).
 - `reserved_usernames` — username (PK), email (text, nullable), note (text). RLS : lecture publique, écriture service_role only. RPCs : `check_username_availability(p_username, p_email)` → `'available'|'reserved_for_you'|'reserved'|'taken'` ; `claim_reserved_username(p_username)` (SECURITY DEFINER). Migration : `supabase/migrations/017_creator_badge.sql`.
+- `notifications` — id, user_id (destinataire), actor_id (nullable, null pour badges système), type (enum `notification_type` : follow, like_review, like_quote, like_list, badge, reply), target_id, target_type, metadata (jsonb), is_read (bool), created_at. Contrainte `user_id != actor_id`. RLS : lecture/update/delete owner only, pas d'INSERT policy (les triggers SECURITY DEFINER insèrent). Triggers : `trg_notify_follow` (follows), `trg_notify_like` (likes → review/quote/list), `trg_notify_badge` (user_badges). RPCs : `get_notifications(p_limit, p_offset)`, `get_unread_notification_count()`, `mark_notifications_read(p_ids)`. Nettoyage pg_cron > 90 jours. Realtime activé. Migration : `025_notifications.sql`.
 
 ### Anti-doublons : regroupement des éditions par oeuvre
 Reliure regroupe les éditions par oeuvre (comme Letterboxd : un film = une fiche). Avant toute création dans `books`, vérification par ISBN exact puis par titre normalisé + auteur principal via `findExistingBook` (`src/utils/deduplicateBook.js`). Appliqué dans les deux points d'insertion : `importBook.js` (client-side) et edge function `book_import` (server-side). Normalisation : remplacement des apostrophes françaises par un espace, suppression accents/ponctuation, coupe au premier `:` ou `/` (sous-titres BnF), extraction du nom de famille de l'auteur. Ce fix garantit que "L'Étranger", "L\u2019Étranger" et "L'Etranger" produisent la même clé normalisée.
@@ -328,7 +329,7 @@ Toutes les couleurs UI sont gérées via CSS custom properties dans `src/index.c
 - Persisté dans `localStorage` sous `reliure-theme`
 - Applique `data-theme="light|dark"` sur `<html>`
 - Pas de `prefers-color-scheme` — toggle manuel uniquement pour la beta
-- Bouton lune/soleil dans le Header entre la recherche et l'avatar
+- Bouton lune/soleil dans le Header entre la recherche et la cloche notifications
 - `useTheme()` appelé dans `App.jsx`, `theme` + `toggleTheme` passés au Header
 
 ### Layout
@@ -358,6 +359,8 @@ Toutes les couleurs UI sont gérées via CSS custom properties dans `src/index.c
 - **UserName** : `src/components/UserName.jsx` — lien `@handle` avec prop `isCreator` optionnelle. Si `isCreator=true`, affiche `<CreatorBadge />` à la suite du lien. Utilisé partout où on affiche un auteur de critique/citation.
 - **BadgeIcon** : `src/components/BadgeIcon.jsx` — rendu d'un badge avec son emoji, forme (cercle, hexagone, bouclier, diamant via clip-path), couleur de fond par tier et bordure colorée. Double-layer pour les shapes clip-path (outer = border color, inner = content bg) pour contourner la limitation CSS de border+clip-path. Props : `badge`, `size`, `locked`.
 - **PinnedBadgesInline** : `src/components/PinnedBadgesInline.jsx` — rangée de 3 slots de badges épinglés sur le profil public. Cliquable → ouvre le modal BadgesPage.
+- **NotificationBell** : `src/components/NotificationBell.jsx` — icône cloche SVG 18×18 + badge compteur rouge (`var(--color-spoiler)`, cap 99+). Props : `unreadCount`, `onClick`, `isOpen`. Placé dans le Header entre le toggle dark mode et l'avatar.
+- **NotificationPanel** : `src/components/NotificationPanel.jsx` — dropdown 360px sous la cloche. Header "Notifications" + "Tout marquer comme lu". Liste scrollable (max 440px), fond `var(--bg-surface)` pour les non lues, dot rouge 7px. Avatar acteur ou icône système (👤/♥/✦/💬). Click-outside + Escape ferment. Props : `notifications`, `isLoading`, `onMarkAllRead`, `onClickNotif`, `onClose`.
 
 ## Règles React — performance et boucles
 
@@ -467,6 +470,14 @@ Chaque onglet a sa propre URL (`/:username/critiques`, etc.).
 - **ClassementPage** (`/classement`) : onglets Mensuel / Tout temps via `get_monthly_ranking()` / `get_alltime_ranking()`.
 - **BadgeIcon** : rendu avec double-layer pour clip-path shapes (hexagone, bouclier, diamant) — voir composant.
 - Migrations : 012 (tables), 013 (seed badges), 014 (check badge), 015 (RPCs ranking), 016 (cron mensuel), 018 (backfill point_events), 019 (contrainte 3 pinned), 020 (descriptions courtes), 021 (icônes emoji).
+
+#### Notifications (in-app, realtime)
+- **Table `notifications`** : migration `025_notifications.sql`. Enum `notification_type` (follow, like_review, like_quote, like_list, badge, reply). Triggers SECURITY DEFINER sur `follows`, `likes`, `user_badges`. Anti-spam 5min. pg_cron nettoyage >90j. Realtime activé.
+- **RPCs** : `get_notifications(p_limit, p_offset)` (jointure actor), `get_unread_notification_count()`, `mark_notifications_read(p_ids)`.
+- **Hook `useNotifications`** : TanStack Query (`["notifications"]` staleTime 1min, `["unreadCount"]` staleTime 30s) + Supabase Realtime (channel dans `useRef`). Optimistic UI pour mark-as-read. Expose `{ notifications, unreadCount, isLoading, markAsRead, markOneAsRead, refetch }`.
+- **NotificationBell** dans le Header (entre theme toggle et avatar) : cloche SVG 18×18, badge rouge compteur (`var(--color-spoiler)`), cap 99+.
+- **NotificationPanel** : dropdown 360×440px, `bg-elevated`, border-radius 12. Header "Notifications" + "Tout marquer comme lu". Liste : avatar acteur ou icône système (👤/♥/✦/💬), texte FR via `getNotificationText()`, timestamp relatif via `relativeTime()`. Unread : fond `bg-surface` + dot rouge 7px. Click-outside + Escape ferment.
+- **`notificationHelpers.js`** : `getNotificationText(notif)` (6 types FR), `getNotificationLink(notif)` (React Router path ou null), `relativeTime(dateStr)` (français).
 
 #### Profil
 - Données réelles via `useProfileData` (allStatuses, diaryBooks, allReadBooks, reviews, stats, chronologie, topRated)
@@ -644,6 +655,7 @@ Variable `isOwnProfile = user?.id === viewedProfile?.id` contrôle l'affichage c
 - Pas de scan code-barres (v2)
 - Pas de lien librairies (v2)
 - ~~Pas de dark mode~~ → implémenté (toggle manuel, CSS custom properties, pas de prefers-color-scheme)
+- ~~Pas de notifications~~ → notifications in-app implémentées (migration 025, hook, panneau Header)
 - Pas de notifications push
 - Pas de table AUTHORS séparée (JSONB suffit au MVP)
 

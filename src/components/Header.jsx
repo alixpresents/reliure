@@ -1,12 +1,31 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { NavLink, Link, useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 import Avatar from "./Avatar";
 import Search from "./Search";
+import NotificationBell from "./NotificationBell";
+import NotificationPanel from "./NotificationPanel";
+import { useNotifications } from "../hooks/useNotifications";
+import { getNotificationLink } from "../utils/notificationHelpers";
 
 export default function Header({ onSearch, onClose, searchOpen, searchGo, searchInitialQuery = "", initials = "?", username, avatarUrl, isLoggedIn = true, theme, toggleTheme }) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [notifOpen, setNotifOpen] = useState(false);
   const navigate = useNavigate();
+  const { notifications, unreadCount, isLoading: notifLoading, markAsRead, markOneAsRead } = useNotifications();
+
+  const handleNotifClick = useCallback((notif) => {
+    if (!notif.is_read) markOneAsRead(notif.id);
+    const link = getNotificationLink(notif);
+    if (link) {
+      setNotifOpen(false);
+      navigate(link);
+    }
+  }, [markOneAsRead, navigate]);
+
+  const handleMarkAllRead = useCallback(() => {
+    markAsRead();
+  }, [markAsRead]);
 
   const navItems = isLoggedIn
     ? [
@@ -128,6 +147,26 @@ export default function Header({ onSearch, onClose, searchOpen, searchGo, search
             </svg>
           )}
         </button>
+
+        {/* Notification bell (logged in only) */}
+        {isLoggedIn && (
+          <div className="relative">
+            <NotificationBell
+              unreadCount={unreadCount}
+              onClick={() => setNotifOpen(!notifOpen)}
+              isOpen={notifOpen}
+            />
+            {notifOpen && (
+              <NotificationPanel
+                notifications={notifications}
+                isLoading={notifLoading}
+                onMarkAllRead={handleMarkAllRead}
+                onClickNotif={handleNotifClick}
+                onClose={() => setNotifOpen(false)}
+              />
+            )}
+          </div>
+        )}
 
         {/* Avatar + dropdown (logged in) / Se connecter (logged out) */}
         {isLoggedIn ? (

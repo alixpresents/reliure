@@ -585,8 +585,8 @@ Permettre d'ajouter des tags libres sur une liste pour faciliter la découverte 
 
 ## 8. Notifications
 
-**Statut :** Post-bêta · Priorité haute avant v2 sociale
-**Portée :** Système transversal (in-app + email)
+**Statut :** ✅ Fonctionnel (migration DB + UI in-app) — avril 2026
+**Portée :** Système transversal (in-app + email à terme)
 
 ### Le concept
 Plusieurs features du backlog dépendent d'un système de notifications :
@@ -594,38 +594,43 @@ suivre une liste, les Défis (badge débloqué, soumission validée),
 les critiques likées, les nouveaux abonnés. Sans ce système,
 ces features sont incomplètes.
 
-### Types de notifications envisagées
-- Quelqu'un a liké ta critique ou ta citation
-- Quelqu'un t'a suivi
-- Un livre a été ajouté à une liste que tu suis
-- Ta soumission à un Défi a été validée
-- Quelqu'un a répondu à ta critique
+### Ce qui est implémenté (migration 025, avril 2026)
 
-### Deux canaux
-- **In-app** : cloche dans le header, badge rouge, liste de notifications
-  avec mark-as-read. Priorité absolue.
-- **Email digest** : résumé hebdomadaire optionnel ("cette semaine sur Reliure").
-  Désactivable dans les paramètres. Jamais d'email pour chaque action
-  individuelle — trop agressif.
+**Table `notifications`** :
+- `id`, `user_id` (destinataire), `actor_id` (qui a déclenché, null pour badges système), `type` (enum : `follow`, `like_review`, `like_quote`, `like_list`, `badge`, `reply`), `target_id`, `target_type`, `metadata` (jsonb), `is_read` (bool), `created_at`
+- Contrainte `user_id != actor_id` (pas d'auto-notification)
+- RLS : lecture/update/delete owner only, pas d'INSERT policy (triggers SECURITY DEFINER)
+- Index : `(user_id, is_read, created_at DESC)`, `(user_id, created_at DESC)`, `(actor_id, type, target_id)` (dédup)
 
-### Préférences utilisateur
-Table `notification_preferences` : un toggle par type d'événement,
-in-app et email séparément. Désactivé par défaut pour l'email,
-activé par défaut pour l'in-app.
+**Fonction helper `create_notification()`** : SECURITY DEFINER, anti-spam (pas de doublon identique dans les 5 dernières minutes), vérifie `user_id != actor_id`.
 
-### Tables envisagées
-```
-notifications
-  id, user_id, type, actor_id, target_id, target_type,
-  is_read, created_at
-notification_preferences
-  user_id, event_type, in_app_enabled, email_enabled
-```
+**Triggers** :
+- `trg_notify_follow` (AFTER INSERT on `follows`) → notifie `following_id`, metadata = `{ "username": "..." }`
+- `trg_notify_like` (AFTER INSERT on `likes`) → notifie le propriétaire du contenu, metadata = `{ "book_title": "...", "book_slug": "..." }` (review/quote) ou `{ "list_title": "..." }` (list)
+- `trg_notify_badge` (AFTER INSERT on `user_badges`) → notifie `user_id`, actor_id=NULL, metadata = `{ "badge_id": "...", "badge_name": "..." }`
+- **PAS de trigger `reply`** (table `review_replies` n'existe pas encore — type réservé dans l'enum)
+
+**RPCs** :
+- `get_notifications(p_limit, p_offset)` → jointure actor (username, display_name, avatar_url)
+- `get_unread_notification_count()` → int
+- `mark_notifications_read(p_ids)` → NULL = tout marquer lu, sinon les IDs spécifiés
+
+**Nettoyage** : pg_cron `cleanup-old-notifications` (> 90 jours, dimanche 3h)
+**Realtime** : `ALTER PUBLICATION supabase_realtime ADD TABLE notifications`
+
+### UI implémentée (avril 2026)
+
+- **`NotificationBell`** (`src/components/NotificationBell.jsx`) : cloche SVG 18×18 dans le Header (entre theme toggle et avatar), badge rouge compteur (`var(--color-spoiler)`), cap 99+
+- **`NotificationPanel`** (`src/components/NotificationPanel.jsx`) : dropdown 360×440px, `bg-elevated`, border-radius 12. Header "Notifications" + "Tout marquer comme lu". Avatar acteur ou icône système (👤/♥/✦/💬), texte FR, timestamp relatif. Unread : fond `bg-surface` + dot rouge. Click-outside + Escape ferment.
+- **`useNotifications`** (`src/hooks/useNotifications.js`) : TanStack Query (`["notifications"]` staleTime 1min, `["unreadCount"]` staleTime 30s) + Supabase Realtime (channel dans `useRef`). Optimistic UI mark-as-read.
+- **`notificationHelpers.js`** (`src/utils/notificationHelpers.js`) : `getNotificationText()` (6 types FR), `getNotificationLink()` (React Router path), `relativeTime()` (français)
+- **Header** : intégration bell + panel entre theme toggle et avatar, `handleNotifClick` (markOneAsRead + navigate), `handleMarkAllRead`
 
 ### Ce qu'on ne fait PAS en v1
 - Pas de notifications push mobile (PWA d'abord)
-- Pas d'email par action individuelle
-- Pas de notifications temps réel (polling toutes les 30s suffit au MVP)
+- Pas d'email par action individuelle (email digest hebdomadaire en v2)
+- Pas de table `notification_preferences` (tous les types activés par défaut)
+- Pas de trigger reply (table `review_replies` pas encore créée)
 
 ---
 
@@ -1647,39 +1652,14 @@ Le fil devient un vrai espace de discussion littéraire, pas juste un flux passi
 
 ## 31. Notifications in-app
 
-**Statut :** Post-bêta · Rétention
-**Portée :** Header, nouvelle table `notifications`, Supabase Realtime
+**Statut :** ✅ Fonctionnel — voir entrée #8 pour le détail complet (migration 025 + UI avril 2026)
+**Portée :** Header, table `notifications`, Supabase Realtime
 
-### Le concept
-Centre de notifications accessible via une cloche dans le header. Notifie les événements sociaux clés : nouveau follower, like reçu sur une critique ou citation, réponse à une critique, badge débloqué.
-
-### Pourquoi c'est fort
-La notification est le mécanisme de rétention le plus direct — elle ramène l'utilisateur sur l'app. Sans notifications, les interactions sociales passent inaperçues et l'engagement s'érode. C'est aussi ce qui manque le plus à Babelio.
-
-### Implémentation envisagée
-
-**Table `notifications`** :
-- `id`, `user_id` (destinataire), `actor_id` (qui a déclenché), `type` (enum : `follow`, `like_review`, `like_quote`, `reply`, `badge`), `target_id`, `target_type`, `is_read` (bool, défaut false), `created_at`
-- RLS : lecture/écriture owner only
-- Index sur `(user_id, is_read, created_at desc)`
-
-**Déclencheurs** :
-- Follow → notif `follow` pour le suivi
-- Like critique/citation → notif `like_review` / `like_quote`
-- Réponse à une critique → notif `reply`
-- Badge débloqué → notif `badge`
-
-**UI** :
-- Icône cloche dans le Header entre recherche et avatar
-- Badge rouge compteur non lus (masqué si 0)
-- Dropdown panneau 360px : liste chronologique des notifs, avatar acteur + texte descriptif + timestamp relatif
-- Clic notif → navigation vers la cible + marquage `is_read = true`
-- "Tout marquer comme lu" en haut du panneau
-- Realtime Supabase (`supabase.channel`) pour les nouvelles notifs en live
+Entrée consolidée dans **#8. Notifications**. Migration DB complète + UI in-app (NotificationBell, NotificationPanel, useNotifications, notificationHelpers) implémentées en avril 2026.
 
 ### Ce qu'on ne fait PAS en v1
 - Pas de notifications push (mobile ou web push) — in-app uniquement
-- Pas d'email de notification
+- Pas d'email de notification (digest hebdo en v2)
 - Pas de préférences de notification granulaires (v3)
 
 ---
