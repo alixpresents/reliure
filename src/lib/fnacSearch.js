@@ -1,10 +1,9 @@
 // ═══════════════════════════════════════════════
-// Fnac Search — browser-side scraper
-// Fallback de dernier recours quand DB + Google = 0 résultats
+// Fnac Search — via edge function proxy (contourne CORS)
 // ⚠️  Dépend de la structure HTML de fnac.com (fragile)
 // ═══════════════════════════════════════════════
 
-const FNAC_SEARCH = "https://www.fnac.com/SearchResult/ResultList.aspx";
+import { supabase } from "./supabase";
 
 function extractInfoItem(article, labelText) {
   const items = article.querySelectorAll("li.moreInfos-item");
@@ -65,18 +64,12 @@ function articleToBook(article) {
 export async function searchFnac(query, maxResults = 8) {
   if (!query || query.trim().length < 2) return [];
 
-  const url = `${FNAC_SEARCH}?Search=${encodeURIComponent(query.trim())}&sft=1&sa=0`;
-
   try {
-    const res = await fetch(url, {
-      signal: AbortSignal.timeout(4000),
-      headers: {
-        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
-      },
+    const { data: html, error } = await supabase.functions.invoke("fnac-proxy", {
+      body: { query: query.trim() },
     });
-    if (!res.ok) return [];
+    if (error || !html) return [];
 
-    const html = await res.text();
     const doc = new DOMParser().parseFromString(html, "text/html");
     const articles = doc.querySelectorAll("article.Article-itemGroup");
 

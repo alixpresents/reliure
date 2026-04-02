@@ -12,3 +12,6 @@ verify_jwt = false
 
 [functions.google-books-proxy]
 verify_jwt = false
+
+[functions.fnac-proxy]
+verify_jwt = false
