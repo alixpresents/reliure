@@ -73,7 +73,8 @@ export default function Search({ open, onClose, go, initialQuery = "" }) {
 
   // AI smart search — aligned with skip logic: disabled when DB returns ≥ 3 (unless NL query)
   const dbResultCount = results.filter(r => r._source === "db").length;
-  const aiEnabled = !atMode && q.length >= 2 && (dbResultCount < 3 || looksLikeNaturalLanguage(q));
+  const isNL = !atMode && q.length >= 2 && looksLikeNaturalLanguage(q);
+  const aiEnabled = !atMode && q.length >= 2 && (dbResultCount < 3 || isNL);
 
   // Fast-path: if 0 results from all sources, trigger AI immediately (no debounce)
   const zeroResults = !loading && results.length === 0 && q.length >= 2 && !atMode;
@@ -85,7 +86,7 @@ export default function Search({ open, onClose, go, initialQuery = "" }) {
     isLoading: aiLoading,
   } = useSmartSearch(q, {
     enabled: aiEnabled || zeroResults,
-    debounceMs: zeroResults ? 0 : 600,
+    debounceMs: zeroResults ? 0 : isNL ? 300 : 400,
   });
 
   const ghost = rawGhost && !ghostDismissed ? rawGhost : null;
@@ -400,6 +401,16 @@ export default function Search({ open, onClose, go, initialQuery = "" }) {
           source: best.r._source,
         }));
         if (best.score >= 100) {
+          if (best.r.isbn13) {
+            const { data, error } = await supabase.functions.invoke("book_import", {
+              body: { isbn: best.r.isbn13 },
+            });
+            if (!error && data?.id) {
+              navigateToBook(data);
+              return;
+            }
+          }
+          // Fallback si pas d'ISBN ou edge function échoue
           await handleSelect(best.r);
           setLoading(false);
           return;
@@ -617,22 +628,35 @@ export default function Search({ open, onClose, go, initialQuery = "" }) {
         {/* Normal mode */}
         {!loading && !atMode && (
           <>
-            {/* Zero results detected, AI still searching */}
-            {zeroResults && aiLoading && (
+            {/* NL mode: "Recherche approfondie..." immédiatement dès que l'IA charge */}
+            {isNL && aiLoading && (
+              <div className="py-2.5 text-center text-[11px] font-body" style={{ color: "var(--text-tertiary)" }}>
+                Recherche approfondie…
+              </div>
+            )}
+
+            {/* Non-NL: zero results, AI still searching */}
+            {!isNL && zeroResults && aiLoading && (
               <div className="py-6 text-center text-[13px] font-body" style={{ color: "var(--text-tertiary)" }}>
                 Aucun résultat local — recherche approfondie...
               </div>
             )}
-            {/* Zero results, AI finished, nothing found anywhere */}
-            {zeroResults && !aiLoading && filteredAIBooks.length === 0 && userResults.length === 0 && (
+            {/* Non-NL: zero results, AI finished, nothing found */}
+            {!isNL && zeroResults && !aiLoading && filteredAIBooks.length === 0 && userResults.length === 0 && (
               <div className="py-6 text-center text-[13px] font-body" style={{ color: "var(--text-tertiary)" }}>
                 Aucun résultat trouvé.
               </div>
             )}
-            {/* Normal case: had some results but display filtering removed them all */}
-            {!zeroResults && q.length >= 2 && displayResults.length === 0 && userResults.length === 0 && !aiLoading && filteredAIBooks.length === 0 && (
+            {/* Non-NL: had some results but display filtering removed them all */}
+            {!isNL && !zeroResults && q.length >= 2 && displayResults.length === 0 && userResults.length === 0 && !aiLoading && filteredAIBooks.length === 0 && (
               <div className="py-6 text-center text-[13px] font-body" style={{ color: "var(--text-tertiary)" }}>
                 Aucun résultat pour cette recherche.
+              </div>
+            )}
+            {/* NL: aucun résultat IA ni classique */}
+            {isNL && !aiLoading && filteredAIBooks.length === 0 && displayResults.length === 0 && userResults.length === 0 && (
+              <div className="py-6 text-center text-[13px] font-body" style={{ color: "var(--text-tertiary)" }}>
+                Aucun résultat trouvé.
               </div>
             )}
 
@@ -647,6 +671,35 @@ export default function Search({ open, onClose, go, initialQuery = "" }) {
                   </div>
                 )}
               </>
+            )}
+
+            {/* NL mode: résultats IA EN PREMIER, sans séparateur ✨ */}
+            {isNL && showAI && filteredAIBooks.length > 0 && (
+              <>
+                {filteredAIBooks.map((aiBook, i) => (
+                  <div
+                    key={`ai-${i}`}
+                    onClick={() => handleAIBookClick(aiBook)}
+                    className="flex gap-2.5 py-2 px-4 items-center cursor-pointer hover:bg-surface transition-colors duration-100"
+                  >
+                    <div className="rounded-sm bg-avatar-bg flex items-center justify-center text-[10px] shrink-0" style={{ width: 24, height: 36, color: "var(--text-tertiary)" }}>✨</div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-[13px] font-medium font-body truncate">{aiBook.title}</div>
+                      <div className="text-[11px] font-body truncate" style={{ color: "var(--text-tertiary)" }}>{aiBook.author}</div>
+                      {aiBook.why && (
+                        <div className="text-[11px] font-body mt-0.5" style={{ color: "var(--text-tertiary)" }}>→ {aiBook.why}</div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </>
+            )}
+
+            {/* NL mode: label "Autres résultats" avant les résultats classiques */}
+            {isNL && showBooks && displayResults.length > 0 && filteredAIBooks.length > 0 && (
+              <div className="px-4 pt-2.5 pb-1 text-[10px] uppercase tracking-[1.5px] font-body font-medium" style={{ color: "var(--text-tertiary)" }}>
+                Autres résultats
+              </div>
             )}
 
             {/* Classic book results */}
@@ -708,8 +761,8 @@ export default function Search({ open, onClose, go, initialQuery = "" }) {
               );
             })}
 
-            {/* AI results — below classic results */}
-            {showAI && filteredAIBooks.length > 0 && (
+            {/* Non-NL mode: résultats IA en dessous avec séparateur ✨ */}
+            {!isNL && showAI && filteredAIBooks.length > 0 && (
               <>
                 {displayResults.length > 0 && (
                   <div className="flex items-center gap-2 px-4 py-2.5">
@@ -745,8 +798,8 @@ export default function Search({ open, onClose, go, initialQuery = "" }) {
               </>
             )}
 
-            {/* Subtle indicator during Wave 2 (Google+OL in-flight) or AI search */}
-            {(deepSearching || aiLoading) && displayResults.length > 0 && (
+            {/* Non-NL: indicateur Wave 2 en bas */}
+            {!isNL && (deepSearching || aiLoading) && displayResults.length > 0 && (
               <div className="text-center py-2.5 text-[11px] font-body" style={{ color: "var(--text-tertiary)" }}>
                 Recherche approfondie…
               </div>

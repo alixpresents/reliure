@@ -19,6 +19,8 @@ function cleanTitle(raw) {
   if (!raw) return raw;
   return raw
     .replace(/\s*[-–]\s*(nouveau\s+roman|roman|thriller|policier|essai|récit|\d{4}).*$/i, "")
+    .replace(/\s*:\s+(?:le |la |les |un |une )?(nouveau|nouv|roman|polar|thriller|essai|récit|série|saga|best.seller).*$/i, "")
+    .replace(/\s*:\s+[^:]{21,}$/, "")
     .replace(/\s*\([^)]*\)\s*$/, "")
     .trim();
 }

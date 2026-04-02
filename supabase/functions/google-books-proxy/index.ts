@@ -6,11 +6,16 @@ function normalizeQuery(q: string): string {
     .replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, " ");
 }
 
-const KEYS = [
-  Deno.env.get("GOOGLE_BOOKS_KEY_1"),
-  Deno.env.get("GOOGLE_BOOKS_KEY_2"),
-  Deno.env.get("GOOGLE_BOOKS_KEY_3"),
-].filter(Boolean) as string[];
+const KEYS: string[] = [];
+{
+  let i = 1;
+  while (true) {
+    const key = Deno.env.get(`GOOGLE_BOOKS_KEY_${i}`);
+    if (!key) break;
+    KEYS.push(key);
+    i++;
+  }
+}
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {

@@ -25,7 +25,7 @@ export function looksLikeNaturalLanguage(query) {
  * @param {string} query
  * @param {{ enabled?: boolean, debounceMs?: number }} options
  */
-export function useSmartSearch(query, { enabled = true, debounceMs = 600 } = {}) {
+export function useSmartSearch(query, { enabled = true, debounceMs = 300 } = {}) {
   const [books, setBooks] = useState([]);
   const [ghost, setGhost] = useState(null);
   const [interpretedAs, setInterpretedAs] = useState(null);
