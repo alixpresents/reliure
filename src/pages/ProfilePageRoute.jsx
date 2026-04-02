@@ -1,11 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 
-async function fetchProfileData(params) {
-  const supabase = createClient(
-    import.meta.env.VITE_SUPABASE_URL,
-    import.meta.env.VITE_SUPABASE_ANON_KEY
-  );
-
+async function queryProfileData(supabase, params) {
   const { data: profile } = await supabase
     .from("users")
     .select("id, username, display_name, avatar_url, bio")
@@ -17,14 +12,20 @@ async function fetchProfileData(params) {
   return { profile };
 }
 
-// loader runs at build time during prerendering
+// loader runs at build time during prerendering — own createClient (Node env)
 export async function loader({ params }) {
-  return fetchProfileData(params);
+  const supabase = createClient(
+    import.meta.env.VITE_SUPABASE_URL,
+    import.meta.env.VITE_SUPABASE_ANON_KEY
+  );
+  return queryProfileData(supabase, params);
 }
 
-// clientLoader runs in the browser on client-side navigation
+// clientLoader runs in the browser — uses the singleton to avoid GoTrueClient warning
+import { supabase as supabaseSingleton } from "../lib/supabase";
+
 export async function clientLoader({ params }) {
-  return fetchProfileData(params);
+  return queryProfileData(supabaseSingleton, params);
 }
 
 export function meta({ data, params }) {

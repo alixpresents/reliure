@@ -71,10 +71,49 @@ L'app ne doit jamais ressembler à un tableur ou à un webzine. C'est un objet c
 - **Frontend** : React + Vite + React Router (BrowserRouter)
 - **Backend** : Supabase (auth, PostgreSQL, storage, realtime, edge functions)
 - **Styling** : Tailwind CSS (migré depuis CSS-in-JS)
-- **Data fetching / cache** : TanStack Query (`@tanstack/react-query`) — tous les hooks de lecture utilisent `useQuery`, invalidation cross-cache après mutations. Config globale : `staleTime: 5min`, `gcTime: 30min`, `refetchOnWindowFocus: false`. QueryClient initialisé dans `src/main.jsx`.
-- **Routing** : React Router v7, convention URLs Letterboxd (/:username, /livre/:slug, /explorer, etc.)
-- **Déploiement** : Vercel (vercel.json rewrite SPA)
+- **Data fetching / cache** : TanStack Query (`@tanstack/react-query`) — tous les hooks de lecture utilisent `useQuery`, invalidation cross-cache après mutations. Config globale : `staleTime: 5min`, `gcTime: 30min`, `refetchOnWindowFocus: false`. QueryClient initialisé dans `src/root.tsx`.
+- **Routing** : React Router v7 Framework Mode (prerendering + SPA), convention URLs Letterboxd (/:username, /livre/:slug, /explorer, etc.)
+- **Déploiement** : Vercel — `outputDirectory: build/client`, SPA fallback `__spa-fallback.html`
 - **Jobs asynchrones** : pg_cron (stats agrégées, trending, cache invalidation)
+
+## Prerendering & SEO (React Router v7 Framework Mode)
+
+Migration depuis SPA pure vers React Router v7 Framework Mode (avril 2026).
+
+### Architecture
+- `react-router.config.ts` : `ssr: false` + `prerender()` — génère du HTML statique au build
+- `src/root.tsx` : remplace index.html + main.jsx + App.jsx comme shell
+- `src/routes.ts` : config déclarative des routes (remplace les `<Route>` de App.jsx)
+
+### Prerendering
+- Toutes les pages publiques sont pré-rendues au build time (livres, profils, statiques)
+- Les pages protégées (/fil, /parametres, /backfill) restent en SPA via `__spa-fallback.html`
+- `prerender()` dans `react-router.config.ts` fetch tous les slugs livres et usernames depuis Supabase
+- Chaque deploy Vercel pré-rend automatiquement les nouveaux livres/profils
+
+### Loaders
+- `loader` (dans BookPageRoute, ProfilePageRoute) : s'exécute au build time pour le prerendering — crée son propre `createClient` (contexte Node)
+- `clientLoader` : s'exécute dans le navigateur pour la navigation SPA — utilise le singleton `supabase` de `src/lib/supabase.js` (évite le warning GoTrueClient)
+- `clientLoader.hydrate = true` n'est PAS utilisé (cassait les meta tags en rendant les données asynchrones)
+- Coexistence avec TanStack Query : le clientLoader fetch les données initiales, les hooks `useQuery` prennent le relais pour le cache et les mutations
+
+### Meta tags & SEO
+- Chaque route exporte `meta()` pour les balises `<title>`, `og:*`, `twitter:*`
+- JSON-LD `schema.org/Book` sur les fiches livres
+- `scripts/generate-sitemap.mjs` génère `sitemap.xml` au build (post `react-router build`)
+- `public/robots.txt` copié automatiquement dans `build/client/` par React Router
+
+### Build
+- `npm run build` : pour Vercel (env vars injectées par Vercel, sitemap généré)
+- Build time ~5 min (prerendering ~1000 pages)
+
+### Fichiers clés
+- `react-router.config.ts` — config prerender + app directory
+- `src/root.tsx` — shell HTML + providers (remplace App.jsx)
+- `src/routes.ts` — config routes déclarative
+- `src/lib/supabase-loader.ts` — client Supabase pour les loaders build-time (non utilisé directement — chaque loader crée son propre client)
+- `scripts/generate-sitemap.mjs` — génération sitemap post-build
+- `vercel.json` — outputDirectory: build/client, SPA fallback, cache headers
 
 ## Routes
 

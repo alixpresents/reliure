@@ -1,11 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 
-async function fetchBookData(params) {
-  const supabase = createClient(
-    import.meta.env.VITE_SUPABASE_URL,
-    import.meta.env.VITE_SUPABASE_ANON_KEY
-  );
-
+async function queryBookData(supabase, params) {
   const { data: book } = await supabase
     .from("books")
     .select("id, title, subtitle, authors, cover_url, publisher, publication_date, page_count, avg_rating, rating_count, genres, slug, description, isbn_13, language")
@@ -24,14 +19,20 @@ async function fetchBookData(params) {
   return { book, reviews: reviews || [] };
 }
 
-// loader runs at build time during prerendering (provides data for meta + HTML)
+// loader runs at build time during prerendering — own createClient (Node env)
 export async function loader({ params }) {
-  return fetchBookData(params);
+  const supabase = createClient(
+    import.meta.env.VITE_SUPABASE_URL,
+    import.meta.env.VITE_SUPABASE_ANON_KEY
+  );
+  return queryBookData(supabase, params);
 }
 
-// clientLoader runs in the browser on client-side navigation (no .data fetch)
+// clientLoader runs in the browser — uses the singleton to avoid GoTrueClient warning
+import { supabase as supabaseSingleton } from "../lib/supabase";
+
 export async function clientLoader({ params }) {
-  return fetchBookData(params);
+  return queryBookData(supabaseSingleton, params);
 }
 
 export function meta({ data, params }) {
