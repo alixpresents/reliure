@@ -197,7 +197,7 @@ async function fetchGoogleBooks(query) {
 // Déduplication
 // ═══════════════════════════════════════════════
 
-function deduplicateResults(dbResults, googleResults, olResults = []) {
+function deduplicateResults(dbResults, googleResults, olResults = [], fnacResults = []) {
   // Les résultats DB sont TOUJOURS en premier et jamais supprimés
   const dbIsbns = new Set(dbResults.map(r => r.isbn13).filter(Boolean));
   const dbTitles = new Set(dbResults.map(r => strip(r.title)));
@@ -227,7 +227,18 @@ function deduplicateResults(dbResults, googleResults, olResults = []) {
     return true;
   });
 
-  return [...dbResults, ...uniqueGoogle, ...uniqueOL];
+  // Fnac : dédup par titre uniquement (isbn13 souvent null)
+  const allKnownTitles = new Set([
+    ...knownTitles,
+    ...uniqueOL.map(r => strip(r.title)),
+  ]);
+  const uniqueFnac = fnacResults.filter(f => {
+    if (!f.title) return false;
+    if (allKnownTitles.has(strip(f.title))) return false;
+    return true;
+  });
+
+  return [...dbResults, ...uniqueGoogle, ...uniqueOL, ...uniqueFnac];
 }
 
 // ═══════════════════════════════════════════════
@@ -260,9 +271,11 @@ export async function searchBooks(query, { onDbResults } = {}) {
 
   let googleResults = [];
   let olResults = [];
+  let fnacResults = [];
   let googleRaw = 0;
   let skipReason = null;
   let olActuallyCalled = false;
+  let fnacActuallyCalled = false;
 
   if (skipGoogle) {
     if (isbnFound) skipReason = "isbn_found";
@@ -272,8 +285,14 @@ export async function searchBooks(query, { onDbResults } = {}) {
 
   const t_ext_start = performance.now();
   if (!skipGoogle) {
-    // Étape 2 : Google Books seul (OL uniquement si circuit breaker actif)
-    googleResults = await fetchGoogleBooks(query);
+    // Étape 2 : Google Books + Fnac en parallèle (db < 3)
+    fnacActuallyCalled = true;
+    const [gRes, fRes] = await Promise.all([
+      fetchGoogleBooks(query),
+      searchFnac(query),
+    ]);
+    googleResults = gRes;
+    fnacResults = fRes;
     googleRaw = googleResults._rawCount || 0;
   } else if (skipReason === "circuit_breaker") {
     // Google est down — Open Library comme découverte de secours
@@ -283,17 +302,7 @@ export async function searchBooks(query, { onDbResults } = {}) {
   const t_google = skipGoogle ? 0 : Math.round(performance.now() - t_ext_start);
   const t_total = Math.round(performance.now() - t0);
 
-  const merged = deduplicateResults(dbResults, googleResults, olResults);
-
-  // Fallback Fnac : uniquement si aucun résultat après DB + Google + OL
-  let fnacResults = [];
-  let fnacActuallyCalled = false;
-  if (merged.length === 0) {
-    fnacActuallyCalled = true;
-    fnacResults = await searchFnac(query);
-  }
-
-  const final = [...merged, ...fnacResults].slice(0, 10);
+  const final = deduplicateResults(dbResults, googleResults, olResults, fnacResults).slice(0, 10);
 
   // Métadonnées skip logic (attachées au tableau)
   final._skippedGoogle = skipGoogle;
