@@ -82,8 +82,18 @@ function buildPayload(book) {
 
 // ─── API MetasBooks ───────────────────────────────────────────────
 
+let _firstBook = true;
+
 async function submitBook(book) {
   const payload = buildPayload(book);
+
+  const isFirst = _firstBook;
+  if (isFirst) {
+    _firstBook = false;
+    console.log(`\n${C.cyan}[DEBUG] Payload premier livre :${C.reset}`);
+    console.log(JSON.stringify(payload, null, 2));
+  }
+
   try {
     const res = await fetch(METASBOOKS_URL, {
       method: 'POST',
@@ -95,19 +105,34 @@ async function submitBook(book) {
       signal: AbortSignal.timeout(10000),
     });
 
+    const rawBody = await res.text();
+
+    if (isFirst) {
+      console.log(`\n${C.cyan}[DEBUG] Réponse MetasBooks (status ${res.status}) :${C.reset}`);
+      console.log(rawBody || '(body vide)');
+      console.log();
+    }
+
+    let data = null;
+    try { data = JSON.parse(rawBody); } catch { /* body non-JSON */ }
+
     if (res.status === 201) return { status: 'created' };
     if (res.status === 200) return { status: 'exists' };
     if (res.status === 403) return { status: 'forbidden' };
 
-    let message = '';
-    try {
-      const data = await res.json();
-      message = data.message || data.error || JSON.stringify(data).slice(0, 120);
-    } catch {
-      message = await res.text().catch(() => '').then(t => t.slice(0, 120));
+    const message = data
+      ? (data.message || data.error || JSON.stringify(data))
+      : rawBody.slice(0, 200);
+
+    if (res.status === 400) {
+      if (!isFirst) {
+        // Logger le body 400 en entier même pour les suivants
+        console.log(`\n${C.red}[400 body]${C.reset} ${book.title.slice(0, 50)}`);
+        console.log(rawBody);
+      }
+      return { status: 'invalid', message };
     }
 
-    if (res.status === 400) return { status: 'invalid', message };
     return { status: 'unexpected', code: res.status, message };
 
   } catch (e) {
