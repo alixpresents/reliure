@@ -13,7 +13,7 @@ import { useCreatorIds } from "../hooks/useUserBadges";
 import ContentMenu from "../components/ContentMenu";
 import { useNav } from "../lib/NavigationContext";
 import { useNavigate } from "react-router-dom";
-import { usePopularBooks, usePopularReviews, usePopularQuotes, usePopularLists } from "../hooks/useExplore";
+import { useBabelioPopular, usePopularReviews, usePopularQuotes, usePopularLists } from "../hooks/useExplore";
 import { useClassement } from "../hooks/useClassement";
 import { searchBooks } from "../lib/googleBooks";
 import { importBook } from "../lib/importBook";
@@ -123,7 +123,7 @@ export default function ExplorePage() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const creatorIds = useCreatorIds();
-  const { books: popular, loading: loadingBooks } = usePopularBooks();
+  const { books: babelioBooks, loading: loadingBabelio } = useBabelioPopular();
   const { reviews, loading: loadingReviews, refetch: refetchReviews } = usePopularReviews();
   const { quotes, loading: loadingQuotes, refetch: refetchQuotes } = usePopularQuotes();
   const { lists, loading: loadingLists } = usePopularLists();
@@ -207,7 +207,7 @@ export default function ExplorePage() {
   const hasResults = query.length >= 2 && (searchResults.length > 0 || searchLoading);
   const showDropdown = showResults && query.length >= 2;
 
-  const allEmpty = !loadingBooks && !loadingReviews && !loadingQuotes && !loadingLists && popular.length === 0 && reviews.length === 0 && quotes.length === 0 && lists.length === 0;
+  const allEmpty = !loadingBabelio && !loadingReviews && !loadingQuotes && !loadingLists && babelioBooks.length === 0 && reviews.length === 0 && quotes.length === 0 && lists.length === 0;
 
   return (
     <div>
@@ -336,10 +336,10 @@ export default function ExplorePage() {
         </div>
       )}
 
-      {/* Populaires cette semaine */}
-      {loadingBooks && (
+      {/* Plébiscités par les lecteurs francophones (Babelio) */}
+      {loadingBabelio && (
         <div className="border-t border-border-light py-6">
-          <Heading>Populaires cette semaine</Heading>
+          <Heading>Plébiscités par les lecteurs francophones</Heading>
           <HScroll>
             {[1, 2, 3, 4, 5, 6, 7].map(i => (
               <div key={i} className="min-w-[130px]">
@@ -351,21 +351,47 @@ export default function ExplorePage() {
           </HScroll>
         </div>
       )}
-      {!loadingBooks && popular.length > 0 && (
+      {!loadingBabelio && babelioBooks.length > 0 && (
         <div className="border-t border-border-light py-6">
-          <Heading>Populaires cette semaine</Heading>
+          <Heading>Plébiscités par les lecteurs francophones</Heading>
+          <div className="text-[11px] font-body mb-3" style={{ color: "var(--text-tertiary)" }}>
+            Sélection d'après les classements Babelio
+          </div>
           <HScroll>
-            {popular.map((book, i) => (
-              <div key={book.id} className="text-center min-w-[130px]">
-                <div className="relative inline-block">
-                  <Img book={book} w={130} h={195} onClick={() => go(book)} />
-                  <div className="absolute top-1.5 left-1.5 w-[22px] h-[22px] rounded-full bg-black/70 backdrop-blur-[4px] flex items-center justify-center text-[10px] font-bold text-white font-body z-2">
-                    {i + 1}
+            {babelioBooks.map((book, i) => {
+              const years = book._supabase?.babelio_popular_year;
+              const multiYear = Array.isArray(years) && years.length > 1;
+              return (
+                <div key={book.id} className="text-center min-w-[130px]">
+                  <div className="relative inline-block">
+                    <Img book={book} w={130} h={195} onClick={() => go(book)} />
+                    <div className="absolute top-1.5 left-1.5 w-[22px] h-[22px] rounded-full bg-black/70 backdrop-blur-[4px] flex items-center justify-center text-[10px] font-bold text-white font-body z-2">
+                      {i + 1}
+                    </div>
+                    {multiYear && (
+                      <div className="absolute bottom-1.5 right-1.5 px-1.5 py-0.5 rounded-full bg-black/70 backdrop-blur-[4px] text-[9px] font-medium text-white font-body leading-none">
+                        ×{years.length} ans
+                      </div>
+                    )}
                   </div>
+                  <div className="text-xs font-medium mt-2 overflow-hidden text-ellipsis whitespace-nowrap max-w-[130px] font-body">{book.t}</div>
+                  <div className="text-[11px] mt-[1px] font-body" style={{ color: "var(--text-tertiary)" }}>{book.a.split(" ").pop()}</div>
                 </div>
-                <div className="text-xs font-medium mt-2 overflow-hidden text-ellipsis whitespace-nowrap max-w-[130px] font-body">{book.t}</div>
-                <div className="text-[11px] mt-[1px] font-body" style={{ color: "var(--text-tertiary)" }}>{book.a.split(" ").pop()}</div>
-              </div>
+              );
+            })}
+          </HScroll>
+        </div>
+      )}
+
+      {/* Sélections */}
+      {curatedSelections && curatedSelections.length > 0 && (
+        <div className="border-t border-border-light py-6">
+          <Heading right={<Link to="/selections" className="text-[13px] font-body no-underline hover:underline" style={{ color: "var(--text-muted)" }}>Tout voir ›</Link>}>
+            Sélections
+          </Heading>
+          <HScroll>
+            {curatedSelections.map(s => (
+              <CuratedSelectionCard key={s.id} selection={s} variant="compact" />
             ))}
           </HScroll>
         </div>
@@ -455,20 +481,6 @@ export default function ExplorePage() {
           ))}
         </div>
       )}
-      {/* Sélections */}
-      {curatedSelections && curatedSelections.length > 0 && (
-        <div className="border-t border-border-light py-6">
-          <Heading right={<Link to="/selections" className="text-[13px] font-body no-underline hover:underline" style={{ color: "var(--text-muted)" }}>Tout voir ›</Link>}>
-            Sélections
-          </Heading>
-          <HScroll>
-            {curatedSelections.map(s => (
-              <CuratedSelectionCard key={s.id} selection={s} variant="compact" />
-            ))}
-          </HScroll>
-        </div>
-      )}
-
       {/* Top contributeurs */}
       {!loadingRanking && top3.length > 0 && (
         <div className="border-t border-border-light py-6">

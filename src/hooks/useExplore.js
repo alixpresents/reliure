@@ -19,23 +19,6 @@ function normalizeBook(b) {
   };
 }
 
-async function fetchPopularBooks() {
-  const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
-  const { data: trending } = await supabase.rpc("popular_books_week", { since_date: since }).limit(7);
-
-  if (trending && trending.length >= 3) {
-    return trending.map(normalizeBook);
-  }
-  // Fallback: most rated books
-  const { data: fallback } = await supabase
-    .from("books")
-    .select("id, title, authors, cover_url, slug, publication_date, avg_rating, rating_count, page_count")
-    .gt("rating_count", 0)
-    .order("rating_count", { ascending: false })
-    .limit(7);
-  return (fallback ?? []).map(normalizeBook);
-}
-
 async function fetchPopularReviews() {
   const { data } = await supabase
     .from("reviews")
@@ -61,10 +44,19 @@ async function fetchPopularLists() {
   return data ?? [];
 }
 
-export function usePopularBooks() {
+export function useBabelioPopular() {
   const { data: books = [], isLoading: loading } = useQuery({
-    queryKey: ["popularBooks"],
-    queryFn: fetchPopularBooks,
+    queryKey: ["babelioPopular"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("books")
+        .select("id, title, authors, cover_url, slug, publication_date, avg_rating, rating_count, page_count, babelio_popular_year")
+        .not("babelio_popular_year", "is", null)
+        .order("avg_rating", { ascending: false })
+        .limit(10);
+      return (data ?? []).map(normalizeBook);
+    },
+    staleTime: 30 * 60 * 1000,
   });
   return { books, loading };
 }
