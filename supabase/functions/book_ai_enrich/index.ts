@@ -193,7 +193,7 @@ function pick<T>(...values: (T | null | undefined)[]): T | null {
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: getCorsHeaders(req) });
+    return new Response(null, { status: 200, headers: getCorsHeaders(req) });
   }
 
   try {

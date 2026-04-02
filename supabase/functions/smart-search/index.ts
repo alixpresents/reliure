@@ -57,7 +57,7 @@ function normalizeQuery(q: string): string {
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: getCorsHeaders(req) });
+    return new Response(null, { status: 200, headers: getCorsHeaders(req) });
   }
 
   try {
