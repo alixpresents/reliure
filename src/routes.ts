@@ -29,7 +29,7 @@ export default [
   route(":username/listes/:slug", "pages/ListPage.jsx"),
   route(":username/badges", "pages/BadgesPage.jsx"),
   route(":username", "pages/ProfilePageRoute.jsx", { id: "profile" }),
-  route(":username/:tab", "pages/ProfilePageRoute.jsx", { id: "profile-tab" }),
+  route(":username/:tab", "pages/ProfilePageTabRoute.jsx", { id: "profile-tab" }),
 
   // 404
   route("*", "pages/NotFoundPage.jsx"),

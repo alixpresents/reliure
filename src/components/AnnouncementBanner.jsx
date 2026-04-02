@@ -8,7 +8,7 @@ export default function AnnouncementBanner({
   storageKey = "reliure_banner_dismissed_v1",
 }) {
   const [dismissed, setDismissed] = useState(
-    () => !!localStorage.getItem(storageKey)
+    () => typeof window !== "undefined" && !!localStorage.getItem(storageKey)
   );
 
   if (dismissed) return null;

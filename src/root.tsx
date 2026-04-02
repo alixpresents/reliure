@@ -159,7 +159,7 @@ function AppShell() {
   const searchGo = searchCb || goToBook;
 
   const isLoggedIn = !!user;
-  const needsOnboarding = isLoggedIn && !profile && !localStorage.getItem("reliure_onboarding_done");
+  const needsOnboarding = isLoggedIn && !profile && typeof window !== "undefined" && !localStorage.getItem("reliure_onboarding_done");
 
   if (needsOnboarding) {
     return (

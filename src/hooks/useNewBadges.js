@@ -10,7 +10,7 @@ export function useNewBadges() {
   const [dismissed, setDismissed] = useState(false);
 
   const lastSeen = useMemo(
-    () => localStorage.getItem(LS_KEY) || "1970-01-01T00:00:00.000Z",
+    () => typeof window !== "undefined" ? localStorage.getItem(LS_KEY) || "1970-01-01T00:00:00.000Z" : "1970-01-01T00:00:00.000Z",
     // eslint-disable-next-line react-hooks/exhaustive-deps
     []
   );

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 
 export function useTheme() {
   const [theme, setTheme] = useState(
-    () => localStorage.getItem('reliure-theme') || 'light'
+    () => typeof window !== "undefined" ? localStorage.getItem('reliure-theme') || 'light' : 'light'
   );
 
   useEffect(() => {

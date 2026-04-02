@@ -1,21 +1,70 @@
-export function meta({ params }) {
+import { createClient } from "@supabase/supabase-js";
+
+async function fetchProfileData(params) {
+  const supabase = createClient(
+    import.meta.env.VITE_SUPABASE_URL,
+    import.meta.env.VITE_SUPABASE_ANON_KEY
+  );
+
+  const { data: profile } = await supabase
+    .from("users")
+    .select("id, username, display_name, avatar_url, bio")
+    .eq("username", params.username)
+    .single();
+
+  if (!profile) throw new Response("Not Found", { status: 404 });
+
+  return { profile };
+}
+
+// loader runs at build time during prerendering
+export async function loader({ params }) {
+  return fetchProfileData(params);
+}
+
+// clientLoader runs in the browser on client-side navigation
+export async function clientLoader({ params }) {
+  return fetchProfileData(params);
+}
+
+export function meta({ data, params }) {
+  if (!data?.profile) {
+    return [
+      { title: `@${params.username} — Reliure` },
+      { name: "description", content: `Profil de @${params.username} sur Reliure — critiques, citations et listes de lecture.` },
+      { property: "og:title", content: `@${params.username} — Reliure` },
+      { property: "og:description", content: `Profil de @${params.username} sur Reliure — critiques, citations et listes de lecture.` },
+      { property: "og:type", content: "profile" },
+      { property: "og:site_name", content: "Reliure" },
+      { name: "twitter:card", content: "summary_large_image" },
+    ];
+  }
+  const { profile } = data;
+  const name = profile.display_name || profile.username;
+  const description = profile.bio || `Profil de ${name} sur Reliure.`;
+
   return [
-    { title: `@${params.username} — Reliure` },
-    { name: "description", content: `Profil de @${params.username} sur Reliure — critiques, citations et listes de lecture.` },
-    { property: "og:title", content: `@${params.username} — Reliure` },
-    { property: "og:description", content: `Profil de @${params.username} sur Reliure — critiques, citations et listes de lecture.` },
+    { title: `${name} (@${profile.username}) — Reliure` },
+    { name: "description", content: description },
+    { property: "og:title", content: `${name} — Reliure` },
+    { property: "og:description", content: description },
+    { property: "og:image", content: profile.avatar_url || "" },
     { property: "og:type", content: "profile" },
     { property: "og:site_name", content: "Reliure" },
     { name: "twitter:card", content: "summary_large_image" },
   ];
 }
 
+import { lazy, Suspense } from "react";
+import { useLoaderData } from "react-router";
 import { useParams, useLocation } from "react-router-dom";
 import { useAuth } from "../lib/AuthContext";
 import { usePublicProfile } from "../hooks/usePublicProfile";
-import ProfilePage from "./ProfilePage";
 import NotFoundPage from "./NotFoundPage";
 import Skeleton from "../components/Skeleton";
+
+// Lazy-load ProfilePage to keep browser-only deps out of the SSR bundle
+const ProfilePage = lazy(() => import("./ProfilePage"));
 
 const TAB_MAP = {
   "": "journal",
@@ -30,7 +79,6 @@ const TAB_MAP = {
 function ProfileSkeleton() {
   return (
     <div className="py-8">
-      {/* Header profil */}
       <div className="flex items-center gap-3.5 mb-3.5">
         <Skeleton.Avatar size={52} />
         <div className="flex-1 flex flex-col gap-2">
@@ -38,21 +86,17 @@ function ProfileSkeleton() {
           <Skeleton.Text width="24%" height={11} />
         </div>
       </div>
-      {/* Stats */}
       <div className="flex gap-5 mb-5">
         {[52, 68, 60, 88].map((w, i) => <Skeleton.Text key={i} width={w} height={11} />)}
       </div>
-      {/* Bio */}
       <Skeleton.Text width="72%" height={12} className="mb-1.5" />
       <Skeleton.Text width="52%" height={12} className="mb-6" />
-      {/* Quatre favoris */}
       <div className="border-t border-border-light py-6">
         <Skeleton.Text width={88} height={10} className="mb-3" />
         <div className="grid grid-cols-4 gap-4">
           {[1, 2, 3, 4].map(i => <Skeleton.Cover key={i} />)}
         </div>
       </div>
-      {/* Journal */}
       <div className="border-t border-border-light py-4">
         <Skeleton.Text width={80} height={10} className="mb-3" />
         <div className="flex gap-1.5 flex-wrap">
@@ -63,21 +107,62 @@ function ProfileSkeleton() {
   );
 }
 
+// SSR-safe content for prerendering
+function ProfileSeoContent({ profile }) {
+  const name = profile.display_name || profile.username;
+  return (
+    <article className="py-8">
+      <div className="flex items-center gap-3.5 mb-4">
+        {profile.avatar_url && (
+          <img
+            src={profile.avatar_url}
+            alt={name}
+            style={{ width: 52, height: 52, borderRadius: "50%", objectFit: "cover" }}
+          />
+        )}
+        <div>
+          <h1 className="text-xl font-display" style={{ color: "var(--text-primary)" }}>{name}</h1>
+          <p className="text-sm" style={{ color: "var(--text-secondary)" }}>@{profile.username}</p>
+        </div>
+      </div>
+      {profile.bio && (
+        <p className="text-sm" style={{ color: "var(--text-body)" }}>{profile.bio}</p>
+      )}
+    </article>
+  );
+}
+
 export default function ProfilePageRoute() {
+  const loaderData = useLoaderData();
   const { username, tab } = useParams();
+  const isServer = typeof window === "undefined";
+
+  // Hooks called unconditionally
   const { user } = useAuth();
   const location = useLocation();
-
   const { profile, loading, notFound } = usePublicProfile(username);
 
-  if (loading) return <ProfileSkeleton />;
-  if (notFound || !profile) return <NotFoundPage />;
+  // SSR: render SEO-safe content
+  if (isServer) {
+    if (loaderData?.profile) {
+      return <ProfileSeoContent profile={loaderData.profile} />;
+    }
+    return <ProfileSkeleton />;
+  }
+
+  // Client: loader data as fallback
+  const displayProfile = profile || loaderData?.profile;
+
+  if (!displayProfile && loading) return <ProfileSkeleton />;
+  if (notFound || !displayProfile) return <NotFoundPage />;
 
   const activeTab = TAB_MAP[tab || ""] || "journal";
 
   return (
     <div className="sk-fade">
-      <ProfilePage viewedProfile={profile} initialTab={activeTab} />
+      <Suspense fallback={<ProfileSkeleton />}>
+        <ProfilePage viewedProfile={displayProfile} initialTab={activeTab} />
+      </Suspense>
     </div>
   );
 }
