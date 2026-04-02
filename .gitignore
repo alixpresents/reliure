@@ -26,8 +26,9 @@ dist-ssr
 *.sw?
 .vercel
 
-# React Router generated types
+# React Router
 .react-router/
+build/
 
 seeds/*.json
 seeds/.isbn-cache.json
