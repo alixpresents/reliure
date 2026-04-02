@@ -270,16 +270,11 @@ export async function searchBooks(query, { onDbResults } = {}) {
 
   const t_ext_start = performance.now();
   if (!skipGoogle) {
-    // Étape 2 : Google Books + Open Library en parallèle
-    const [gRes, olRes] = await Promise.all([
-      fetchGoogleBooks(query),
-      searchOpenLibrary(query),
-    ]);
-    googleResults = gRes;
-    olResults = olRes;
+    // Étape 2 : Google Books seul (OL uniquement si circuit breaker actif)
+    googleResults = await fetchGoogleBooks(query);
     googleRaw = googleResults._rawCount || 0;
   } else if (skipReason === "circuit_breaker") {
-    // Google est down — utiliser Open Library seul comme découverte
+    // Google est down — Open Library comme découverte de secours
     olResults = await searchOpenLibrary(query);
   }
   const t_google = skipGoogle ? 0 : Math.round(performance.now() - t_ext_start);
