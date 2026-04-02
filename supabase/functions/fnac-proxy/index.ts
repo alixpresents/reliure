@@ -14,6 +14,8 @@ Deno.serve(async (req) => {
       });
     }
 
+    console.log("fnac-proxy: received query", query);
+
     const url = `https://www.fnac.com/SearchResult/ResultList.aspx?Search=${encodeURIComponent(query.trim())}&sft=1&sa=0`;
 
     const res = await fetch(url, {
@@ -25,14 +27,18 @@ Deno.serve(async (req) => {
       },
     });
 
-    if (!res.ok) {
-      return new Response("", {
-        status: 200,
-        headers: { ...getCorsHeaders(req), "Content-Type": "text/plain" },
-      });
+    console.log("fnac-proxy: fetch status", res.status);
+
+    if (res.status !== 200) {
+      return Response.json(
+        { error: res.status, html: "" },
+        { status: 200, headers: getCorsHeaders(req) },
+      );
     }
 
     const html = await res.text();
+
+    console.log("fnac-proxy: html length", html.length);
 
     return new Response(html, {
       status: 200,
