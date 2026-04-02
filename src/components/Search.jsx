@@ -410,21 +410,7 @@ export default function Search({ open, onClose, go, initialQuery = "" }) {
 
     // ── Branche 2 : Google indisponible ou 0 résultat → cascade BnF ──
 
-    // 2a. Si l'IA fournit un ISBN → tenter import via edge function
-    if (aiBook.isbn13) {
-      try {
-        const { data, error } = await supabase.functions.invoke("book_import", {
-          body: { isbn: aiBook.isbn13 },
-        });
-        if (!error && data?.id) {
-          console.log("[search-ai-import] edge function import via AI ISBN:", aiBook.isbn13);
-          navigateToBook(data);
-          return;
-        }
-      } catch { /* ISBN halluciné ou edge function down — continuer cascade */ }
-    }
-
-    // 2b. Recherche BnF par titre + auteur → récupérer un ISBN fiable
+    // Recherche BnF par titre + auteur → récupérer un ISBN fiable
     try {
       const bnfResults = await searchBnF(`${aiBook.title} ${aiBook.author || ""}`, 5);
       const bnfWithIsbn = bnfResults.find(r => r.volumeInfo?.industryIdentifiers?.length > 0);
