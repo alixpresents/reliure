@@ -27,6 +27,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { useNav } from "../lib/NavigationContext";
 import { useBookLists } from "../hooks/useBookLists";
 import ContentMenu from "../components/ContentMenu";
+import ReviewReplies from "../components/ReviewReplies";
 import Toast from "../components/Toast";
 import { useToast } from "../hooks/useToast";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
@@ -286,7 +287,7 @@ function EnrichModal({ bookId, onClose, onSaved, initialDescription, initialPage
   );
 }
 
-const BookReviewItem = memo(function BookReviewItem({ rv, liked, initialLiked, toggleLike, showToast, refetchReviews, navigate, anchorRef, creatorIds }) {
+const BookReviewItem = memo(function BookReviewItem({ rv, liked, initialLiked, toggleLike, showToast, refetchReviews, navigate, anchorRef, creatorIds, onRequireLogin }) {
   const displayName = rv.users?.display_name || rv.users?.username || "?";
   const initials = displayName.split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2);
   return (
@@ -307,7 +308,7 @@ const BookReviewItem = memo(function BookReviewItem({ rv, liked, initialLiked, t
       ) : (
         <p className="text-[15px] leading-[1.7] m-0 font-body" style={{ color: "var(--text-body)" }}>{rv.body}</p>
       )}
-      <div className="mt-2 text-[11px] font-body">
+      <div className="mt-2 flex items-center gap-3 text-[11px] font-body">
         <LikeButton
           count={rv.likes_count || 0}
           liked={liked}
@@ -315,6 +316,12 @@ const BookReviewItem = memo(function BookReviewItem({ rv, liked, initialLiked, t
           onToggle={() => toggleLike(rv.id, () => showToast("Une erreur est survenue"))}
         />
       </div>
+      <ReviewReplies
+        reviewId={rv.id}
+        initialReplyCount={rv.reply_count || 0}
+        showToast={showToast}
+        onRequireLogin={onRequireLogin}
+      />
     </div>
   );
 });
@@ -1037,6 +1044,7 @@ export default function BookPage({ book }) {
                     navigate={navigate}
                     anchorRef={i === ownReviewIdx ? newReviewRef : null}
                     creatorIds={creatorIds}
+                    onRequireLogin={() => showLoginModal(false)}
                   />
                 ));
               })()

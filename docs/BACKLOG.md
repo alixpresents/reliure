@@ -608,7 +608,7 @@ ces features sont incomplètes.
 - `trg_notify_follow` (AFTER INSERT on `follows`) → notifie `following_id`, metadata = `{ "username": "..." }`
 - `trg_notify_like` (AFTER INSERT on `likes`) → notifie le propriétaire du contenu, metadata = `{ "book_title": "...", "book_slug": "..." }` (review/quote) ou `{ "list_title": "..." }` (list)
 - `trg_notify_badge` (AFTER INSERT on `user_badges`) → notifie `user_id`, actor_id=NULL, metadata = `{ "badge_id": "...", "badge_name": "..." }`
-- **PAS de trigger `reply`** (table `review_replies` n'existe pas encore — type réservé dans l'enum)
+- `trg_notify_review_reply` (AFTER INSERT on `review_replies`) → notifie l'auteur de la critique, metadata = `{ "book_title", "book_slug", "book_id", "reply_id", "reply_preview" }` (migration 026)
 
 **RPCs** :
 - `get_notifications(p_limit, p_offset)` → jointure actor (username, display_name, avatar_url)
@@ -630,7 +630,7 @@ ces features sont incomplètes.
 - Pas de notifications push mobile (PWA d'abord)
 - Pas d'email par action individuelle (email digest hebdomadaire en v2)
 - Pas de table `notification_preferences` (tous les types activés par défaut)
-- Pas de trigger reply (table `review_replies` pas encore créée)
+- ~~Pas de trigger reply~~ → implémenté (migration 026, trigger `trg_notify_review_reply`)
 
 ---
 
@@ -1626,27 +1626,43 @@ Système de badges extensible avec un premier badge "Créateur" réservé aux ut
 
 ## 30. Réponses aux critiques dans le fil
 
-**Statut :** Post-bêta · Social
+**Statut :** ✅ Implémenté — avril 2026
 **Portée :** FeedPage, BookPage, table `review_replies`
 
-### Le concept
-Un bouton "Répondre" sous chaque critique dans `/fil` et sur les fiches livres permet d'engager une conversation autour d'une lecture. Les réponses sont imbriquées (1 niveau, pas de thread infini).
+### Ce qui est implémenté
 
-### Pourquoi c'est fort
-Le fil devient un vrai espace de discussion littéraire, pas juste un flux passif. C'est le différenciateur social par rapport à Babelio (commentaires quasi inexistants) et The StoryGraph (pas de réponses).
+**Migration `026_review_replies.sql`** :
+- Table `review_replies` (id, review_id, user_id, body 1-2000 chars, likes_count, created_at)
+- Colonne `reviews.reply_count` (int, maintenu par trigger `reply_count_trigger`)
+- Enums étendus : `activity_type` + 'reply', `likeable_type` + 'reply'
+- `update_likes_count()` étendu pour target_type='reply'
+- Trigger `trg_notify_review_reply` → notification type 'reply' (SECURITY DEFINER, via `create_notification`)
+- Trigger `trg_log_reply_activity` → activité type 'reply' avec metadata book/cover/reply_preview
+- RPC `get_review_replies(p_review_id, p_limit)` → jointure users
+- RLS : lecture publique, INSERT/UPDATE/DELETE owner only
 
-### Implémentation envisagée
-- Nouvelle table `review_replies` : `id`, `review_id` (FK), `user_id` (FK), `body` (text), `likes_count`, `created_at`
-- RLS : lecture publique, écriture authentifiée
-- UI : sous chaque critique, lien "Répondre" (11px muted) → textarea inline (pas de modal). Bouton "Publier" + Escape annule.
-- Réponses affichées repliées par défaut ("Voir X réponses") → dépliées au clic
-- Chaque réponse génère une entrée `notifications` pour l'auteur de la critique
-- Activité dans le fil : `action_type = 'reply'` dans la table `activity`
+**Hook `useReviewReplies(reviewId)`** :
+- TanStack Query `["reviewReplies", reviewId]`, staleTime 2min
+- `submitReply(body)`, `deleteReply(replyId)` (+ nettoyage activité), `refetch`
+- Invalidation cross-cache : book, feed, popularReviews, myReviews
+
+**Composant `ReviewReplies`** (`src/components/ReviewReplies.jsx`) :
+- Replié par défaut ("Voir les X réponses"), lien "Répondre" toujours visible
+- Formulaire inline : textarea + Cmd+Entrée + Escape, avatar Reliure (useProfile)
+- Chaque réponse : Avatar + UserName (badge creator) + timestamp + LikeButton + "Supprimer" inline
+- Intégré dans BookPage (sous chaque critique) et FeedPage (sous chaque critique)
+- Non-connecté → onRequireLogin (LoginModal sur BookPage, redirect /login sur FeedPage)
+
+**Fil d'activité** :
+- Type 'reply' affiché : "[Username] a répondu à une critique de [Titre]" + preview blockquote + mini cover
+- `useFeed` enrichit les reviews avec `reply_count` frais de la DB
+- Filet de sécurité étendu pour vérifier l'existence des `review_replies`
 
 ### Ce qu'on ne fait PAS en v1
 - Pas de réponse à une réponse (1 seul niveau d'imbrication)
 - Pas de mentions @utilisateur
 - Pas de rich text
+- Pas d'édition d'une réponse (juste suppression)
 
 ---
 

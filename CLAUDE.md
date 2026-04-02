@@ -233,7 +233,8 @@ Scripts autonomes dans `seeds/` pour enrichir les métadonnées des livres exist
 ### Tables principales
 - `users` — id, username, display_name, avatar_url, bio, created_at
 - `books` — id, isbn_13, title, subtitle, authors (jsonb), publisher, publication_date, cover_url, language, genres (jsonb), page_count, avg_rating, rating_count, source, created_at, **slug** (unique, généré à l'import), description (text), awards (jsonb), ai_confidence (numeric 3,2)
-- `reviews` — id, user_id, book_id, rating (smallint), body, contains_spoilers, likes_count, created_at
+- `reviews` — id, user_id, book_id, rating (smallint), body, contains_spoilers, likes_count, reply_count (int, trigger), created_at
+- `review_replies` — id, review_id (FK CASCADE), user_id (FK CASCADE), body (text 1-2000), likes_count, created_at. RLS : lecture publique, INSERT/UPDATE/DELETE owner only. Trigger `reply_count_trigger` maintient `reviews.reply_count`. Trigger `trg_notify_review_reply` → notification type 'reply'. Trigger `trg_log_reply_activity` → activité type 'reply'. RPC `get_review_replies(p_review_id, p_limit)`. Migration : `026_review_replies.sql`.
 - `reading_status` — id, user_id, book_id, status (want_to_read/reading/read/abandoned), started_at, finished_at, current_page, is_reread, created_at
 - `reading_log_tags` — id, reading_status_id, user_id, tag_text, created_at
 - `user_favorites` — id, user_id, book_id, position (1-4, CHECK), note (text, max 24 chars), created_at
@@ -242,7 +243,7 @@ Scripts autonomes dans `seeds/` pour enrichir les métadonnées des livres exist
 - `follows` — id, follower_id, following_id, created_at
 - `activity` — id, user_id, action_type, target_id, target_type, metadata (jsonb), created_at
 - `quotes` — id, user_id, book_id, text, likes_count, created_at
-- `likes` — id, user_id, target_id, target_type (review/quote/list), created_at
+- `likes` — id, user_id, target_id, target_type (review/quote/list/reply), created_at
 - `search_cache` — query_normalized (PK), response (jsonb), hit_count, expires_at (service_role only, pas de RLS publique)
 - `badge_definitions` — id (text PK), name, description, category (enum badge_category), icon, points, sort_order, color. Lecture publique. Migration : `migrations/012_gamification.sql`.
 - `user_badges` — id, user_id, badge_id (FK), awarded_at, expires_at (nullable), is_pinned (bool). Unique (user_id, badge_id). Lecture publique. Contrainte max 3 épinglés via trigger (`migrations/019_pinned_badges_constraint.sql`).
@@ -361,6 +362,7 @@ Toutes les couleurs UI sont gérées via CSS custom properties dans `src/index.c
 - **PinnedBadgesInline** : `src/components/PinnedBadgesInline.jsx` — rangée de 3 slots de badges épinglés sur le profil public. Cliquable → ouvre le modal BadgesPage.
 - **NotificationBell** : `src/components/NotificationBell.jsx` — icône cloche SVG 18×18 + badge compteur rouge (`var(--color-spoiler)`, cap 99+). Props : `unreadCount`, `onClick`, `isOpen`. Placé dans le Header entre le toggle dark mode et l'avatar.
 - **NotificationPanel** : `src/components/NotificationPanel.jsx` — dropdown 360px sous la cloche. Header "Notifications" + "Tout marquer comme lu". Liste scrollable (max 440px), fond `var(--bg-surface)` pour les non lues, dot rouge 7px. Avatar acteur ou icône système (👤/♥/✦/💬). Click-outside + Escape ferment. Props : `notifications`, `isLoading`, `onMarkAllRead`, `onClickNotif`, `onClose`.
+- **ReviewReplies** : `src/components/ReviewReplies.jsx` — réponses aux critiques, replié par défaut ("Voir les X réponses"). Lien "Répondre" toujours visible. Formulaire inline : textarea + Cmd+Entrée + avatar Reliure (useProfile). Chaque réponse : Avatar + UserName (badge creator) + timestamp + LikeButton (target_type='reply') + "Supprimer" inline. Props : `reviewId`, `initialReplyCount`, `showToast`, `onRequireLogin`. Intégré dans BookPage et FeedPage.
 
 ## Règles React — performance et boucles
 
@@ -390,6 +392,7 @@ Toutes les couleurs UI sont gérées via CSS custom properties dans `src/index.c
   - `["popularReviews"]`, `["popularQuotes"]`, `["popularLists"]` — Explorer
   - `["booksByGenre", genre]` — livres par genre
   - `["feed"]` — fil d'activité
+  - `["reviewReplies", reviewId]` — réponses à une critique (staleTime 2min)
 - **Invalidation cross-cache** : après une mutation, invalider toutes les queryKeys affectées. Ex : noter un livre invalide `["profileData"]` et `["myReviews"]`.
 - **Optimistic UI** : préserver le pattern `safeMutation` + `useRef` existant pour les toggles likes (stabilité référentielle pour `React.memo`). Ne pas remplacer par `useMutation` de TanStack si ça casserait la stabilité des props.
 - **`refetch` exposé** : quand un consommateur a besoin de déclencher un refresh manuellement, exposer `refetch = () => queryClient.invalidateQueries({ queryKey: [...] })` depuis le hook.
@@ -527,12 +530,21 @@ Chaque onglet a sa propre URL (`/:username/critiques`, etc.).
 - Likes via `useLikes` existant (target_type='list')
 - Pages publiques (pas de ProtectedRoute)
 
+#### Réponses aux critiques
+- **Table `review_replies`** : migration `026_review_replies.sql`. Body 1-2000 chars, likes_count maintenu par `update_likes_count()` étendu. `reply_count` dénormalisé sur `reviews` via trigger.
+- **Triggers** : `trg_notify_review_reply` (notification type 'reply', metadata book_title/book_slug/reply_preview), `trg_log_reply_activity` (activité type 'reply', metadata book/cover/reply_preview).
+- **Hook `useReviewReplies(reviewId)`** : TanStack Query (`["reviewReplies", reviewId]`, staleTime 2min). Expose `{ replies, isLoading, replyCount, submitReply, deleteReply, refetch }`. Invalidation cross-cache : book, feed, popularReviews, myReviews. `deleteReply` nettoie aussi l'entrée `activity`.
+- **Composant `ReviewReplies`** (`src/components/ReviewReplies.jsx`) : replié par défaut ("Voir les X réponses"), lien "Répondre" toujours visible. Formulaire inline (textarea + Cmd+Entrée + Escape, avatar Reliure via `useProfile()`). Chaque réponse : Avatar + UserName (badge creator) + timestamp + LikeButton + "Supprimer" inline (confirmation Oui/Annuler). `useLikes(replyIds, 'reply')` pour les likes. Non-connecté → `onRequireLogin`.
+- **Intégré** dans BookPage (sous chaque critique, `onRequireLogin={() => showLoginModal(false)}`) et FeedPage (sous chaque critique, `onRequireLogin={() => nav("/login")}`).
+- **Enums étendus** : `activity_type` + 'reply', `likeable_type` + 'reply'.
+
 #### Fil d'activité
-- Branché sur table `activity`, dédoublonnage, types : reading_status, review, quote, list
+- Branché sur table `activity`, dédoublonnage, types : reading_status, review, quote, list, reply
 - Affichage cover, relecture badge, notation
 - Type `list` : logged à la création (si publique) et au passage privé→publique, supprimé avec la liste ; card avec titre italic cliquable + mosaïque des 3 premières couvertures
+- Type `reply` : "[Username] a répondu à une critique de [Titre]" + preview blockquote + mini cover. Données depuis `activity.metadata` (book_title, book_slug, book_cover, reply_preview).
 - **ContentMenu** sur les critiques et citations du fil
-- `useFeed` sélectionne `users(username, display_name, avatar_url)` — le champ `avatar_url` est requis pour afficher le bon avatar dans le fil
+- `useFeed` sélectionne `users(username, display_name, avatar_url)` — le champ `avatar_url` est requis pour afficher le bon avatar dans le fil. Le filet de sécurité vérifie l'existence des `review_replies` pour les activités de type 'reply'. Les reviews sont enrichies avec `reply_count` frais de la DB.
 
 ### Frontend (UI complète, données mock ou partiellement branchées)
 

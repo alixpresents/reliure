@@ -13,6 +13,7 @@ import { useCreatorIds } from "../hooks/useUserBadges";
 import { formatRelativeTime } from "../lib/formatTime";
 import Skeleton from "../components/Skeleton";
 import ContentMenu from "../components/ContentMenu";
+import ReviewReplies from "../components/ReviewReplies";
 import Toast from "../components/Toast";
 import Tooltip from "../components/Tooltip";
 import { useToast } from "../hooks/useToast";
@@ -21,6 +22,7 @@ function actionLabel(actionType, metadata) {
   if (actionType === "review") return "a critiqué";
   if (actionType === "quote") return "a cité un extrait de";
   if (actionType === "list") return "a créé une liste";
+  if (actionType === "reply") return "a répondu à une critique de";
   if (actionType === "reading_status") {
     const s = metadata?.status;
     if (s === "want_to_read") return "veut lire";
@@ -67,7 +69,7 @@ const FeedItem = memo(function FeedItem({
   const meta = it.metadata || {};
   const bookTitle = meta.book_title || "un livre";
   const bookAuthor = meta.book_author;
-  const hasContent = (it.action_type === "review" && meta.review_body) || (it.action_type === "quote" && meta.quote_body);
+  const hasContent = (it.action_type === "review" && meta.review_body) || (it.action_type === "quote" && meta.quote_body) || (it.action_type === "reply" && meta.reply_preview);
 
   return (
     <div className="group py-3.5 border-b border-border-light relative">
@@ -82,7 +84,7 @@ const FeedItem = memo(function FeedItem({
 
         {/* Text line */}
         <div className="flex-1 min-w-0">
-          <p className="text-[13px] leading-normal font-body m-0">
+          <div className="text-[13px] leading-normal font-body m-0">
             <UserName user={it.users} className="text-[13px]" isCreator={creatorIds?.has(it.user_id)} />
             {isTopContributor && (
               <Tooltip text={`Top Contributeur · ${new Date().toLocaleDateString("fr-FR", { month: "long", year: "numeric" })}`}>
@@ -106,7 +108,7 @@ const FeedItem = memo(function FeedItem({
                 )}
               </>
             )}
-          </p>
+          </div>
 
           {/* List content */}
           {it.action_type === "list" && (
@@ -162,9 +164,14 @@ const FeedItem = memo(function FeedItem({
                   initialLiked={initialLikedReview}
                   onToggle={() => toggleReviewLike(it.target_id, () => showToast("Une erreur est survenue"))}
                 />
-                <span className="cursor-pointer hover:opacity-80 transition-colors duration-150">Répondre</span>
                 <ContentMenu type="review" item={{ id: it.target_id, user_id: it.user_id, body: meta.review_body, rating: meta.rating, contains_spoilers: meta.contains_spoilers }} onDelete={refetchFeed} onEdit={refetchFeed} />
               </div>
+              <ReviewReplies
+                reviewId={it.target_id}
+                initialReplyCount={meta.reply_count || 0}
+                showToast={showToast}
+                onRequireLogin={() => nav("/login")}
+              />
             </div>
           )}
 
@@ -186,8 +193,17 @@ const FeedItem = memo(function FeedItem({
             </div>
           )}
 
+          {/* Reply activity */}
+          {it.action_type === "reply" && meta.reply_preview && (
+            <div className="mt-1.5">
+              <div className="border-l-[3px] border-l-cover-fallback pl-3">
+                <span className="text-[13px] leading-relaxed font-body" style={{ color: "var(--text-body)" }}>{meta.reply_preview}</span>
+              </div>
+            </div>
+          )}
+
           {/* Timestamp */}
-          <div className={`text-[11px] font-body ${hasContent ? "mt-1.5" : "mt-1"}`} style={{ color: "var(--text-tertiary)" }}>
+          <div className={`text-[11px] font-body ${hasContent || it.action_type === "reply" ? "mt-1.5" : "mt-1"}`} style={{ color: "var(--text-tertiary)" }}>
             {formatRelativeTime(it.created_at)}
           </div>
         </div>

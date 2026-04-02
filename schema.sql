@@ -9,8 +9,8 @@ create extension if not exists "uuid-ossp";
 
 -- ─── Types enum ──────────────────────────────
 create type reading_status_type as enum ('want_to_read', 'reading', 'read', 'abandoned');
-create type activity_type as enum ('review', 'quote', 'list', 'reading_status', 'follow');
-create type likeable_type as enum ('review', 'quote', 'list');
+create type activity_type as enum ('review', 'quote', 'list', 'reading_status', 'follow', 'reply');
+create type likeable_type as enum ('review', 'quote', 'list', 'reply');
 
 -- ─── Users ───────────────────────────────────
 -- Étend le profil auth.users de Supabase
@@ -101,12 +101,43 @@ create table public.reviews (
   body text,
   contains_spoilers boolean default false,
   likes_count int default 0,
+  reply_count int not null default 0,
   created_at timestamptz default now() not null,
   updated_at timestamptz default now() not null
 );
 
 create index reviews_book_idx on public.reviews (book_id, created_at desc);
 create index reviews_user_idx on public.reviews (user_id, created_at desc);
+
+-- ─── Review Replies ─────────────────────────
+-- migration 026_review_replies.sql
+-- Réponses aux critiques (1 seul niveau, pas de threads)
+create table public.review_replies (
+  id          uuid primary key default gen_random_uuid(),
+  review_id   uuid not null references public.reviews(id) on delete cascade,
+  user_id     uuid not null references public.users(id) on delete cascade,
+  body        text not null,
+  likes_count int not null default 0,
+  created_at  timestamptz not null default now(),
+
+  constraint reply_body_length check (char_length(body) >= 1 and char_length(body) <= 2000)
+);
+
+create index idx_review_replies_review_chrono on public.review_replies (review_id, created_at asc);
+create index idx_review_replies_user on public.review_replies (user_id, created_at desc);
+
+-- RLS : lecture publique, écriture owner only
+alter table public.review_replies enable row level security;
+create policy "Réponses en lecture publique" on public.review_replies for select using (true);
+create policy "Répondre à une critique" on public.review_replies for insert with check (auth.uid() = user_id);
+create policy "Modifier sa réponse" on public.review_replies for update using (auth.uid() = user_id);
+create policy "Supprimer sa réponse" on public.review_replies for delete using (auth.uid() = user_id);
+
+-- Trigger reply_count : maintient reviews.reply_count (même pattern que likes_count)
+-- Trigger trg_notify_review_reply : notifie l'auteur de la critique (SECURITY DEFINER, via create_notification)
+-- Trigger trg_log_reply_activity : crée une entrée activité type 'reply'
+-- update_likes_count() étendu pour gérer target_type='reply' → review_replies.likes_count
+-- RPC get_review_replies(p_review_id, p_limit) → jointure users (username, display_name, avatar_url)
 
 -- ─── Quotes ──────────────────────────────────
 create table public.quotes (

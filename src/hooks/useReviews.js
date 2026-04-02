@@ -11,7 +11,7 @@ export function useBookReviews(bookId) {
     if (!bookId) { setReviews([]); setLoading(false); return; }
     const { data } = await supabase
       .from("reviews")
-      .select("id, rating, body, contains_spoilers, likes_count, created_at, users:user_id(username, display_name, avatar_url)")
+      .select("id, user_id, rating, body, contains_spoilers, likes_count, reply_count, created_at, users:user_id(username, display_name, avatar_url)")
       .eq("book_id", bookId)
       .not("body", "is", null)
       .order("created_at", { ascending: false })
