@@ -383,3 +383,146 @@ create policy "Supprimer ses propres favoris" on public.user_favorites for delet
 alter table public.activity enable row level security;
 create policy "Activité en lecture publique" on public.activity for select using (true);
 create policy "Créer sa propre activité" on public.activity for insert with check (auth.uid() = user_id);
+
+-- ─── Colonnes ajoutées via migrations ────────
+
+-- books : champs enrichissement (migrations 005_ai_enrichment, 006)
+alter table public.books add column if not exists description text;
+alter table public.books add column if not exists awards jsonb default '[]'::jsonb;
+alter table public.books add column if not exists ai_confidence numeric(3,2);
+
+-- lists : sélections curées (migration supabase/migrations/018_curated_selections)
+alter table public.lists
+  add column if not exists is_curated boolean default false,
+  add column if not exists curator_name text,
+  add column if not exists curator_role text,
+  add column if not exists curator_avatar_url text,
+  add column if not exists curator_intro text,
+  add column if not exists curator_pull_quote text,
+  add column if not exists published_at timestamptz;
+
+create index if not exists lists_curated_idx
+  on public.lists (is_curated, published_at desc) where is_curated = true;
+
+-- ─── Recherche ───────────────────────────────
+
+-- Cache des résultats de la recherche IA (smart-search edge function)
+-- migration 004_search_cache.sql
+create table if not exists public.search_cache (
+  query_normalized text primary key,
+  response         jsonb not null,
+  hit_count        int not null default 1,
+  expires_at       timestamptz not null
+);
+
+create index if not exists search_cache_expires_idx on public.search_cache (expires_at);
+
+alter table public.search_cache enable row level security;
+-- Lecture réservée au service_role uniquement (pas de RLS publique)
+create policy "search_cache service_role only" on public.search_cache
+  using (false);  -- bloque anon + authenticated, seul service_role (bypass RLS) peut lire/écrire
+
+-- RPC search_books_v2 — DB-first avec scoring et normalisation apostrophes
+-- Voir migration 022_fix_apostrophe_search.sql pour la version complète
+-- (cross-field matching, CTE norm, branche ISBN, matching compact)
+
+-- ─── Pseudos réservés ────────────────────────
+-- migration supabase/migrations/017_creator_badge.sql
+create table if not exists public.reserved_usernames (
+  username text primary key,
+  email    text,
+  note     text
+);
+
+alter table public.reserved_usernames enable row level security;
+create policy "reserved_usernames public read"        on public.reserved_usernames for select using (true);
+create policy "reserved_usernames service_role write" on public.reserved_usernames for all    using (auth.role() = 'service_role');
+
+-- check_username_availability(p_username, p_email)
+-- Retourne : 'available' | 'reserved_for_you' | 'reserved' | 'taken'
+-- claim_reserved_username(p_username) — SECURITY DEFINER, supprime la réservation
+
+-- ─── Gamification ────────────────────────────
+-- migrations 012_gamification.sql, 013_gamification_seed.sql,
+--            014_gamification_badge_check.sql, 015_ranking_rpcs.sql,
+--            016_gamification_monthly_cron.sql, 017_creator_badge.sql,
+--            018_backfill_point_events.sql, 019_pinned_badges_constraint.sql,
+--            020_badge_descriptions_short.sql, 021_badge_icon_key_emojis.sql
+
+do $$ begin
+  create type badge_category as enum ('lecture', 'contribution', 'social', 'defis', 'special');
+exception when duplicate_object then null;
+end $$;
+
+-- Catalogue de badges
+create table if not exists public.badge_definitions (
+  id          text primary key,
+  name        text not null,
+  description text not null,
+  category    badge_category not null,
+  icon        text not null default '📚',
+  points      int not null default 0,
+  sort_order  int not null default 0,
+  color       text not null default '#C9A96E'
+);
+
+alter table public.badge_definitions enable row level security;
+create policy "badge_definitions public read" on public.badge_definitions for select using (true);
+
+-- Log immuable de points (chaque action = une entrée)
+create table if not exists public.point_events (
+  id         uuid primary key default gen_random_uuid(),
+  user_id    uuid not null references public.users(id) on delete cascade,
+  event_type text not null,   -- "book_read", "review_written", "badge_earned", etc.
+  reason     text,            -- alias lisible (même valeur que event_type dans certains RPCs)
+  points     int not null,
+  metadata   jsonb default '{}',
+  created_at timestamptz not null default now()
+);
+
+create index if not exists point_events_user_id_idx   on public.point_events (user_id);
+create index if not exists point_events_created_at_idx on public.point_events (created_at desc);
+
+alter table public.point_events enable row level security;
+create policy "point_events owner read" on public.point_events for select using (auth.uid() = user_id);
+
+-- Totaux dénormalisés par utilisateur
+create table if not exists public.user_points (
+  user_id      uuid primary key references public.users(id) on delete cascade,
+  total_points int not null default 0,
+  level        int not null default 1,
+  updated_at   timestamptz not null default now()
+);
+
+alter table public.user_points enable row level security;
+create policy "user_points public read" on public.user_points for select using (true);
+
+-- Badges débloqués par utilisateur
+create table if not exists public.user_badges (
+  id         uuid primary key default gen_random_uuid(),
+  user_id    uuid not null references public.users(id) on delete cascade,
+  badge_id   text not null references public.badge_definitions(id) on delete cascade,
+  awarded_at timestamptz not null default now(),
+  expires_at timestamptz,
+  is_pinned  boolean not null default false,
+  unique (user_id, badge_id)
+);
+
+create index if not exists user_badges_user_id_idx on public.user_badges (user_id);
+create index if not exists user_badges_pinned_idx  on public.user_badges (user_id, is_pinned) where is_pinned = true;
+
+alter table public.user_badges enable row level security;
+create policy "user_badges public read" on public.user_badges for select using (true);
+
+-- Contrainte max 3 badges épinglés par user (trigger, migration 019)
+-- create or replace function check_pinned_badges_limit() ...
+-- create trigger enforce_pinned_badges_limit before insert or update on user_badges ...
+
+-- RPCs classement (migration 015_ranking_rpcs.sql)
+-- get_monthly_ranking() → user_id, username, display_name, avatar_url, month_points, reviews_count, quotes_count
+-- get_alltime_ranking() → user_id, username, display_name, avatar_url, total_points, level
+-- Les deux accessibles à anon + authenticated.
+
+-- RPCs sélections curées (migration supabase/migrations/018_curated_selections.sql)
+-- curated_selections() → id, title, description, slug, curator_*, published_at, likes_count, book_count, covers jsonb
+-- curated_selection_by_slug(p_slug) → idem + items jsonb (position, note, book_id, title, authors, cover_url, slug, ...)

@@ -460,26 +460,32 @@ Actuellement : une critique par livre par utilisateur (upsert sur `user_id` + `b
 
 ---
 
-## 6. Qualité des résultats de recherche (ranking & déduplication)
+## 6. Qualité des résultats de recherche (ranking, déduplication, apostrophes)
 
-**Statut :** ✅ Fait — architecture DB-first via RPC `search_books_v2` (mars 2026)
-**Portée :** `src/lib/googleBooks.js` + RPC PostgreSQL + `src/utils/deduplicateBook.js`
+**Statut :** ✅ Fait — architecture DB-first + fixes apostrophes + cascade BnF (avril 2026)
+**Portée :** `src/lib/googleBooks.js` + `src/components/Search.jsx` + RPC `search_books_v2`
 
 ### Architecture DB-first (implémentée)
 
-La base locale (3830+ livres) est la source primaire. Google Books sert uniquement à la découverte de nouveaux livres.
+La base locale (3830+ livres) est la source primaire. Google Books sert uniquement à la découverte.
 
-**`searchBooks(query)`** lance en parallèle :
-1. **RPC `search_books_v2`** (Supabase) — gère apostrophes françaises, accents, matching titre + auteurs, tri par `rating_count DESC`. Résultats affichés en premier, jamais supprimés.
-2. **Google Books** — une seule requête `langRestrict=fr`, max 8 résultats après filtre (pas de couverture, pas d'ISBN, éditeurs parasites, mots-clés parasites exclus).
+**`searchBooks(query)`** fonctionne en séquentiel (RPC-first) avec skip logic :
+1. **RPC `search_books_v2`** (migration 022) : cross-field matching (titre OU auteurs), scoring (+100 exact, +50 début, ×30 couverture titre, ×5 auteur, tie-breaker rating_count), matching compact (requête mono-token sans espaces), branche ISBN, **normalisation apostrophes** (CTE `norm` : toutes variantes `' ' ' ‹ ›  \`` → espace sur query ET sur champs DB avant comparaison).
+2. **Skip Google** si ≥ 3 résultats DB (`db_sufficient`) ou ISBN trouvé (`isbn_found`) — ~60% d'appels évités.
+3. **Google Books** (conditionnel) : une requête `langRestrict=fr`, max 8 résultats filtrés. **Circuit breaker** : HTTP 429 → API désactivée 15min. `isGoogleBooksAvailable()` exportée pour contrôle externe.
 
-**Déduplication** : résultats Google dupliquant un résultat DB (même ISBN-13 ou titre normalisé) supprimés. Max 10 résultats finaux.
+### Clic sur un résultat IA — cascade avec scoring
 
-**Anti-doublons à l'import** (`deduplicateBook.js`) : normalisation des apostrophes françaises avant comparaison → "L'Étranger" et "L\u2019Étranger" produisent la même clé, pas de doublon créé.
+Quand l'utilisateur clique un résultat de la recherche assistée IA (`smart-search`) :
+1. **Google disponible** : recherche Google + `scoreMatch()` (compare titre+auteur normalisés, seuil > 0) → importe le résultat avec le meilleur score, évite d'importer le mauvais livre.
+2. **Google indisponible** (circuit breaker actif) → cascade BnF :
+   - Tente l'ISBN fourni par l'IA via edge function `book_import`
+   - Puis recherche BnF SRU par titre+auteur, import via edge function
+   - Puis import direct en dernier recours
 
 ### BnF SRU
 
-Conservé dans l'edge function `book_import` pour l'import par ISBN. Supprimé de la recherche libre (trop lente, pas de couvertures).
+Conservé dans l'edge function `book_import` pour l'import par ISBN et comme fallback IA. Hors de la recherche libre temps réel (trop lente, pas de couvertures).
 
 ### Ce qu'on ne fait PAS (toujours vrai)
 
@@ -1535,4 +1541,76 @@ Système de badges extensible avec un premier badge "Créateur" réservé aux ut
 
 ---
 
-*Dernière mise à jour : 1 avril 2026 — Creator badge + drag & drop fix + onboarding username prefill*
+---
+
+## 28. Gamification complète (badges, points, niveaux, classement)
+
+**Statut :** ✅ Implémenté — 2 avril 2026
+**Portée :** Profil + BadgesPage + ClassementPage + infra DB
+
+### Ce qui est implémenté
+
+**Infrastructure DB** (migrations 012–021) :
+- `badge_definitions` : catalogue de badges (catégories : lecture, contribution, social, défis, spécial). Points par badge, sort_order, emoji/icône, description courte.
+- `user_badges` : badges débloqués par user. `is_pinned` (bool), max 3 épinglés — contrainte via trigger (migration 019).
+- `user_points` : total dénormalisé + level par user.
+- `point_events` : log immuable de chaque action (book_read, review_written, quote_saved, like_received, follow_received, badge_earned). Lecture owner-only (RLS).
+- RPCs : `get_monthly_ranking()` (points du mois en cours), `get_alltime_ranking()` (total points + level). Accessible anon + authenticated.
+- pg_cron : reset des points mensuels à minuit le 1er de chaque mois (migration 016).
+
+**Composants** :
+- `BadgeIcon` (`src/components/BadgeIcon.jsx`) : rendu d'un badge avec forme (cercle, hexagone, bouclier, diamant via clip-path), couleur de fond par tier, bordure colorée. Double-layer div pour les shapes clip-path (contournement limitation CSS border+clip-path).
+- `PinnedBadgesInline` (`src/components/PinnedBadgesInline.jsx`) : rangée de 3 slots de badges épinglés sur le profil public. Cliquable → ouvre BadgesPage.
+- `Tooltip` : stratégie `absolute` par défaut, `strategy="fixed"` pour les contextes modaux (getBoundingClientRect). Évite le clipping par overflow.
+
+**Pages** :
+- `BadgesPage` (`src/pages/BadgesPage.jsx`) : modal complet sur le profil. Sections : "Badges épinglés" (3 slots cliquables) + grille de tous les badges par catégorie (débloqués en couleur, verrouillés grisés avec cadenas). En mode sélection (depuis les slots épinglés), click badge → swap. Tooltips `strategy="fixed"` pour tous les badges dans le modal. Bouton × de fermeture.
+- `ClassementPage` (`/classement`) : onglets Mensuel / Tout temps. Rows avec rang, avatar, username, points + compteurs critiques/citations. Mise en avant du rang de l'user connecté (s'il est dans le top 100).
+
+**Attribution** : script `scripts/award-creator-badge.js` (badge créateur initial, manuel). L'attribution automatique par triggers Supabase est prévue pour les futures catégories.
+
+### Ce qu'on ne fait PAS encore
+- Pas d'attribution automatique en temps réel via triggers DB (prochaine étape)
+- Pas de notification à l'utilisateur lors de l'attribution
+- Pas de badges challenge (infrastructure prête, badges à définir quand les Défis seront actifs)
+- Pas d'animations de déverrouillage (toast ou confetti lors de l'obtention)
+
+---
+
+## 29. Sélections curées ("La Bibliothèque de...")
+
+**Statut :** ✅ Implémenté — 2 avril 2026
+**Portée :** `/selections`, BookPage, Explorer, La Revue
+
+### Ce qui est implémenté
+
+**Format éditorial** : une personnalité littéraire invitée partage sa bibliothèque idéale — livres choisis + commentaire sur chaque livre (note en Geist regular, guillemets en Instrument Serif italic).
+
+**Infrastructure DB** (migration `supabase/migrations/018_curated_selections.sql`) :
+- Colonnes ajoutées à `lists` : `is_curated` (bool), `curator_name`, `curator_role`, `curator_avatar_url`, `curator_intro`, `curator_pull_quote`, `published_at`.
+- `user_id` = compte admin Reliure (contenu créé éditorialement, pas par les users).
+- Index `lists_curated_idx` sur `(is_curated, published_at desc)`.
+- RPC `curated_selections()` : index complet (id, slug, curator_*, likes_count, book_count, covers jsonb).
+- RPC `curated_selection_by_slug(p_slug)` : détail avec `items jsonb` (position, note, book_id, title, authors, cover_url, slug, publication_date, page_count).
+
+**Hooks** : `useCuratedSelections()` et `useCuratedSelection(slug)` (TanStack Query, staleTime 10min).
+
+**Pages** :
+- `/selections` (`SelectionsPage`) : sélection featured (la plus récente) + grille de cards compact.
+- `/selections/:slug` (`SelectionPage`) : page éditoriale complète — breadcrumb, header (Label + "La Bibliothèque de" + nom curateur + rôle), portrait (maxHeight 280px), pull quote (guillemets Instrument Serif, texte Geist), intro multi-paragraphes, liste numérotée de livres avec note du curateur, footer (date + LikeButton), carousel "Autres sélections".
+
+**Intégration** :
+- `ExplorePage` : section "Sélections" avec HScroll de cards compact.
+- `JournalPage` (onglet Textes) : card `featured` après l'article principal.
+- `BookPage` : encart "Sélection" avant "Dans des listes" si le livre appartient à une sélection curée. Query `["bookCuratedSelections", bookId]`.
+
+**Seed** : `scripts/seed-curated-selection.js` — seed la première sélection (à lancer avec `--apply`).
+
+### Conventions éditoriales
+- Notes des items : guillemets « » en Instrument Serif italic, corps en Geist regular. Border-left 2px.
+- Pull quote curateur : même traitement hybride.
+- Likes via `useLikes` existant (`target_type='list'`).
+
+---
+
+*Dernière mise à jour : 2 avril 2026 — Gamification complète + sélections curées + améliorations recherche (apostrophes RPC, scoring IA, cascade BnF)*

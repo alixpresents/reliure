@@ -220,18 +220,23 @@ Scripts autonomes dans `seeds/` pour enrichir les métadonnées des livres exist
 
 ### Tables principales
 - `users` — id, username, display_name, avatar_url, bio, created_at
-- `books` — id, isbn_13, title, subtitle, authors (jsonb), publisher, publication_date, cover_url, language, genres (jsonb), page_count, avg_rating, rating_count, source, **slug** (unique, généré à l'import)
+- `books` — id, isbn_13, title, subtitle, authors (jsonb), publisher, publication_date, cover_url, language, genres (jsonb), page_count, avg_rating, rating_count, source, created_at, **slug** (unique, généré à l'import), description (text), awards (jsonb), ai_confidence (numeric 3,2)
 - `reviews` — id, user_id, book_id, rating (smallint), body, contains_spoilers, likes_count, created_at
 - `reading_status` — id, user_id, book_id, status (want_to_read/reading/read/abandoned), started_at, finished_at, current_page, is_reread, created_at
 - `reading_log_tags` — id, reading_status_id, user_id, tag_text, created_at
 - `user_favorites` — id, user_id, book_id, position (1-4, CHECK), note (text, max 24 chars), created_at
-- `lists` — id, user_id, title, description, is_public, is_ranked, likes_count, **slug** (unique par user, généré depuis le titre), created_at
+- `lists` — id, user_id, title, description, is_public, is_ranked, likes_count, **slug** (unique par user, généré depuis le titre), created_at ; colonnes sélections curées : is_curated (bool), curator_name, curator_role, curator_avatar_url, curator_intro, curator_pull_quote, published_at
 - `list_items` — id, list_id, book_id, position, note
 - `follows` — id, follower_id, following_id, created_at
 - `activity` — id, user_id, action_type, target_id, target_type, metadata (jsonb), created_at
 - `quotes` — id, user_id, book_id, text, likes_count, created_at
 - `likes` — id, user_id, target_id, target_type (review/quote/list), created_at
 - `search_cache` — query_normalized (PK), response (jsonb), hit_count, expires_at (service_role only, pas de RLS publique)
+- `badge_definitions` — id (text PK), name, description, category (enum badge_category), icon, points, sort_order, color. Lecture publique. Migration : `migrations/012_gamification.sql`.
+- `user_badges` — id, user_id, badge_id (FK), awarded_at, expires_at (nullable), is_pinned (bool). Unique (user_id, badge_id). Lecture publique. Contrainte max 3 épinglés via trigger (`migrations/019_pinned_badges_constraint.sql`).
+- `user_points` — user_id (PK), total_points, level, updated_at. Dénormalisé. Lecture publique.
+- `point_events` — id, user_id, event_type, points, reason, metadata (jsonb), created_at. Log immuable. Lecture owner only. RPCs : `get_monthly_ranking()`, `get_alltime_ranking()` (migrations 015, 016).
+- `reserved_usernames` — username (PK), email (text, nullable), note (text). RLS : lecture publique, écriture service_role only. RPCs : `check_username_availability(p_username, p_email)` → `'available'|'reserved_for_you'|'reserved'|'taken'` ; `claim_reserved_username(p_username)` (SECURITY DEFINER). Migration : `supabase/migrations/017_creator_badge.sql`.
 
 ### Anti-doublons : regroupement des éditions par oeuvre
 Reliure regroupe les éditions par oeuvre (comme Letterboxd : un film = une fiche). Avant toute création dans `books`, vérification par ISBN exact puis par titre normalisé + auteur principal via `findExistingBook` (`src/utils/deduplicateBook.js`). Appliqué dans les deux points d'insertion : `importBook.js` (client-side) et edge function `book_import` (server-side). Normalisation : remplacement des apostrophes françaises par un espace, suppression accents/ponctuation, coupe au premier `:` ou `/` (sous-titres BnF), extraction du nom de famille de l'auteur. Ce fix garantit que "L'Étranger", "L\u2019Étranger" et "L'Etranger" produisent la même clé normalisée.
@@ -250,9 +255,6 @@ Reliure regroupe les éditions par oeuvre (comme Letterboxd : un film = une fich
 - `books.slug` unique, généré à `src/utils/slugify.js` (titre → titre-auteur → titre-auteur-année → titre-n). Migration `migrations/001_add_book_slugs.sql` à appliquer.
 - `user_favorites` swap : pattern delete+reinsert (pas d'update) pour respecter le CHECK constraint position 1-4
 - `useProfileData` distingue `diaryBooks` (read + finished_at non null, pour le diary/calendrier) et `allReadBooks` (tous les "read", pour stats/bilan/topRated)
-- `badge_definitions` — id (text PK), name, description, category (enum badge_category), color (text, défaut `#C9A96E`), icon, created_at. Seed : badge `creator`.
-- `user_badges` — user_id, badge_id (FK badge_definitions), awarded_at, awarded_by (nullable). Index sur user_id.
-- `reserved_usernames` — username (PK), email (text, nullable), note (text). RLS : lecture publique, écriture service_role only. RPCs : `check_username_availability(p_username, p_email)` → `'available'|'reserved_for_you'|'reserved'|'taken'` ; `claim_reserved_username(p_username)` (SECURITY DEFINER). Migration : `supabase/migrations/017_creator_badge.sql`.
 
 ## Design system
 
@@ -342,6 +344,8 @@ Toutes les couleurs UI sont gérées via CSS custom properties dans `src/index.c
 - **Toast** : notification d'erreur fixe, centrée en bas (z-10000), fond `var(--text-primary)`, texte `var(--bg-primary)`, animation slide-up 180ms, auto-dismiss 3s. Hook `useToast()` → `{ toast, showToast }` (src/hooks/useToast.js). Déclenché sur les erreurs de mutation (likes, follows, création de liste, publication de citation). Intégré dans BookPage, ProfilePage, ExplorePage, FeedPage, CitationsPage, CreateListModal.
 - **CreatorBadge** : `src/components/CreatorBadge.jsx` — pill inline (11px, fond `var(--creator-bg)`, texte `var(--creator-text)`, bordure `var(--creator-border)`, border-radius 999). Texte : "✦ Créateur". Rendu à côté du `@username` sur le profil et dans `UserName`.
 - **UserName** : `src/components/UserName.jsx` — lien `@handle` avec prop `isCreator` optionnelle. Si `isCreator=true`, affiche `<CreatorBadge />` à la suite du lien. Utilisé partout où on affiche un auteur de critique/citation.
+- **BadgeIcon** : `src/components/BadgeIcon.jsx` — rendu d'un badge avec son emoji, forme (cercle, hexagone, bouclier, diamant via clip-path), couleur de fond par tier et bordure colorée. Double-layer pour les shapes clip-path (outer = border color, inner = content bg) pour contourner la limitation CSS de border+clip-path. Props : `badge`, `size`, `locked`.
+- **PinnedBadgesInline** : `src/components/PinnedBadgesInline.jsx` — rangée de 3 slots de badges épinglés sur le profil public. Cliquable → ouvre le modal BadgesPage.
 
 ## Règles React — performance et boucles
 
@@ -439,6 +443,17 @@ Chaque onglet a sa propre URL (`/:username/critiques`, etc.).
 - Navigation vers les livres par slug (`/livre/:slug`)
 - **Modifier la fiche** (EnrichModal) : bouton pill dans le hero sous les métadonnées, visible pour tous les users connectés sur les livres à UUID. Modal avec couverture (deux modes : upload fichier vers Supabase Storage `book-covers`, ou coller une URL directe avec aperçu live + validation onLoad/onError), description, pages, éditeur, date de publication. UPDATE immédiat en base, invalidation TanStack Query post-save, toast confirmation.
 - **ContentMenu** sur les critiques et citations : édition/suppression inline, refetch après modification
+- **Sélection curée** (encart avant "Dans des listes") : si le livre appartient à une sélection `is_curated=true`, affiche un encart "Dans la bibliothèque de [Curator]" cliquable → `/selections/:slug`. Query `["bookCuratedSelections", bookId]`, staleTime 10min. Affiché uniquement sur les livres UUID (DB).
+
+#### Gamification (points, niveaux, badges, classement)
+- **Infrastructure DB** : `badge_definitions`, `user_badges` (is_pinned, max 3 épinglés via trigger 019), `user_points`, `point_events`. RPC `get_monthly_ranking()` et `get_alltime_ranking()`.
+- **Points** : chaque action (lecture, critique, citation, like reçu, follow reçu) génère un `point_event`. Total dénormalisé dans `user_points`. Niveaux calculés côté client (paliers définis dans `useUserPoints`).
+- **Badges** : catalogue dans `badge_definitions` (lecture, contribution, social, défis, spécial). `useUserBadges(userId)` → `{ badges, hasCreator, loading }`. `useCreatorIds()` → `Set` partagé, staleTime 10min. Attribution manuelle via `scripts/award-creator-badge.js`.
+- **BadgesPage** (`src/pages/BadgesPage.jsx`) : modal complet sur le profil — grille de tous les badges (débloqués en couleur, verrouillés grisés), sélection des 3 badges épinglés, swap des pinned depuis le modal (Tooltip `strategy="fixed"` pour les modals), bouton × de fermeture.
+- **PinnedBadgesInline** : rangée de 3 slots visible sur le profil public, cliquable → BadgesPage.
+- **ClassementPage** (`/classement`) : onglets Mensuel / Tout temps via `get_monthly_ranking()` / `get_alltime_ranking()`.
+- **BadgeIcon** : rendu avec double-layer pour clip-path shapes (hexagone, bouclier, diamant) — voir composant.
+- Migrations : 012 (tables), 013 (seed badges), 014 (check badge), 015 (RPCs ranking), 016 (cron mensuel), 018 (backfill point_events), 019 (contrainte 3 pinned), 020 (descriptions courtes), 021 (icônes emoji).
 
 #### Profil
 - Données réelles via `useProfileData` (allStatuses, diaryBooks, allReadBooks, reviews, stats, chronologie, topRated)
