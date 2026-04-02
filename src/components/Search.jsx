@@ -72,12 +72,19 @@ export default function Search({ open, onClose, go, initialQuery = "" }) {
   // AI smart search — aligned with skip logic: disabled when DB returns ≥ 3 (unless NL query)
   const dbResultCount = results.filter(r => r._source === "db").length;
   const aiEnabled = !atMode && q.length >= 2 && (dbResultCount < 3 || looksLikeNaturalLanguage(q));
+
+  // Fast-path: if 0 results from all sources, trigger AI immediately (no debounce)
+  const zeroResults = !loading && results.length === 0 && q.length >= 2 && !atMode;
+
   const {
     books: aiBooks,
     ghost: rawGhost,
     interpretedAs,
     isLoading: aiLoading,
-  } = useSmartSearch(q, { enabled: aiEnabled, debounceMs: 600 });
+  } = useSmartSearch(q, {
+    enabled: aiEnabled || zeroResults,
+    debounceMs: zeroResults ? 0 : 600,
+  });
 
   const ghost = rawGhost && !ghostDismissed ? rawGhost : null;
 
@@ -608,8 +615,23 @@ export default function Search({ open, onClose, go, initialQuery = "" }) {
         {/* Normal mode */}
         {!loading && !atMode && (
           <>
-            {q.length >= 2 && displayResults.length === 0 && userResults.length === 0 && !aiLoading && filteredAIBooks.length === 0 && (
-              <div className="py-6 text-center text-[13px] font-body" style={{ color: "var(--text-tertiary)" }}>Aucun résultat pour cette recherche.</div>
+            {/* Zero results detected, AI still searching */}
+            {zeroResults && aiLoading && (
+              <div className="py-6 text-center text-[13px] font-body" style={{ color: "var(--text-tertiary)" }}>
+                Aucun résultat local — recherche approfondie...
+              </div>
+            )}
+            {/* Zero results, AI finished, nothing found anywhere */}
+            {zeroResults && !aiLoading && filteredAIBooks.length === 0 && userResults.length === 0 && (
+              <div className="py-6 text-center text-[13px] font-body" style={{ color: "var(--text-tertiary)" }}>
+                Aucun résultat trouvé.
+              </div>
+            )}
+            {/* Normal case: had some results but display filtering removed them all */}
+            {!zeroResults && q.length >= 2 && displayResults.length === 0 && userResults.length === 0 && !aiLoading && filteredAIBooks.length === 0 && (
+              <div className="py-6 text-center text-[13px] font-body" style={{ color: "var(--text-tertiary)" }}>
+                Aucun résultat pour cette recherche.
+              </div>
             )}
 
             {/* Lecteurs */}

@@ -113,14 +113,15 @@ Liste dans `src/constants/reserved-usernames.js`. Vérifiés à l'inscription (f
 ## Sources de métadonnées livres
 
 Stratégie hybride, par priorité :
-1. **Google Books API** — socle principal, gratuit, excellente couverture FR, couvertures incluses
+1. **Google Books API** — socle principal, couvertures incluses. Appelé via edge function proxy `google-books-proxy` (rotation de clés `GOOGLE_BOOKS_KEY_1/2/3`, cache serveur 6h dans `search_cache`). Clé API supprimée côté client (`VITE_GOOGLE_BOOKS_KEY` n'est plus nécessaire).
 2. **BnF SRU** — catalogue légal exhaustif de tous les livres publiés en France ; utilisé en **recherche parallèle** (`src/lib/bnfSearch.js`) ET en import par ISBN (`book_import`)
-3. **Open Library API** — complément pour les trous, open source
-4. **Nudger (Open Data ISBN)** — base ISBN française, licence ODbL, CSV gratuit via data.gouv.fr
-5. **Enrichissement communautaire** — les utilisateurs corrigent/complètent les fiches (comme TMDb pour Letterboxd)
-6. **Claude Haiku (enrichissement IA)** — utilisé en fallback quand Google Books, BnF et Open Library échouent. Edge function `book_ai_enrich` : Haiku génère métadonnées + description FR, Open Library confirme + fournit OLID, cascade de 4 sources pour la couverture. Source `ai_enriched`, champ `ai_confidence` (numeric 3,2) indique le niveau de certitude. Badge "À vérifier" sur BookPage si confidence < 0.7. Déclenché uniquement via BackfillPage (jamais automatique).
+3. **Wikidata** — base de connaissance libre (CC0), excellent pour les classiques traduits, Prix Nobel, Prix Goncourt, littérature francophone. Interrogé via SPARQL (`https://query.wikidata.org/sparql`). Script batch `scripts/enrich-from-wikidata.mjs` (deux modes : enrichissement DB existante, import classiques depuis `reports/wikidata-candidates.json`). Jamais utilisé en temps réel (trop lent) — batch uniquement. **Ne jamais faire confiance aux ISBN Wikidata** : toujours valider via `book_import` edge function.
+4. **Open Library API** — source parallèle de découverte (`src/lib/openLibrarySearch.js`), appelée en parallèle avec Google Books quand DB < 3 résultats, et seule quand le circuit breaker Google est actif. Pas de clé API. Timeout 4s. Filtrage BAD_TITLE_WORDS/BAD_PUBLISHERS identique à Google.
+5. **Nudger (Open Data ISBN)** — base ISBN française, licence ODbL, CSV gratuit via data.gouv.fr
+6. **Enrichissement communautaire** — les utilisateurs corrigent/complètent les fiches (comme TMDb pour Letterboxd)
+7. **Claude Haiku (enrichissement IA)** — utilisé en fallback quand Google Books, BnF et Open Library échouent. Edge function `book_ai_enrich` : Haiku génère métadonnées + description FR, Open Library confirme + fournit OLID, cascade de 4 sources pour la couverture. Source `ai_enriched`, champ `ai_confidence` (numeric 3,2) indique le niveau de certitude. Badge "À vérifier" sur BookPage si confidence < 0.7. Déclenché uniquement via BackfillPage (jamais automatique).
 
-L'edge function `book_import` (`supabase/functions/book_import/index.ts`) interroge 3 sources en parallèle par ISBN (Google Books, Open Library, BnF SRU), fusionne les résultats selon une priorité par champ, génère le slug, et upsert dans `books`. Si l'edge function échoue, `importBook.js` retombe sur un import client-side avec les données Google Books.
+L'edge function `book_import` (`supabase/functions/book_import/index.ts`) interroge 3 sources en parallèle par ISBN (Google Books, Open Library, BnF SRU), fusionne les résultats selon une priorité par champ, génère le slug, et upsert dans `books`. Si l'edge function échoue, `importBook.js` retombe sur un import client-side avec les données Google Books. **`verify_jwt = false`** (dans `supabase/config.toml`) : accessible sans authentification car il écrit dans le catalogue partagé `books`, pas dans les données utilisateur. Permet aux visiteurs non connectés de déclencher un import via le clic sur un résultat IA ✨.
 
 **Recherche BnF** (`src/lib/bnfSearch.js`) : toujours disponible pour l'edge function `book_import` (import par ISBN). N'est plus utilisée dans la recherche libre (supprimée pour éviter les timeouts de 3s).
 
@@ -141,24 +142,29 @@ Architecture DB-first : la base locale (3830+ livres) est la source primaire, Go
 
 `searchBooks(query)` fonctionne en séquentiel (RPC-first) avec skip logic :
 
-1. **Recherche locale** via RPC PostgreSQL `search_books_v2` (migration `008_improve_search_books_v2.sql`) :
+1. **Recherche locale** via RPC PostgreSQL `search_books_v2` (migrations `008`, `022`, `023`) :
    - **Cross-field matching** : chaque mot significatif (>2 chars) doit être présent dans le titre OU dans les auteurs (`bool_and` sur `title LIKE OR authors LIKE`). Permet "Victor Hugo Les Misérables", "Madame Bovary Flaubert".
+   - **Fallback mots courts** (migration `023`) : si tous les mots font ≤2 chars (`sig_count = 0`), utilise tous les mots dans le matching au lieu de retourner 0. Évite le 0-résultat sur "la bo", "le de", etc.
    - **Scoring de pertinence** : match exact titre (+100), titre commence par query (+50), couverture titre (×30), couverture auteur (×5), rating_count en tie-breaker. Garantit que "Les Misérables" remonte avant des livres parasites.
-   - **Matching compact** : pour les queries mono-token ≥5 chars (ex: "LETRANGER"), compare sans espaces ni ponctuation → matche "L'étranger".
-   - **Branche ISBN** : si la query est un nombre de 10-13 chiffres, match exact sur `isbn_13`.
+   - **Matching compact** : pour les queries mono-token ≥5 chars (ex: "LETRANGER"), compare sans espaces ni ponctuation → matche "L'étranger". Étendu aux bi-tokens courts (migration `023`) : "le bo" → "lebo" peut matcher.
+   - **Branche ISBN** : si la query est un nombre de 10-13 chiffres, match sur `isbn_13` insensible aux tirets (migration `023` : `regexp_replace` côté DB).
    - **Normalisation apostrophes** (migration `022_fix_apostrophe_search.sql`) : toutes les variantes d'apostrophes (' U+2019, ' U+2018, ‚ ‹ › ' `) sont normalisées en espace côté query ET côté champs DB (CTE `norm`) avant comparaison. Gère accents via `unaccent(lower())`.
 2. **Skip logic** (économie quota Google Books, ~60% d'appels évités) :
-   - Si RPC retourne ≥ 3 résultats → skip Google (`db_sufficient`)
-   - Si query est un ISBN et RPC retourne ≥ 1 résultat → skip Google (`isbn_found`)
-   - Sinon → appel Google Books pour découverte
+   - Si RPC retourne ≥ 3 résultats → skip Google + OL (`db_sufficient`)
+   - Si query est un ISBN et RPC retourne ≥ 1 résultat → skip Google + OL (`isbn_found`)
+   - Sinon → appel Google Books proxy + Open Library en parallèle
+   - Si circuit breaker Google actif → Open Library seul comme source de découverte
    - Le tableau retourné porte `_skippedGoogle` et `_skipReason` en propriétés
-3. **Google Books** (conditionnel) : une seule requête (`langRestrict=fr`, max 15 résultats), filtrée (sans couverture, sans ISBN, éditeurs parasites, mots-clés parasites exclus), limitée à 8 résultats après filtre. **Circuit breaker** : si Google Books retourne HTTP 429, l'API est désactivée pendant 15 minutes (module-level `googleBooksDisabledUntil`). Skip reason `circuit_breaker` loggé dans les analytics. `isGoogleBooksAvailable()` est exportée depuis `googleBooks.js` pour permettre aux autres modules (Search.jsx) de vérifier l'état du circuit breaker.
+3. **Google Books** (conditionnel) : via edge function `google-books-proxy` (rotation de clés `GOOGLE_BOOKS_KEY_1/2/3`, cache serveur 6h, fallback quota anonyme). Résultats filtrés côté client (sans couverture, sans ISBN, éditeurs parasites, mots-clés parasites exclus), limités à 8 après filtre. **Circuit breaker** : si le proxy retourne 429 (toutes clés épuisées), l'API est désactivée pendant 15 minutes (module-level `googleBooksDisabledUntil`). `isGoogleBooksAvailable()` exportée depuis `googleBooks.js`.
+4. **Open Library** (conditionnel) : appelé en parallèle avec Google (ou seul si circuit breaker actif). `src/lib/openLibrarySearch.js`, timeout 4s, même filtrage BAD_TITLE/BAD_PUBLISHERS. Résultats `_source: "openlibrary"`, jamais prioritaires sur DB ou Google.
 
-**Logging** : chaque appel `searchBooks()` émet un `console.log('[search-analytics]', JSON.stringify({...}))` avec les compteurs DB, Google, skip. Greppable dans les logs Vercel.
+**Logging** : chaque appel `searchBooks()` émet un `console.log('[search-analytics]', JSON.stringify({...}))` avec les compteurs DB, Google, OL, skip. Greppable dans les logs Vercel.
 
-**Smart-search aligné** : `useSmartSearch` dans `Search.jsx` est désactivé quand `dbResultCount >= 3` et que la query n'est pas en langage naturel — cohérent avec la skip logic Google.
+**Smart-search aligné** : `useSmartSearch` dans `Search.jsx` est désactivé quand `dbResultCount >= 3` et que la query n'est pas en langage naturel — cohérent avec la skip logic. **Zero-result fast path** : si 0 résultat de toutes les sources classiques, l'IA est déclenchée immédiatement (debounce 0ms au lieu de 600ms), avec message "Aucun résultat local — recherche approfondie..." pendant le chargement.
 
-**Déduplication** : les résultats Google qui dupliquent un résultat DB (même ISBN-13 ou même titre normalisé) sont supprimés. Les résultats DB ne sont jamais supprimés.
+**Auto-enrichissement** : après chaque réponse smart-search, les livres avec ISBN valide qui ne sont pas encore en base sont importés en fire-and-forget via `book_import`. Les prochaines recherches du même livre trouveront un résultat DB directement.
+
+**Déduplication** : 3 sources dédupliquées. Priorité DB > Google > OL. Les résultats OL qui partagent ISBN ou titre normalisé avec DB ou Google sont supprimés.
 
 **Format de retour** (`{ googleId, _source, dbId, slug, title, authors, coverUrl, isbn13, ... }`) — même format pour DB et Google, consommé directement par `Search.jsx`.
 
@@ -203,8 +209,12 @@ Scripts dans `scripts/`, rapports dans `reports/`. Pipeline exécuté en mars 20
 - `scripts/validate-isbn.mjs` — validation ISBN via checksum + Open Library + BnF SRU. `--apply` nullifie les invalides.
 - `scripts/resolve-isbn-bnf.mjs` — résolution ISBN par titre+auteur via BnF SRU (UNIMARC). 78,5% de taux de résolution. `--apply` met à jour missing-books.json.
 - `scripts/batch-import-missing.mjs` — import batch, 3 modes : `--source edge` (edge function), `--source direct` (BnF+OL, 0 Google), `--source google`. Dry-run par défaut, `--apply` pour importer.
+- `scripts/enrich-from-wikidata.mjs` — enrichissement via Wikidata SPARQL. Deux modes :
+  - `--mode enrich` (défaut) : enrichit les livres DB avec description/genres manquants via recherche SPARQL titre+auteur. Score minimum 40 pour éviter les faux matchs. Rate limit 200ms entre requêtes.
+  - `--mode import` : importe les classiques de `reports/wikidata-candidates.json` (liste curatée ~55 QIDs) via cascade Wikidata→`book_import` edge function. Ne jamais importer sans passer par `book_import` (validation ISBN checksum + déduplication).
+  - Options : `--apply`, `--limit N`, `--offset N`, `--verbose`. Checkpoint toutes les 50 entrées → `reports/wikidata-progress.json`. Rapport final → `reports/wikidata-report.json`.
 
-**Leçon critique** : ne jamais faire confiance aux ISBN générés par un LLM (88% d'hallucinations constatées). Toujours valider via source externe.
+**Leçon critique** : ne jamais faire confiance aux ISBN générés par un LLM (88% d'hallucinations constatées). Toujours valider via source externe. Même règle pour Wikidata : certains QID n'ont pas d'ISBN-13 ou ont des ISBN erronés — le script valide via checksum avant tout import.
 
 ### Scripts d'enrichissement continu (seeds/)
 

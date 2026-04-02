@@ -1,6 +1,5 @@
 import { supabase } from "./supabase";
-
-const API = "https://www.googleapis.com/books/v1/volumes";
+import { searchOpenLibrary } from "./openLibrarySearch";
 
 // ═══════════════════════════════════════════════
 // Helpers
@@ -12,15 +11,6 @@ function strip(s) {
     .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase()
     .replace(/[^a-z0-9\s]/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-}
-
-function cleanQuery(s) {
-  return (s || "")
-    .toLowerCase()
-    .replace(/['\u2018\u2019\u201A\u2039\u203A'`]/g, " ")
-    .replace(/[^a-zà-öø-ÿ0-9\s]/g, " ")
     .replace(/\s+/g, " ")
     .trim();
 }
@@ -134,17 +124,19 @@ const BAD_PUBLISHERS = [
 ];
 
 async function fetchGoogleBooks(query) {
-  const key = import.meta.env.VITE_GOOGLE_BOOKS_KEY;
-  const enc = encodeURIComponent(query.trim());
-  // Une seule requête Google, pas 3-4 en parallèle
-  const url = `${API}?q=${enc}&orderBy=relevance&printType=books&maxResults=15&langRestrict=fr${key ? `&key=${key}` : ""}`;
-
   try {
-    const res = await fetch(url);
-    if (res.status === 429) { disableGoogleBooks(); return []; }
-    if (!res.ok) return [];
-    const data = await res.json();
-    const items = data.items || [];
+    // Appel via edge function proxy (rotation de clés + cache côté serveur)
+    const { data, error } = await supabase.functions.invoke("google-books-proxy", {
+      body: { query: query.trim() },
+    });
+    if (error) {
+      // Si le proxy retourne 429 → toutes les clés épuisées → circuit breaker
+      if (error.message?.includes("429") || error.status === 429) {
+        disableGoogleBooks();
+      }
+      return [];
+    }
+    const items = data?.items || [];
 
     const filtered = items
       .filter(it => {
@@ -193,7 +185,7 @@ async function fetchGoogleBooks(query) {
 // Déduplication
 // ═══════════════════════════════════════════════
 
-function deduplicateResults(dbResults, googleResults) {
+function deduplicateResults(dbResults, googleResults, olResults = []) {
   // Les résultats DB sont TOUJOURS en premier et jamais supprimés
   const dbIsbns = new Set(dbResults.map(r => r.isbn13).filter(Boolean));
   const dbTitles = new Set(dbResults.map(r => strip(r.title)));
@@ -205,7 +197,25 @@ function deduplicateResults(dbResults, googleResults) {
     return true;
   });
 
-  return [...dbResults, ...uniqueGoogle];
+  // Construire les sets de ce qui existe déjà (DB + Google retenu)
+  const knownIsbns = new Set([
+    ...dbIsbns,
+    ...uniqueGoogle.map(r => r.isbn13).filter(Boolean),
+  ]);
+  const knownTitles = new Set([
+    ...dbTitles,
+    ...uniqueGoogle.map(r => strip(r.title)),
+  ]);
+
+  // Filtrer les résultats OL — DB et Google ont la priorité
+  const uniqueOL = olResults.filter(ol => {
+    if (!ol.title) return false;
+    if (ol.isbn13 && knownIsbns.has(ol.isbn13)) return false;
+    if (knownTitles.has(strip(ol.title))) return false;
+    return true;
+  });
+
+  return [...dbResults, ...uniqueGoogle, ...uniqueOL];
 }
 
 // ═══════════════════════════════════════════════
@@ -230,6 +240,7 @@ export async function searchBooks(query) {
   const skipGoogle = dbSufficient || isbnFound || !isGoogleBooksAvailable();
 
   let googleResults = [];
+  let olResults = [];
   let googleRaw = 0;
   let skipReason = null;
 
@@ -237,13 +248,23 @@ export async function searchBooks(query) {
     if (isbnFound) skipReason = "isbn_found";
     else if (dbSufficient) skipReason = "db_sufficient";
     else skipReason = "circuit_breaker";
-  } else {
-    // Étape 2 : Google Books (seulement si nécessaire)
-    googleResults = await fetchGoogleBooks(query);
-    googleRaw = googleResults._rawCount || 0;
   }
 
-  const results = deduplicateResults(dbResults, googleResults);
+  if (!skipGoogle) {
+    // Étape 2 : Google Books + Open Library en parallèle
+    const [gRes, olRes] = await Promise.all([
+      fetchGoogleBooks(query),
+      searchOpenLibrary(query),
+    ]);
+    googleResults = gRes;
+    olResults = olRes;
+    googleRaw = googleResults._rawCount || 0;
+  } else if (skipReason === "circuit_breaker") {
+    // Google est down — utiliser Open Library seul comme découverte
+    olResults = await searchOpenLibrary(query);
+  }
+
+  const results = deduplicateResults(dbResults, googleResults, olResults);
   const final = results.slice(0, 10);
 
   // Métadonnées skip logic (attachées au tableau)
@@ -252,6 +273,7 @@ export async function searchBooks(query) {
 
   // Logging structuré
   const googleUseful = final.filter(r => r._source === "google").length;
+  const olUseful = final.filter(r => r._source === "openlibrary").length;
   console.log("[search-analytics]", JSON.stringify({
     query,
     ts: new Date().toISOString(),
@@ -261,6 +283,9 @@ export async function searchBooks(query) {
     googleFiltered: googleResults.length,
     googleDeduped: googleResults.length - (googleResults.length - googleUseful),
     googleUseful,
+    olCalled: !skipGoogle || skipReason === "circuit_breaker",
+    olResults: olResults.length,
+    olUseful,
     skipped: skipGoogle,
     skipReason,
     circuitBreakerActive: !isGoogleBooksAvailable(),

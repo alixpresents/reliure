@@ -1613,4 +1613,137 @@ Système de badges extensible avec un premier badge "Créateur" réservé aux ut
 
 ---
 
-*Dernière mise à jour : 2 avril 2026 — Gamification complète + sélections curées + améliorations recherche (apostrophes RPC, scoring IA, cascade BnF)*
+## 30. Réponses aux critiques dans le fil
+
+**Statut :** Post-bêta · Social
+**Portée :** FeedPage, BookPage, table `review_replies`
+
+### Le concept
+Un bouton "Répondre" sous chaque critique dans `/fil` et sur les fiches livres permet d'engager une conversation autour d'une lecture. Les réponses sont imbriquées (1 niveau, pas de thread infini).
+
+### Pourquoi c'est fort
+Le fil devient un vrai espace de discussion littéraire, pas juste un flux passif. C'est le différenciateur social par rapport à Babelio (commentaires quasi inexistants) et The StoryGraph (pas de réponses).
+
+### Implémentation envisagée
+- Nouvelle table `review_replies` : `id`, `review_id` (FK), `user_id` (FK), `body` (text), `likes_count`, `created_at`
+- RLS : lecture publique, écriture authentifiée
+- UI : sous chaque critique, lien "Répondre" (11px muted) → textarea inline (pas de modal). Bouton "Publier" + Escape annule.
+- Réponses affichées repliées par défaut ("Voir X réponses") → dépliées au clic
+- Chaque réponse génère une entrée `notifications` pour l'auteur de la critique
+- Activité dans le fil : `action_type = 'reply'` dans la table `activity`
+
+### Ce qu'on ne fait PAS en v1
+- Pas de réponse à une réponse (1 seul niveau d'imbrication)
+- Pas de mentions @utilisateur
+- Pas de rich text
+
+---
+
+## 31. Notifications in-app
+
+**Statut :** Post-bêta · Rétention
+**Portée :** Header, nouvelle table `notifications`, Supabase Realtime
+
+### Le concept
+Centre de notifications accessible via une cloche dans le header. Notifie les événements sociaux clés : nouveau follower, like reçu sur une critique ou citation, réponse à une critique, badge débloqué.
+
+### Pourquoi c'est fort
+La notification est le mécanisme de rétention le plus direct — elle ramène l'utilisateur sur l'app. Sans notifications, les interactions sociales passent inaperçues et l'engagement s'érode. C'est aussi ce qui manque le plus à Babelio.
+
+### Implémentation envisagée
+
+**Table `notifications`** :
+- `id`, `user_id` (destinataire), `actor_id` (qui a déclenché), `type` (enum : `follow`, `like_review`, `like_quote`, `reply`, `badge`), `target_id`, `target_type`, `is_read` (bool, défaut false), `created_at`
+- RLS : lecture/écriture owner only
+- Index sur `(user_id, is_read, created_at desc)`
+
+**Déclencheurs** :
+- Follow → notif `follow` pour le suivi
+- Like critique/citation → notif `like_review` / `like_quote`
+- Réponse à une critique → notif `reply`
+- Badge débloqué → notif `badge`
+
+**UI** :
+- Icône cloche dans le Header entre recherche et avatar
+- Badge rouge compteur non lus (masqué si 0)
+- Dropdown panneau 360px : liste chronologique des notifs, avatar acteur + texte descriptif + timestamp relatif
+- Clic notif → navigation vers la cible + marquage `is_read = true`
+- "Tout marquer comme lu" en haut du panneau
+- Realtime Supabase (`supabase.channel`) pour les nouvelles notifs en live
+
+### Ce qu'on ne fait PAS en v1
+- Pas de notifications push (mobile ou web push) — in-app uniquement
+- Pas d'email de notification
+- Pas de préférences de notification granulaires (v3)
+
+---
+
+## 32. App native iOS / Android
+
+**Statut :** Post-bêta · Acquisition
+**Portée :** Nouveau projet React Native / Expo
+
+### Le concept
+Une app native Reliure disponible sur l'App Store et le Google Play Store, après validation de la bêta web. La PWA est la priorité immédiate ; l'app native est la v2 si la demande est confirmée.
+
+### Pourquoi c'est fort
+- L'App Store est un canal d'acquisition organique majeur pour la cible (même profil utilisateur que Gleeph, dont 50%+ des users ont moins de 24 ans)
+- Les notifications push natives sont le levier de rétention le plus puissant
+- Le scan de code-barres (feature v2 déjà au backlog) est nativement accessible sur mobile
+- Gleeph a prouvé que le mobile-first fonctionne sur ce marché
+
+### Implémentation envisagée
+- Stack : React Native + Expo (réutilisation maximale de la logique React existante)
+- Supabase JS SDK compatible React Native
+- Design system porté tel quel (CSS vars → StyleSheet)
+- Features natives prioritaires : notifications push, scan code-barres (ISBN), accès galerie photo (feature "Scanne ta bibliothèque")
+- PWA d'abord pour valider l'usage mobile avant d'investir dans l'app native
+
+### Ce qu'on ne fait PAS en v1 native
+- Pas de refonte UX spécifique mobile (adapter le web, pas repartir de zéro)
+- Pas d'app séparée iOS / Android (Expo universal app)
+
+---
+
+## 33. "Scanne ta bibliothèque" — import par photo
+
+**Statut :** Post-bêta · Onboarding
+**Portée :** Nouvelle edge function `scan-bookshelf`, OnboardingPage, ProfilePage (backfill)
+
+### Le concept
+L'utilisateur prend une photo de son étagère (ou plusieurs) → l'IA détecte les titres et auteurs visibles sur les tranches → propose une liste de livres à confirmer → les ajoute en masse à la bibliothèque Reliure avec le statut "Lu".
+
+C'est le moyen le plus rapide de résoudre le problème de la bibliothèque vide à l'onboarding. Une photo d'étagère = potentiellement 20-50 livres importés en 30 secondes.
+
+### Pourquoi c'est fort
+- Élimine la friction d'onboarding la plus importante (saisir ses lectures passées une par une)
+- Feature virale : les gens photographient leurs étagères et partagent le résultat
+- Différenciation forte vs Babelio (saisie manuelle) et The StoryGraph (import CSV Goodreads seulement)
+- Gleeph fait le scan code-barres (un livre à la fois) — on fait l'étagère entière
+
+### Implémentation envisagée
+
+**Edge function `scan-bookshelf`** :
+- Reçoit une image base64 (JPEG/PNG, max 5 Mo)
+- Appelle Claude Vision (`claude-sonnet-4-5-20251022`) avec un prompt spécialisé : extraire tous les titres et auteurs lisibles sur les tranches de livres
+- Retourne `{ books: [{ title, author, confidence }] }` — confidence entre 0 et 1
+- Pour chaque livre détecté : recherche dans la base locale via `search_books_v2`, puis Google Books si absent
+- Retourne la liste enrichie avec `dbMatch` (livre trouvé en base) ou `googleMatch` (à importer)
+
+**UI** :
+- Bouton "📷 Scanner mon étagère" sur la page backfill (`/backfill`) et dans l'onboarding (étape 3)
+- Upload photo ou capture caméra (sur mobile)
+- État "Analyse en cours..." avec skeleton
+- Résultats : liste de livres détectés avec couverture, titre, auteur + checkbox cochée par défaut
+- Livres à faible confidence (< 0.6) affichés en dernier avec warning "À vérifier"
+- Bouton "Ajouter X livres à ma bibliothèque" → import en masse avec `status = 'read'`
+
+### Ce qu'on ne fait PAS en v1
+- Pas de détection des notes de lecture visibles sur les pages
+- Pas d'import automatique sans confirmation utilisateur (toujours une étape de validation)
+- Pas de traitement de plusieurs photos simultanées (une photo à la fois)
+- Pas disponible pour les visiteurs non connectés
+
+---
+
+*Dernière mise à jour : 2 avril 2026 — Entrées 30-33 : réponses aux critiques, notifications in-app, app native, scan bibliothèque IA*

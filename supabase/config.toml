@@ -9,3 +9,6 @@ verify_jwt = false
 
 [functions.book_import]
 verify_jwt = false
+
+[functions.google-books-proxy]
+verify_jwt = false

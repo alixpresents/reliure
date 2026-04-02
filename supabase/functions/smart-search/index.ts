@@ -37,10 +37,13 @@ Règles :
   "belle d" → ghost: "u seigneur — albert cohen"
   "proust" → ghost: " — à la recherche du temps perdu"
   Si la requête est en langage naturel : ghost = null
+- Pour les requêtes de 1-2 mots qui ressemblent à un début de titre, retourne jusqu'à 3 suggestions dans books ET le ghost le plus probable.
 - "interpreted_as" = reformulation courte pour afficher à l'utilisateur
 - Ne jamais inventer de livres qui n'existent pas
+- Ne jamais inventer un ISBN. Si tu n'es pas certain à 100% de l'ISBN de l'édition poche FR, retourne null pour isbn13. Les ISBN halluccinés sont pires que pas d'ISBN.
 - Si la requête n'est pas liée à un livre : { "books": [], "ghost": null, "interpreted_as": null }
 - Si c'est un ISBN (suite de chiffres) : { "books": [], "ghost": null, "interpreted_as": null }
+- Gérer les fautes d'orthographe courantes : "Beaudelaire" → Baudelaire, "Nietzche" → Nietzsche, "Dostoïevsky" → Dostoïevski, "Toqueville" → Tocqueville, etc.
 - Pour isbn13 : toujours retourner l'ISBN de l'édition de poche française la plus courante (Folio Gallimard, Le Livre de Poche, Points Seuil, 10/18, Pocket, J'ai Lu, Babel Actes Sud). Si pas d'édition poche connue, retourner l'édition originale française. Ne jamais retourner un ISBN d'édition collector, illustrée, scolaire, ou numérique.`;
 
 function normalizeQuery(q: string): string {
@@ -152,6 +155,25 @@ Deno.serve(async (req) => {
         Date.now() + 7 * 24 * 60 * 60 * 1000,
       ).toISOString(),
     });
+
+    // Auto-enrichment: import AI-discovered books into DB (fire-and-forget)
+    if (result.books?.length > 0) {
+      for (const book of result.books) {
+        if (book.isbn13 && /^\d{13}$/.test(book.isbn13)) {
+          // Check if already in DB before importing
+          const { count } = await supabase
+            .from("books")
+            .select("id", { count: "exact", head: true })
+            .eq("isbn_13", book.isbn13);
+          if (!count || count === 0) {
+            // Fire-and-forget: don't await, don't block the response
+            supabase.functions.invoke("book_import", {
+              body: { isbn: book.isbn13 },
+            }).catch(() => {}); // silently ignore errors
+          }
+        }
+      }
+    }
 
     return Response.json(result, { headers: getCorsHeaders(req) });
   } catch (error) {
