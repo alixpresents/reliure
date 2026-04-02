@@ -261,6 +261,7 @@ export async function searchBooks(query, { onDbResults } = {}) {
   let olResults = [];
   let googleRaw = 0;
   let skipReason = null;
+  let olActuallyCalled = false;
 
   if (skipGoogle) {
     if (isbnFound) skipReason = "isbn_found";
@@ -275,6 +276,7 @@ export async function searchBooks(query, { onDbResults } = {}) {
     googleRaw = googleResults._rawCount || 0;
   } else if (skipReason === "circuit_breaker") {
     // Google est down — Open Library comme découverte de secours
+    olActuallyCalled = true;
     olResults = await searchOpenLibrary(query);
   }
   const t_google = skipGoogle ? 0 : Math.round(performance.now() - t_ext_start);
@@ -299,7 +301,7 @@ export async function searchBooks(query, { onDbResults } = {}) {
     googleFiltered: googleResults.length,
     googleDeduped: googleResults.length - (googleResults.length - googleUseful),
     googleUseful,
-    olCalled: !skipGoogle || skipReason === "circuit_breaker",
+    olCalled: olActuallyCalled,
     olResults: olResults.length,
     olUseful,
     skipped: skipGoogle,
