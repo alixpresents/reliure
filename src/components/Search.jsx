@@ -61,7 +61,9 @@ export default function Search({ open, onClose, go, initialQuery = "" }) {
   const [userResults, setUserResults] = useState([]);
   const [userSuggestionLabel, setUserSuggestionLabel] = useState("Lecteurs");
   const [ghostDismissed, setGhostDismissed] = useState(false);
+  const [deepSearching, setDeepSearching] = useState(false);
   const timer = useRef(null);
+  const searchSeq = useRef(0);
   const inputRef = useRef(null);
   const dropdownRef = useRef(null);
   const multiAddMode = useRef(false);
@@ -141,17 +143,34 @@ export default function Search({ open, onClose, go, initialQuery = "" }) {
       return () => clearTimeout(timer.current);
     }
 
-    if (!q || q.length < 2) { setResults([]); setUserResults([]); setLoading(false); return; }
+    if (!q || q.length < 2) {
+      setResults([]); setUserResults([]); setLoading(false); setDeepSearching(false);
+      return;
+    }
     setLoading(true);
+    setDeepSearching(false);
+    const seq = ++searchSeq.current;
     timer.current = setTimeout(async () => {
-      const [bookRes, users] = await Promise.all([
-        searchBooks(q),
-        fetchUsers(q, 3),
-      ]);
-      setResults(bookRes);
+      const usersPromise = fetchUsers(q, 3);
+
+      const books = await searchBooks(q, {
+        onDbResults: (dbResults, { skipGoogle }) => {
+          if (searchSeq.current !== seq) return;
+          if (dbResults.length > 0) {
+            setResults(dbResults);
+            setLoading(false);
+            if (!skipGoogle) setDeepSearching(true);
+          }
+        },
+      });
+
+      if (searchSeq.current !== seq) return;
+      const users = await usersPromise;
+      setResults(books);
       setUserResults(users);
       setUserSuggestionLabel("Lecteurs");
       setLoading(false);
+      setDeepSearching(false);
     }, 400);
     return () => clearTimeout(timer.current);
   }, [q]);
@@ -743,8 +762,8 @@ export default function Search({ open, onClose, go, initialQuery = "" }) {
               </>
             )}
 
-            {/* AI loading indicator (subtle) */}
-            {aiLoading && displayResults.length > 0 && (
+            {/* Subtle indicator during Wave 2 (Google+OL in-flight) or AI search */}
+            {(deepSearching || aiLoading) && displayResults.length > 0 && (
               <div className="text-center py-2.5 text-[11px] font-body" style={{ color: "var(--text-tertiary)" }}>
                 Recherche approfondie…
               </div>

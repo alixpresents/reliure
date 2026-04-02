@@ -15,6 +15,14 @@ function strip(s) {
     .trim();
 }
 
+function cleanTitle(raw) {
+  if (!raw) return raw;
+  return raw
+    .replace(/\s*[-–]\s*(nouveau\s+roman|roman|thriller|policier|essai|récit|\d{4}).*$/i, "")
+    .replace(/\s*\([^)]*\)\s*$/, "")
+    .trim();
+}
+
 // ═══════════════════════════════════════════════
 // Cache (in-memory, per session)
 // ═══════════════════════════════════════════════
@@ -163,7 +171,7 @@ async function fetchGoogleBooks(query) {
           _source: "google",
           dbId: null,
           slug: null,
-          title: v.title,
+          title: cleanTitle(v.title),
           subtitle: v.subtitle || null,
           authors: v.authors || [],
           publisher: v.publisher || null,
@@ -222,14 +230,18 @@ function deduplicateResults(dbResults, googleResults, olResults = []) {
 // Main export
 // ═══════════════════════════════════════════════
 
-export async function searchBooks(query) {
+export async function searchBooks(query, { onDbResults } = {}) {
   if (!query || query.length < 2) return [];
 
   const cached = getCached(query);
   if (cached) return cached;
 
+  const t0 = performance.now();
+
   // Étape 1 : RPC locale (rapide, ~50ms)
+  const t_db_start = performance.now();
   const localBooks = await searchLocalBooks(query);
+  const t_db = Math.round(performance.now() - t_db_start);
   const dbResults = localBooks.map(formatDbResult);
 
   // Skip logic : déterminer si Google est nécessaire
@@ -238,6 +250,9 @@ export async function searchBooks(query) {
   const dbSufficient = dbResults.length >= 3;
   const isbnFound = isISBN && dbResults.length >= 1;
   const skipGoogle = dbSufficient || isbnFound || !isGoogleBooksAvailable();
+
+  // Wave 1 callback — résultats DB disponibles avant les sources externes
+  onDbResults?.(dbResults, { skipGoogle });
 
   let googleResults = [];
   let olResults = [];
@@ -250,6 +265,7 @@ export async function searchBooks(query) {
     else skipReason = "circuit_breaker";
   }
 
+  const t_ext_start = performance.now();
   if (!skipGoogle) {
     // Étape 2 : Google Books + Open Library en parallèle
     const [gRes, olRes] = await Promise.all([
@@ -263,6 +279,8 @@ export async function searchBooks(query) {
     // Google est down — utiliser Open Library seul comme découverte
     olResults = await searchOpenLibrary(query);
   }
+  const t_google = skipGoogle ? 0 : Math.round(performance.now() - t_ext_start);
+  const t_total = Math.round(performance.now() - t0);
 
   const results = deduplicateResults(dbResults, googleResults, olResults);
   const final = results.slice(0, 10);
@@ -289,6 +307,9 @@ export async function searchBooks(query) {
     skipped: skipGoogle,
     skipReason,
     circuitBreakerActive: !isGoogleBooksAvailable(),
+    t_db,
+    t_google,
+    t_total,
   }));
 
   setCache(query, final);
