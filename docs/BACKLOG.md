@@ -474,14 +474,21 @@ La base locale (3830+ livres) est la source primaire. Google Books sert uniqueme
 2. **Skip Google** si ≥ 3 résultats DB (`db_sufficient`) ou ISBN trouvé (`isbn_found`) — ~60% d'appels évités.
 3. **Google Books** (conditionnel) : une requête `langRestrict=fr`, max 8 résultats filtrés. **Circuit breaker** : HTTP 429 → API désactivée 15min. `isGoogleBooksAvailable()` exportée pour contrôle externe.
 
-### Clic sur un résultat IA — cascade avec scoring
+### Clic sur un résultat IA — cascade avec scoring (mis à jour avril 2026)
 
 Quand l'utilisateur clique un résultat de la recherche assistée IA (`smart-search`) :
-1. **Google disponible** : recherche Google + `scoreMatch()` (compare titre+auteur normalisés, seuil > 0) → importe le résultat avec le meilleur score, évite d'importer le mauvais livre.
+0. **Score >= 100 + ISBN disponible** → appel direct `book_import` edge function (pipeline 4 sources complet : Google, OL, BnF, MetasBooks) avant navigation. Évite la recherche Google redondante quand l'IA a identifié le bon livre avec certitude.
+1. **Score < 100, Google disponible** : recherche Google + `scoreMatch()` (compare titre+auteur normalisés, seuil > 0) → importe le résultat avec le meilleur score, évite d'importer le mauvais livre.
 2. **Google indisponible** (circuit breaker actif) → cascade BnF :
    - Tente l'ISBN fourni par l'IA via edge function `book_import`
    - Puis recherche BnF SRU par titre+auteur, import via edge function
    - Puis import direct en dernier recours
+
+### Améliorations pipeline avril 2026
+
+- **`cleanTitle()`** : 4 patterns regex pour nettoyer les sous-titres promotionnels Google Books (suffixes `-– roman/thriller/...`, `: roman/polar/...`, `: + sous-titre long (21+ chars)`, `(...)` en fin de titre)
+- **`google-books-proxy` clés dynamiques** : boucle `while` scanne `GOOGLE_BOOKS_KEY_N` sans limite fixe (était hardcodé à 3 clés). Ajouter `GOOGLE_BOOKS_KEY_4`, `_5`, etc. sans toucher au code.
+- **MetasBooks** : 4ème source dans `book_import`, enrichissement post-merge (description, couverture, éditeur). Source `multi_api_metasbooks` si actif.
 
 ### BnF SRU
 
@@ -738,8 +745,8 @@ organique gratuite portant le nom "reliure" dans le feed des amis.
 
 ## 13. Normalisation IA des requêtes de recherche
 
-**Statut :** ✅ Fait (edge function smart-search, Claude Haiku, ghost text, cache 7j, filtrage IA confirmé/non-confirmé)
-**Portée :** src/lib/googleBooks.js + API Anthropic
+**Statut :** ✅ Fait (edge function smart-search, Claude Haiku, ghost text, cache 7j, filtrage IA confirmé/non-confirmé, mode NL avril 2026)
+**Portée :** src/lib/googleBooks.js + src/components/Search.jsx + src/hooks/useSmartSearch.js + API Anthropic
 
 ### Le concept
 Avant d'envoyer une requête à Google Books, passer par
@@ -754,19 +761,18 @@ propres à la source. Le scoring compense en partie ce
 désavantage structurel, mais la normalisation IA le règle
 définitivement pour les requêtes ambiguës ou mal orthographiées.
 
-### Implémentation envisagée
-- Fonction `normalizeQueryWithAI(query)` dans googleBooks.js
-- Modèle : Claude Haiku (~$0.00025/requête, quasi gratuit au bêta)
-- Timeout 800ms max — fallback query originale si pas de réponse
-- Cache en mémoire (même Map que les résultats)
-- Retourne : { normalizedQuery, authorHint, titleHint }
-- Utiliser authorHint pour ajouter une requête parallèle
-  `inauthor:+intitle:` au mix existant
+### Ce qui est implémenté (avril 2026)
 
-### Ce qu'on ne fait PAS en v1
+- Edge function `smart-search` : Claude Haiku, ghost text, cache 7j, `looksLikeNaturalLanguage()`
+- **Mode NL** (`isNL = looksLikeNaturalLanguage(q)`) : debounce 300ms (vs 400ms standard), résultats IA affichés **en premier** dans la dropdown, résultats classiques sous label "Autres résultats", "Recherche approfondie…" immédiat sans attendre la réponse IA
+- **Debounce réduit à 300ms** (était 600ms) — réactivité améliorée
+- Filtrage confirmé/non-confirmé : résultats classiques réordonnés selon confirmation IA (titre + auteur matching)
+- Zero-result fast path : debounce 0ms si aucun résultat classique
+
+### Ce qu'on ne fait PAS
 - Pas d'IA sur les requêtes ISBN (inutile)
-- Pas d'appel IA si query < 3 caractères
-- Jamais bloquer la recherche si l'IA échoue
+- Pas d'appel IA si query < 2 caractères
+- Jamais bloquer la recherche si l'IA échoue (toujours retourne 200)
 
 ---
 
@@ -1746,4 +1752,34 @@ C'est le moyen le plus rapide de résoudre le problème de la bibliothèque vide
 
 ---
 
-*Dernière mise à jour : 2 avril 2026 — Entrées 30-33 : réponses aux critiques, notifications in-app, app native, scan bibliothèque IA*
+---
+
+## 34. Explorer — Sections éditoriales Babelio + Sélections
+
+**Statut :** ✅ Implémenté — 2 avril 2026
+**Portée :** `src/pages/ExplorePage.jsx` + `src/hooks/useExplore.js`
+
+### Ce qui est implémenté
+
+**"Plébiscités par les lecteurs francophones"** : remplace l'ancienne section "Populaires cette semaine" (basée sur RPC `popular_books_week` qui manquait de données au bêta). La nouvelle section s'appuie sur la colonne `babelio_popular_year integer[]` populée via `seeds/seed-babelio-popular.mjs` depuis les classements annuels Babelio.
+
+- Hook `useBabelioPopular()` : query `books WHERE babelio_popular_year IS NOT NULL ORDER BY avg_rating DESC LIMIT 10`, queryKey `["babelioPopular"]`, staleTime 30min
+- Badge `×N ans` sur les livres présents dans plusieurs années de classements (`babelio_popular_year.length > 1`)
+- Sublabel "Sélection d'après les classements Babelio"
+
+**Sélections curées remontées** : le carousel `CuratedSelectionCard` est maintenant placé juste **avant** les critiques populaires (était après le skeleton des listes). Donne plus de visibilité aux sélections éditoriales dès le premier scroll.
+
+**Ordre final des sections Explorer** :
+1. Hero visiteurs (si non connecté) + barre de recherche + thèmes
+2. Plébiscités par les lecteurs francophones (Babelio)
+3. Sélections
+4. Critiques populaires
+5. Citations populaires
+6. Top contributeurs
+7. Listes populaires
+
+### Colonnes DB
+
+- `books.babelio_popular_year integer[]` — ajoutée via `schema.sql` (ALTER TABLE). Tableau des années où le livre figure dans les classements Babelio (ex : `[2024, 2025]`). Null = pas dans les classements.
+
+*Dernière mise à jour : 2 avril 2026 — Entrées 30-33 : réponses aux critiques, notifications in-app, app native, scan bibliothèque IA. Entrée 34 : Explorer Babelio + Sélections*

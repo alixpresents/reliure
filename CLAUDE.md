@@ -113,15 +113,16 @@ Liste dans `src/constants/reserved-usernames.js`. Vérifiés à l'inscription (f
 ## Sources de métadonnées livres
 
 Stratégie hybride, par priorité :
-1. **Google Books API** — socle principal, couvertures incluses. Appelé via edge function proxy `google-books-proxy` (rotation de clés `GOOGLE_BOOKS_KEY_1/2/3`, cache serveur 6h dans `search_cache`). Clé API supprimée côté client (`VITE_GOOGLE_BOOKS_KEY` n'est plus nécessaire).
+1. **Google Books API** — socle principal, couvertures incluses. Appelé via edge function proxy `google-books-proxy` (rotation de clés **dynamiques** `GOOGLE_BOOKS_KEY_N` via boucle while — pas de limite fixe, cache serveur 6h dans `search_cache`). Clé API supprimée côté client (`VITE_GOOGLE_BOOKS_KEY` n'est plus nécessaire).
 2. **BnF SRU** — catalogue légal exhaustif de tous les livres publiés en France ; utilisé en **recherche parallèle** (`src/lib/bnfSearch.js`) ET en import par ISBN (`book_import`)
 3. **Wikidata** — base de connaissance libre (CC0), excellent pour les classiques traduits, Prix Nobel, Prix Goncourt, littérature francophone. Interrogé via SPARQL (`https://query.wikidata.org/sparql`). Script batch `scripts/enrich-from-wikidata.mjs` (deux modes : enrichissement DB existante, import classiques depuis `reports/wikidata-candidates.json`). Jamais utilisé en temps réel (trop lent) — batch uniquement. **Ne jamais faire confiance aux ISBN Wikidata** : toujours valider via `book_import` edge function.
 4. **Open Library API** — source parallèle de découverte (`src/lib/openLibrarySearch.js`), appelée en parallèle avec Google Books quand DB < 3 résultats, et seule quand le circuit breaker Google est actif. Pas de clé API. Timeout 4s. Filtrage BAD_TITLE_WORDS/BAD_PUBLISHERS identique à Google.
-5. **Nudger (Open Data ISBN)** — base ISBN française, licence ODbL, CSV gratuit via data.gouv.fr
-6. **Enrichissement communautaire** — les utilisateurs corrigent/complètent les fiches (comme TMDb pour Letterboxd)
-7. **Claude Haiku (enrichissement IA)** — utilisé en fallback quand Google Books, BnF et Open Library échouent. Edge function `book_ai_enrich` : Haiku génère métadonnées + description FR, Open Library confirme + fournit OLID, cascade de 4 sources pour la couverture. Source `ai_enriched`, champ `ai_confidence` (numeric 3,2) indique le niveau de certitude. Badge "À vérifier" sur BookPage si confidence < 0.7. Déclenché uniquement via BackfillPage (jamais automatique).
+5. **MetasBooks** — agrégateur FR de métadonnées livres (éditeurs, collections, résumés éditeurs). Utilisé **uniquement dans `book_import`** comme 4ème source d'enrichissement post-merge (description, couverture, éditeur). Source taggée `multi_api_metasbooks` si MetasBooks a enrichi le résultat.
+6. **Nudger (Open Data ISBN)** — base ISBN française, licence ODbL, CSV gratuit via data.gouv.fr
+7. **Enrichissement communautaire** — les utilisateurs corrigent/complètent les fiches (comme TMDb pour Letterboxd)
+8. **Claude Haiku (enrichissement IA)** — utilisé en fallback quand Google Books, BnF et Open Library échouent. Edge function `book_ai_enrich` : Haiku génère métadonnées + description FR, Open Library confirme + fournit OLID, cascade de 4 sources pour la couverture. Source `ai_enriched`, champ `ai_confidence` (numeric 3,2) indique le niveau de certitude. Badge "À vérifier" sur BookPage si confidence < 0.7. Déclenché uniquement via BackfillPage (jamais automatique).
 
-L'edge function `book_import` (`supabase/functions/book_import/index.ts`) interroge 3 sources en parallèle par ISBN (Google Books, Open Library, BnF SRU), fusionne les résultats selon une priorité par champ, génère le slug, et upsert dans `books`. Si l'edge function échoue, `importBook.js` retombe sur un import client-side avec les données Google Books. **`verify_jwt = false`** (dans `supabase/config.toml`) : accessible sans authentification car il écrit dans le catalogue partagé `books`, pas dans les données utilisateur. Permet aux visiteurs non connectés de déclencher un import via le clic sur un résultat IA ✨.
+L'edge function `book_import` (`supabase/functions/book_import/index.ts`) interroge **4 sources en parallèle** par ISBN (Google Books, Open Library, BnF SRU, MetasBooks), fusionne les résultats selon une priorité par champ, enrichit post-merge avec MetasBooks si les champs clés sont manquants, génère le slug, et upsert dans `books`. Si l'edge function échoue, `importBook.js` retombe sur un import client-side avec les données Google Books. **`verify_jwt = false`** (dans `supabase/config.toml`) : accessible sans authentification car il écrit dans le catalogue partagé `books`, pas dans les données utilisateur. Permet aux visiteurs non connectés de déclencher un import via le clic sur un résultat IA ✨.
 
 **Recherche BnF** (`src/lib/bnfSearch.js`) : toujours disponible pour l'edge function `book_import` (import par ISBN). N'est plus utilisée dans la recherche libre (supprimée pour éviter les timeouts de 3s).
 
@@ -155,12 +156,12 @@ Architecture DB-first : la base locale (3830+ livres) est la source primaire, Go
    - Sinon → appel Google Books proxy + Open Library en parallèle
    - Si circuit breaker Google actif → Open Library seul comme source de découverte
    - Le tableau retourné porte `_skippedGoogle` et `_skipReason` en propriétés
-3. **Google Books** (conditionnel) : via edge function `google-books-proxy` (rotation de clés `GOOGLE_BOOKS_KEY_1/2/3`, cache serveur 6h, fallback quota anonyme). Résultats filtrés côté client (sans couverture, sans ISBN, éditeurs parasites, mots-clés parasites exclus), limités à 8 après filtre. **Circuit breaker** : si le proxy retourne 429 (toutes clés épuisées), l'API est désactivée pendant 15 minutes (module-level `googleBooksDisabledUntil`). `isGoogleBooksAvailable()` exportée depuis `googleBooks.js`.
+3. **Google Books** (conditionnel) : via edge function `google-books-proxy` (rotation de clés **dynamiques** `GOOGLE_BOOKS_KEY_N`, cache serveur 6h, fallback quota anonyme). Résultats filtrés côté client (sans couverture, sans ISBN, éditeurs parasites, mots-clés parasites exclus), limités à 8 après filtre. `cleanTitle()` nettoie les sous-titres promotionnels (patterns regex : `-–` genre/année, `: roman/polar/...`, `: + 21 chars`, `(...)` en fin). **Circuit breaker** : si le proxy retourne 429 (toutes clés épuisées), l'API est désactivée pendant 15 minutes (module-level `googleBooksDisabledUntil`). `isGoogleBooksAvailable()` exportée depuis `googleBooks.js`.
 4. **Open Library** (conditionnel) : appelé en parallèle avec Google (ou seul si circuit breaker actif). `src/lib/openLibrarySearch.js`, timeout 4s, même filtrage BAD_TITLE/BAD_PUBLISHERS. Résultats `_source: "openlibrary"`, jamais prioritaires sur DB ou Google.
 
 **Logging** : chaque appel `searchBooks()` émet un `console.log('[search-analytics]', JSON.stringify({...}))` avec les compteurs DB, Google, OL, skip. Greppable dans les logs Vercel.
 
-**Smart-search aligné** : `useSmartSearch` dans `Search.jsx` est désactivé quand `dbResultCount >= 3` et que la query n'est pas en langage naturel — cohérent avec la skip logic. **Zero-result fast path** : si 0 résultat de toutes les sources classiques, l'IA est déclenchée immédiatement (debounce 0ms au lieu de 600ms), avec message "Aucun résultat local — recherche approfondie..." pendant le chargement.
+**Smart-search aligné** : `useSmartSearch` dans `Search.jsx` est désactivé quand `dbResultCount >= 3` et que la query n'est pas en langage naturel — cohérent avec la skip logic. **Zero-result fast path** : si 0 résultat de toutes les sources classiques, l'IA est déclenchée immédiatement (debounce 0ms au lieu de 300ms), avec message "Aucun résultat local — recherche approfondie..." pendant le chargement. **Mode NL** (`isNL = looksLikeNaturalLanguage(q)`) : debounce 300ms, résultats IA affichés **en premier** (sans ✨ séparateur), résultats classiques sous label "Autres résultats", message "Recherche approfondie…" immédiat en haut de dropdown.
 
 **Auto-enrichissement** : après chaque réponse smart-search, les livres avec ISBN valide qui ne sont pas encore en base sont importés en fire-and-forget via `book_import`. Les prochaines recherches du même livre trouveront un résultat DB directement.
 
@@ -172,7 +173,7 @@ Architecture DB-first : la base locale (3830+ livres) est la source primaire, Go
 
 ### Recherche assistée IA (`supabase/functions/smart-search/index.ts` + `src/hooks/useSmartSearch.js`)
 
-Filet de secours intelligent qui enrichit le pipeline classique. Activé dès 2 caractères (debounce 600ms) seulement si `dbResultCount < 3` ou si la query est en langage naturel (`looksLikeNaturalLanguage`). Désactivé quand la DB suffit (aligné avec la skip logic Google). Le coût est amorti par le cache `search_cache` (7 jours).
+Filet de secours intelligent qui enrichit le pipeline classique. Activé dès 2 caractères (debounce 300ms) seulement si `dbResultCount < 3` ou si la query est en langage naturel (`looksLikeNaturalLanguage`). Désactivé quand la DB suffit (aligné avec la skip logic Google). Le coût est amorti par le cache `search_cache` (7 jours).
 
 **Edge function `smart-search`** :
 - Appelle Claude Haiku (`claude-haiku-4-5-20251001`) avec un system prompt spécialisé livres francophones
@@ -187,16 +188,17 @@ Filet de secours intelligent qui enrichit le pipeline classique. Activé dès 2 
 - Index sur `expires_at`, RLS activée (service_role only)
 
 **Hook `useSmartSearch(query, { enabled, debounceMs })`** :
-- Debounce 600ms, AbortController pour annulation
+- Debounce **300ms** par défaut, AbortController pour annulation
 - Retourne `{ books, ghost, interpretedAs, isLoading }`
 - `looksLikeNaturalLanguage(query)` : détecte les mots-clés NL ou queries ≥ 4 mots
 
 **Intégration dans `Search.jsx`** :
 - Ghost text : overlay invisible aligné sur l'input, accepté par Tab/ArrowRight, rejeté par Escape
 - `displayResults` useMemo : quand l'IA a répondu, filtre les résultats classiques — confirmés (titre + auteur matching) en premier, non-confirmés limités à 2. `aiConfirmedMap` lie chaque résultat classique au livre IA correspondant.
-- Résultats IA affichés sous les résultats classiques avec indicateur ✨, dédoublonnés par titre normalisé
+- **Mode classique** : résultats IA affichés sous les résultats classiques avec indicateur ✨, dédoublonnés par titre normalisé
+- **Mode NL** (`isNL = true`) : résultats IA en **premier**, résultats classiques sous label "Autres résultats", message "Recherche approfondie…" immédiat sans attendre la réponse IA
 - IA activée uniquement si résultats classiques < 2 OU query en langage naturel (`looksLikeNaturalLanguage`)
-- Clic sur un résultat IA → **cascade avec scoring** : (1) si Google disponible (`isGoogleBooksAvailable()`), recherche Google + `scoreMatch()` (compare titre/auteur normalisés, seuil > 0) pour éviter d'importer le mauvais livre ; (2) si Google indisponible (circuit breaker), cascade BnF : tente d'abord l'ISBN fourni par l'IA via edge function `book_import`, puis recherche BnF SRU par titre+auteur, puis import direct en dernier recours
+- Clic sur un résultat IA → **cascade avec scoring** : (0) si `best.score >= 100` et ISBN disponible → appel direct `book_import` edge function (import complet 4 sources) avant navigation ; (1) sinon, si Google disponible, recherche Google + `scoreMatch()` (seuil > 0) ; (2) si Google indisponible (circuit breaker), cascade BnF : ISBN via `book_import`, puis BnF SRU titre+auteur, puis import direct en dernier recours
 - Clic sur un résultat DB → navigation directe via `slug ?? dbId` sans passer par importBook
 - Indicateur "Recherche approfondie…" pendant le chargement IA
 - Le SYSTEM_PROMPT de `smart-search` retourne l'ISBN de l'édition poche française (Folio, LdP, Points…)
@@ -381,7 +383,8 @@ Toutes les couleurs UI sont gérées via CSS custom properties dans `src/index.c
   - `["favorites", userId]` — quatre favoris
   - `["followCounts", userId]` — compteurs abonnés/abonnements
   - `["readingList", statusFilter, userId]` — liste de lecture par statut
-  - `["popularBooks"]`, `["popularReviews"]`, `["popularQuotes"]`, `["popularLists"]` — Explorer
+  - `["babelioPopular"]` — livres plébiscités Babelio (Explorer, staleTime 30min)
+  - `["popularReviews"]`, `["popularQuotes"]`, `["popularLists"]` — Explorer
   - `["booksByGenre", genre]` — livres par genre
   - `["feed"]` — fil d'activité
 - **Invalidation cross-cache** : après une mutation, invalider toutes les queryKeys affectées. Ex : noter un livre invalide `["profileData"]` et `["myReviews"]`.
@@ -482,7 +485,8 @@ Chaque onglet a sa propre URL (`/:username/critiques`, etc.).
 - **ContentMenu** sur les critiques et citations (onglets Mes critiques, Mes citations)
 
 #### Explorer
-- Livres populaires via RPC `popular_books_week` (fallback rating_count)
+- **"Plébiscités par les lecteurs francophones"** via `useBabelioPopular()` (`queryKey: ["babelioPopular"]`, staleTime 30min) — livres avec `babelio_popular_year IS NOT NULL` triés par `avg_rating DESC`. Badge `×N ans` sur les livres présents dans plusieurs années de classements Babelio (`babelio_popular_year.length > 1`).
+- **Sélections curées** — carousel `CuratedSelectionCard` compact, affiché **juste avant les critiques populaires**
 - Critiques populaires, citations populaires, listes populaires — données réelles
 - Filtrage par genre (`useBooksByGenre`) — filtre JSONB via `.filter("genres", "cs", `["${genre}"]`)` (opérateur PostgREST `cs`)
 - Thèmes : liste curatée statique `THEMES_PRINCIPAUX` (20 thèmes hardcodés, pas de fetch dynamique)

@@ -391,6 +391,11 @@ alter table public.books add column if not exists description text;
 alter table public.books add column if not exists awards jsonb default '[]'::jsonb;
 alter table public.books add column if not exists ai_confidence numeric(3,2);
 
+-- books : classements Babelio (seeds/seed-babelio-popular.mjs)
+-- Tableau d'années où le livre apparaît dans les classements Babelio (ex: [2024, 2025])
+-- Utilisé par useBabelioPopular() pour la section Explorer "Plébiscités par les lecteurs francophones"
+alter table public.books add column if not exists babelio_popular_year integer[];
+
 -- lists : sélections curées (migration supabase/migrations/018_curated_selections)
 alter table public.lists
   add column if not exists is_curated boolean default false,
