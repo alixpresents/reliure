@@ -59,7 +59,7 @@ export default function CreateListModal({ open, onClose, onCreate }) {
           >
             ×
           </button>
-          <h2 className="text-[18px] font-normal font-display italic m-0 mb-5">Nouvelle liste</h2>
+          <h2 className="text-[18px] font-normal font-display m-0 mb-5">Nouvelle liste</h2>
 
           <form onSubmit={handleSubmit}>
             <div className="mb-4">

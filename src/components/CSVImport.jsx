@@ -305,7 +305,7 @@ export default function CSVImport() {
     return (
       <div className="mb-10">
         <div className="text-center mb-4">
-          <h2 className="font-display italic text-xl font-normal mb-1">Importer depuis un fichier</h2>
+          <h2 className="font-display text-xl font-normal mb-1">Importer depuis un fichier</h2>
           <p className="text-[13px] font-body" style={{ color: "var(--text-secondary)" }}>
             Exporte ta bibliothèque depuis Goodreads ou Babelio, puis dépose le CSV ici.
           </p>
@@ -352,7 +352,7 @@ export default function CSVImport() {
     return (
       <div className="mb-10">
         <div className="text-center mb-5">
-          <h2 className="font-display italic text-xl font-normal mb-1">
+          <h2 className="font-display text-xl font-normal mb-1">
             {rows.length} livre{rows.length > 1 ? "s" : ""} détecté{rows.length > 1 ? "s" : ""} depuis {source === "goodreads" ? "Goodreads" : "Babelio"}
           </h2>
         </div>
@@ -412,7 +412,7 @@ export default function CSVImport() {
     return (
       <div className="mb-10">
         <div className="text-center mb-5">
-          <h2 className="font-display italic text-xl font-normal mb-1">Import en cours…</h2>
+          <h2 className="font-display text-xl font-normal mb-1">Import en cours…</h2>
           <p className="text-[13px] font-body" style={{ color: "var(--text-secondary)" }}>
             {progress.current} / {progress.total}
           </p>

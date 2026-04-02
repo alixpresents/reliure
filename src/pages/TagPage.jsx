@@ -19,7 +19,7 @@ export default function TagPage() {
         ← Retour
       </button>
       <Label>Thème</Label>
-      <h2 className="text-[22px] font-normal mb-1 font-display italic">{decodedTag}</h2>
+      <h2 className="text-[22px] font-normal mb-1 font-display">{decodedTag}</h2>
 
       {loading ? (
         <div className="py-8 text-center text-[13px] font-body" style={{ color: "var(--text-tertiary)" }}>Chargement...</div>

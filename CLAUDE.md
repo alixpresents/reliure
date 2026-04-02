@@ -273,7 +273,7 @@ Reliure regroupe les éditions par oeuvre (comme Letterboxd : un film = une fich
 ## Design system
 
 ### Typographie
-- **Display** : Instrument Serif (italic) — titres de section, titres de livres dans les fiches, headings éditoriaux
+- **Display** : EB Garamond (roman) — titres de section, titres de livres dans les fiches, headings éditoriaux, nom de profil. Italic réservé aux citations « » et au fallback cover uniquement.
 - **Body** : Geist — tout le reste (nav, labels, corps de texte, métadonnées)
 - Pas de mélange de poids fantaisistes : 400 regular, 500 medium, 600 semibold, 700 bold
 

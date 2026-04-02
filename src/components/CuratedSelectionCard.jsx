@@ -37,7 +37,7 @@ export default function CuratedSelectionCard({ selection, variant = "compact" })
         <div className="mt-3 mb-1">
           <span className="text-[14px] font-body" style={{ color: "var(--text-secondary)" }}>La Bibliothèque de</span>
         </div>
-        <div className="font-display italic text-[20px] font-normal leading-tight mb-1" style={{ color: "var(--text-primary)" }}>
+        <div className="font-display text-[20px] font-normal leading-tight mb-1" style={{ color: "var(--text-primary)" }}>
           {s.curator_name}
         </div>
         <div className="text-[13px] font-body mb-4" style={{ color: "var(--text-tertiary)" }}>
@@ -45,7 +45,7 @@ export default function CuratedSelectionCard({ selection, variant = "compact" })
         </div>
 
         {pullExcerpt && (
-          <p className="font-display italic text-[14px] leading-relaxed mb-4" style={{ color: "var(--text-secondary)" }}>
+          <p className="font-display text-[14px] leading-relaxed mb-4" style={{ color: "var(--text-secondary)" }}>
             {pullExcerpt}
           </p>
         )}
@@ -97,7 +97,7 @@ export default function CuratedSelectionCard({ selection, variant = "compact" })
         )}
         <div className="min-w-0">
           <div className="text-[12px] font-body mb-0.5" style={{ color: "var(--text-tertiary)" }}>La Bibliothèque de</div>
-          <div className="font-display italic text-[16px] font-normal leading-tight truncate" style={{ color: "var(--text-primary)" }}>
+          <div className="font-display text-[16px] font-normal leading-tight truncate" style={{ color: "var(--text-primary)" }}>
             {s.curator_name}
           </div>
           <div className="text-[12px] font-body truncate" style={{ color: "var(--text-tertiary)" }}>

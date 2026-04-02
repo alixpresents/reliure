@@ -18,7 +18,7 @@ export default function SelectionsPage() {
         <Label>Sélections</Label>
       </div>
 
-      <h1 className="font-display italic text-[26px] font-normal leading-tight mb-2" style={{ color: "var(--text-primary)" }}>
+      <h1 className="font-display text-[26px] font-normal leading-tight mb-2" style={{ color: "var(--text-primary)" }}>
         La Bibliothèque de...
       </h1>
       <p className="text-[14px] font-body mb-8" style={{ color: "var(--text-tertiary)" }}>

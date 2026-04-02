@@ -114,7 +114,7 @@ const FeedItem = memo(function FeedItem({
           {it.action_type === "list" && (
             <div className="mt-1.5">
               <span
-                className="text-[14px] font-normal font-display italic cursor-pointer hover:underline"
+                className="text-[14px] font-normal font-display cursor-pointer hover:underline"
                 onClick={() => nav(`/${it.users?.username}/listes/${meta.list_slug}`)}
               >
                 {meta.list_title}
@@ -179,7 +179,7 @@ const FeedItem = memo(function FeedItem({
           {it.action_type === "quote" && meta.quote_body && (
             <div className="mt-2">
               <div className="border-l-[3px] border-l-cover-fallback pl-3">
-                <span className="text-sm italic leading-relaxed font-display" style={{ color: "var(--text-primary)" }}>« {meta.quote_body} »</span>
+                <span className="text-sm leading-relaxed font-display" style={{ color: "var(--text-primary)" }}>« {meta.quote_body} »</span>
               </div>
               <div className="flex items-center gap-2 mt-1.5 text-[11px] font-body">
                 <LikeButton

@@ -88,7 +88,7 @@ const ExploreQuoteItem = memo(function ExploreQuoteItem({ q, liked, initialLiked
   return (
     <div className="group py-4 border-b border-border-light relative">
       <div className="flex items-start justify-between gap-2">
-        <div className="text-[15px] italic leading-[1.7] border-l-[3px] border-l-cover-fallback pl-3.5 mb-2.5 font-display flex-1" style={{ color: "var(--text-primary)" }}>
+        <div className="text-[15px] leading-[1.7] border-l-[3px] border-l-cover-fallback pl-3.5 mb-2.5 font-display flex-1" style={{ color: "var(--text-primary)" }}>
           « {q.text} »
         </div>
         <ContentMenu type="quote" item={q} onDelete={refetchQuotes} onEdit={refetchQuotes} />
@@ -215,7 +215,7 @@ export default function ExplorePage() {
       {/* Hero — visiteurs non connectés uniquement */}
       {!user && (
         <div className="pt-8 pb-6 mb-2" style={{ borderBottom: "1px solid var(--border-subtle)" }}>
-          <h1 className="font-display italic text-[22px] sm:text-[26px] font-normal leading-snug mb-2" style={{ color: "var(--text-primary)" }}>
+          <h1 className="font-display text-[22px] sm:text-[26px] font-normal leading-snug mb-2" style={{ color: "var(--text-primary)" }}>
             La bibliothèque personnelle des lecteurs francophones.
           </h1>
           <p className="text-[14px] font-body mb-5" style={{ color: "var(--text-tertiary)" }}>
@@ -485,7 +485,7 @@ export default function ExplorePage() {
       {!loadingRanking && top3.length > 0 && (
         <div className="border-t border-border-light py-6">
           <div className="flex items-baseline justify-between mb-4">
-            <span className="font-display italic text-[18px] font-normal" style={{ color: "var(--text-primary)" }}>Top contributeurs</span>
+            <span className="font-display text-[18px] font-normal" style={{ color: "var(--text-primary)" }}>Top contributeurs</span>
             <Link to="/classement" className="text-[12px] font-body no-underline hover:underline" style={{ color: "var(--text-tertiary)" }}>
               Voir le classement ›
             </Link>
@@ -496,7 +496,7 @@ export default function ExplorePage() {
               const ini = name.split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2);
               return (
                 <div key={entry.user_id} className="flex items-center gap-3">
-                  <span className="font-display italic text-[14px] shrink-0" style={{ color: i === 0 ? "#C9A84C" : "var(--text-muted)", minWidth: 20 }}>{i + 1}</span>
+                  <span className="font-display text-[14px] shrink-0" style={{ color: i === 0 ? "#C9A84C" : "var(--text-muted)", minWidth: 20 }}>{i + 1}</span>
                   <Link to={`/${entry.username}`} className="shrink-0">
                     <Avatar i={ini} s={30} src={entry.avatar_url || null} />
                   </Link>

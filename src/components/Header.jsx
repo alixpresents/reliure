@@ -80,7 +80,7 @@ export default function Header({ onSearch, onClose, searchOpen, searchGo, search
           <NavLink
             to="/la-revue"
             className={({ isActive }) =>
-              `no-underline rounded-md px-2 py-1.5 sm:px-[11px] sm:py-[7px] text-[13px] font-display italic shrink-0 flex items-center gap-1 ${
+              `no-underline rounded-md px-2 py-1.5 sm:px-[11px] sm:py-[7px] text-[13px] font-display shrink-0 flex items-center gap-1 ${
                 isActive ? "font-semibold" : "font-normal"
               }`
             }

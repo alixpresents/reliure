@@ -58,7 +58,7 @@ export default function JournalPage() {
             className="py-8 pb-7 cursor-pointer hover:bg-surface -mx-4 px-4 sm:-mx-6 sm:px-6 rounded-lg transition-colors duration-150"
           >
             <div className="flex items-start gap-2 mb-3.5"><Tag>{feat.tag}</Tag></div>
-            <h3 className="text-xl sm:text-2xl font-normal mb-2 leading-[1.25] max-w-[580px] font-display italic">{feat.t}</h3>
+            <h3 className="text-xl sm:text-2xl font-normal mb-2 leading-[1.25] max-w-[580px] font-display">{feat.t}</h3>
             <p className="text-[15px] mb-4 leading-normal max-w-[580px] font-body" style={{ color: "var(--text-secondary)" }}>{feat.st}</p>
             <div className="flex flex-col sm:flex-row gap-6">
               <Img book={feat.cv} w={200} h={300} className="sm:w-[200px] sm:h-[300px] w-full h-auto aspect-[2/3] mx-auto sm:mx-0" />
@@ -95,7 +95,7 @@ export default function JournalPage() {
               <div className="flex gap-5">
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-2.5"><Tag>{a.tag}</Tag></div>
-                  <h4 className="text-[17px] font-normal mb-[5px] leading-[1.3] font-display italic">{a.t}</h4>
+                  <h4 className="text-[17px] font-normal mb-[5px] leading-[1.3] font-display">{a.t}</h4>
                   {a.st && <p className="text-[13px] mb-2.5 leading-[1.45] font-body" style={{ color: "var(--text-secondary)" }}>{a.st}</p>}
                   <p className="text-[13px] leading-[1.7] mb-3 font-body" style={{ color: "var(--text-secondary)" }}>{a.ex.slice(0, 180)}...</p>
                   <div className="text-xs font-body" style={{ color: "var(--text-tertiary)" }}>

@@ -156,12 +156,12 @@ export default function ListPage() {
                 onChange={e => setTitleDraft(e.target.value)}
                 onBlur={commitTitle}
                 onKeyDown={e => { if (e.key === "Enter") commitTitle(); if (e.key === "Escape") setEditingTitle(false); }}
-                className="text-[22px] font-normal font-display italic w-full bg-transparent border-none outline-none border-b pb-1"
+                className="text-[22px] font-normal font-display w-full bg-transparent border-none outline-none border-b pb-1"
                 style={{ borderColor: "var(--border-default)" }}
               />
             ) : (
               <h1
-                className={`text-[22px] font-normal font-display italic m-0 ${isOwner ? "cursor-text" : ""}`}
+                className={`text-[22px] font-normal font-display m-0 ${isOwner ? "cursor-text" : ""}`}
                 onClick={isOwner ? () => { setTitleDraft(list.title); setEditingTitle(true); } : undefined}
               >
                 {list.title}
@@ -352,7 +352,7 @@ export default function ListPage() {
                   </div>
                 ) : item.note ? (
                   <div
-                    className={`text-[12px] font-display italic mt-1 leading-relaxed ${isOwner && editing ? "cursor-text" : ""}`}
+                    className={`text-[12px] font-display mt-1 leading-relaxed ${isOwner && editing ? "cursor-text" : ""}`}
                     style={{ color: "var(--text-secondary)" }}
                     onClick={isOwner && editing ? () => { setEditingNote(item.id); setNoteDraft(item.note || ""); } : undefined}
                   >

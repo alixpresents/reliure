@@ -66,7 +66,7 @@ export default function LoginPage() {
               BETA
             </span>
           </div>
-          <h1 className="font-display italic text-[32px] font-normal mb-3 leading-tight">
+          <h1 className="font-display text-[32px] font-normal mb-3 leading-tight">
             Ton journal de lecture, tes coups de cœur.
           </h1>
           <p className="text-[14px] font-body leading-relaxed" style={{ color: "var(--text-tertiary)" }}>

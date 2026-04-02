@@ -741,7 +741,7 @@ export default function ProfilePage({ viewedProfile, initialTab }) {
                 onBlur={commitName}
                 onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); commitName(); } if (e.key === "Escape") setEditingName(false); }}
                 maxLength={50}
-                className="text-[22px] font-normal font-display italic bg-transparent border-none outline-none w-full py-0 px-0"
+                className="text-[22px] font-normal font-display bg-transparent border-none outline-none w-full py-0 px-0"
                 style={{ borderBottom: "1px solid var(--text-primary)" }}
               />
             ) : (
@@ -749,7 +749,7 @@ export default function ProfilePage({ viewedProfile, initialTab }) {
                 className={`flex items-center gap-1.5 ${isOwnProfile ? "cursor-pointer group/name" : ""}`}
                 onClick={isOwnProfile ? startEditName : undefined}
               >
-                <span className="text-[22px] font-normal font-display italic">{displayName || profile.username}</span>
+                <span className="text-[22px] font-normal font-display">{displayName || profile.username}</span>
                 {isOwnProfile && <span className="text-[15px] select-none opacity-0 group-hover/name:opacity-100 transition-opacity duration-150" style={{ color: "var(--text-muted)" }}>✎</span>}
               </div>
             )}
@@ -1041,7 +1041,7 @@ export default function ProfilePage({ viewedProfile, initialTab }) {
           {libraryBooks.length === 0 ? (
             isOwnProfile ? (
               <div className="py-14 flex flex-col items-center text-center px-4">
-                <h2 className="font-display italic text-[22px] font-normal mb-3" style={{ color: "var(--text-primary)" }}>
+                <h2 className="font-display text-[22px] font-normal mb-3" style={{ color: "var(--text-primary)" }}>
                   Ta bibliothèque t'attend.
                 </h2>
                 <p className="text-[14px] font-body leading-relaxed mb-7" style={{ maxWidth: 360, color: "var(--text-secondary)" }}>
@@ -1232,7 +1232,7 @@ export default function ProfilePage({ viewedProfile, initialTab }) {
             return (
               <div key={q.id} className="group py-5 border-b border-border-light relative">
                 <div className="flex items-start justify-between gap-2">
-                  <div className="text-[15px] italic leading-[1.7] border-l-[3px] border-l-cover-fallback pl-4 mb-3 font-display flex-1" style={{ color: "var(--text-primary)" }}>
+                  <div className="text-[15px] leading-[1.7] border-l-[3px] border-l-cover-fallback pl-4 mb-3 font-display flex-1" style={{ color: "var(--text-primary)" }}>
                     « {q.text} »
                   </div>
                   <ContentMenu type="quote" item={q} onDelete={() => refetchQuotes()} onEdit={() => refetchQuotes()} />
@@ -1399,7 +1399,7 @@ export default function ProfilePage({ viewedProfile, initialTab }) {
             </>
           ) : (
             <EmptyState>
-              <div className="font-display italic text-[18px] mb-5" style={{ color: "var(--text-primary)" }}>
+              <div className="font-display text-[18px] mb-5" style={{ color: "var(--text-primary)" }}>
                 Encore {5 - (s.thisYear || 0)} livre{(5 - (s.thisYear || 0)) > 1 ? "s" : ""} pour débloquer ton bilan {yr}
               </div>
               <div className="flex justify-center mb-2">
@@ -1445,7 +1445,7 @@ export default function ProfilePage({ viewedProfile, initialTab }) {
               </button>
               {badgeModal === "pick" ? (
                 <>
-                  <h2 className="font-display italic font-normal text-center" style={{ fontSize: 18, color: "var(--text-primary)", margin: "0 0 4px" }}>
+                  <h2 className="font-display font-normal text-center" style={{ fontSize: 18, color: "var(--text-primary)", margin: "0 0 4px" }}>
                     Mes badges
                   </h2>
                   <p className="text-center text-[12px] font-body" style={{ color: "var(--text-tertiary)", margin: "0 0 20px" }}>
@@ -1489,7 +1489,7 @@ export default function ProfilePage({ viewedProfile, initialTab }) {
                 </>
               ) : (
                 <>
-                  <h2 className="font-display italic font-normal text-center" style={{ fontSize: 18, color: "var(--text-primary)", margin: "0 0 20px" }}>
+                  <h2 className="font-display font-normal text-center" style={{ fontSize: 18, color: "var(--text-primary)", margin: "0 0 20px" }}>
                     Quel badge remplacer ?
                   </h2>
                   <div className="flex justify-center gap-6">

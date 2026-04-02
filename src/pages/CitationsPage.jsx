@@ -30,7 +30,7 @@ function QuoteCard({ q, liked, initialLiked, onToggle, showToast, onEdit, onDele
     >
       {/* Quote text */}
       <div
-        className="text-[15px] font-display italic leading-[1.6] mb-4 pl-4"
+        className="text-[15px] font-display leading-[1.6] mb-4 pl-4"
         style={{
           color: "var(--text-primary)",
           borderLeft: "2px solid var(--border-default)",
@@ -134,7 +134,7 @@ export default function CitationsPage() {
             }}
           >
             <div
-              className="text-[15px] font-display italic leading-[1.6] mb-4 pl-4"
+              className="text-[15px] font-display leading-[1.6] mb-4 pl-4"
               style={{
                 color: "var(--text-primary)",
                 borderLeft: "2px solid var(--border-default)",

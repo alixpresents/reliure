@@ -66,7 +66,7 @@ export default function ArticlePage() {
       {/* Header */}
       <div className="mb-8">
         <div className="mb-3"><Tag>{article.tag}</Tag></div>
-        <h1 className="font-display italic text-[24px] sm:text-[28px] font-normal leading-tight mb-3">{article.t}</h1>
+        <h1 className="font-display text-[24px] sm:text-[28px] font-normal leading-tight mb-3">{article.t}</h1>
         {article.st && (
           <p className="text-base leading-relaxed mb-4 font-body" style={{ color: "var(--text-secondary)" }}>{article.st}</p>
         )}
@@ -101,7 +101,7 @@ export default function ArticlePage() {
         <div className="flex-1 sm:order-1">
           {/* First paragraph with drop cap */}
           <p className="text-base leading-[1.85] mb-6 font-body" style={{ color: "var(--text-body)" }}>
-            <span className="font-display italic text-[48px] float-left leading-[0.8] mr-2 mt-1" style={{ color: "var(--text-primary)" }}>{firstChar}</span>
+            <span className="font-display text-[48px] float-left leading-[0.8] mr-2 mt-1" style={{ color: "var(--text-primary)" }}>{firstChar}</span>
             {restOfFirst}
           </p>
 
@@ -127,7 +127,7 @@ export default function ArticlePage() {
           >
             <div className="flex-1">
               <div className="mb-2"><Tag>{a.tag}</Tag></div>
-              <h4 className="text-[15px] sm:text-[17px] font-normal mb-1 leading-[1.3] font-display italic">{a.t}</h4>
+              <h4 className="text-[15px] sm:text-[17px] font-normal mb-1 leading-[1.3] font-display">{a.t}</h4>
               <div className="text-xs font-body mt-2" style={{ color: "var(--text-tertiary)" }}>
                 <span className="font-medium" style={{ color: "var(--text-secondary)" }}>{a.a}</span>
                 <span className="mx-1.5" style={{ color: "var(--border-subtle)" }}>·</span>{a.d}

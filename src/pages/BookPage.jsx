@@ -171,7 +171,7 @@ function EnrichModal({ bookId, onClose, onSaved, initialDescription, initialPage
       <div onClick={onClose} style={S_MODAL_OVERLAY} />
       <div style={S_MODAL_CONTAINER}>
         <div onClick={e => e.stopPropagation()} style={{ width: "100%", maxWidth: 440, background: "var(--bg-primary)", borderRadius: 16, boxShadow: "0 12px 48px rgba(0,0,0,0.16)", padding: "28px 24px 24px", maxHeight: "90vh", overflowY: "auto" }}>
-          <h2 className="font-display italic text-[20px] font-normal m-0 mb-1">Compléter cette fiche</h2>
+          <h2 className="font-display text-[20px] font-normal m-0 mb-1">Compléter cette fiche</h2>
           <div className="text-[11px] font-body mb-5" style={{ color: "var(--text-tertiary)" }}>Les modifications sont appliquées immédiatement.</div>
 
           {/* Couverture */}
@@ -329,7 +329,7 @@ const BookReviewItem = memo(function BookReviewItem({ rv, liked, initialLiked, t
 const BookQuoteItem = memo(function BookQuoteItem({ q, liked, initialLiked, toggleLike, showToast, refetchQuotes, anchorRef, creatorIds }) {
   return (
     <div ref={anchorRef} className="group py-[18px] border-b border-border-light relative">
-      <div className="text-[15px] italic leading-[1.7] border-l-[3px] border-l-cover-fallback pl-4 font-display" style={{ color: "var(--text-primary)" }}>
+      <div className="text-[15px] leading-[1.7] border-l-[3px] border-l-cover-fallback pl-4 font-display" style={{ color: "var(--text-primary)" }}>
         « {q.text} »
       </div>
       <div className="flex items-center gap-2 mt-2.5">
@@ -641,7 +641,7 @@ export default function BookPage({ book }) {
           )}
         </div>
         <div className="flex-1 pt-1">
-          <h1 className="m-0 text-[26px] font-normal leading-tight font-display italic">{book.t}</h1>
+          <h1 className="m-0 text-[26px] font-normal leading-tight font-display">{book.t}</h1>
           <div className="text-[15px] mt-1.5 font-body" style={{ color: "var(--text-tertiary)" }}>{book.a}</div>
           <div className="text-[13px] mt-1 font-body" style={{ color: "var(--text-tertiary)" }}>{book.y || book.publication_date}{(book.p || book.page_count) ? ` · ${book.p || book.page_count} pages` : ""}</div>
 
@@ -1071,7 +1071,7 @@ export default function BookPage({ book }) {
                   value={quoteText}
                   onChange={e => setQuoteText(e.target.value)}
                   placeholder="Copiez un passage du livre..."
-                  className="w-full min-h-[80px] p-3 border rounded-lg outline-none text-base md:text-[15px] font-display italic leading-[1.7] resize-y placeholder:text-[var(--text-tertiary)] placeholder:not-italic placeholder:font-body focus:border-[var(--text-tertiary)] transition-[border] duration-150"
+                  className="w-full min-h-[80px] p-3 border rounded-lg outline-none text-base md:text-[15px] font-display leading-[1.7] resize-y placeholder:text-[var(--text-tertiary)] placeholder:not-italic placeholder:font-body focus:border-[var(--text-tertiary)] transition-[border] duration-150"
                   style={{ backgroundColor: "var(--bg-elevated)", color: "var(--text-primary)", borderColor: "var(--border-default)" }}
                 />
                 <div className="flex gap-2 mt-3">

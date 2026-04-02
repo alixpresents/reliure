@@ -74,7 +74,7 @@ export default function ContentMenu({ type, item, onDelete, onEdit }) {
         <textarea
           value={editBody}
           onChange={e => setEditBody(e.target.value)}
-          className={`w-full min-h-[80px] p-3 border rounded-lg outline-none text-[15px] leading-[1.7] resize-y transition-[border] duration-150 ${type === "quote" ? "font-display italic" : "font-body"}`}
+          className={`w-full min-h-[80px] p-3 border rounded-lg outline-none text-[15px] leading-[1.7] resize-y transition-[border] duration-150 ${type === "quote" ? "font-display" : "font-body"}`}
           style={{ backgroundColor: "var(--bg-elevated)", borderColor: "var(--border-default)", color: "var(--text-primary)" }}
         />
         {type === "review" && (

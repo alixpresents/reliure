@@ -138,7 +138,7 @@ export default function BadgesPage() {
         </Link>
       </div>
 
-      <h1 className="font-display italic text-[20px] font-normal mb-0.5">
+      <h1 className="font-display text-[20px] font-normal mb-0.5">
         Collection de badges
       </h1>
       <p className="text-[13px] font-body mb-8" style={{ color: "var(--text-tertiary)" }}>
@@ -148,7 +148,7 @@ export default function BadgesPage() {
       {/* ── Vitrine (own profile only) ── */}
       {isOwnProfile && (
         <div className="mb-10">
-          <div className="text-[14px] font-display italic mb-1">Ma vitrine</div>
+          <div className="text-[14px] font-display mb-1">Ma vitrine</div>
           <div className="text-[12px] font-body mb-4" style={{ color: "var(--text-tertiary)" }}>
             Choisis 3 badges à afficher sur ton profil
           </div>
@@ -308,7 +308,7 @@ export default function BadgesPage() {
               onClick={e => e.stopPropagation()}
               style={{ backgroundColor: "var(--bg-primary)", border: "1px solid var(--border-subtle)", borderRadius: 16, padding: 24, boxShadow: "0 8px 40px rgba(0,0,0,0.16)", maxWidth: 360, width: "100%" }}
             >
-              <h2 className="font-display italic font-normal mb-5 text-center" style={{ fontSize: 18, color: "var(--text-primary)", margin: "0 0 20px" }}>
+              <h2 className="font-display font-normal mb-5 text-center" style={{ fontSize: 18, color: "var(--text-primary)", margin: "0 0 20px" }}>
                 Quel badge remplacer ?
               </h2>
               <div className="flex justify-center gap-6">

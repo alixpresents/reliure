@@ -10,9 +10,9 @@ function initials(user) {
 }
 
 function RankNumber({ rank }) {
-  if (rank === 1) return <span className="font-display italic text-[18px]" style={{ color: "#C9A84C", minWidth: 28, textAlign: "center" }}>1</span>;
-  if (rank === 2) return <span className="font-display italic text-[16px]" style={{ color: "var(--text-tertiary)", minWidth: 28, textAlign: "center" }}>2</span>;
-  if (rank === 3) return <span className="font-display italic text-[15px]" style={{ color: "var(--text-tertiary)", minWidth: 28, textAlign: "center" }}>3</span>;
+  if (rank === 1) return <span className="font-display text-[18px]" style={{ color: "#C9A84C", minWidth: 28, textAlign: "center" }}>1</span>;
+  if (rank === 2) return <span className="font-display text-[16px]" style={{ color: "var(--text-tertiary)", minWidth: 28, textAlign: "center" }}>2</span>;
+  if (rank === 3) return <span className="font-display text-[15px]" style={{ color: "var(--text-tertiary)", minWidth: 28, textAlign: "center" }}>3</span>;
   return <span className="font-body text-[13px]" style={{ color: "var(--text-muted)", minWidth: 28, textAlign: "center" }}>{rank}</span>;
 }
 
@@ -62,7 +62,7 @@ export default function ClassementPage() {
   return (
     <div className="sk-fade pb-16">
       <div className="pt-8 pb-3">
-        <h1 className="font-display italic text-[28px] font-normal mb-1" style={{ color: "var(--text-primary)" }}>
+        <h1 className="font-display text-[28px] font-normal mb-1" style={{ color: "var(--text-primary)" }}>
           Classement
         </h1>
         <p className="text-[13px] font-body" style={{ color: "var(--text-muted)" }}>

@@ -74,7 +74,7 @@ export default function BadgeToast({ badge, onDismiss }) {
             Nouveau badge débloqué !
           </div>
           <div
-            className="font-display italic text-[16px] font-normal leading-tight"
+            className="font-display text-[16px] font-normal leading-tight"
             style={{ color: "var(--text-primary)" }}
           >
             {def.name}

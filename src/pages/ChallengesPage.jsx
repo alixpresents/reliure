@@ -48,7 +48,7 @@ function ChallengesIndex({ onSelect, enrolled, onJoin }) {
 
   return (
     <div className="pt-5">
-      <h1 className="font-display italic text-[26px] font-normal m-0 leading-tight">Défis</h1>
+      <h1 className="font-display text-[26px] font-normal m-0 leading-tight">Défis</h1>
       <p className="text-[13px] font-body mt-1 mb-6" style={{ color: "var(--text-tertiary)" }}>Rejoins un défi de lecture et découvre de nouveaux livres.</p>
 
       {mine.length > 0 && (
@@ -129,7 +129,7 @@ function ParticipantView() {
       <div className="flex flex-col sm:flex-row gap-5 sm:gap-6 items-center sm:items-start mb-6">
         <ProgressCircle completed={c.completedCount} total={target.required} size={80} />
         <div className="text-center sm:text-left">
-          <h1 className="font-display italic text-xl sm:text-2xl font-normal m-0 leading-tight">{c.title}</h1>
+          <h1 className="font-display text-xl sm:text-2xl font-normal m-0 leading-tight">{c.title}</h1>
           <div className="text-[13px] font-body mt-1">
             Objectif : <span className="font-medium" style={{ color: "var(--color-wip-text)" }}>{c.targetTier}</span>
           </div>
@@ -174,7 +174,7 @@ function ParticipantView() {
                 <div className="flex items-center gap-2.5">
                   <div className="w-8 h-12 rounded-sm bg-cover-fallback shrink-0" />
                   <div>
-                    <div className="text-[11px] font-display italic" style={{ color: "var(--text-primary)" }}>{item.myBook.title}</div>
+                    <div className="text-[11px] font-display" style={{ color: "var(--text-primary)" }}>{item.myBook.title}</div>
                     <div className="text-[10px] font-body flex items-center gap-1" style={{ color: "var(--text-tertiary)" }}>{item.myBook.date} · <Stars r={item.myBook.rating} s={10} /></div>
                   </div>
                 </div>
@@ -207,7 +207,7 @@ function PublicView() {
             <span className="text-[28px] text-star">★</span>
           </div>
         </div>
-        <h1 className="font-display italic text-[24px] sm:text-[28px] font-normal m-0 leading-tight">{c.title}</h1>
+        <h1 className="font-display text-[24px] sm:text-[28px] font-normal m-0 leading-tight">{c.title}</h1>
         <p className="text-sm leading-relaxed max-w-[400px] mx-auto mt-2 font-body" style={{ color: "var(--text-tertiary)" }}>{c.description}</p>
         <div className="text-xs font-body mt-2" style={{ color: "var(--text-tertiary)" }}>Par {c.creator} · {c.startDate} — {c.endDate}</div>
       </div>

@@ -69,7 +69,7 @@ function StepUsername({ username, setUsername, bio, setBio, onNext, error: exter
 
   return (
     <div>
-      <h1 className="font-display italic text-[24px] font-normal text-center mb-2 leading-tight">
+      <h1 className="font-display text-[24px] font-normal text-center mb-2 leading-tight">
         Comment on t'appelle ?
       </h1>
       <p className="text-[13px] text-center mb-10 font-body" style={{ color: "var(--text-tertiary)" }}>
@@ -181,7 +181,7 @@ function StepBooks({ picks, setPicks, onFinish, onSkip }) {
 
   return (
     <div>
-      <h1 className="font-display italic text-[24px] font-normal text-center mb-2 leading-tight">
+      <h1 className="font-display text-[24px] font-normal text-center mb-2 leading-tight">
         Quels livres t'ont marqué ?
       </h1>
       <p className="text-[13px] text-center mb-4 font-body" style={{ color: "var(--text-tertiary)" }}>
@@ -318,7 +318,7 @@ function StepProfilePreview({ username, picks, onExplore }) {
         </div>
       </div>
 
-      <h1 className="font-display italic text-[24px] font-normal mb-1 leading-tight">
+      <h1 className="font-display text-[24px] font-normal mb-1 leading-tight">
         Bienvenue, @{username}
       </h1>
       <p className="text-[13px] font-body mb-8" style={{ color: "var(--text-tertiary)" }}>

@@ -477,7 +477,7 @@ export default function BackfillPage() {
 
       {/* Header */}
       <div className="text-center mb-6">
-        <h1 className="font-display italic text-xl font-normal mb-1 leading-tight">
+        <h1 className="font-display text-xl font-normal mb-1 leading-tight">
           Qu'as-tu lu récemment ?
         </h1>
         <p className="text-[13px] font-body" style={{ color: "var(--text-tertiary)" }}>

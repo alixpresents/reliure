@@ -43,7 +43,7 @@ export default function SelectionPage({ selection }) {
       <div className="mt-3 mb-1">
         <span className="text-[15px] font-body" style={{ color: "var(--text-secondary)" }}>La Bibliothèque de</span>
       </div>
-      <h1 className="font-display italic text-[32px] font-normal leading-tight mb-1" style={{ color: "var(--text-primary)" }}>
+      <h1 className="font-display text-[32px] font-normal leading-tight mb-1" style={{ color: "var(--text-primary)" }}>
         {s.curator_name}
       </h1>
       {s.curator_role && (
@@ -76,9 +76,9 @@ export default function SelectionPage({ selection }) {
           className="text-center"
           style={{ fontSize: 20, lineHeight: 1.6, color: "var(--text-primary)", padding: "8px 0 24px", fontFamily: "var(--font-body)" }}
         >
-          <span style={{ fontFamily: "var(--font-display)", fontStyle: "italic" }}>«</span>
+          <span style={{ fontFamily: "var(--font-display)" }}>«</span>
           {" "}{s.curator_pull_quote}{" "}
-          <span style={{ fontFamily: "var(--font-display)", fontStyle: "italic" }}>»</span>
+          <span style={{ fontFamily: "var(--font-display)" }}>»</span>
         </p>
       )}
 
@@ -133,7 +133,7 @@ export default function SelectionPage({ selection }) {
               </Link>
               <div className="flex-1 min-w-0">
                 <Link to={bookUrl} className="no-underline">
-                  <div className="font-display italic text-[18px] font-normal leading-snug mb-1" style={{ color: "var(--text-primary)" }}>
+                  <div className="font-display text-[18px] font-normal leading-snug mb-1" style={{ color: "var(--text-primary)" }}>
                     {item.title}
                   </div>
                 </Link>
@@ -163,9 +163,9 @@ export default function SelectionPage({ selection }) {
                   fontFamily: "var(--font-body)",
                 }}
               >
-                <span style={{ fontFamily: "var(--font-display)", fontStyle: "italic" }}>«</span>
+                <span style={{ fontFamily: "var(--font-display)" }}>«</span>
                 {" "}{item.note}{" "}
-                <span style={{ fontFamily: "var(--font-display)", fontStyle: "italic" }}>»</span>
+                <span style={{ fontFamily: "var(--font-display)" }}>»</span>
               </div>
             )}
           </div>
