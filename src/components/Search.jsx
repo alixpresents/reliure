@@ -399,7 +399,7 @@ export default function Search({ open, onClose, go, initialQuery = "" }) {
           bestTitle: best.r.title, bestScore: best.score,
           source: best.r._source,
         }));
-        if (best.score > 0) {
+        if (best.score >= 100) {
           await handleSelect(best.r);
           setLoading(false);
           return;
