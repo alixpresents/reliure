@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "../lib/supabase";
 
-function mapBook(data) {
+export function mapBook(data) {
   return {
     id: data.id,
     t: data.title,

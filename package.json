@@ -4,22 +4,31 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
+    "dev": "react-router dev",
+    "build": "react-router build && node scripts/generate-sitemap.mjs",
+    "start": "react-router-serve ./build/server/index.js",
+    "preview": "react-router-serve ./build/server/index.js",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "typecheck": "react-router typegen && tsc",
+    "_dev:old": "vite",
+    "_build:old": "vite build"
   },
   "dependencies": {
+    "@react-router/node": "^7.14.0",
     "@supabase/supabase-js": "^2.100.1",
     "@tanstack/react-query": "^5.96.1",
     "lucide-react": "^1.7.0",
     "papaparse": "^5.5.3",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
-    "react-router-dom": "^7.13.2"
+    "react-router": "^7.14.0",
+    "react-router-dom": "^7.14.0",
+    "isbot": "^5"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.4",
+    "@react-router/dev": "^7.14.0",
+    "@react-router/serve": "^7.14.0",
     "@tailwindcss/vite": "^4.2.2",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",

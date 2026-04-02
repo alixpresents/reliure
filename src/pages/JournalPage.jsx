@@ -1,3 +1,15 @@
+export function meta() {
+  return [
+    { title: "La Revue — Reliure" },
+    { name: "description", content: "Essais, entretiens et sélections littéraires sur Reliure." },
+    { property: "og:title", content: "La Revue — Reliure" },
+    { property: "og:description", content: "Essais, entretiens et sélections littéraires sur Reliure." },
+    { property: "og:type", content: "website" },
+    { property: "og:site_name", content: "Reliure" },
+    { name: "twitter:card", content: "summary_large_image" },
+  ];
+}
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { JARTICLES, JAGENDA } from "../data";

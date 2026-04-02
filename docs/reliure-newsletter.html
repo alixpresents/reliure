@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Le Journal — Reliure</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cardo:ital,wght@0,400;1,400&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Fragment+Mono:ital,wght@0,400&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #f5f3f0;
+    color: #1a1a1a;
+    font-family: 'Fragment Mono', monospace;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .nl {
+    max-width: 620px;
+    margin: 0 auto;
+    background: #fff;
+  }
+
+  /* ─── HEADER ─── */
+  .hdr {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 18px 28px;
+  }
+  .hdr-logo {
+    font-family: 'Cardo', serif;
+    font-weight: 400;
+    font-size: 22px;
+    letter-spacing: -0.3px;
+    color: #1a1a1a;
+    text-decoration: none;
+  }
+  .hdr-nav {
+    display: flex;
+    gap: 20px;
+  }
+  .hdr-nav a {
+    font-family: 'Fragment Mono', monospace;
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: #999;
+    text-decoration: none;
+    transition: color .2s;
+  }
+  .hdr-nav a:hover { color: #1a1a1a; }
+  .hdr-rule {
+    height: 1px;
+    background: #1a1a1a;
+    margin: 0 28px;
+  }
+
+  /* ─── HERO ─── */
+  .hero {
+    padding: 48px 28px 0;
+  }
+  .hero-kicker {
+    font-family: 'Fragment Mono', monospace;
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    color: #999;
+    margin-bottom: 18px;
+  }
+  .hero-title {
+    font-family: 'Cardo', serif;
+    font-weight: 400;
+    font-size: 46px;
+    line-height: 1.05;
+    letter-spacing: -1px;
+    color: #1a1a1a;
+    margin-bottom: 18px;
+    max-width: 520px;
+  }
+  .hero-deck {
+    font-family: 'Fragment Mono', monospace;
+    font-size: 13px;
+    color: #666;
+    line-height: 1.7;
+    max-width: 460px;
+  }
+
+  /* ─── IMAGE PLACEHOLDERS ─── */
+  .img-full {
+    width: 100%;
+    aspect-ratio: 16/9;
+    display: block;
+  }
+
+  .c-sand { background: #e8e4de; }
+  .c-terracotta { background: #c4775a; }
+  .c-olive { background: #8a8a6a; }
+  .c-ink { background: #1a1a1a; }
+  .c-cream { background: #f5f0e8; }
+  .c-slate { background: #6b6e72; }
+  .c-rust { background: #a0522d; }
+  .c-sage { background: #b2b5a0; }
+  .c-warm-gray { background: #d5d0c8; }
+  .c-blush { background: #d4a99a; }
+  .c-charcoal { background: #333; }
+
+  /* ─── TEXT ─── */
+  .txt {
+    padding: 0 28px;
+    font-family: 'Cardo', serif;
+    font-size: 16px;
+    color: #333;
+    line-height: 1.7;
+  }
+  .txt em { font-style: italic; }
+
+  .drop-cap::first-letter {
+    font-family: 'Cardo', serif;
+    font-size: 62px;
+    float: left;
+    line-height: 0.78;
+    margin-right: 10px;
+    margin-top: 5px;
+    color: #1a1a1a;
+  }
+
+  /* ─── QUOTE ─── */
+  .qt {
+    padding: 32px 28px;
+    margin: 0 28px;
+    background: #1a1a1a;
+    color: #fff;
+  }
+  .qt-text {
+    font-family: 'Cardo', serif;
+    font-size: 23px;
+    line-height: 1.4;
+    margin-bottom: 16px;
+    letter-spacing: -0.3px;
+  }
+  .qt-attr {
+    font-family: 'Fragment Mono', monospace;
+    font-size: 10px;
+    color: #777;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+  }
+
+  /* ─── SPACERS ─── */
+  .sp-xs { height: 8px; }
+  .sp-sm { height: 16px; }
+  .sp { height: 28px; }
+  .sp-lg { height: 44px; }
+  .sp-xl { height: 64px; }
+  .rule { height: 1px; background: #eee; margin: 0 28px; }
+  .rule-dark { height: 1px; background: #1a1a1a; margin: 0 28px; }
+
+  /* ─── SECTION LABEL ─── */
+  .lbl {
+    font-family: 'Fragment Mono', monospace;
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    color: #999;
+    padding: 0 28px;
+  }
+
+  /* ─── BOOK GRID ─── */
+  .books {
+    display: flex;
+    gap: 14px;
+    padding: 0 28px;
+  }
+  .bk {
+    flex: 1;
+    text-decoration: none;
+    color: inherit;
+  }
+  .bk-cover {
+    width: 100%;
+    aspect-ratio: 2/3;
+    border-radius: 2px;
+    margin-bottom: 10px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  }
+  .bk-label {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 32px 10px 10px;
+    background: linear-gradient(transparent, rgba(0,0,0,0.6));
+    color: #fff;
+  }
+  .bk-label-title {
+    font-family: 'Cardo', serif;
+    font-size: 14px;
+    line-height: 1.2;
+    margin-bottom: 2px;
+  }
+  .bk-label-author {
+    font-family: 'Fragment Mono', monospace;
+    font-size: 8px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    opacity: 0.75;
+  }
+  .bk-stars {
+    font-size: 10px;
+    color: #D4883A;
+    letter-spacing: 1px;
+  }
+
+  /* ─── DIARY STRIP ─── */
+  .diary {
+    display: flex;
+    gap: 4px;
+    padding: 0 28px;
+  }
+  .diary-d {
+    flex: 1;
+    text-align: center;
+  }
+  .diary-d .d-lbl {
+    font-family: 'Fragment Mono', monospace;
+    font-size: 8px;
+    color: #bbb;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 4px;
+  }
+  .diary-d .d-slot {
+    width: 100%;
+    aspect-ratio: 2/3;
+    border-radius: 2px;
+    background: #f0ede8;
+  }
+  .diary-d .d-slot.filled {
+    box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+  }
+  .diary-d .d-rate {
+    font-size: 7px;
+    color: #D4883A;
+    margin-top: 3px;
+    letter-spacing: 0.5px;
+    height: 10px;
+  }
+
+  /* ─── STATS ─── */
+  .stats {
+    display: flex;
+    padding: 0 28px;
+  }
+  .st {
+    flex: 1;
+    text-align: center;
+    padding: 22px 0;
+    border-right: 1px solid #f0f0f0;
+  }
+  .st:last-child { border-right: none; }
+  .st-n {
+    font-family: 'Cardo', serif;
+    font-size: 38px;
+    color: #1a1a1a;
+    line-height: 1;
+    margin-bottom: 6px;
+  }
+  .st-l {
+    font-family: 'Fragment Mono', monospace;
+    font-size: 8px;
+    text-transform: uppercase;
+    letter-spacing: 2.5px;
+    color: #bbb;
+  }
+
+  /* ─── FEATURE ROW ─── */
+  .feat {
+    display: flex;
+    gap: 20px;
+    padding: 0 28px;
+    align-items: start;
+    text-decoration: none;
+    color: inherit;
+  }
+  .feat-img {
+    width: 110px;
+    min-width: 110px;
+    aspect-ratio: 3/4;
+    border-radius: 2px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  }
+  .feat-body {
+    flex: 1;
+    padding-top: 4px;
+  }
+  .feat-tag {
+    font-family: 'Fragment Mono', monospace;
+    font-size: 8px;
+    text-transform: uppercase;
+    letter-spacing: 2.5px;
+    color: #bbb;
+    margin-bottom: 10px;
+  }
+  .feat-title {
+    font-family: 'Cardo', serif;
+    font-weight: 400;
+    font-size: 22px;
+    line-height: 1.2;
+    margin-bottom: 10px;
+    color: #1a1a1a;
+    letter-spacing: -0.3px;
+  }
+  .feat-excerpt {
+    font-family: 'Fragment Mono', monospace;
+    font-size: 11px;
+    color: #999;
+    line-height: 1.6;
+  }
+
+  /* ─── COMMUNITY ─── */
+  .crit {
+    margin: 0 28px;
+    padding: 24px;
+    border: 1px solid #eee;
+  }
+  .crit-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+  .crit-av {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: #f0ede8;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Fragment Mono', monospace;
+    font-size: 11px;
+    color: #999;
+  }
+  .crit-name {
+    font-family: 'Fragment Mono', monospace;
+    font-size: 11px;
+    color: #1a1a1a;
+  }
+  .crit-handle {
+    font-family: 'Fragment Mono', monospace;
+    font-size: 10px;
+    color: #bbb;
+  }
+  .crit-text {
+    font-family: 'Cardo', serif;
+    font-size: 15px;
+    color: #333;
+    line-height: 1.65;
+    margin-bottom: 12px;
+  }
+  .crit-book {
+    font-family: 'Fragment Mono', monospace;
+    font-size: 9px;
+    color: #bbb;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+  }
+
+  /* ─── CTA ─── */
+  .cta-w { padding: 0 28px; text-align: center; }
+  .cta {
+    display: inline-block;
+    background: #1a1a1a;
+    color: #fff;
+    font-family: 'Fragment Mono', monospace;
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    padding: 16px 44px;
+    text-decoration: none;
+    transition: opacity .2s;
+  }
+  .cta:hover { opacity: 0.75; }
+  .cta-ghost {
+    background: transparent;
+    color: #1a1a1a;
+    border: 1px solid #1a1a1a;
+  }
+
+  /* ─── AGENDA ─── */
+  .agenda-item {
+    padding: 14px 28px;
+    display: flex;
+    gap: 18px;
+    align-items: baseline;
+    border-bottom: 1px solid #f5f3f0;
+  }
+  .agenda-item:last-child { border-bottom: none; }
+  .agenda-date {
+    font-family: 'Fragment Mono', monospace;
+    font-size: 10px;
+    white-space: nowrap;
+    min-width: 80px;
+    color: #1a1a1a;
+  }
+  .agenda-desc {
+    font-family: 'Fragment Mono', monospace;
+    font-size: 11px;
+    color: #999;
+    line-height: 1.6;
+  }
+
+  /* ─── BANNER ─── */
+  .banner {
+    padding: 44px 28px;
+    text-align: center;
+  }
+  .banner-title {
+    font-family: 'Cardo', serif;
+    font-weight: 400;
+    font-size: 32px;
+    letter-spacing: -0.5px;
+    margin-bottom: 10px;
+    color: #1a1a1a;
+  }
+  .banner-sub {
+    font-family: 'Fragment Mono', monospace;
+    font-size: 11px;
+    color: #999;
+    margin-bottom: 28px;
+    line-height: 1.6;
+  }
+
+  /* ─── 2-COL IMAGE ─── */
+  .img-duo {
+    display: flex;
+    gap: 4px;
+    padding: 0 28px;
+  }
+  .img-duo > div {
+    flex: 1;
+    aspect-ratio: 3/4;
+    border-radius: 2px;
+  }
+
+  /* ─── 3-COL GRID ─── */
+  .img-trio {
+    display: flex;
+    gap: 4px;
+    padding: 0 28px;
+  }
+  .img-trio > div {
+    flex: 1;
+    aspect-ratio: 1/1;
+    border-radius: 2px;
+  }
+
+  /* ─── FOOTER ─── */
+  .ftr {
+    padding: 32px 28px;
+    text-align: center;
+    border-top: 1px solid #1a1a1a;
+    margin: 0 28px;
+  }
+  .ftr-logo {
+    font-family: 'Cardo', serif;
+    font-weight: 400;
+    font-size: 18px;
+    margin-bottom: 4px;
+  }
+  .ftr-tag {
+    font-family: 'Fragment Mono', monospace;
+    font-size: 10px;
+    color: #bbb;
+    margin-bottom: 20px;
+  }
+  .ftr-links {
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+    margin-bottom: 20px;
+  }
+  .ftr-links a {
+    font-family: 'Fragment Mono', monospace;
+    font-size: 8px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: #bbb;
+    text-decoration: none;
+  }
+  .ftr-links a:hover { color: #1a1a1a; }
+  .ftr-legal {
+    font-family: 'Fragment Mono', monospace;
+    font-size: 9px;
+    color: #ccc;
+    line-height: 1.8;
+  }
+  .ftr-legal a { color: #ccc; }
+
+  /* ─── MOBILE ─── */
+  @media (max-width: 480px) {
+    .hero-title { font-size: 34px; }
+    .hero, .txt, .lbl, .books, .diary, .stats, .feat, .cta-w,
+    .img-duo, .img-trio, .agenda-item { padding-left: 18px; padding-right: 18px; }
+    .hdr { padding: 16px 18px; }
+    .hdr-rule, .rule, .rule-dark { margin-left: 18px; margin-right: 18px; }
+    .qt, .crit { margin-left: 18px; margin-right: 18px; }
+    .ftr { margin-left: 18px; margin-right: 18px; }
+    .books { gap: 8px; }
+    .diary { gap: 3px; }
+    .feat-img { width: 90px; min-width: 90px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="nl">
+
+  <!-- ═══════════ HEADER ═══════════ -->
+  <div class="hdr">
+    <a href="#" class="hdr-logo">Reliure</a>
+    <div class="hdr-nav">
+      <a href="#">Explorer</a>
+      <a href="#">Journal</a>
+      <a href="#">Profil</a>
+    </div>
+  </div>
+  <div class="hdr-rule"></div>
+
+  <!-- ═══════════ HERO ═══════════ -->
+  <div class="hero">
+    <div class="hero-kicker">Le Journal · Avril 2026</div>
+    <h1 class="hero-title">Pourquoi on revient toujours à Duras</h1>
+    <p class="hero-deck">On l'a relue cet hiver, entre deux cafés et trois insomnies. Vingt ans après, ses phrases coupent toujours aussi net.</p>
+  </div>
+
+  <div class="sp"></div>
+
+  <div class="img-full c-terracotta"></div>
+
+  <div class="sp-lg"></div>
+
+  <!-- ═══════════ ARTICLE ═══════════ -->
+  <div class="txt">
+    <p class="drop-cap">Il y a des écrivains qu'on lit une fois et qu'on range. Et il y a Duras. Celle qu'on retrouve à vingt-cinq ans comme on retrouve une lettre dans la poche d'un vieux manteau — avec cette stupeur intacte, cette phrase qui ne ressemble à rien d'autre.</p>
+  </div>
+  <div class="sp-sm"></div>
+  <div class="txt">
+    <p>La communauté Reliure ne s'y trompe pas. <em>L'Amant</em> est le troisième livre le plus critiqué de la plateforme ce mois-ci. Et dans les citations partagées, Duras revient comme un refrain — pas nostalgique, pas scolaire. Vivant.</p>
+  </div>
+
+  <div class="sp-lg"></div>
+
+  <div class="img-duo">
+    <div class="c-sand"></div>
+    <div class="c-olive"></div>
+  </div>
+
+  <div class="sp-lg"></div>
+
+  <div class="qt">
+    <div class="qt-text">« Écrire, c'est aussi ne pas parler. C'est se taire. C'est hurler sans bruit. »</div>
+    <div class="qt-attr">Marguerite Duras — Écrire</div>
+  </div>
+
+  <div class="sp-lg"></div>
+
+  <div class="img-full c-warm-gray"></div>
+
+  <div class="sp-lg"></div>
+
+  <div class="cta-w">
+    <a href="#" class="cta">Lire l'essai</a>
+  </div>
+
+  <div class="sp-xl"></div>
+  <div class="rule-dark"></div>
+  <div class="sp-lg"></div>
+
+  <!-- ═══════════ POPULAIRES ═══════════ -->
+  <div class="lbl">Populaires en avril</div>
+  <div class="sp"></div>
+
+  <div class="books">
+    <a href="#" class="bk">
+      <div class="bk-cover c-terracotta">
+        <div class="bk-label">
+          <div class="bk-label-title">L'Amant</div>
+          <div class="bk-label-author">Marguerite Duras</div>
+        </div>
+      </div>
+      <div class="bk-stars">★★★★½</div>
+    </a>
+    <a href="#" class="bk">
+      <div class="bk-cover c-slate">
+        <div class="bk-label">
+          <div class="bk-label-title">Chanson douce</div>
+          <div class="bk-label-author">Leïla Slimani</div>
+        </div>
+      </div>
+      <div class="bk-stars">★★★★</div>
+    </a>
+    <a href="#" class="bk">
+      <div class="bk-cover c-ink">
+        <div class="bk-label">
+          <div class="bk-label-title">Vernon Subutex</div>
+          <div class="bk-label-author">Virginie Despentes</div>
+        </div>
+      </div>
+      <div class="bk-stars">★★★★</div>
+    </a>
+  </div>
+
+  <div class="sp-xl"></div>
+  <div class="rule"></div>
+  <div class="sp-lg"></div>
+
+  <!-- ═══════════ DIARY ═══════════ -->
+  <div class="lbl">La semaine de <span style="color:#1a1a1a;">@clémence</span></div>
+  <div class="sp"></div>
+
+  <div class="diary">
+    <div class="diary-d">
+      <div class="d-lbl">L</div>
+      <div class="d-slot filled c-terracotta"></div>
+      <div class="d-rate">★★★★</div>
+    </div>
+    <div class="diary-d">
+      <div class="d-lbl">M</div>
+      <div class="d-slot"></div>
+      <div class="d-rate"></div>
+    </div>
+    <div class="diary-d">
+      <div class="d-lbl">M</div>
+      <div class="d-slot filled c-slate"></div>
+      <div class="d-rate">★★★★½</div>
+    </div>
+    <div class="diary-d">
+      <div class="d-lbl">J</div>
+      <div class="d-slot"></div>
+      <div class="d-rate"></div>
+    </div>
+    <div class="diary-d">
+      <div class="d-lbl">V</div>
+      <div class="d-slot"></div>
+      <div class="d-rate"></div>
+    </div>
+    <div class="diary-d">
+      <div class="d-lbl">S</div>
+      <div class="d-slot filled c-ink"></div>
+      <div class="d-rate">★★★★</div>
+    </div>
+    <div class="diary-d">
+      <div class="d-lbl">D</div>
+      <div class="d-slot"></div>
+      <div class="d-rate"></div>
+    </div>
+  </div>
+
+  <div class="sp-lg"></div>
+
+  <div class="stats">
+    <div class="st">
+      <div class="st-n">3</div>
+      <div class="st-l">Livres</div>
+    </div>
+    <div class="st">
+      <div class="st-n">847</div>
+      <div class="st-l">Pages</div>
+    </div>
+    <div class="st">
+      <div class="st-n">4.2</div>
+      <div class="st-l">Moyenne</div>
+    </div>
+  </div>
+
+  <div class="sp-xl"></div>
+  <div class="rule-dark"></div>
+  <div class="sp-lg"></div>
+
+  <!-- ═══════════ JOURNAL ARTICLES ═══════════ -->
+  <div class="lbl">Aussi dans Le Journal</div>
+  <div class="sp"></div>
+
+  <a href="#" class="feat">
+    <div class="feat-img c-blush"></div>
+    <div class="feat-body">
+      <div class="feat-tag">Entretien</div>
+      <div class="feat-title">Kamel Daoud : « Je n'écris pas pour être aimé »</div>
+      <div class="feat-excerpt">Rencontre avec l'auteur de Houris, Prix Goncourt 2024, sur l'exil et le devoir de fiction.</div>
+    </div>
+  </a>
+
+  <div class="sp"></div>
+  <div class="rule"></div>
+  <div class="sp"></div>
+
+  <a href="#" class="feat">
+    <div class="feat-img c-sage"></div>
+    <div class="feat-body">
+      <div class="feat-tag">Sélection</div>
+      <div class="feat-title">5 romans courts pour un week-end de pluie</div>
+      <div class="feat-excerpt">Moins de 200 pages, maximum d'intensité. Pour les dimanches où on ne sort pas.</div>
+    </div>
+  </a>
+
+  <div class="sp-xl"></div>
+
+  <!-- ═══════════ CITATION ═══════════ -->
+  <div class="img-trio">
+    <div class="c-olive"></div>
+    <div class="c-cream"></div>
+    <div class="c-rust"></div>
+  </div>
+
+  <div class="sp-lg"></div>
+
+  <div class="lbl">Citation de la semaine</div>
+  <div class="sp"></div>
+
+  <div class="qt" style="background: #f5f3f0; color: #1a1a1a;">
+    <div class="qt-text" style="color: #1a1a1a;">« On ne voit bien qu'avec le cœur. L'essentiel est invisible pour les yeux. »</div>
+    <div class="qt-attr" style="color: #999;">Antoine de Saint-Exupéry — Le Petit Prince</div>
+  </div>
+
+  <div class="sp"></div>
+
+  <div class="cta-w">
+    <a href="#" class="cta cta-ghost">Toutes les citations</a>
+  </div>
+
+  <div class="sp-xl"></div>
+  <div class="rule"></div>
+  <div class="sp-lg"></div>
+
+  <!-- ═══════════ CRITIQUE ═══════════ -->
+  <div class="lbl">Critique remarquée</div>
+  <div class="sp"></div>
+
+  <div class="crit">
+    <div class="crit-head">
+      <div class="crit-av">M</div>
+      <div>
+        <span class="crit-name">Mathilde</span>
+        <span class="crit-handle"> · @mathilde · <span style="color:#D4883A;">★★★★★</span></span>
+      </div>
+    </div>
+    <div class="crit-text">« J'ai lu ce roman en une nuit. Pas parce qu'il est court — parce qu'il est impossible de le poser. Despentes écrit comme on prend un coup. Chaque chapitre est un round. On en sort K.O., mais on y retourne. »</div>
+    <div class="crit-book">Vernon Subutex, 1 — Virginie Despentes</div>
+  </div>
+
+  <div class="sp-xl"></div>
+  <div class="rule-dark"></div>
+  <div class="sp-lg"></div>
+
+  <!-- ═══════════ AGENDA ═══════════ -->
+  <div class="lbl">Agenda</div>
+  <div class="sp-sm"></div>
+
+  <div class="agenda-item">
+    <div class="agenda-date">12 avril</div>
+    <div class="agenda-desc">Rencontre avec Alice Zeniter à la librairie Compagnie, Paris 5e. 19h.</div>
+  </div>
+  <div class="agenda-item">
+    <div class="agenda-date">18–21 avril</div>
+    <div class="agenda-desc">Festival du Livre de Paris, Grand Palais.</div>
+  </div>
+  <div class="agenda-item">
+    <div class="agenda-date">25 avril</div>
+    <div class="agenda-desc">Nuit de la lecture — librairies indépendantes partout en France.</div>
+  </div>
+
+  <div class="sp-xl"></div>
+
+  <!-- ═══════════ FINAL CTA ═══════════ -->
+  <div class="img-full c-charcoal"></div>
+
+  <div class="banner">
+    <div class="banner-title">Ta bibliothèque t'attend</div>
+    <div class="banner-sub">Ajoute tes lectures. Note tes coups de cœur.<br>Partage tes citations.</div>
+    <a href="#" class="cta">Ouvrir Reliure</a>
+  </div>
+
+  <div class="sp"></div>
+
+  <!-- ═══════════ FOOTER ═══════════ -->
+  <div class="ftr">
+    <div class="ftr-logo">Reliure</div>
+    <div class="ftr-tag">La lecture, ensemble.</div>
+    <div class="ftr-links">
+      <a href="#">Explorer</a>
+      <a href="#">Journal</a>
+      <a href="#">Profil</a>
+      <a href="#">Aide</a>
+    </div>
+    <div class="ftr-legal">
+      Tu reçois cet email parce que tu as un compte Reliure.<br>
+      <a href="#">Se désabonner</a> · <a href="#">Préférences</a><br><br>
+      © Reliure 2026
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>

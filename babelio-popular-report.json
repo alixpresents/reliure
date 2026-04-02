@@ -1,0 +1,1265 @@
+{
+  "generatedAt": "2026-04-02T14:58:35.544Z",
+  "stats": {
+    "total": 106,
+    "matched": 81,
+    "notFound": 25
+  },
+  "matched": [
+    {
+      "rank": 1,
+      "title": "L'Énigme de la Chambre 622",
+      "author": "Joël Dicker (Editions de Fallois)",
+      "babelioPath": "/livres/Dicker-Lnigme-de-la-Chambre-622/1203076",
+      "year": 2020,
+      "years": [
+        2020
+      ],
+      "dbId": "89cc2ad7-93c4-4646-b8fc-ceaf8b14d8d4",
+      "dbTitle": "L'énigme de la chambre 622",
+      "dbSlug": "l-enigme-de-la-chambre-622"
+    },
+    {
+      "rank": 2,
+      "title": "Miroir de nos peines",
+      "author": "Pierre Lemaitre (Albin Michel)",
+      "babelioPath": "/livres/Lemaitre-Miroir-de-nos-peines/1189289",
+      "year": 2020,
+      "years": [
+        2020
+      ],
+      "dbId": "c4c62e7e-ea0b-456e-b4d5-9cd4062091bf",
+      "dbTitle": "Miroir de nos peines",
+      "dbSlug": "miroir-de-nos-peines"
+    },
+    {
+      "rank": 6,
+      "title": "Le Consentement",
+      "author": "Vanessa Springora (Grasset)",
+      "babelioPath": "/livres/Springora-Le-Consentement/1189295",
+      "year": 2020,
+      "years": [
+        2020
+      ],
+      "dbId": "6252818f-5b1c-4e10-b8be-dba4e1b3c95b",
+      "dbTitle": "Troubles dans le consentement",
+      "dbSlug": "troubles-dans-le-consentement"
+    },
+    {
+      "rank": 7,
+      "title": "Il était deux fois",
+      "author": "Franck Thilliez (Fleuve noir)",
+      "babelioPath": "/livres/Thilliez-Il-etait-deux-fois/1271721",
+      "year": 2020,
+      "years": [
+        2020
+      ],
+      "dbId": "9808a302-aac3-4616-b11e-40a9bc4f8b16",
+      "dbTitle": "Il était deux fois",
+      "dbSlug": null
+    },
+    {
+      "rank": 8,
+      "title": "Le Pays des autres",
+      "author": "Leïla Slimani (Gallimard)",
+      "babelioPath": "/livres/Slimani-Le-Pays-des-autres/1199561",
+      "year": 2020,
+      "years": [
+        2020
+      ],
+      "dbId": "71af854b-edbe-4aef-9225-bda48e1f2dbc",
+      "dbTitle": "Le pays des autres",
+      "dbSlug": null
+    },
+    {
+      "rank": 9,
+      "title": "L'Institut",
+      "author": "Stephen King (Albin Michel), traduit de l’anglais par Jean Esch",
+      "babelioPath": "/livres/King-LInstitut/1171768",
+      "year": 2020,
+      "years": [
+        2020
+      ],
+      "dbId": "9e269e0a-15f3-4a05-9149-f0d89a6ca7cf",
+      "dbTitle": "L'institution imaginaire de la société",
+      "dbSlug": "l-institution-imaginaire-de-la-societe"
+    },
+    {
+      "rank": 10,
+      "title": "Et que ne durent que les moments doux",
+      "author": "Virginie Grimaldi (Fayard)",
+      "babelioPath": "/livres/Grimaldi-Et-que-ne-durent-que-les-moments-doux/1272556",
+      "year": 2020,
+      "years": [
+        2020
+      ],
+      "dbId": "8b42557f-6df4-4548-94ca-8316b4175a1b",
+      "dbTitle": "Et que ne durent que les moments doux",
+      "dbSlug": null
+    },
+    {
+      "rank": 11,
+      "title": "Yoga",
+      "author": "mmanuel Carrère (POL)",
+      "babelioPath": "/livres/Carrere-Yoga/1238561",
+      "year": 2020,
+      "years": [
+        2020
+      ],
+      "dbId": "40785211-228e-40f5-acd2-0738a4e0c1b7",
+      "dbTitle": "Yoga",
+      "dbSlug": "yoga"
+    },
+    {
+      "rank": 13,
+      "title": "La vie est un roman",
+      "author": "Guillaume Musso (Calmann-Lévy)",
+      "babelioPath": "/livres/Musso-La-vie-est-un-roman/1207507",
+      "year": 2020,
+      "years": [
+        2020
+      ],
+      "dbId": "3cec4a0d-0bbd-44db-9dfd-b935a36a4279",
+      "dbTitle": "La vie est un roman",
+      "dbSlug": null
+    },
+    {
+      "rank": 16,
+      "title": "La Commode aux tiroirs de couleurs",
+      "author": "’Olivia Ruiz (JC Lattès)",
+      "babelioPath": "/livres/Ruiz-La-Commode-aux-tiroirs-de-couleurs/1208477",
+      "year": 2020,
+      "years": [
+        2020
+      ],
+      "dbId": "7c22b603-6724-4d92-99d7-ede3bae07472",
+      "dbTitle": "La commode aux tiroirs de couleurs",
+      "dbSlug": null
+    },
+    {
+      "rank": 17,
+      "title": "Chavirer",
+      "author": "Lola Lafon (Actes Sud)",
+      "babelioPath": "/livres/Lafon-Chavirer/1237281",
+      "year": 2020,
+      "years": [
+        2020
+      ],
+      "dbId": "62af0706-6eb1-40f0-8853-6a8c0ecb0e27",
+      "dbTitle": "Chavirer",
+      "dbSlug": null
+    },
+    {
+      "rank": 18,
+      "title": "Buveurs de vent",
+      "author": "Franck Bouysse (Albin Michel)",
+      "babelioPath": "/livres/Bouysse-Buveurs-de-vent/1236164",
+      "year": 2020,
+      "years": [
+        2020
+      ],
+      "dbId": "1aff1527-8959-475a-84bc-695c4f847265",
+      "dbTitle": "Buveurs de vent",
+      "dbSlug": "buveurs-de-vent"
+    },
+    {
+      "rank": 19,
+      "title": "La Vallée",
+      "author": "Bernard Minier (XO éditions)",
+      "babelioPath": "/livres/Minier-La-Vallee/1207723",
+      "year": 2020,
+      "years": [
+        2020
+      ],
+      "dbId": "1ec4ded1-5ddd-48df-bb83-2defef155581",
+      "dbTitle": "Les fainéants dans la vallée fertile",
+      "dbSlug": "les-faineants-dans-la-vallee-fertile"
+    },
+    {
+      "rank": 2,
+      "title": "L'Affaire Alaska Sanders",
+      "author": "Joël Dicker",
+      "babelioPath": "/livres/Dicker-Laffaire-Alaska-Sanders/1380950",
+      "year": 2022,
+      "years": [
+        2022
+      ],
+      "dbId": "96740bb7-624f-4a8c-adf4-df1c756cd5ae",
+      "dbTitle": "L'Affaire Alaska Sanders",
+      "dbSlug": null
+    },
+    {
+      "rank": 3,
+      "title": "Le Grand Monde",
+      "author": "Pierre Lemaitre",
+      "babelioPath": "/livres/Lemaitre-Le-grand-monde/1362550",
+      "year": 2022,
+      "years": [
+        2022
+      ],
+      "dbId": "1b2a3cf9-8b3c-4b63-a397-cc2a7d58b358",
+      "dbTitle": "Le grand monde",
+      "dbSlug": "le-grand-monde"
+    },
+    {
+      "rank": 4,
+      "title": "Dans les brumes de Capelans",
+      "author": "Olivier Norek",
+      "babelioPath": "/livres/Norek-Dans-les-brumes-de-Capelans/1382059",
+      "year": 2022,
+      "years": [
+        2022
+      ],
+      "dbId": "9788042f-dbee-4f78-b8df-8d2aecacb60c",
+      "dbTitle": "Dans les brumes de Capelans",
+      "dbSlug": "dans-les-brumes-de-capelans"
+    },
+    {
+      "rank": 5,
+      "title": "Connemara",
+      "author": "Nicolas Mathieu",
+      "babelioPath": "/livres/Mathieu-Connemara/1375767",
+      "year": 2022,
+      "years": [
+        2022
+      ],
+      "dbId": "b5aefdc0-f88a-456b-8efd-9f846ba93443",
+      "dbTitle": "Connemara",
+      "dbSlug": "connemara"
+    },
+    {
+      "rank": 6,
+      "title": "La Décision",
+      "author": "Karine Tuil",
+      "babelioPath": "/livres/Tuil-La-decision/1365833",
+      "year": 2022,
+      "years": [
+        2022
+      ],
+      "dbId": "521e2be3-77aa-435c-9af9-a37969ff17e6",
+      "dbTitle": "La décision",
+      "dbSlug": "la-decision"
+    },
+    {
+      "rank": 8,
+      "title": "Cher connard",
+      "author": "Virginie Despentes",
+      "babelioPath": "/livres/Despentes-Cher-connard/1423121",
+      "year": 2022,
+      "years": [
+        2022
+      ],
+      "dbId": "72753fc9-cbff-40af-8328-61d38280e4c2",
+      "dbTitle": "Cher connard",
+      "dbSlug": null
+    },
+    {
+      "rank": 9,
+      "title": "Labyrinthes",
+      "author": "Franck Thilliez",
+      "babelioPath": "/livres/Thilliez-Labyrinthes/1389271",
+      "year": 2022,
+      "years": [
+        2022
+      ],
+      "dbId": "815a0e2e-f1b0-4145-b25f-2d388040bea0",
+      "dbTitle": "Labyrinthes",
+      "dbSlug": "labyrinthes"
+    },
+    {
+      "rank": 10,
+      "title": "Il nous restera ça",
+      "author": "Virginie Grimaldi",
+      "babelioPath": "/livres/Grimaldi-Il-nous-restera-ca/1401259",
+      "year": 2022,
+      "years": [
+        2022
+      ],
+      "dbId": "fe283787-c034-4320-a541-ced5fc35079e",
+      "dbTitle": "Il nous restera ça",
+      "dbSlug": null
+    },
+    {
+      "rank": 11,
+      "title": "Le Mage du Kremlin",
+      "author": "Giuliano da Empoli",
+      "babelioPath": "/livres/da-Empoli-Le-Mage-du-Kremlin/1401900",
+      "year": 2022,
+      "years": [
+        2022
+      ],
+      "dbId": "c14317c1-043c-47a9-bd3c-3e1a6cea5a8f",
+      "dbTitle": "Le Mage du Kremlin",
+      "dbSlug": "le-mage-du-kremlin"
+    },
+    {
+      "rank": 12,
+      "title": "Paris-Briançon",
+      "author": "Philippe Besson",
+      "babelioPath": "/livres/Besson-Paris-Briancon/1376009",
+      "year": 2022,
+      "years": [
+        2022
+      ],
+      "dbId": "fb14d67d-892b-4322-8211-26b2cbeb29d6",
+      "dbTitle": "Paris-Briançon",
+      "dbSlug": null
+    },
+    {
+      "rank": 13,
+      "title": "Anéantir",
+      "author": "Michel Houellebecq",
+      "babelioPath": "/livres/Houellebecq-Aneantir/1376626",
+      "year": 2022,
+      "years": [
+        2022
+      ],
+      "dbId": "af9bbf68-ceb2-4e4e-8ddc-d19ab7ba374d",
+      "dbTitle": "Anéantir",
+      "dbSlug": "aneantir"
+    },
+    {
+      "rank": 16,
+      "title": "La Déraison",
+      "author": "Agnès Martin-Lugand",
+      "babelioPath": "/livres/Martin-Lugand-La-Deraison/1396553",
+      "year": 2022,
+      "years": [
+        2022
+      ],
+      "dbId": "c3b35fe3-3f9b-4229-b2f4-c4083cecc809",
+      "dbTitle": "La Déraison",
+      "dbSlug": null
+    },
+    {
+      "rank": 17,
+      "title": "Lucia",
+      "author": "Bernard Minier",
+      "babelioPath": "/livres/Minier-Lucia/1382060",
+      "year": 2022,
+      "years": [
+        2022
+      ],
+      "dbId": "ff90a25d-5c74-47e6-a647-c670c80ac880",
+      "dbTitle": "Lucia",
+      "dbSlug": "lucia"
+    },
+    {
+      "rank": 18,
+      "title": "Ton absence n'est que ténèbres",
+      "author": "Jón Kalman Stefánsson",
+      "babelioPath": "/livres/Stefnsson-Ton-absence-nest-que-tenebres/1376629",
+      "year": 2022,
+      "years": [
+        2022
+      ],
+      "dbId": "3cd2562d-c382-4361-af88-288823f5b540",
+      "dbTitle": "Ton absence n'est que ténèbres",
+      "dbSlug": "ton-absence-n-est-que-tenebres"
+    },
+    {
+      "rank": 19,
+      "title": "Désenchantées",
+      "author": "Marie Vareille",
+      "babelioPath": "/livres/Vareille-Desenchantees/1401716",
+      "year": 2022,
+      "years": [
+        2022
+      ],
+      "dbId": "163bd923-521b-4209-926f-4eba46b28996",
+      "dbTitle": "Désenchantées",
+      "dbSlug": null
+    },
+    {
+      "rank": 21,
+      "title": "On était des loups",
+      "author": "Sandrine Collette",
+      "babelioPath": "/livres/Collette-On-etait-des-loups/1423805",
+      "year": 2022,
+      "years": [
+        2022
+      ],
+      "dbId": "6c21eed2-bb05-45d3-a7cf-a5d568e718cd",
+      "dbTitle": "On était des loups - Prix Renaudot des lycéens 2022, Prix Jean Giono 2022",
+      "dbSlug": null
+    },
+    {
+      "rank": 22,
+      "title": "La Doublure",
+      "author": "Mélissa Da Costa",
+      "babelioPath": "/livres/Da-Costa-La-doublure/1433127",
+      "year": 2022,
+      "years": [
+        2022
+      ],
+      "dbId": "18aaa8cd-3768-4749-8f82-16b185ee5fe9",
+      "dbTitle": "La Doublure",
+      "dbSlug": null
+    },
+    {
+      "rank": 1,
+      "title": "Les Femmes du bout du monde",
+      "author": "Mélissa Da Costa",
+      "babelioPath": "/livres/Da-Costa-Les-Femmes-du-bout-du-monde/1480069",
+      "year": 2023,
+      "years": [
+        2023
+      ],
+      "dbId": "7e4f0c64-a167-4989-aeb4-093845c80c82",
+      "dbTitle": "Les Femmes du bout du monde",
+      "dbSlug": null
+    },
+    {
+      "rank": 2,
+      "title": "Veiller sur elle",
+      "author": "Jean-Baptiste Andrea",
+      "babelioPath": "/livres/Andrea-Veiller-sur-elle/1524339",
+      "year": 2023,
+      "years": [
+        2023
+      ],
+      "dbId": "3122a533-4a07-4f3e-a9b3-b6346e209414",
+      "dbTitle": "Veiller sur elle",
+      "dbSlug": "veiller-sur-elle"
+    },
+    {
+      "rank": 4,
+      "title": "Le Silence et la Colère",
+      "author": "Pierre Lemaitre",
+      "babelioPath": "/livres/Lemaitre-Le-silence-et-la-colere/1472488",
+      "year": 2023,
+      "years": [
+        2023
+      ],
+      "dbId": "f4844ed7-4cf0-44f2-9ff0-53a67cf6cdfc",
+      "dbTitle": "Le silence et la colère",
+      "dbSlug": "le-silence-et-la-colere"
+    },
+    {
+      "rank": 5,
+      "title": "Une belle vie",
+      "author": "Virginie Grimaldi",
+      "babelioPath": "/livres/Grimaldi-Une-belle-vie/1497429",
+      "year": 2023,
+      "years": [
+        2023
+      ],
+      "dbId": "4d904db0-e3e9-4cee-8c5d-d82105259e25",
+      "dbTitle": "Une belle vie",
+      "dbSlug": null
+    },
+    {
+      "rank": 7,
+      "title": "La Faille",
+      "author": "Franck Thilliez",
+      "babelioPath": "/livres/Thilliez-La-Faille/1498638",
+      "year": 2023,
+      "years": [
+        2023
+      ],
+      "dbId": "ee6c995c-bf6c-47fc-914d-21dbe4e5f888",
+      "dbTitle": "La faille",
+      "dbSlug": "la-faille"
+    },
+    {
+      "rank": 8,
+      "title": "La Femme de ménage",
+      "author": "Freida McFadden",
+      "babelioPath": "/livres/McFadden-La-Femme-de-menage/1522185",
+      "year": 2023,
+      "years": [
+        2023
+      ],
+      "dbId": "0b71e304-09f4-45e9-98df-ed4977510e1a",
+      "dbTitle": "La femme de ménage voit tout",
+      "dbSlug": "la-femme-de-menage-voit-tout"
+    },
+    {
+      "rank": 9,
+      "title": "Ceci n'est pas un fait divers",
+      "author": "Philippe Besson",
+      "babelioPath": "/livres/Besson-Ceci-nest-pas-un-fait-divers/1460499",
+      "year": 2023,
+      "years": [
+        2023
+      ],
+      "dbId": "ba7ea282-6ec8-4d73-86b3-93400caa0866",
+      "dbTitle": "Ceci n'est pas un fait divers",
+      "dbSlug": null
+    },
+    {
+      "rank": 10,
+      "title": "L'Enragé",
+      "author": "Sorj Chalandon",
+      "babelioPath": "/livres/Chalandon-LEnrage/1560190",
+      "year": 2023,
+      "years": [
+        2023
+      ],
+      "dbId": "d5b8ea0a-c59d-4f90-8623-72096a5e4be8",
+      "dbTitle": "L'enragé",
+      "dbSlug": null
+    },
+    {
+      "rank": 13,
+      "title": "Le Bureau d'éclaircissement des destins",
+      "author": "Gaëlle Nohant",
+      "babelioPath": "/livres/Nohant-Le-bureau-declaircissement-des-destins/1468403",
+      "year": 2023,
+      "years": [
+        2023
+      ],
+      "dbId": "1500264e-4bd6-46e3-806a-2da6740ff163",
+      "dbTitle": "Le bureau d'éclaircissement des destins",
+      "dbSlug": null
+    },
+    {
+      "rank": 14,
+      "title": "Sur la dalle",
+      "author": "Fred Vargas",
+      "babelioPath": "/livres/Vargas-Sur-la-dalle/1496372",
+      "year": 2023,
+      "years": [
+        2023
+      ],
+      "dbId": "41eb146f-f120-440d-8eed-3ccbdffd07b6",
+      "dbTitle": "Sur la dalle",
+      "dbSlug": null
+    },
+    {
+      "rank": 16,
+      "title": "Trois vies par semaine",
+      "author": "Michel Bussi",
+      "babelioPath": "/livres/Bussi-Trois-vies-par-semaine/1475333",
+      "year": 2023,
+      "years": [
+        2023
+      ],
+      "dbId": "c4b0263a-3e00-41e8-98d3-16f1d5414e67",
+      "dbTitle": "Trois vies par semaine",
+      "dbSlug": null
+    },
+    {
+      "rank": 17,
+      "title": "Un abri de fortune",
+      "author": "Agnès Ledig",
+      "babelioPath": "/livres/Ledig-Un-abri-de-fortune/1475510",
+      "year": 2023,
+      "years": [
+        2023
+      ],
+      "dbId": "70aa224f-9b41-4e37-80fd-a9f479f1011c",
+      "dbTitle": "Un abri de fortune",
+      "dbSlug": null
+    },
+    {
+      "rank": 18,
+      "title": "Un œil dans la nuit",
+      "author": "Bernard Minier",
+      "babelioPath": "/livres/Minier-Un-il-dans-la-nuit/1511647",
+      "year": 2023,
+      "years": [
+        2023
+      ],
+      "dbId": "34a2c7cf-7a73-4ddf-87df-489b135d4847",
+      "dbTitle": "Un œil dans la nuit",
+      "dbSlug": null
+    },
+    {
+      "rank": 19,
+      "title": "Conte de fées",
+      "author": "Stephen King",
+      "babelioPath": "/livres/King-Conte-de-fees/1456234",
+      "year": 2023,
+      "years": [
+        2023
+      ],
+      "dbId": "47b66e33-89ad-4cfa-97af-66f23ea8b654",
+      "dbTitle": "Conte de fées",
+      "dbSlug": null
+    },
+    {
+      "rank": 20,
+      "title": "La prochaine fois que tu mordras la poussière",
+      "author": "Panayotis Pascot",
+      "babelioPath": "/livres/Pascot-La-prochaine-fois-que-tu-mordras-la-poussiere/1522665",
+      "year": 2023,
+      "years": [
+        2023
+      ],
+      "dbId": "eff64435-189f-4ae6-aa89-3fb33636e958",
+      "dbTitle": "La prochaine fois que tu mordras la poussière",
+      "dbSlug": "la-prochaine-fois-que-tu-mordras-la-poussiere"
+    },
+    {
+      "rank": 22,
+      "title": "Triste tigre",
+      "author": "Neige Sinno",
+      "babelioPath": "/livres/Sinno-Triste-tigre/1546114",
+      "year": 2023,
+      "years": [
+        2023
+      ],
+      "dbId": "232366a4-b1cd-4c98-8be5-25595955841e",
+      "dbTitle": "Triste tigre",
+      "dbSlug": "triste-tigre"
+    },
+    {
+      "rank": 1,
+      "title": "Un animal sauvage",
+      "author": "Joël Dicker",
+      "babelioPath": "/livres/Dicker-Un-animal-sauvage/1603007",
+      "year": 2024,
+      "years": [
+        2024
+      ],
+      "dbId": "de6ab5e0-5c57-459e-b906-a03c053c9665",
+      "dbTitle": "Un animal sauvage",
+      "dbSlug": null
+    },
+    {
+      "rank": 4,
+      "title": "Jacaranda",
+      "author": "Gaël Faye",
+      "babelioPath": "/livres/Faye-Jacaranda/1673674",
+      "year": 2024,
+      "years": [
+        2024
+      ],
+      "dbId": "6f5c3873-5726-405c-9499-f9441d50ff5d",
+      "dbTitle": "Jacaranda",
+      "dbSlug": "jacaranda"
+    },
+    {
+      "rank": 5,
+      "title": "Plus grand que le ciel",
+      "author": "Virginie Grimaldi",
+      "babelioPath": "/livres/Grimaldi-Plus-grand-que-le-ciel/1633003",
+      "year": 2024,
+      "years": [
+        2024
+      ],
+      "dbId": "666d7260-59da-4507-b3cd-34ad963a3ef7",
+      "dbTitle": "Plus grand que le ciel - Édition collector",
+      "dbSlug": null
+    },
+    {
+      "rank": 6,
+      "title": "Tenir debout",
+      "author": "Mélissa Da Costa",
+      "babelioPath": "/livres/Da-Costa-Tenir-debout/1667192",
+      "year": 2024,
+      "years": [
+        2024
+      ],
+      "dbId": "3a1fd00f-b15f-4a4b-ad4b-9c71c144d2fe",
+      "dbTitle": "Tenir debout",
+      "dbSlug": null
+    },
+    {
+      "rank": 7,
+      "title": "Tata",
+      "author": "Valérie Perrin",
+      "babelioPath": "/livres/Perrin-Tata/1670587",
+      "year": 2024,
+      "years": [
+        2024
+      ],
+      "dbId": "58cb9de7-7fa7-4810-80f8-739b747b9188",
+      "dbTitle": "Clamser à Tataouine",
+      "dbSlug": "clamser-a-tataouine"
+    },
+    {
+      "rank": 8,
+      "title": "Norferville",
+      "author": "Franck Thilliez",
+      "babelioPath": "/livres/Thilliez-Norferville/1624540",
+      "year": 2024,
+      "years": [
+        2024
+      ],
+      "dbId": "3b0d248e-8cc7-41a2-bda1-1eb3a84bae4d",
+      "dbTitle": "Norferville",
+      "dbSlug": null
+    },
+    {
+      "rank": 9,
+      "title": "Les Guerriers de l'hiver",
+      "author": "Olivier Norek",
+      "babelioPath": "/livres/Norek-Les-Guerriers-de-lhiver/1673573",
+      "year": 2024,
+      "years": [
+        2024
+      ],
+      "dbId": "4886fc45-ec7e-448e-a542-7cee67fb306d",
+      "dbTitle": "Les guerriers de l'hiver",
+      "dbSlug": "les-guerriers-de-l-hiver"
+    },
+    {
+      "rank": 10,
+      "title": "Quelqu'un d'autre",
+      "author": "Guillaume Musso",
+      "babelioPath": "/livres/Musso-Quelquun-dautre/1613222",
+      "year": 2024,
+      "years": [
+        2024
+      ],
+      "dbId": "62175616-e9b7-4a8a-a3f8-27167c105067",
+      "dbTitle": "Quelqu'un d'autre",
+      "dbSlug": "quelqu-un-d-autre-nouveau-roman-2024"
+    },
+    {
+      "rank": 11,
+      "title": "Les Yeux de Mona",
+      "author": "Thomas Schlesser",
+      "babelioPath": "/livres/Schlesser-Les-Yeux-de-Mona/1579372",
+      "year": 2024,
+      "years": [
+        2024
+      ],
+      "dbId": "cb02d9ec-b44f-4a91-9302-b9281a94f6b8",
+      "dbTitle": "Les Yeux de Mona",
+      "dbSlug": null
+    },
+    {
+      "rank": 12,
+      "title": "La Vie heureuse",
+      "author": "avid Foenkinos",
+      "babelioPath": "/livres/Foenkinos-La-Vie-heureuse/1545945",
+      "year": 2024,
+      "years": [
+        2024
+      ],
+      "dbId": "629f80ee-1c83-4ee7-8df7-9cf8af66251c",
+      "dbTitle": "La Vie heureuse",
+      "dbSlug": "la-vie-heureuse"
+    },
+    {
+      "rank": 13,
+      "title": "Le Barman du Ritz",
+      "author": "Philippe Collin",
+      "babelioPath": "/livres/Collin-Le-Barman-du-Ritz/1599780",
+      "year": 2024,
+      "years": [
+        2024
+      ],
+      "dbId": "9fbbe05e-2ec7-4311-9c79-0e49d571cdc3",
+      "dbTitle": "Le Barman du Ritz",
+      "dbSlug": "le-barman-du-ritz"
+    },
+    {
+      "rank": 14,
+      "title": "Un soir d'été",
+      "author": "Philippe Besson",
+      "babelioPath": "/livres/Besson-Un-soir-dete/1577970",
+      "year": 2024,
+      "years": [
+        2024
+      ],
+      "dbId": "c9d44e91-28f7-47bb-a874-dfd61d67086b",
+      "dbTitle": "Un soir d'été",
+      "dbSlug": null
+    },
+    {
+      "rank": 15,
+      "title": "La Femme de ménage voit tout",
+      "author": "Freida McFadden",
+      "babelioPath": "/livres/McFadden-La-Femme-de-menage-voit-tout/1629502",
+      "year": 2024,
+      "years": [
+        2024
+      ],
+      "dbId": "0b71e304-09f4-45e9-98df-ed4977510e1a",
+      "dbTitle": "La femme de ménage voit tout",
+      "dbSlug": "la-femme-de-menage-voit-tout"
+    },
+    {
+      "rank": 17,
+      "title": "Holly",
+      "author": "Stephen King",
+      "babelioPath": "/livres/King-Holly/1509385",
+      "year": 2024,
+      "years": [
+        2024
+      ],
+      "dbId": "43ce377e-0807-4fbe-afe4-cddf49aaa08b",
+      "dbTitle": "Hollywood",
+      "dbSlug": "hollywood-sire"
+    },
+    {
+      "rank": 18,
+      "title": "Cinq coeurs en sursis",
+      "author": "Laure Manel",
+      "babelioPath": "/livres/Manel-Cinq-coeurs-en-sursis/1616203",
+      "year": 2024,
+      "years": [
+        2024
+      ],
+      "dbId": "45f540ad-657d-41b2-b62b-5b0aace687ad",
+      "dbTitle": "Cinq coeurs en sursis",
+      "dbSlug": null
+    },
+    {
+      "rank": 19,
+      "title": "Houris",
+      "author": "Kamel Daoud",
+      "babelioPath": "/livres/Daoud-Houris/1635123",
+      "year": 2024,
+      "years": [
+        2024
+      ],
+      "dbId": "c4b4b2f3-8c57-4e77-bb7d-f0c61d40b89c",
+      "dbTitle": "Houris - Prix Goncourt 2024",
+      "dbSlug": null
+    },
+    {
+      "rank": 20,
+      "title": "L'Inconnue du portrait",
+      "author": "Camille de Peretti",
+      "babelioPath": "/livres/Peretti-LInconnue-du-portrait/1587404",
+      "year": 2024,
+      "years": [
+        2024
+      ],
+      "dbId": "93ebde68-de56-4a99-a1c7-e60e4c26062a",
+      "dbTitle": "L'Inconnue du portrait",
+      "dbSlug": null
+    },
+    {
+      "rank": 21,
+      "title": "Madelaine avant l'aube",
+      "author": "Sandrine Collette",
+      "babelioPath": "/livres/Collette-Madelaine-avant-laube/1660729",
+      "year": 2024,
+      "years": [
+        2024
+      ],
+      "dbId": "ad0ce999-78ae-4d47-be26-2d2afd3d7858",
+      "dbTitle": "Madelaine avant l'aube - Prix Goncourt des lycéens 2024",
+      "dbSlug": null
+    },
+    {
+      "rank": 22,
+      "title": "Les Effacées",
+      "author": "Bernard Minier",
+      "babelioPath": "/livres/Minier-Les-Effacees/1616011",
+      "year": 2024,
+      "years": [
+        2024
+      ],
+      "dbId": "e67484f0-5954-45dd-8a88-185fb0c1d359",
+      "dbTitle": "Les effacées",
+      "dbSlug": null
+    },
+    {
+      "rank": 24,
+      "title": "Les Âmes féroces",
+      "author": "Marie Vingtras",
+      "babelioPath": "/livres/Vingtras-Les-mes-feroces/1669887",
+      "year": 2024,
+      "years": [
+        2024
+      ],
+      "dbId": "e90593e9-917b-4d7a-a3f4-5019807c07c5",
+      "dbTitle": "Les Âmes féroces",
+      "dbSlug": null
+    },
+    {
+      "rank": 1,
+      "title": "La femme de ménage se marie",
+      "author": "Freida McFadden",
+      "babelioPath": "/livres/McFadden-La-femme-de-menage-se-marie/1810921",
+      "year": 2025,
+      "years": [
+        2025
+      ],
+      "dbId": "d2787e76-e6d5-40af-9622-e592c1f19277",
+      "dbTitle": "La femme de ménage se marie",
+      "dbSlug": null
+    },
+    {
+      "rank": 3,
+      "title": "La Très Catastrophique Visite du zoo",
+      "author": "Joël Dicker",
+      "babelioPath": "/livres/Dicker-La-Tres-Catastrophique-Visite-du-Zoo/1791217",
+      "year": 2025,
+      "years": [
+        2025
+      ],
+      "dbId": "679b3e18-ad43-44ff-8363-75657818954a",
+      "dbTitle": "La Très Catastrophique Visite du Zoo",
+      "dbSlug": null
+    },
+    {
+      "rank": 4,
+      "title": "Mon vrai nom est Elisabeth",
+      "author": "Adèle Yon",
+      "babelioPath": "/livres/Yon-Mon-vrai-nom-est-Elisabeth/1777228",
+      "year": 2025,
+      "years": [
+        2025
+      ],
+      "dbId": "82c5f901-e73a-472e-8320-ea85f72aa8e6",
+      "dbTitle": "Mon vrai nom est Elisabeth",
+      "dbSlug": "mon-vrai-nom-est-elisabeth"
+    },
+    {
+      "rank": 8,
+      "title": "Onyx Storm",
+      "author": "Rebecca Yarros",
+      "babelioPath": "/livres/Yarros-Onyx-Storm/1722898",
+      "year": 2025,
+      "years": [
+        2025
+      ],
+      "dbId": "0297043f-82e8-43e2-b1fc-a7934dd38f07",
+      "dbTitle": "Onyx Storm - Version française",
+      "dbSlug": null
+    },
+    {
+      "rank": 9,
+      "title": "La Maison vide",
+      "author": "Laurent Mauvignier",
+      "babelioPath": "/livres/Mauvignier-La-Maison-vide/1868350",
+      "year": 2025,
+      "years": [
+        2025
+      ],
+      "dbId": "6563a533-3ab1-4808-8553-df5b3915c01a",
+      "dbTitle": "La Maison vide",
+      "dbSlug": "la-maison-vide"
+    },
+    {
+      "rank": 10,
+      "title": "Le Boyfriend",
+      "author": "Freida McFadden",
+      "babelioPath": "/livres/McFadden-Le-Boyfriend/1876159",
+      "year": 2025,
+      "years": [
+        2025
+      ],
+      "dbId": "2c545f40-06b7-449c-acda-8bdc0dfbe9e0",
+      "dbTitle": "Le boyfriend",
+      "dbSlug": null
+    },
+    {
+      "rank": 11,
+      "title": "La Fille au pair",
+      "author": "Sidonie Bonnec",
+      "babelioPath": "/livres/Bonnec-La-Fille-au-pair/1754528",
+      "year": 2025,
+      "years": [
+        2025
+      ],
+      "dbId": "38702f27-dba3-40ef-8a99-88be657cbd2e",
+      "dbTitle": "La fille au pair",
+      "dbSlug": "la-fille-au-pair"
+    },
+    {
+      "rank": 13,
+      "title": "Les Renaissances",
+      "author": "Agnès Martin-Lugand",
+      "babelioPath": "/livres/Martin-Lugand-Les-Renaissances/1791484",
+      "year": 2025,
+      "years": [
+        2025
+      ],
+      "dbId": "e0b6bb0a-19dc-4dcc-9b7a-269c0e8569b6",
+      "dbTitle": "Les Renaissances",
+      "dbSlug": null
+    },
+    {
+      "rank": 14,
+      "title": "Le vent souffle sur Little Balmoral",
+      "author": "Sophie Jomain",
+      "babelioPath": "/livres/Jomain-Le-vent-souffle-sur-Little-Balmoral/1870847",
+      "year": 2025,
+      "years": [
+        2025
+      ],
+      "dbId": "6ad17fe3-42cd-4173-972d-83809d84b76a",
+      "dbTitle": "Le vent souffle sur Little Balmoral",
+      "dbSlug": null
+    },
+    {
+      "rank": 15,
+      "title": "Ta promesse",
+      "author": "Camille Laurens",
+      "babelioPath": "/livres/Laurens-Ta-promesse/1696857",
+      "year": 2025,
+      "years": [
+        2025
+      ],
+      "dbId": "660940a1-dead-4233-8664-1736879dfaef",
+      "dbTitle": "Ta promesse",
+      "dbSlug": null
+    },
+    {
+      "rank": 16,
+      "title": "La Nuit au cœur",
+      "author": "Nathacha Appanah",
+      "babelioPath": "/livres/Appanah-La-Nuit-au-coeur/1824138",
+      "year": 2025,
+      "years": [
+        2025
+      ],
+      "dbId": "677bfbdc-ba4e-41cc-88d3-68244ed09445",
+      "dbTitle": "La nuit au cœur - Prix Femina 2025 - Prix Goncourt des Lycéens 2025 - Prix Renaudot des Lycéens 2025",
+      "dbSlug": null
+    },
+    {
+      "rank": 19,
+      "title": "Les Vivants",
+      "author": "Ambre Chalumeau",
+      "babelioPath": "/livres/Chalumeau-Les-Vivants/1811775",
+      "year": 2025,
+      "years": [
+        2025
+      ],
+      "dbId": "f8f67104-87ca-4150-9456-312027dcca3a",
+      "dbTitle": "Et les vivants autour",
+      "dbSlug": "et-les-vivants-autour"
+    },
+    {
+      "rank": 20,
+      "title": "Villa Gloria",
+      "author": "Serena Giuliano",
+      "babelioPath": "/livres/Giuliano-Villa-Gloria/1796022",
+      "year": 2025,
+      "years": [
+        2025
+      ],
+      "dbId": "546ef2b0-1312-49be-89e7-5516dd94bd5d",
+      "dbTitle": "Villa Gloria",
+      "dbSlug": "villa-gloria"
+    },
+    {
+      "rank": 24,
+      "title": "Wicked Game",
+      "author": "Anita Rigins",
+      "babelioPath": "/livres/Rigins-Wicked-Game/1721185",
+      "year": 2025,
+      "years": [
+        2025
+      ],
+      "dbId": "017778d1-1509-4b4e-a9c6-fa3e3a0e9da2",
+      "dbTitle": "Wicked Game",
+      "dbSlug": null
+    },
+    {
+      "rank": 25,
+      "title": "L'Heure des prédateurs",
+      "author": "Giuliano da Empoli",
+      "babelioPath": "/livres/da-Empoli-LHeure-des-predateurs/1822965",
+      "year": 2025,
+      "years": [
+        2025
+      ],
+      "dbId": "4dc2a26b-bbf5-44f9-8ff0-de29eb9bacf8",
+      "dbTitle": "L'heure des prédateurs",
+      "dbSlug": "l-heure-des-predateurs"
+    }
+  ],
+  "notFound": [
+    {
+      "title": "Mamma Maria",
+      "author": "Serena Giuliano (Le Cherche Midi)",
+      "years": [
+        2020
+      ],
+      "babelioPath": "/livres/Giuliano-Mamma-Maria/1205014"
+    },
+    {
+      "title": "Hunger Games : La Ballade du serpent et de l'oiseau chanteur",
+      "author": "Suzanne Collins (Pocket Jeunesse), traduit de l’anglais par Guillaume Fournier",
+      "years": [
+        2020
+      ],
+      "babelioPath": "/livres/Collins-Hunger-Games--La-ballade-du-serpent-et-de-loisea/1206649"
+    },
+    {
+      "title": "La Vie mensongère des adultes",
+      "author": "lena Ferrante (Gallimard), traduit de l’italien par Elsa Damien",
+      "years": [
+        2020
+      ],
+      "babelioPath": "/livres/Ferrante-La-Vie-mensongere-des-adultes/1226107"
+    },
+    {
+      "title": "Blackwater, tome 1 : La Crue",
+      "author": "Michael McDowell",
+      "years": [
+        2022
+      ],
+      "babelioPath": "/livres/McDowell-Blackwater-tome-1--La-Crue/1388639"
+    },
+    {
+      "title": "Numéro deux",
+      "author": "avid Foenkinos",
+      "years": [
+        2022
+      ],
+      "babelioPath": "/livres/Foenkinos-Numero-deux/1350143"
+    },
+    {
+      "title": "Hadès et Perséphone, tome 1 : A Touch of Darkness",
+      "author": "Scarlett St. Clair",
+      "years": [
+        2022
+      ],
+      "babelioPath": "/livres/St-Clair-Hades-et-Persephone-tome-1--A-touch-of-darkness/1404139"
+    },
+    {
+      "title": "Le Pays des autres, tome 2 : Regardez-nous danser",
+      "author": "Leïla Slimani",
+      "years": [
+        2022
+      ],
+      "babelioPath": "/livres/Slimani-Le-pays-des-autres-tome-2--Regardez-nous-danser/1356498"
+    },
+    {
+      "title": "Chien 51",
+      "author": "Laurent Gaudé",
+      "years": [
+        2022
+      ],
+      "babelioPath": "/livres/Gaude-Chien-51/1425651"
+    },
+    {
+      "title": "À tout jamais",
+      "author": "Colleen Hoover",
+      "years": [
+        2023
+      ],
+      "babelioPath": "/livres/Hoover--tout-jamais/1465936"
+    },
+    {
+      "title": "Seasons, tome 1 : Un automne pour te pardonner",
+      "author": "Morgane Moncomble",
+      "years": [
+        2023
+      ],
+      "babelioPath": "/livres/Moncomble-Seasons-tome-1--Un-automne-pour-te-pardonner/1509834"
+    },
+    {
+      "title": "Les Sept Sœurs, tome 8 : Atlas, l'histoire de Pa Salt",
+      "author": "Harry Whittaker, d’après une histoire de Lucinda Riley",
+      "years": [
+        2023
+      ],
+      "babelioPath": "/livres/Riley-Les-Sept-Soeurs-tome-8--Atlas-lhistoire-de-Pa-Sa/1479046"
+    },
+    {
+      "title": "I’m not your soulmate, tome 1 : The Perfect Match",
+      "author": "Lyla Mars",
+      "years": [
+        2023
+      ],
+      "babelioPath": "/livres/Mars-Im-not-your-soulmate-tome-1--The-perfect-match/1489150"
+    },
+    {
+      "title": "Seasons, tome 2 : Un hiver pour te résister",
+      "author": "Morgane Moncomble",
+      "years": [
+        2024
+      ],
+      "babelioPath": "/livres/Moncomble-Seasons-tome-2--Un-hiver-pour-te-resister/1575226"
+    },
+    {
+      "title": "La Dernière Allumette",
+      "author": "Marie Vareille",
+      "years": [
+        2024
+      ],
+      "babelioPath": "/livres/Vareille-La-Derniere-Allumette/1589710"
+    },
+    {
+      "title": "Mon cœur a déménagé",
+      "author": "Michel Bussi",
+      "years": [
+        2024
+      ],
+      "babelioPath": "/livres/Bussi-Mon-cur-a-demenage/1573740"
+    },
+    {
+      "title": "Et chaque fois, mourir un peu, tome 1 : Blast",
+      "author": "Karine Giebel",
+      "years": [
+        2024
+      ],
+      "babelioPath": "/livres/Giebel-Et-chaque-fois-mourir-un-peu-tome-1--Blast/1601807"
+    },
+    {
+      "title": "Hunger Games : Lever de soleil sur la moisson",
+      "author": "Suzanne Collins",
+      "years": [
+        2025
+      ],
+      "babelioPath": "/livres/Collins-Hunger-Games--Lever-de-soleil-sur-la-moisson/1798347"
+    },
+    {
+      "title": "Un avenir radieux",
+      "author": "Pierre Lemaitre",
+      "years": [
+        2025
+      ],
+      "babelioPath": "/livres/Lemaitre-Un-avenir-radieux/1746584"
+    },
+    {
+      "title": "À retardement",
+      "author": "Franck Thilliez",
+      "years": [
+        2025
+      ],
+      "babelioPath": "/livres/Thilliez--retardement/1809735"
+    },
+    {
+      "title": "Jamais 203",
+      "author": "Kentin Jarno",
+      "years": [
+        2025
+      ],
+      "babelioPath": "/livres/Jarno-Jamais-203/1840110"
+    },
+    {
+      "title": "Tout le monde aime Clara",
+      "author": "avid Foenkinos",
+      "years": [
+        2025
+      ],
+      "babelioPath": "/livres/Foenkinos-Tout-le-monde-aime-Clara/1721121"
+    },
+    {
+      "title": "Breathe",
+      "author": "va Sorn",
+      "years": [
+        2025
+      ],
+      "babelioPath": "/livres/Sorn-Breathe/1777230"
+    },
+    {
+      "title": "À nos cœurs battants",
+      "author": "mma Green",
+      "years": [
+        2025
+      ],
+      "babelioPath": "/livres/Green--nos-coeurs-battants/1722169"
+    },
+    {
+      "title": "Vous parler de mon fils",
+      "author": "Philippe Besson",
+      "years": [
+        2025
+      ],
+      "babelioPath": "/livres/Besson-Vous-parler-de-mon-fils/1764526"
+    },
+    {
+      "title": "Le Pays des autres, tome 3 : J'emporterai le feu",
+      "author": "Leïla Slimani",
+      "years": [
+        2025
+      ],
+      "babelioPath": "/livres/Slimani-Le-Pays-des-autres-tome-3--Jemporterai-le-feu/1696880"
+    }
+  ]
+}
