@@ -1,5 +1,6 @@
 import { supabase } from "./supabase";
 import { searchOpenLibrary } from "./openLibrarySearch";
+import { searchFnac } from "./fnacSearch";
 
 // ═══════════════════════════════════════════════
 // Helpers
@@ -282,8 +283,17 @@ export async function searchBooks(query, { onDbResults } = {}) {
   const t_google = skipGoogle ? 0 : Math.round(performance.now() - t_ext_start);
   const t_total = Math.round(performance.now() - t0);
 
-  const results = deduplicateResults(dbResults, googleResults, olResults);
-  const final = results.slice(0, 10);
+  const merged = deduplicateResults(dbResults, googleResults, olResults);
+
+  // Fallback Fnac : uniquement si aucun résultat après DB + Google + OL
+  let fnacResults = [];
+  let fnacActuallyCalled = false;
+  if (merged.length === 0) {
+    fnacActuallyCalled = true;
+    fnacResults = await searchFnac(query);
+  }
+
+  const final = [...merged, ...fnacResults].slice(0, 10);
 
   // Métadonnées skip logic (attachées au tableau)
   final._skippedGoogle = skipGoogle;
@@ -292,6 +302,7 @@ export async function searchBooks(query, { onDbResults } = {}) {
   // Logging structuré
   const googleUseful = final.filter(r => r._source === "google").length;
   const olUseful = final.filter(r => r._source === "openlibrary").length;
+  const fnacUseful = final.filter(r => r._source === "fnac").length;
   console.log("[search-analytics]", JSON.stringify({
     query,
     ts: new Date().toISOString(),
@@ -304,6 +315,9 @@ export async function searchBooks(query, { onDbResults } = {}) {
     olCalled: olActuallyCalled,
     olResults: olResults.length,
     olUseful,
+    fnacCalled: fnacActuallyCalled,
+    fnacResults: fnacResults.length,
+    fnacUseful,
     skipped: skipGoogle,
     skipReason,
     circuitBreakerActive: !isGoogleBooksAvailable(),
