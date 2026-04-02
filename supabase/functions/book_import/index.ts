@@ -152,6 +152,40 @@ async function fetchBnF(isbn: string) {
 }
 
 // ---------------------------------------------------------------------------
+// MetasBooks
+// ---------------------------------------------------------------------------
+async function fetchMetasBooks(isbn13: string): Promise<Partial<BookMeta> | null> {
+  const key = Deno.env.get("METASBOOKS_API_KEY");
+  if (!key || !isbn13) return null;
+
+  try {
+    const res = await fetch(
+      `https://metasbooks.fr/api/v1/lookup?ean=${isbn13.replace(/-/g, "")}`,
+      {
+        headers: { "X-API-Key": key },
+        signal: AbortSignal.timeout(3000),
+      },
+    );
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (!data.ok || !data.meta) return null;
+
+    const m = data.meta;
+    return {
+      publisher: m.editeur || null,
+      description: m.description || null,
+      page_count: m.nbpages ? parseInt(m.nbpages) : null,
+      cover_url: m.url_image || null,
+      publication_date: m.date_parrution
+        ? m.date_parrution.split("-").reverse().join("-") // DD-MM-YYYY → YYYY-MM-DD
+        : null,
+    };
+  } catch {
+    return null;
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Slug generation (mirrors src/utils/slugify.js)
 // ---------------------------------------------------------------------------
 function slugify(text: string): string {
@@ -371,8 +405,8 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Fetch all 3 sources in parallel — never let one failure block the rest
-    const [google, openLib, bnf] = await Promise.all([
+    // Fetch all sources in parallel — never let one failure block the rest
+    const [google, openLib, bnf, metasData] = await Promise.all([
       fetchGoogleBooks(isbn).catch((e) => {
         console.error("Google Books error:", e.message);
         return null;
@@ -385,13 +419,46 @@ Deno.serve(async (req) => {
         console.error("BnF error:", e.message);
         return null;
       }),
+      fetchMetasBooks(isbn).catch(() => null),
     ]);
 
     console.log(
-      `[book_import] ${isbn} — Google:${!!google} OL:${!!openLib} BnF:${!!bnf}`,
+      `[book_import] ${isbn} — Google:${!!google} OL:${!!openLib} BnF:${!!bnf} MetasBooks:${!!metasData}`,
     );
 
     const merged = mergeSources(google, openLib, bnf, fallback);
+
+    // MetasBooks enrichment — comble les champs vides après fusion principale
+    let enrichedByMetasbooks = false;
+
+    if (metasData?.description &&
+        (!merged.description || merged.description.length < 100)) {
+      merged.description = metasData.description;
+      enrichedByMetasbooks = true;
+    }
+    if (metasData?.publisher && !merged.publisher) {
+      merged.publisher = metasData.publisher;
+      enrichedByMetasbooks = true;
+    }
+    if (metasData?.page_count && !merged.page_count) {
+      merged.page_count = metasData.page_count;
+      enrichedByMetasbooks = true;
+    }
+    if (metasData?.cover_url) {
+      const currentCover = merged.cover_url || "";
+      if (!currentCover || currentCover.includes("books.google")) {
+        merged.cover_url = metasData.cover_url;
+        enrichedByMetasbooks = true;
+      }
+    }
+    if (metasData?.publication_date && !merged.publication_date) {
+      merged.publication_date = metasData.publication_date;
+      enrichedByMetasbooks = true;
+    }
+
+    if (enrichedByMetasbooks) {
+      console.log("[book_import] MetasBooks enriched:", isbn);
+    }
 
     // Anti-doublons : même oeuvre sous un ISBN différent ?
     if (merged.title) {
@@ -428,7 +495,7 @@ Deno.serve(async (req) => {
         description: merged.description,
         language: merged.language,
         genres: merged.genres,
-        source: "multi_api",
+        source: enrichedByMetasbooks ? "multi_api_metasbooks" : "multi_api",
         slug,
       })
       .select("*")
