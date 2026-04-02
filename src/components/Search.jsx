@@ -404,10 +404,7 @@ export default function Search({ open, onClose, go, initialQuery = "" }) {
           setLoading(false);
           return;
         }
-        // score 0 → premier résultat (comportement legacy)
-        await handleSelect(bookResults[0]);
-        setLoading(false);
-        return;
+        // score < 100 → laisser la cascade BnF prendre le relais
       }
     }
 
