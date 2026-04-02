@@ -14,6 +14,7 @@ import { useFavorites } from "../hooks/useFavorites";
 import { useMyLists, createList } from "../hooks/useLists";
 import { useLikes } from "../hooks/useLikes";
 import { useAuth } from "../lib/AuthContext";
+import { useQueryClient } from "@tanstack/react-query";
 import { useNav } from "../lib/NavigationContext";
 import { useNavigate, Link } from "react-router-dom";
 import ContentMenu from "../components/ContentMenu";
@@ -29,6 +30,9 @@ import { useUserRole } from "../hooks/useUserRole";
 import { useUserPoints } from "../hooks/useUserPoints";
 import { useUserBadges } from "../hooks/useUserBadges";
 import CreatorBadge from "../components/CreatorBadge";
+import { CATEGORY_COLORS, TIER_COLORS } from "../hooks/useUserBadges";
+import Tooltip from "../components/Tooltip";
+import BadgeIcon from "../components/BadgeIcon";
 
 function ReadingItem({ book, go, onFinish, initialPage = 0, statusId = null, isOwner = true }) {
   const [currentPage, setCurrentPage] = useState(initialPage);
@@ -445,6 +449,7 @@ export default function ProfilePage({ viewedProfile, initialTab }) {
   const [libView, setLibView] = useState("grille");
   const [showHints, setShowHints] = useState(() => !localStorage.getItem("reliure_tab_hints_seen"));
   const [hintsOpacity, setHintsOpacity] = useState(0);
+  const [badgeModal, setBadgeModal] = useState(null); // null | "pick" | { swapping: badgeId }
   useEffect(() => { if (initialTab) setTab(initialTab); }, [initialTab]);
   useEffect(() => {
     if (!showHints) return;
@@ -454,13 +459,20 @@ export default function ProfilePage({ viewedProfile, initialTab }) {
     const t3 = setTimeout(() => setShowHints(false), 3200);
     return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
   }, [showHints]);
+  useEffect(() => {
+    if (!badgeModal) return;
+    const handler = e => { if (e.key === "Escape") setBadgeModal(null); };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [badgeModal]);
   const { goToBook: go, openSearchFor } = useNav();
   const navigate = useNavigate();
   const { user } = useAuth();
   const profile = viewedProfile;
   const profileId = viewedProfile?.id;
   const { role } = useUserRole(profileId);
-  const { levelName, totalPoints, monthlyPoints, pinnedBadges } = useUserPoints(profileId);
+  const { levelName, totalPoints, monthlyPoints, badges, pinnedBadges } = useUserPoints(profileId);
+  const queryClient = useQueryClient();
 
   // Inline profile editing state
   const [editingName, setEditingName] = useState(false);
@@ -511,6 +523,36 @@ export default function ProfilePage({ viewedProfile, initialTab }) {
     if (trimmed === (bio || "")) return;
     setLocalBio(trimmed || null);
     await supabase.from("users").update({ bio: trimmed || null }).eq("id", user.id);
+  };
+
+  const invalidateBadges = () => {
+    queryClient.invalidateQueries({ queryKey: ["userBadges", profileId] });
+    queryClient.invalidateQueries({ queryKey: ["userPoints", profileId] });
+  };
+
+  const pinBadgeFromModal = async (badgeId) => {
+    const isPinned = pinnedBadges.some(p => p.badge_id === badgeId);
+    if (isPinned) {
+      await supabase.from("user_badges").update({ is_pinned: false }).eq("user_id", user.id).eq("badge_id", badgeId);
+      invalidateBadges();
+      setBadgeModal(null);
+      return;
+    }
+    if (pinnedBadges.length < 3) {
+      await supabase.from("user_badges").update({ is_pinned: true }).eq("user_id", user.id).eq("badge_id", badgeId);
+      invalidateBadges();
+      setBadgeModal(null);
+      return;
+    }
+    setBadgeModal({ swapping: badgeId });
+  };
+
+  const swapBadgeFromModal = async (oldBadgeId) => {
+    const newBadgeId = badgeModal.swapping;
+    await supabase.from("user_badges").update({ is_pinned: false }).eq("user_id", user.id).eq("badge_id", oldBadgeId);
+    await supabase.from("user_badges").update({ is_pinned: true }).eq("user_id", user.id).eq("badge_id", newBadgeId);
+    invalidateBadges();
+    setBadgeModal(null);
   };
 
   const [avatarError, setAvatarError] = useState(null);
@@ -716,12 +758,55 @@ export default function ProfilePage({ viewedProfile, initialTab }) {
               {hasCreator && <CreatorBadge />}
               {role && <RoleBadge role={role} />}
             </div>
-            {totalPoints > 0 && <LevelBadge levelName={levelName} totalPoints={totalPoints} monthlyPoints={isOwnProfile ? monthlyPoints : 0} />}
+            {totalPoints > 0 && <LevelBadge levelName={levelName} />}
           </div>
-          <div className="flex gap-5 text-xs font-body w-full sm:w-auto mt-2 sm:mt-0" style={{ color: "var(--text-tertiary)" }}>
-            {[[totalBooks, totalBooks < 2 ? "livre" : "livres"], [booksThisYear, "cette année"], [followers, followers < 2 ? "abonné" : "abonnés"], [followingCount, followingCount < 2 ? "abonnement" : "abonnements"]].map(([n, l]) => (
-              <span key={l}><strong className="font-semibold" style={{ color: "var(--text-primary)" }}>{n}</strong> {l}</span>
-            ))}
+          <div className="flex flex-col w-full sm:w-auto mt-2 sm:mt-0">
+            <div className="flex gap-5 text-xs font-body" style={{ color: "var(--text-tertiary)" }}>
+              {[[totalBooks, totalBooks < 2 ? "livre" : "livres"], [booksThisYear, "cette année"], [followers, followers < 2 ? "abonné" : "abonnés"], [followingCount, followingCount < 2 ? "abonnement" : "abonnements"]].map(([n, l]) => (
+                <span key={l}><strong className="font-semibold" style={{ color: "var(--text-primary)" }}>{n}</strong> {l}</span>
+              ))}
+            </div>
+            {(pinnedBadges.length > 0 || isOwnProfile) && (
+              <div className="flex gap-2 mt-2">
+                {[0, 1, 2].map(slot => {
+                  const b = pinnedBadges[slot];
+                  if (!b) {
+                    if (!isOwnProfile) return null;
+                    return (
+                      <button
+                        key={slot}
+                        onClick={() => setBadgeModal("pick")}
+                        className="flex items-center justify-center rounded-full cursor-pointer"
+                        style={{ width: 32, height: 32, border: "1.5px dashed var(--border-default)", background: "transparent" }}
+                      >
+                        <span style={{ fontSize: 14, color: "var(--text-muted)", lineHeight: 1 }}>+</span>
+                      </button>
+                    );
+                  }
+                  const d = b.badge_definitions;
+                  const color = (d?.tier && TIER_COLORS[d.tier]) || CATEGORY_COLORS[d?.category] || "var(--text-tertiary)";
+                  return (
+                    <Tooltip
+                      key={b.id}
+                      multiline
+                      text={
+                        <>
+                          <div style={{ fontWeight: 600, fontSize: 12, whiteSpace: "nowrap" }}>{d?.name}</div>
+                          {d?.description && <div style={{ fontSize: 11, color: "rgba(255,255,255,0.7)", lineHeight: 1.4, marginTop: 2 }}>{d.description}</div>}
+                        </>
+                      }
+                    >
+                      <div
+                        style={{ cursor: isOwnProfile ? "pointer" : "default" }}
+                        onClick={isOwnProfile ? () => setBadgeModal("pick") : undefined}
+                      >
+                        <BadgeIcon badgeId={d?.id} iconKey={d?.icon_key} category={d?.category} tier={d?.tier} size={32} />
+                      </div>
+                    </Tooltip>
+                  );
+                })}
+              </div>
+            )}
           </div>
           {!isOwnProfile && (
             <button
@@ -799,11 +884,11 @@ export default function ProfilePage({ viewedProfile, initialTab }) {
           className="flex items-center gap-4 p-3 px-4 rounded-lg cursor-pointer transition-colors duration-150 mb-0" style={{ backgroundColor: "var(--bg-elevated)", border: "1px solid var(--border-default)" }}
         >
           <div className="flex-1">
-            <div className="text-[13px] font-medium font-body">Tu as lu d'autres livres ?</div>
-            <div className="text-xs font-body" style={{ color: "var(--text-tertiary)" }}>Remplis ta bibliothèque en quelques clics.</div>
+            <div className="text-[13px] font-medium font-body">Importe ta bibliothèque</div>
+            <div className="text-xs font-body" style={{ color: "var(--text-tertiary)" }}>Transfère tes lectures depuis Goodreads, Babelio ou ajoute-les manuellement en quelques clics.</div>
           </div>
-          <button className="px-3 py-[6px] rounded-[16px] text-xs font-medium font-body cursor-pointer transition-colors duration-150" style={{ backgroundColor: "var(--bg-primary)", border: "1.5px solid var(--border-default)", color: "var(--text-primary)" }}>
-            Ajouter
+          <button className="px-3 py-[6px] rounded-[16px] text-xs font-medium font-body cursor-pointer transition-colors duration-150 shrink-0" style={{ backgroundColor: "var(--text-primary)", color: "var(--bg-primary)", border: "none" }}>
+            📥 Importer
           </button>
         </div>
       )}
@@ -829,37 +914,6 @@ export default function ProfilePage({ viewedProfile, initialTab }) {
         onSwap={swapPositions}
         onUpdateNote={updateNote}
       />}
-
-      {/* Badges épinglés */}
-      {pinnedBadges.length > 0 && (
-        <div className="border-t border-border-light py-5">
-          <div className="flex items-center justify-between mb-3">
-            <Label>Badges</Label>
-            <Link
-              to={`/${profile.username}/badges`}
-              className="text-[11px] font-body hover:opacity-70 transition-opacity duration-150"
-              style={{ color: "var(--text-tertiary)" }}
-            >
-              Voir tous ›
-            </Link>
-          </div>
-          <div className="flex gap-4 flex-wrap">
-            {pinnedBadges.map(b => (
-              <div key={b.id} className="flex flex-col items-center gap-1" title={b.badge_definitions?.description}>
-                <div
-                  className="flex items-center justify-center rounded-full"
-                  style={{ width: 36, height: 36, backgroundColor: "var(--bg-elevated)", border: "1px solid var(--border-default)", fontSize: 18 }}
-                >
-                  {b.badge_definitions?.icon ?? "🏅"}
-                </div>
-                <span className="text-[10px] font-body text-center leading-tight max-w-[48px]" style={{ color: "var(--text-tertiary)" }}>
-                  {b.badge_definitions?.name}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
 
       {/* En cours */}
       <div className="border-t border-border-light py-6">
@@ -1370,6 +1424,115 @@ export default function ProfilePage({ viewedProfile, initialTab }) {
         );
       })()}
 
+      {/* Badge selection modal */}
+      {badgeModal && isOwnProfile && (
+        <>
+          <div onClick={() => setBadgeModal(null)} style={{ position: "fixed", inset: 0, zIndex: 9998, backgroundColor: "rgba(0,0,0,0.4)" }} />
+          <div style={{ position: "fixed", inset: 0, zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 20px" }}>
+            <div
+              onClick={e => e.stopPropagation()}
+              style={{ position: "relative", backgroundColor: "var(--bg-primary)", border: "1px solid var(--border-subtle)", borderRadius: 16, padding: 24, boxShadow: "0 8px 40px rgba(0,0,0,0.16)", maxWidth: 380, width: "100%", maxHeight: "70vh", overflow: "hidden", display: "flex", flexDirection: "column" }}
+            >
+              <button
+                onClick={() => setBadgeModal(null)}
+                className="group"
+                style={{ position: "absolute", top: 16, right: 16, width: 28, height: 28, borderRadius: "50%", border: "none", backgroundColor: "transparent", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", transition: "background-color 150ms, color 150ms" }}
+                onMouseEnter={e => { e.currentTarget.style.backgroundColor = "var(--bg-surface)"; e.currentTarget.querySelector("span").style.color = "var(--text-primary)"; }}
+                onMouseLeave={e => { e.currentTarget.style.backgroundColor = "transparent"; e.currentTarget.querySelector("span").style.color = "var(--text-muted)"; }}
+                aria-label="Fermer"
+              >
+                <span style={{ fontSize: 18, color: "var(--text-muted)", lineHeight: 1, transition: "color 150ms" }}>×</span>
+              </button>
+              {badgeModal === "pick" ? (
+                <>
+                  <h2 className="font-display italic font-normal text-center" style={{ fontSize: 18, color: "var(--text-primary)", margin: "0 0 4px" }}>
+                    Mes badges
+                  </h2>
+                  <p className="text-center text-[12px] font-body" style={{ color: "var(--text-tertiary)", margin: "0 0 20px" }}>
+                    Clique sur un badge pour l'épingler ou le retirer
+                  </p>
+                  <div className="overflow-y-auto flex-1">
+                    <div className="grid grid-cols-3 gap-4">
+                      {badges.filter(b => !b.expired).map(b => {
+                        const d = b.badge_definitions;
+                        const color = (d?.tier && TIER_COLORS[d.tier]) || CATEGORY_COLORS[d?.category] || "var(--text-tertiary)";
+                        const isPinned = pinnedBadges.some(p => p.badge_id === b.badge_id);
+                        return (
+                          <Tooltip
+                            key={b.badge_id}
+                            multiline
+                            strategy="fixed"
+                            text={
+                              <>
+                                <div style={{ fontWeight: 600, fontSize: 12, whiteSpace: "nowrap" }}>{d?.name}</div>
+                                {d?.description && <div style={{ fontSize: 11, opacity: 0.7, marginTop: 2 }}>{d.description}</div>}
+                              </>
+                            }
+                          >
+                            <button
+                              onClick={() => pinBadgeFromModal(b.badge_id)}
+                              className="flex flex-col items-center gap-1.5 bg-transparent border-none cursor-pointer hover:opacity-70 transition-opacity duration-150 p-1"
+                            >
+                              <div style={isPinned ? { outline: `2px solid ${color}`, outlineOffset: 2, borderRadius: "50%" } : undefined}>
+                                <BadgeIcon badgeId={d?.id} iconKey={d?.icon_key} category={d?.category} tier={d?.tier} size={44} />
+                              </div>
+                              <div className="text-[11px] font-body font-medium text-center leading-tight" style={{ color: "var(--text-secondary)", maxWidth: 72 }}>
+                                {d?.name}
+                                {isPinned && <span className="block text-[10px] font-normal" style={{ color }}>Épinglé ✓</span>}
+                              </div>
+                            </button>
+                          </Tooltip>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <h2 className="font-display italic font-normal text-center" style={{ fontSize: 18, color: "var(--text-primary)", margin: "0 0 20px" }}>
+                    Quel badge remplacer ?
+                  </h2>
+                  <div className="flex justify-center gap-6">
+                    {pinnedBadges.map(b => {
+                      const d = b.badge_definitions;
+                      return (
+                        <Tooltip
+                          key={b.badge_id}
+                          multiline
+                          strategy="fixed"
+                          text={
+                            <>
+                              <div style={{ fontWeight: 600, fontSize: 12, whiteSpace: "nowrap" }}>{d?.name}</div>
+                              {d?.description && <div style={{ fontSize: 11, opacity: 0.7, marginTop: 2 }}>{d.description}</div>}
+                            </>
+                          }
+                        >
+                          <button
+                            onClick={() => swapBadgeFromModal(b.badge_id)}
+                            className="flex flex-col items-center gap-1.5 bg-transparent border-none cursor-pointer hover:opacity-70 transition-opacity duration-150 p-0"
+                          >
+                            <BadgeIcon badgeId={d?.id} iconKey={d?.icon_key} category={d?.category} tier={d?.tier} size={48} />
+                            <span className="text-[11px] font-body font-medium text-center" style={{ color: "var(--text-secondary)", maxWidth: 72, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                              {d?.name}
+                            </span>
+                          </button>
+                        </Tooltip>
+                      );
+                    })}
+                  </div>
+                </>
+              )}
+              <button
+                onClick={() => setBadgeModal(null)}
+                className="block w-full mt-5 text-[12px] font-body bg-transparent border-none cursor-pointer hover:opacity-70 transition-opacity duration-150"
+                style={{ color: "var(--text-muted)" }}
+              >
+                Annuler
+              </button>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }

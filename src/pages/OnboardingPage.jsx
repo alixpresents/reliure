@@ -1,39 +1,19 @@
 import { useState, useEffect, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
-import { B } from "../data";
 import Img from "../components/Img";
-import InteractiveStars from "../components/InteractiveStars";
 import OnboardingProgress from "../components/OnboardingProgress";
+import CoverBackdrop from "../components/CoverBackdrop";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../lib/AuthContext";
 import { searchBooks } from "../lib/googleBooks";
 import { importBook } from "../lib/importBook";
 import { RESERVED_USERNAMES } from "../constants/reserved-usernames";
 
-function CoverBackdrop() {
-  const covers = [...B, ...B.slice(0, 4)];
-  return (
-    <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
-      <div className="absolute top-8 left-1/2 -translate-x-1/2 flex gap-4" style={{ width: "max-content" }}>
-        {covers.map((b, i) => (
-          <img
-            key={i}
-            src={b.c}
-            alt=""
-            className="w-[100px] h-[150px] rounded-[3px] object-cover opacity-[0.11] grayscale blur-[1px]"
-          />
-        ))}
-      </div>
-      <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, color-mix(in srgb, var(--bg-primary) 40%, transparent), color-mix(in srgb, var(--bg-primary) 90%, transparent), var(--bg-primary))" }} />
-    </div>
-  );
-}
-
-function PickedBook({ book, rating, onRate, onRemove }) {
+function PickedBook({ book, onRemove }) {
   return (
     <div className="flex flex-col items-center">
       <div className="relative group">
-        <Img book={book} w={90} h={135} />
+        <Img book={book} w={72} h={108} />
         <button
           onClick={onRemove}
           className="absolute -top-2 -right-2 w-5 h-5 rounded-full text-xs leading-none flex items-center justify-center cursor-pointer transition-all duration-150 shadow-[0_1px_3px_rgba(0,0,0,0.08)] hover:opacity-80"
@@ -42,46 +22,13 @@ function PickedBook({ book, rating, onRate, onRemove }) {
           ×
         </button>
       </div>
-      <div className="text-[11px] font-medium mt-2 font-body text-center max-w-[90px] truncate">{book.t}</div>
+      <div className="text-[11px] font-medium mt-2 font-body text-center max-w-[72px] truncate">{book.t}</div>
       <div className="text-[10px] font-body" style={{ color: "var(--text-tertiary)" }}>{book.a.split(" ").pop()}</div>
-      <div className="mt-1.5">
-        <InteractiveStars value={rating} onChange={onRate} size="text-xs" />
-      </div>
     </div>
   );
 }
 
-/* ─── Step 0: Welcome ─── */
-function StepWelcome({ onNext }) {
-  return (
-    <div className="text-center">
-      <div className="flex items-center justify-center gap-1.5 mb-10">
-        <span className="text-[28px] font-bold tracking-tight font-body" style={{ color: "var(--text-primary)" }}>reliure</span>
-        <span className="text-[9px] font-semibold rounded-[3px] px-[5px] py-[2px] font-body" style={{ backgroundColor: "var(--text-primary)", color: "var(--bg-primary)" }}>
-          BETA
-        </span>
-      </div>
-
-      <h1 className="font-display italic text-[36px] font-normal mb-3 leading-tight">
-        Bienvenue sur Reliure.
-      </h1>
-      <p className="text-[15px] font-body mb-10 leading-relaxed max-w-[340px] mx-auto" style={{ color: "var(--text-secondary)" }}>
-        Ton journal de lecture. Tes coups de c&oelig;ur.<br />
-        La communauté qui lit comme toi.
-      </p>
-
-      <button
-        onClick={onNext}
-        className="text-[14px] font-medium font-body px-7 py-3 rounded-lg border-none cursor-pointer hover:opacity-80 transition-colors duration-200"
-        style={{ backgroundColor: "var(--text-primary)", color: "var(--bg-primary)" }}
-      >
-        Commencer →
-      </button>
-    </div>
-  );
-}
-
-/* ─── Step 1: Username ─── */
+/* ─── Step 0: Username ─── */
 function StepUsername({ username, setUsername, bio, setBio, onNext, error: externalError, userEmail, usernameParam }) {
   const [status, setStatus] = useState(null); // null | 'available' | 'reserved_for_you' | 'reserved' | 'taken' | 'invalid'
   const [saving, setSaving] = useState(false);
@@ -190,7 +137,7 @@ function StepUsername({ username, setUsername, bio, setBio, onNext, error: exter
   );
 }
 
-/* ─── Step 2: Pick books ─── */
+/* ─── Step 1: Pick books ─── */
 function StepBooks({ picks, setPicks, onFinish, onSkip }) {
   const [q, setQ] = useState("");
   const [saving, setSaving] = useState(false);
@@ -211,16 +158,12 @@ function StepBooks({ picks, setPicks, onFinish, onSkip }) {
   }, [q]);
 
   const addBook = gb => {
-    if (picks.length < 3) {
-      const book = { id: gb.googleId, t: gb.title, a: gb.authors.join(", "), c: gb.coverUrl, y: gb.publishedDate ? parseInt(gb.publishedDate) : null, p: gb.pageCount, _google: gb };
-      setPicks([...picks, { book, rating: 0 }]);
+    if (picks.length < 5) {
+      const book = { id: gb.googleId || gb.dbId, t: gb.title, a: gb.authors.join(", "), c: gb.coverUrl, y: gb.publishedDate ? parseInt(gb.publishedDate) : null, p: gb.pageCount, slug: gb.slug, _google: gb._source === "google" ? gb : null, _supabase: gb._source === "db" ? gb : null };
+      setPicks([...picks, { book }]);
       setQ("");
       setResults([]);
     }
-  };
-
-  const rateBook = (id, r) => {
-    setPicks(picks.map(p => p.book.id === id ? { ...p, rating: r } : p));
   };
 
   const removeBook = id => {
@@ -228,6 +171,7 @@ function StepBooks({ picks, setPicks, onFinish, onSkip }) {
   };
 
   const hasBooks = picks.length > 0;
+  const remaining = Math.max(0, 3 - picks.length);
 
   const handleFinish = async () => {
     setSaving(true);
@@ -238,13 +182,34 @@ function StepBooks({ picks, setPicks, onFinish, onSkip }) {
   return (
     <div>
       <h1 className="font-display italic text-[24px] font-normal text-center mb-2 leading-tight">
-        Qu'est-ce que tu lis en ce moment ?
+        Quels livres t'ont marqué ?
       </h1>
-      <p className="text-[13px] text-center mb-8 font-body" style={{ color: "var(--text-tertiary)" }}>
-        Ajoute 1 à 3 livres. On commence avec ça — tu ajouteras le reste après.
+      <p className="text-[13px] text-center mb-4 font-body" style={{ color: "var(--text-tertiary)" }}>
+        Tes lectures récentes, tes classiques, tes coups de cœur — ce qui te représente.
       </p>
 
-      {picks.length < 3 && (
+      {/* Feedback progressif */}
+      {hasBooks && (
+        <div className="text-center mb-5">
+          {picks.length < 3 ? (
+            <span
+              className="inline-block text-[12px] font-body px-3 py-1 rounded-full"
+              style={{ backgroundColor: "var(--tag-bg)", color: "var(--text-tertiary)" }}
+            >
+              Beau début ! Encore {remaining} pour un profil complet.
+            </span>
+          ) : (
+            <span
+              className="inline-block text-[12px] font-body px-3 py-1 rounded-full"
+              style={{ backgroundColor: "color-mix(in srgb, var(--color-success) 10%, transparent)", color: "var(--color-success)" }}
+            >
+              {picks.length < 5 ? `✓ Ton profil est prêt — tu peux en ajouter ${5 - picks.length} de plus` : "✓ Parfait !"}
+            </span>
+          )}
+        </div>
+      )}
+
+      {picks.length < 5 && (
         <div className="mb-6 relative">
           <div className="bg-surface rounded-lg py-[11px] px-4 flex items-center gap-2.5 transition-[border] duration-150" style={{ borderWidth: 1, borderStyle: "solid", borderColor: "var(--border-default)" }}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--border-subtle)" strokeWidth="2" className="shrink-0">
@@ -274,7 +239,7 @@ function StepBooks({ picks, setPicks, onFinish, onSkip }) {
             <div className="absolute left-0 right-0 rounded-lg mt-1 overflow-hidden z-10 shadow-[0_4px_16px_rgba(0,0,0,0.06)]" style={{ borderWidth: 1, borderStyle: "solid", borderColor: "var(--border-default)", backgroundColor: "var(--bg-elevated)" }}>
               {results.slice(0, 5).map(gb => (
                 <div
-                  key={gb.googleId}
+                  key={gb.googleId || gb.dbId}
                   onClick={() => addBook(gb)}
                   className="flex items-center gap-3 px-3 py-2.5 cursor-pointer hover:bg-surface transition-colors duration-100 border-b border-border-light last:border-b-0"
                 >
@@ -298,15 +263,13 @@ function StepBooks({ picks, setPicks, onFinish, onSkip }) {
         <div className="mb-6">
           <div className="flex items-center justify-between mb-4">
             <span className="text-xs font-medium font-body" style={{ color: "var(--text-tertiary)" }}>Tes livres</span>
-            <span className="text-xs font-body" style={{ color: "var(--text-tertiary)" }}>{picks.length}/3</span>
+            <span className="text-xs font-body" style={{ color: "var(--text-tertiary)" }}>{picks.length}/5</span>
           </div>
-          <div className="flex justify-center gap-6">
+          <div className="flex justify-center gap-4 flex-wrap">
             {picks.map(p => (
               <PickedBook
                 key={p.book.id}
                 book={p.book}
-                rating={p.rating}
-                onRate={r => rateBook(p.book.id, r)}
                 onRemove={() => removeBook(p.book.id)}
               />
             ))}
@@ -327,7 +290,7 @@ function StepBooks({ picks, setPicks, onFinish, onSkip }) {
           : { color: "var(--text-tertiary)" }
         }
       >
-        {saving ? "Ajout en cours..." : "Continuer"}
+        {saving ? "Ajout en cours..." : hasBooks ? "Voir mon profil →" : "Ajoute au moins un livre"}
       </button>
 
       <button
@@ -335,7 +298,56 @@ function StepBooks({ picks, setPicks, onFinish, onSkip }) {
         className="w-full mt-3 py-2 bg-transparent border-none text-[13px] cursor-pointer font-body hover:opacity-80 transition-colors duration-150"
         style={{ color: "var(--text-tertiary)" }}
       >
-        Passer cette étape
+        Passer — j'ajouterai mes livres plus tard
+      </button>
+    </div>
+  );
+}
+
+/* ─── Step 2: Profile preview ─── */
+function StepProfilePreview({ username, picks, onExplore }) {
+  return (
+    <div className="text-center">
+      {/* Avatar initiales */}
+      <div className="flex justify-center mb-3">
+        <div
+          className="w-16 h-16 rounded-full flex items-center justify-center text-[22px] font-medium font-body"
+          style={{ backgroundColor: "var(--avatar-bg)", color: "var(--text-tertiary)" }}
+        >
+          {username.charAt(0).toUpperCase()}
+        </div>
+      </div>
+
+      <h1 className="font-display italic text-[24px] font-normal mb-1 leading-tight">
+        Bienvenue, @{username}
+      </h1>
+      <p className="text-[13px] font-body mb-8" style={{ color: "var(--text-tertiary)" }}>
+        Ta bibliothèque prend forme.
+      </p>
+
+      {/* Mini preview des couvertures */}
+      {picks.length > 0 && (
+        <div className="rounded-xl p-5 mb-8" style={{ backgroundColor: "var(--bg-surface)", border: "1px solid var(--border-default)" }}>
+          <div
+            className="text-[11px] font-semibold mb-3 text-left font-body"
+            style={{ color: "var(--text-tertiary)", textTransform: "uppercase", letterSpacing: "0.1em" }}
+          >
+            Bibliothèque
+          </div>
+          <div className="flex justify-center gap-3 flex-wrap">
+            {picks.map(p => (
+              <Img key={p.book.id} book={p.book} w={56} h={84} />
+            ))}
+          </div>
+        </div>
+      )}
+
+      <button
+        onClick={onExplore}
+        className="w-full py-3.5 rounded-lg text-[15px] font-medium font-body border-none cursor-pointer transition-all duration-200 hover:opacity-90"
+        style={{ backgroundColor: "var(--text-primary)", color: "var(--bg-primary)" }}
+      >
+        Découvrir mon profil →
       </button>
     </div>
   );
@@ -346,12 +358,12 @@ export default function OnboardingPage({ onComplete }) {
   const { user } = useAuth();
   const [searchParams] = useSearchParams();
   const usernameParam = searchParams.get("username") || "";
-  const [step, setStep] = useState(0); // 0=welcome, 1=username, 2=books
+  const [step, setStep] = useState(0); // 0=username, 1=books, 2=preview
   const [username, setUsername] = useState("");
   const [bio, setBio] = useState("");
   const [picks, setPicks] = useState([]);
   const [leaving, setLeaving] = useState(false);
-  const [step1Error, setStep1Error] = useState(null);
+  const [step0Error, setStep0Error] = useState(null);
 
   const transition = (next) => {
     setLeaving(true);
@@ -362,7 +374,7 @@ export default function OnboardingPage({ onComplete }) {
   };
 
   const handleUsernameNext = async () => {
-    setStep1Error(null);
+    setStep0Error(null);
     const uname = username.toLowerCase();
     const { error } = await supabase.from("users").insert({
       id: user.id,
@@ -372,24 +384,29 @@ export default function OnboardingPage({ onComplete }) {
     });
     if (error) {
       if (error.code === "23505") {
-        setStep1Error("Ce pseudo est déjà pris");
+        setStep0Error("Ce pseudo est déjà pris");
       } else {
-        setStep1Error(error.message);
+        setStep0Error(error.message);
       }
       return;
     }
     // Claim reserved username if applicable
     await supabase.rpc("claim_reserved_username", { p_username: uname });
-    transition(() => setStep(2));
+    transition(() => setStep(1));
   };
 
   const handleBooksFinish = async () => {
+    const insertedBookIds = [];
+
     for (const pick of picks) {
       const gb = pick.book._google;
+      const sb = pick.book._supabase;
       let book;
 
       if (gb) {
         book = await importBook(gb);
+      } else if (sb) {
+        book = { id: sb.dbId || sb.id || pick.book.id };
       } else {
         const { data } = await supabase.from("books").select("id").eq("title", pick.book.t).single();
         if (data) book = data;
@@ -400,22 +417,32 @@ export default function OnboardingPage({ onComplete }) {
       await supabase.from("reading_status").insert({
         user_id: user.id,
         book_id: book.id,
-        status: "reading",
+        status: "read",
       });
 
-      if (pick.rating > 0) {
-        await supabase.from("reviews").insert({
-          user_id: user.id,
-          book_id: book.id,
-          rating: pick.rating,
-        });
-      }
+      insertedBookIds.push(book.id);
     }
+
+    // Auto-fill user_favorites with first 4 books
+    const favoritesToInsert = insertedBookIds.slice(0, 4).map((bookId, index) => ({
+      user_id: user.id,
+      book_id: bookId,
+      position: index + 1,
+    }));
+    if (favoritesToInsert.length > 0) {
+      await supabase.from("user_favorites").insert(favoritesToInsert);
+    }
+
     localStorage.setItem("reliure_walkthrough_pending", "true");
-    onComplete(username.toLowerCase());
+    transition(() => setStep(2));
   };
 
-  // Global step for progress bar: internal 0→1, 1→2, 2→3
+  const handleSkip = () => {
+    localStorage.setItem("reliure_walkthrough_pending", "true");
+    transition(() => setStep(2));
+  };
+
+  // Progress bar: step 0→1/3, 1→2/3, 2→3/3
   const globalStep = step + 1;
 
   return (
@@ -424,15 +451,13 @@ export default function OnboardingPage({ onComplete }) {
       <CoverBackdrop />
 
       <div className="w-full max-w-[400px] relative z-10">
-        {/* Logo — hidden on welcome (it has its own) */}
-        {step > 0 && (
-          <div className="flex items-center justify-center gap-1.5 mb-8">
-            <span className="text-[20px] font-bold tracking-tight font-body" style={{ color: "var(--text-primary)" }}>reliure</span>
-            <span className="text-[8px] font-semibold rounded-[3px] px-[5px] py-[2px] font-body" style={{ backgroundColor: "var(--text-primary)", color: "var(--bg-primary)" }}>
-              BETA
-            </span>
-          </div>
-        )}
+        {/* Logo */}
+        <div className="flex items-center justify-center gap-1.5 mb-8">
+          <span className="text-[20px] font-bold tracking-tight font-body" style={{ color: "var(--text-primary)" }}>reliure</span>
+          <span className="text-[8px] font-semibold rounded-[3px] px-[5px] py-[2px] font-body" style={{ backgroundColor: "var(--text-primary)", color: "var(--bg-primary)" }}>
+            BETA
+          </span>
+        </div>
 
         <div
           className={`transition-all duration-300 ${
@@ -440,29 +465,30 @@ export default function OnboardingPage({ onComplete }) {
           }`}
         >
           {step === 0 && (
-            <StepWelcome onNext={() => transition(() => setStep(1))} />
-          )}
-          {step === 1 && (
             <StepUsername
               username={username}
               setUsername={setUsername}
               bio={bio}
               setBio={setBio}
               onNext={handleUsernameNext}
-              error={step1Error}
+              error={step0Error}
               userEmail={user?.email}
               usernameParam={usernameParam}
             />
           )}
-          {step === 2 && (
+          {step === 1 && (
             <StepBooks
               picks={picks}
               setPicks={setPicks}
               onFinish={handleBooksFinish}
-              onSkip={() => {
-                localStorage.setItem("reliure_walkthrough_pending", "true");
-                onComplete(username.toLowerCase());
-              }}
+              onSkip={handleSkip}
+            />
+          )}
+          {step === 2 && (
+            <StepProfilePreview
+              username={username}
+              picks={picks}
+              onExplore={() => onComplete(username.toLowerCase())}
             />
           )}
         </div>

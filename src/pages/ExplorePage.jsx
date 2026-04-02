@@ -30,6 +30,8 @@ const THEMES_PRINCIPAUX = [
 import { useLikes } from "../hooks/useLikes";
 import Skeleton from "../components/Skeleton";
 import { useAuth } from "../lib/AuthContext";
+import { useCuratedSelections } from "../hooks/useCuratedSelections";
+import CuratedSelectionCard from "../components/CuratedSelectionCard";
 
 function normalizeQuoteBook(q) {
   if (!q.books) return null;
@@ -126,6 +128,7 @@ export default function ExplorePage() {
   const { quotes, loading: loadingQuotes, refetch: refetchQuotes } = usePopularQuotes();
   const { lists, loading: loadingLists } = usePopularLists();
   const { rankings: top3, loading: loadingRanking } = useClassement("alltime", null);
+  const { data: curatedSelections } = useCuratedSelections();
   const reviewIds = useMemo(() => reviews.map(r => r.id), [reviews]);
   const quoteIds = useMemo(() => quotes.map(q => q.id), [quotes]);
   const listIds = useMemo(() => lists.map(l => l.id), [lists]);
@@ -452,6 +455,20 @@ export default function ExplorePage() {
           ))}
         </div>
       )}
+      {/* Sélections */}
+      {curatedSelections && curatedSelections.length > 0 && (
+        <div className="border-t border-border-light py-6">
+          <Heading right={<Link to="/selections" className="text-[13px] font-body no-underline hover:underline" style={{ color: "var(--text-muted)" }}>Tout voir ›</Link>}>
+            Sélections
+          </Heading>
+          <HScroll>
+            {curatedSelections.map(s => (
+              <CuratedSelectionCard key={s.id} selection={s} variant="compact" />
+            ))}
+          </HScroll>
+        </div>
+      )}
+
       {/* Top contributeurs */}
       {!loadingRanking && top3.length > 0 && (
         <div className="border-t border-border-light py-6">
@@ -474,7 +491,7 @@ export default function ExplorePage() {
                   <Link to={`/${entry.username}`} className="flex-1 min-w-0 text-[13px] font-medium font-body no-underline hover:underline truncate" style={{ color: "var(--text-primary)" }}>
                     {name}
                   </Link>
-                  <span className="text-[12px] font-body shrink-0" style={{ color: "var(--text-muted)" }}>{entry.total_points} encre</span>
+                  <span className="text-[12px] font-body shrink-0" style={{ color: "var(--text-muted)" }}>{entry.total_points} {entry.total_points > 1 ? "points" : "point"}</span>
                 </div>
               );
             })}

@@ -29,7 +29,7 @@ import { useBookLists } from "../hooks/useBookLists";
 import ContentMenu from "../components/ContentMenu";
 import Toast from "../components/Toast";
 import { useToast } from "../hooks/useToast";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQueryClient, useQuery } from "@tanstack/react-query";
 
 function LoginModal({ book, onClose, onNavigate }) {
   useEffect(() => {
@@ -362,6 +362,22 @@ export default function BookPage({ book }) {
   // Live book data from Supabase
   const isUuid = typeof bookId === "string" && bookId.includes("-");
   const { lists: bookLists } = useBookLists(isUuid ? bookId : null);
+  const { data: bookCuratedSelections = [] } = useQuery({
+    queryKey: ["bookCuratedSelections", bookId],
+    queryFn: async () => {
+      if (!bookId || !isUuid) return [];
+      const { data, error } = await supabase
+        .from("list_items")
+        .select("list_id, lists!inner(id, slug, curator_name, curator_role, is_curated, is_public)")
+        .eq("book_id", bookId)
+        .eq("lists.is_curated", true)
+        .eq("lists.is_public", true);
+      if (error) return [];
+      return (data || []).map(row => row.lists).filter(Boolean);
+    },
+    enabled: isUuid,
+    staleTime: 10 * 60 * 1000,
+  });
   const avgRating = book.r ?? 0;
   const ratingCount = book.rt ?? 0;
   const bookDescription = book.desc ?? null;
@@ -835,6 +851,43 @@ export default function BookPage({ book }) {
           ))}
         </div>
       </div>
+
+      {/* Dans des sélections curées */}
+      {bookCuratedSelections.length > 0 && (
+        <div className="border-t border-border-light py-5">
+          <Label>Sélection</Label>
+          <div className="flex flex-col" style={{ gap: 8, marginTop: 12 }}>
+            {bookCuratedSelections.map(sel => (
+              <div
+                key={sel.id}
+                onClick={() => navigate(`/selections/${sel.slug}`)}
+                className="cursor-pointer"
+                style={{
+                  backgroundColor: "var(--bg-surface)",
+                  border: "1px solid var(--border-subtle)",
+                  borderRadius: 12,
+                  padding: "16px 20px",
+                }}
+              >
+                <div className="font-body" style={{ fontSize: 13, color: "var(--text-secondary)", marginBottom: 2 }}>
+                  Dans la bibliothèque de
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="font-body" style={{ fontSize: 15, fontWeight: 500, color: "var(--text-primary)" }}>
+                    {sel.curator_name}
+                  </span>
+                  <span style={{ color: "var(--text-tertiary)", fontSize: 14 }}>→</span>
+                </div>
+                {sel.curator_role && (
+                  <div className="font-body" style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 2 }}>
+                    {sel.curator_role}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Dans des listes */}
       {bookLists.length > 0 && (

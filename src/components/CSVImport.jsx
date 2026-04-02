@@ -73,6 +73,7 @@ export default function CSVImport() {
   const fileRef = useRef(null);
   const abortRef = useRef(false);
   const pauseRef = useRef(false);
+  const startTimeRef = useRef(null);
 
   // States: idle → preview → importing → done
   const [phase, setPhase] = useState("idle");
@@ -81,6 +82,7 @@ export default function CSVImport() {
   const [rows, setRows] = useState([]);
   const [dragOver, setDragOver] = useState(false);
   const [paused, setPaused] = useState(false);
+  const [eta, setEta] = useState(null);
 
   // Import progress
   const [progress, setProgress] = useState({ current: 0, total: 0, imported: 0, skipped: 0, failed: 0 });
@@ -108,6 +110,7 @@ export default function CSVImport() {
     setRows([]);
     setProgress({ current: 0, total: 0, imported: 0, skipped: 0, failed: 0 });
     setFailedTitles([]);
+    setEta(null);
     abortRef.current = false;
     if (fileRef.current) fileRef.current.value = "";
   };
@@ -165,70 +168,88 @@ export default function CSVImport() {
   const startImport = async () => {
     if (!user || !rows.length) return;
     setPhase("importing");
+    startTimeRef.current = Date.now();
     abortRef.current = false;
-    setProgress({ current: 0, total: rows.length, imported: 0, skipped: 0, failed: 0 });
+
+    // Sort: ISBN books first (edge function, no client quota), then title-only (searchBooks, client quota)
+    const sorted = [...rows].sort((a, b) => {
+      const aHas = (a.isbn13 || a.isbn10) ? 1 : 0;
+      const bHas = (b.isbn13 || b.isbn10) ? 1 : 0;
+      return bHas - aHas;
+    });
+
+    setProgress({ current: 0, total: sorted.length, imported: 0, skipped: 0, failed: 0 });
     setFailedTitles([]);
 
     let imported = 0, skipped = 0, failed = 0;
     const failures = [];
 
-    for (let i = 0; i < rows.length; i++) {
+    for (let i = 0; i < sorted.length; i++) {
       if (abortRef.current) break;
-      // Wait while paused (tab hidden)
       while (pauseRef.current && !abortRef.current) {
         await new Promise(r => setTimeout(r, 200));
       }
       if (abortRef.current) break;
-      const row = rows[i];
+      const row = sorted[i];
 
       try {
         let book = null;
 
-        // Enrichir via searchBooks avant d'importer
-        let googleBook = null;
-
         if (row.isbn13 || row.isbn10) {
-          // Cas 1 — ISBN disponible : chercher par ISBN d'abord
-          const byIsbn = await searchBooks(row.isbn13 || row.isbn10);
-          if (byIsbn?.length) {
-            googleBook = byIsbn[0];
-          } else {
-            // Fallback : recherche par titre+auteur
-            const byTitle = await searchBooks(`${row.title} ${row.author}`);
-            if (byTitle?.length) googleBook = byTitle[0];
+          // Group 1 — ISBN available: call importBook directly (edge function, server-side quota)
+          const minimalBook = {
+            title: row.title,
+            authors: row.author ? [row.author] : [],
+            isbn13: row.isbn13 || null,
+            coverUrl: null,
+            publishedDate: null,
+            pageCount: null,
+            publisher: null,
+            subtitle: null,
+            description: null,
+          };
+          book = await importBook(minimalBook);
+
+          // Fallback: title match in local DB if edge function failed
+          if (!book && row.title) {
+            const { data: existingByTitle } = await supabase
+              .from("books")
+              .select("id")
+              .ilike("title", row.title.trim())
+              .limit(1);
+            if (existingByTitle?.[0]) book = { id: existingByTitle[0].id };
           }
+
+          await new Promise(r => setTimeout(r, 300));
         } else {
-          // Cas 2 — pas d'ISBN : recherche par titre+auteur uniquement
+          // Group 2 — No ISBN: search by title+author (client-side, circuit breaker risk)
           const byTitle = await searchBooks(`${row.title} ${row.author}`);
-          if (byTitle?.length) googleBook = byTitle[0];
-        }
-
-        if (googleBook) {
-          book = await importBook(googleBook);
-        }
-
-        // Fallback : chercher par titre exact dans notre DB si pas de livre trouvé et pas d'ISBN
-        if (!book && !row.isbn13 && !row.isbn10 && row.title) {
-          const { data: existingByTitle } = await supabase
-            .from('books')
-            .select('id')
-            .ilike('title', row.title.trim())
-            .limit(1);
-
-          if (existingByTitle?.[0]) {
-            book = { id: existingByTitle[0].id };
+          if (byTitle?.length) {
+            book = await importBook(byTitle[0]);
           }
+
+          // Fallback: title match in local DB
+          if (!book && row.title) {
+            const { data: existingByTitle } = await supabase
+              .from("books")
+              .select("id")
+              .ilike("title", row.title.trim())
+              .limit(1);
+            if (existingByTitle?.[0]) book = { id: existingByTitle[0].id };
+          }
+
+          await new Promise(r => setTimeout(r, 800));
         }
 
         if (!book) {
           failed++;
           failures.push(row.title);
-          setProgress({ current: i + 1, total: rows.length, imported, skipped, failed });
+          setProgress({ current: i + 1, total: sorted.length, imported, skipped, failed });
           setFailedTitles([...failures]);
           continue;
         }
 
-        // Vérifier si reading_status existe déjà avant d'insérer
+        // Check if reading_status already exists
         const { data: existing } = await supabase
           .from("reading_status")
           .select("id")
@@ -236,13 +257,13 @@ export default function CSVImport() {
           .eq("book_id", book.id)
           .maybeSingle();
 
-        // Créer reading_status — ne pas écraser si déjà existant
+        // Create reading_status — don't overwrite existing
         const { error: rsErr } = await supabase.from("reading_status").upsert(
           { user_id: user.id, book_id: book.id, status: row.status },
           { onConflict: "user_id,book_id", ignoreDuplicates: true }
         );
 
-        // Créer review rating-only si note >= 1 — ne pas écraser
+        // Create review rating-only if rating >= 1 — don't overwrite
         if (row.rating >= 1) {
           await supabase.from("reviews").upsert(
             { user_id: user.id, book_id: book.id, rating: row.rating },
@@ -250,7 +271,6 @@ export default function CSVImport() {
           );
         }
 
-        // Comptage : succès / doublon / erreur
         if (!rsErr && !existing) {
           imported++;
         } else if (existing || rsErr?.code === "23505") {
@@ -263,10 +283,18 @@ export default function CSVImport() {
         failures.push(row.title);
       }
 
-      setProgress({ current: i + 1, total: rows.length, imported, skipped, failed });
+      setProgress({ current: i + 1, total: sorted.length, imported, skipped, failed });
       setFailedTitles([...failures]);
+
+      const done = i + 1;
+      if (done >= 3 && done % 3 === 0) {
+        const elapsed = (Date.now() - startTimeRef.current) / 1000;
+        const remaining = Math.round((elapsed / done) * (sorted.length - done));
+        setEta(remaining);
+      }
     }
 
+    setEta(null);
     setPhase("done");
   };
 
@@ -409,11 +437,18 @@ export default function CSVImport() {
         </div>
 
         {/* Counters */}
-        <div className="flex justify-center gap-4 text-[12px] font-body mb-6">
+        <div className="flex justify-center gap-4 text-[12px] font-body mb-2">
           <span style={{ color: "var(--text-primary)" }}>{progress.imported} importé{progress.imported > 1 ? "s" : ""}</span>
           <span style={{ color: "var(--text-tertiary)" }}>{progress.skipped} déjà présent{progress.skipped > 1 ? "s" : ""}</span>
           <span style={{ color: "var(--color-error)" }}>{progress.failed} non trouvé{progress.failed > 1 ? "s" : ""}</span>
         </div>
+
+        {eta != null && (
+          <p className="text-[12px] font-body text-center mb-4" style={{ color: "var(--text-tertiary)" }}>
+            ~{eta >= 60 ? `${Math.round(eta / 60)} min` : `${eta}s`} restante{eta >= 60 ? (Math.round(eta / 60) > 1 ? "s" : "") : (eta > 1 ? "s" : "")}
+          </p>
+        )}
+        {eta == null && <div className="mb-4" />}
 
         <div className="flex justify-center">
           <button

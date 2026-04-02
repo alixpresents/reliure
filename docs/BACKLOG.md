@@ -490,18 +490,17 @@ Conservé dans l'edge function `book_import` pour l'import par ISBN. Supprimé d
 
 ## 7. Personnaliser la page login
 
-**Statut :** ✅ Fait (page custom avec branding Reliure, magic link OTP — OAuth Google non implémenté)
+**Statut :** ✅ Fait (page custom avec branding Reliure, magic link OTP, OAuth Google)
 **Portée :** Auth UI Supabase + template email magic link
 
-### Le problème
+### Ce qui est implémenté
 
-La page de login par défaut de Supabase est générique et ne reflète pas l'identité Reliure. C'est le premier écran qu'un nouvel utilisateur voit après avoir cliqué « Créer mon profil » — ça doit être à la hauteur.
-
-### Ce qu'il faut faire
-
-- Customiser l'écran d'auth Supabase : logo Reliure, typo Instrument Serif pour le titre, palette de couleurs du design system, message d'accueil éditorial
-- Personnaliser le template de l'email magic link : sujet, contenu, branding Reliure (pas le template Supabase par défaut)
-- S'assurer que le flow est fluide sur mobile (l'email s'ouvre souvent dans un autre navigateur)
+- Page custom `LoginPage.jsx` : logo reliure + pill BETA, tagline Instrument Serif 32px, `CoverBackdrop` en fond
+- Google OAuth (CTA primaire) : `supabase.auth.signInWithOAuth({ provider: "google" })`, redirect vers `/explorer`
+- Magic link par email (secondaire) : input email + bouton, confirmation envoi avec "Utiliser une autre adresse"
+- Mot de passe (lien discret) : révèle le champ password en `animate-page-in`, toggle retour vers magic link
+- OAuth Google activé. Provider configuré dans Supabase Dashboard.
+- Reste à faire : personnaliser le template de l'email magic link (sujet, contenu, branding Reliure)
 
 ---
 
@@ -1496,4 +1495,44 @@ La base locale contient ~12 500 livres mais beaucoup ont des métadonnées incom
 
 ---
 
-*Dernière mise à jour : 1 avril 2026 — Sprint Performance P1 + TanStack Query migration*
+---
+
+## 27. Gamification — Badge créateur (bêta)
+
+**Statut :** ✅ Implémenté — 1 avril 2026
+**Portée :** Profil + critiques/citations dans toutes les pages
+
+### Ce qui est implémenté
+
+Système de badges extensible avec un premier badge "Créateur" réservé aux utilisateurs bêta fondateurs.
+
+**Infrastructure DB** (`supabase/migrations/017_creator_badge.sql`) :
+- `badge_definitions` : table de référence des badges (id text PK, name, description, category enum, color, icon)
+- `user_badges` : table de jonction user_id × badge_id, avec awarded_at et awarded_by
+- `reserved_usernames` : table de pseudos réservés (username + email optionnel) avec RPCs d'attribution :
+  - `check_username_availability(p_username, p_email)` → `'available' | 'reserved_for_you' | 'reserved' | 'taken'`
+  - `claim_reserved_username(p_username)` (SECURITY DEFINER) — supprime la réservation à l'inscription
+
+**Composants** :
+- `src/components/CreatorBadge.jsx` — pill "✦ Créateur" (11px, CSS vars `--creator-bg/text/border`, dark mode ready)
+- `src/components/UserName.jsx` — lien `@handle` avec prop `isCreator` → affiche `<CreatorBadge />` à la suite
+
+**Hooks** :
+- `src/hooks/useUserBadges.js` — `useUserBadges(userId)` → `{ badges, hasCreator, loading }` ; `useCreatorIds()` → `Set` de tous les IDs avec badge creator (query globale partagée, staleTime 10min, limite 500)
+
+**Intégration UI** :
+- ProfilePage : `<CreatorBadge />` à côté du `@username` dans le header profil
+- BookPage, ExplorePage, FeedPage, CitationsPage : `creatorIds = useCreatorIds()` → `<UserName isCreator={creatorIds.has(item.user_id)} />` sur toutes les listes de critiques et citations
+
+**Attribution** : script Node.js `scripts/award-creator-badge.js` — usage `node --env-file=.env scripts/award-creator-badge.js --username <pseudo>` (ou `--email`). Option `--dry-run`. Nécessite `SUPABASE_SERVICE_KEY`.
+
+### Ce qu'on ne fait PAS encore
+
+- Pas de page badges sur le profil (le badge est juste inline à côté du username)
+- Pas d'autres badges (contributeur, challenge complété) — infrastructure prête, badges à définir
+- Pas d'attribution automatique (toujours manuelle via script)
+- Pas de notification au user lors de l'attribution
+
+---
+
+*Dernière mise à jour : 1 avril 2026 — Creator badge + drag & drop fix + onboarding username prefill*

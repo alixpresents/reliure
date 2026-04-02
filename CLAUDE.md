@@ -87,6 +87,8 @@ L'app ne doit jamais ressembler à un tableur ou à un webzine. C'est un objet c
 - `/defis` → ChallengesPage
 - `/la-revue` → JournalPage
 - `/la-revue/:slug` → ArticlePage
+- `/selections` → SelectionsPage
+- `/selections/:slug` → SelectionPage
 - `/livre/:slug` → BookPage (slug généré à l'import, fallback ID)
 - `/login` → LoginPage
 - `/parametres` → SettingsPage (protégée)
@@ -144,13 +146,13 @@ Architecture DB-first : la base locale (3830+ livres) est la source primaire, Go
    - **Scoring de pertinence** : match exact titre (+100), titre commence par query (+50), couverture titre (×30), couverture auteur (×5), rating_count en tie-breaker. Garantit que "Les Misérables" remonte avant des livres parasites.
    - **Matching compact** : pour les queries mono-token ≥5 chars (ex: "LETRANGER"), compare sans espaces ni ponctuation → matche "L'étranger".
    - **Branche ISBN** : si la query est un nombre de 10-13 chiffres, match exact sur `isbn_13`.
-   - Gère apostrophes françaises, accents via `unaccent(lower())`.
+   - **Normalisation apostrophes** (migration `022_fix_apostrophe_search.sql`) : toutes les variantes d'apostrophes (' U+2019, ' U+2018, ‚ ‹ › ' `) sont normalisées en espace côté query ET côté champs DB (CTE `norm`) avant comparaison. Gère accents via `unaccent(lower())`.
 2. **Skip logic** (économie quota Google Books, ~60% d'appels évités) :
    - Si RPC retourne ≥ 3 résultats → skip Google (`db_sufficient`)
    - Si query est un ISBN et RPC retourne ≥ 1 résultat → skip Google (`isbn_found`)
    - Sinon → appel Google Books pour découverte
    - Le tableau retourné porte `_skippedGoogle` et `_skipReason` en propriétés
-3. **Google Books** (conditionnel) : une seule requête (`langRestrict=fr`, max 15 résultats), filtrée (sans couverture, sans ISBN, éditeurs parasites, mots-clés parasites exclus), limitée à 8 résultats après filtre. **Circuit breaker** : si Google Books retourne HTTP 429, l'API est désactivée pendant 15 minutes (module-level `googleBooksDisabledUntil`). Skip reason `circuit_breaker` loggé dans les analytics.
+3. **Google Books** (conditionnel) : une seule requête (`langRestrict=fr`, max 15 résultats), filtrée (sans couverture, sans ISBN, éditeurs parasites, mots-clés parasites exclus), limitée à 8 résultats après filtre. **Circuit breaker** : si Google Books retourne HTTP 429, l'API est désactivée pendant 15 minutes (module-level `googleBooksDisabledUntil`). Skip reason `circuit_breaker` loggé dans les analytics. `isGoogleBooksAvailable()` est exportée depuis `googleBooks.js` pour permettre aux autres modules (Search.jsx) de vérifier l'état du circuit breaker.
 
 **Logging** : chaque appel `searchBooks()` émet un `console.log('[search-analytics]', JSON.stringify({...}))` avec les compteurs DB, Google, skip. Greppable dans les logs Vercel.
 
@@ -188,7 +190,7 @@ Filet de secours intelligent qui enrichit le pipeline classique. Activé dès 2 
 - `displayResults` useMemo : quand l'IA a répondu, filtre les résultats classiques — confirmés (titre + auteur matching) en premier, non-confirmés limités à 2. `aiConfirmedMap` lie chaque résultat classique au livre IA correspondant.
 - Résultats IA affichés sous les résultats classiques avec indicateur ✨, dédoublonnés par titre normalisé
 - IA activée uniquement si résultats classiques < 2 OU query en langage naturel (`looksLikeNaturalLanguage`)
-- Clic sur un résultat IA → recherche Google Books avec le titre canonique → import normal
+- Clic sur un résultat IA → **cascade avec scoring** : (1) si Google disponible (`isGoogleBooksAvailable()`), recherche Google + `scoreMatch()` (compare titre/auteur normalisés, seuil > 0) pour éviter d'importer le mauvais livre ; (2) si Google indisponible (circuit breaker), cascade BnF : tente d'abord l'ISBN fourni par l'IA via edge function `book_import`, puis recherche BnF SRU par titre+auteur, puis import direct en dernier recours
 - Clic sur un résultat DB → navigation directe via `slug ?? dbId` sans passer par importBook
 - Indicateur "Recherche approfondie…" pendant le chargement IA
 - Le SYSTEM_PROMPT de `smart-search` retourne l'ISBN de l'édition poche française (Folio, LdP, Points…)
@@ -248,6 +250,9 @@ Reliure regroupe les éditions par oeuvre (comme Letterboxd : un film = une fich
 - `books.slug` unique, généré à `src/utils/slugify.js` (titre → titre-auteur → titre-auteur-année → titre-n). Migration `migrations/001_add_book_slugs.sql` à appliquer.
 - `user_favorites` swap : pattern delete+reinsert (pas d'update) pour respecter le CHECK constraint position 1-4
 - `useProfileData` distingue `diaryBooks` (read + finished_at non null, pour le diary/calendrier) et `allReadBooks` (tous les "read", pour stats/bilan/topRated)
+- `badge_definitions` — id (text PK), name, description, category (enum badge_category), color (text, défaut `#C9A96E`), icon, created_at. Seed : badge `creator`.
+- `user_badges` — user_id, badge_id (FK badge_definitions), awarded_at, awarded_by (nullable). Index sur user_id.
+- `reserved_usernames` — username (PK), email (text, nullable), note (text). RLS : lecture publique, écriture service_role only. RPCs : `check_username_availability(p_username, p_email)` → `'available'|'reserved_for_you'|'reserved'|'taken'` ; `claim_reserved_username(p_username)` (SECURITY DEFINER). Migration : `supabase/migrations/017_creator_badge.sql`.
 
 ## Design system
 
@@ -335,6 +340,8 @@ Toutes les couleurs UI sont gérées via CSS custom properties dans `src/index.c
 - **ContentMenu** : menu "···" édition/suppression pour critiques et citations. Visible uniquement si `user.id === item.user_id`. Desktop : opacity 0 → 1 au hover du parent (`group`/`group-hover`). Mobile : toujours visible. Menu contextuel (blanc, border, shadow) avec "✏️ Modifier" (modal inline) et "🗑 Supprimer" (confirmation "Oui/Annuler"). Modal d'édition : textarea pré-rempli + InteractiveStars + checkbox spoilers pour les critiques. Intégré dans BookPage, ProfilePage, ExplorePage, FeedPage, CitationsPage.
 - **AnnouncementBanner** : bandeau au-dessus du header (fond `#1a1a1a`, texte blanc). Props : `pill`, `message`, `ctaLabel`, `ctaHref`, `storageKey`. Fermable via localStorage. Affiché dans `App.jsx` avant le Header.
 - **Toast** : notification d'erreur fixe, centrée en bas (z-10000), fond `var(--text-primary)`, texte `var(--bg-primary)`, animation slide-up 180ms, auto-dismiss 3s. Hook `useToast()` → `{ toast, showToast }` (src/hooks/useToast.js). Déclenché sur les erreurs de mutation (likes, follows, création de liste, publication de citation). Intégré dans BookPage, ProfilePage, ExplorePage, FeedPage, CitationsPage, CreateListModal.
+- **CreatorBadge** : `src/components/CreatorBadge.jsx` — pill inline (11px, fond `var(--creator-bg)`, texte `var(--creator-text)`, bordure `var(--creator-border)`, border-radius 999). Texte : "✦ Créateur". Rendu à côté du `@username` sur le profil et dans `UserName`.
+- **UserName** : `src/components/UserName.jsx` — lien `@handle` avec prop `isCreator` optionnelle. Si `isCreator=true`, affiche `<CreatorBadge />` à la suite du lien. Utilisé partout où on affiche un auteur de critique/citation.
 
 ## Règles React — performance et boucles
 
@@ -413,10 +420,14 @@ Chaque onglet a sa propre URL (`/:username/critiques`, etc.).
 
 #### Auth
 - Magic link + OAuth Google via Supabase Auth
-- Onboarding flow 2 étapes : pseudo + ajout de livres (vérification dispo réelle)
+- **LoginPage** : Google OAuth (CTA primaire avec icône SVG officielle), magic link par email (secondaire), mot de passe (lien discret révélant le champ en `animate-page-in`). `CoverBackdrop` en fond. Tagline Instrument Serif 32px. Confirmation envoi lien avec "Utiliser une autre adresse".
+- **Onboarding flow 3 étapes** : pseudo (step 0) → ajout de livres (step 1, max 5, sans notation, status `read`, question "Quels livres t'ont marqué ?") → preview profil (step 2)
+- `StepWelcome` supprimé — le pitch est dans LoginPage
+- `StepProfilePreview` : avatar initiales + "Bienvenue, @username" + mini-preview couvertures + 2 CTAs ("📚 Ajouter d'autres lectures" → `/backfill`, "Explorer la communauté →" → `/explorer`)
+- `CoverBackdrop` extrait dans `src/components/CoverBackdrop.jsx` (partagé LoginPage + OnboardingPage)
 - Détection nouvel utilisateur dans `App.jsx` : `needsOnboarding = isLoggedIn && !profile` — si l'user n'a pas de row dans `users`, affiche directement `OnboardingPage` (pas de route dédiée)
-- Après onboarding, redirection vers `/explorer`
 - ProtectedRoute pour les pages /fil, /parametres, /backfill
+- **Pré-remplissage username via query param** : `OnboardingPage` lit `?username=` depuis l'URL (`useSearchParams`). `StepUsername` attend que `userEmail` soit disponible avant d'appliquer le pré-remplissage (évite le flash). Validation via RPC `check_username_availability` — si email correspond → status `reserved_for_you` (bordure verte, message "Ce pseudo t'est réservé ✦"). Soumission appelle `claim_reserved_username` pour supprimer la réservation.
 
 #### Fiche livre (BookPage)
 - Couverture, métadonnées, note communautaire (masquée si 0 évaluation)
@@ -431,7 +442,8 @@ Chaque onglet a sa propre URL (`/:username/critiques`, etc.).
 
 #### Profil
 - Données réelles via `useProfileData` (allStatuses, diaryBooks, allReadBooks, reviews, stats, chronologie, topRated)
-- Quatre favoris : drag & drop + touch mobile, swap via SearchOverlay, mini-note (max 24 chars), suppression — persistés via `useFavorites`
+- Quatre favoris : drag & drop + touch mobile, swap via SearchOverlay, mini-note (max 24 chars), suppression — persistés via `useFavorites`. Drag & drop implémenté sur le slot entier (pas uniquement la couverture) : `draggable`/`onDragStart`/`onDragEnd` sur le div outer, `onDragOver`/`onDrop`/`onDragLeave` sur le même div. `handleDrop` lit `e.dataTransfer.getData("text/plain")` comme source principale (évite le bug timing `dragend`-avant-`drop` sur Firefox/macOS), ref `dragFromRef` en fallback.
+- **Badge créateur** : `useUserBadges(userId)` → `{ badges, hasCreator, loading }`. `useCreatorIds()` (export séparé) → `Set` de tous les user IDs avec badge creator (staleTime 10min), partagé par BookPage, ExplorePage, FeedPage, CitationsPage. `<CreatorBadge />` affiché à côté du `@username` sur le profil. `<UserName isCreator={creatorIds?.has(userId)} />` dans toutes les pages avec listes de critiques/citations.
 - En cours de lecture : progression interactive, édition inline de page, complétion
 - **Édition inline du header** (isOwnProfile) : avatar uploadable (bucket `avatars`, compression canvas 400×400 JPEG 0.85, max 1 Mo), nom cliquable → input inline avec icône crayon ✎ au hover, bio cliquable → textarea 160 chars avec icône crayon ✎ au hover. Pas de bouton Paramètres sur le profil.
 - Onglet Bibliothèque : 3 modes grille/liste/étagère, ratings réels
@@ -462,6 +474,18 @@ Chaque onglet a sa propre URL (`/:username/critiques`, etc.).
 - Suppression avec confirmation
 - Onglet "Mes listes" branché sur Supabase (tables `lists` + `list_items`)
 - Cards listes cliquables dans ExplorePage (navigation vers la page liste)
+
+#### Sélections curées ("La Bibliothèque de...")
+- Format éditorial : personnalité littéraire invitée + ses livres commentés
+- Données sur la table `lists` existante (`is_curated = true`) + colonnes dédiées (curator_name, curator_role, curator_avatar_url, curator_intro, curator_pull_quote, published_at)
+- `user_id` = compte admin Reliure (contenu créé éditorialement)
+- RPCs : `curated_selections()` (index) et `curated_selection_by_slug(slug)` (détail)
+- Hook : `useCuratedSelections` (TanStack Query, staleTime 10min)
+- Routes : `/selections` (index) et `/selections/:slug` (détail, page éditoriale)
+- Composant `CuratedSelectionCard` : variante `compact` (carousel HScroll) et `featured` (La Revue)
+- Intégré dans Explorer (section carousel) et La Revue (card featured dans onglet textes)
+- Likes via `useLikes` existant (target_type='list')
+- Pages publiques (pas de ProtectedRoute)
 
 #### Fil d'activité
 - Branché sur table `activity`, dédoublonnage, types : reading_status, review, quote, list
@@ -553,7 +577,7 @@ Toutes les pages sont accessibles sans compte, sauf `/fil`, `/parametres`, `/bac
 - `@username` — sous le nom
 - `bio` — affiché seulement si non null
 - `avatar_url` — `Avatar` supporte `src` (prop optionnelle), fallback sur initiales
-- Badges : pas encore dans le schéma, section retirée jusqu'à implémentation
+- Badges : badge `creator` implémenté — `useUserBadges(profileId)` → `{ hasCreator }`, `<CreatorBadge />` affiché à côté du `@username` si `hasCreator`. Attribution manuelle via `scripts/award-creator-badge.js`.
 
 Variable `isOwnProfile = user?.id === viewedProfile?.id` contrôle l'affichage conditionnel.
 

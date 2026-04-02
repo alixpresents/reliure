@@ -5,12 +5,16 @@ import Img from "../components/Img";
 import Tag from "../components/Tag";
 import Label from "../components/Label";
 import WipBanner from "../components/WipBanner";
+import { useCuratedSelections } from "../hooks/useCuratedSelections";
+import CuratedSelectionCard from "../components/CuratedSelectionCard";
 
 export default function JournalPage() {
   const navigate = useNavigate();
   const goArticle = (a) => navigate(`/la-revue/${a.id}`);
   const [jt, setJt] = useState("textes");
   const feat = JARTICLES[0];
+  const { data: curatedSelections } = useCuratedSelections();
+  const latestSelection = curatedSelections?.[0] || null;
 
   return (
     <div>
@@ -70,6 +74,13 @@ export default function JournalPage() {
           </div>
 
           <div className="border-t border-border-light" />
+
+          {/* Sélection curée featured */}
+          {latestSelection && (
+            <div style={{ padding: "24px 0", borderBottom: "1px solid var(--border-subtle)" }}>
+              <CuratedSelectionCard selection={latestSelection} variant="featured" />
+            </div>
+          )}
 
           {/* Other articles */}
           {JARTICLES.slice(1).map(a => (

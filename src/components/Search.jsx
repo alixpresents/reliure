@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { searchBooks } from "../lib/googleBooks";
+import { searchBooks, isGoogleBooksAvailable } from "../lib/googleBooks";
 import { importBook } from "../lib/importBook";
 import { resetIOSZoom } from "../lib/resetZoom";
 import { supabase } from "../lib/supabase";
+import { searchBnF } from "../lib/bnfSearch";
 import { useSmartSearch, looksLikeNaturalLanguage } from "../hooks/useSmartSearch";
 import Avatar from "./Avatar";
 import Skeleton from "./Skeleton";
@@ -327,19 +328,101 @@ export default function Search({ open, onClose, go, initialQuery = "" }) {
   const handleAIBookClick = async (aiBook) => {
     setLoading(true);
 
-    // 1. Essai Google Books avec titre canonique
-    const bookResults = await searchBooks(`${aiBook.title} ${aiBook.author}`);
-    if (bookResults.length > 0) {
+    const normStr = str => (str ?? "")
+      .toLowerCase()
+      .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+      .replace(/['''\u2019\u2018]/g, " ")
+      .replace(/[^a-z0-9\s]/g, "")
+      .replace(/\s+/g, " ").trim();
+
+    const scoreMatch = (result, ai) => {
+      const gTitle = normStr(result.title);
+      const gAuthor = normStr((result.authors ?? []).join(" "));
+      const aTitle = normStr(ai.title);
+      const aAuthor = normStr(ai.author);
+      let score = 0;
+      if (gTitle === aTitle) score += 100;
+      else if (gTitle.includes(aTitle) || aTitle.includes(gTitle)) score += 60;
+      else {
+        const words = aTitle.split(" ").filter(w => w.length > 2);
+        score += words.filter(w => gTitle.includes(w)).length * 15;
+      }
+      if (aAuthor && gAuthor.includes(aAuthor.split(" ").pop())) score += 50;
+      return score;
+    };
+
+    const navigateToBook = (book) => {
       setLoading(false);
-      await handleSelect(bookResults[0]);
-      return;
+      handleClose();
+      setQ("");
+      setResults([]);
+      if (book?.slug) navigate(`/livre/${book.slug}`);
+      else if (book?.id) navigate(`/livre/${book.id}`);
+    };
+
+    // ── Branche 1 : Google Books disponible → recherche + scoring ──
+    if (isGoogleBooksAvailable()) {
+      const bookResults = await searchBooks(`${aiBook.title} ${aiBook.author}`);
+      if (bookResults.length > 0) {
+        const scored = bookResults
+          .map(r => ({ r, score: scoreMatch(r, aiBook) }))
+          .sort((a, b) => b.score - a.score);
+        const best = scored[0];
+        console.log("[search-ai-import]", JSON.stringify({
+          aiTitle: aiBook.title, aiAuthor: aiBook.author,
+          bestTitle: best.r.title, bestScore: best.score,
+          source: best.r._source,
+        }));
+        if (best.score > 0) {
+          await handleSelect(best.r);
+          setLoading(false);
+          return;
+        }
+        // score 0 → premier résultat (comportement legacy)
+        await handleSelect(bookResults[0]);
+        setLoading(false);
+        return;
+      }
     }
 
-    // 2. Fallback : importer directement depuis les données IA
+    // ── Branche 2 : Google indisponible ou 0 résultat → cascade BnF ──
+
+    // 2a. Si l'IA fournit un ISBN → tenter import via edge function
+    if (aiBook.isbn13) {
+      try {
+        const { data, error } = await supabase.functions.invoke("book_import", {
+          body: { isbn: aiBook.isbn13 },
+        });
+        if (!error && data?.id) {
+          console.log("[search-ai-import] edge function import via AI ISBN:", aiBook.isbn13);
+          navigateToBook(data);
+          return;
+        }
+      } catch { /* ISBN halluciné ou edge function down — continuer cascade */ }
+    }
+
+    // 2b. Recherche BnF par titre + auteur → récupérer un ISBN fiable
+    try {
+      const bnfResults = await searchBnF(`${aiBook.title} ${aiBook.author || ""}`, 5);
+      const bnfWithIsbn = bnfResults.find(r => r.volumeInfo?.industryIdentifiers?.length > 0);
+      if (bnfWithIsbn) {
+        const isbn = bnfWithIsbn.volumeInfo.industryIdentifiers[0].identifier;
+        console.log("[search-ai-import] BnF fallback found ISBN:", isbn);
+        const { data, error } = await supabase.functions.invoke("book_import", {
+          body: { isbn },
+        });
+        if (!error && data?.id) {
+          navigateToBook(data);
+          return;
+        }
+      }
+    } catch { /* BnF down — continuer */ }
+
+    // 2c. Dernier recours : import direct avec données IA (pas idéal mais mieux que rien)
     const book = await importBook({
       title: aiBook.title,
       authors: aiBook.author ? [aiBook.author] : [],
-      isbn13: aiBook.isbn13 || null,
+      isbn13: null, // ne pas utiliser l'ISBN IA non vérifié
       coverUrl: null,
       subtitle: null,
       publisher: null,
@@ -348,13 +431,12 @@ export default function Search({ open, onClose, go, initialQuery = "" }) {
       description: null,
     });
 
-    setLoading(false);
-    handleClose();
-    setQ("");
-    setResults([]);
-
-    if (book?.slug) navigate(`/livre/${book.slug}`);
-    else if (book?.id) navigate(`/livre/${book.id}`);
+    if (book) {
+      navigateToBook(book);
+    } else {
+      setLoading(false);
+      console.warn("[search-ai-import] all fallbacks failed for:", aiBook.title);
+    }
   };
 
   const acceptGhost = () => {

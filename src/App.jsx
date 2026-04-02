@@ -32,6 +32,8 @@ const ClassementPage = lazy(() => import("./pages/ClassementPage"));
 const ChallengesPage = lazy(() => import("./pages/ChallengesPage"));
 const JournalPage = lazy(() => import("./pages/JournalPage"));
 const ArticlePage = lazy(() => import("./pages/ArticlePage"));
+const SelectionsPageRoute = lazy(() => import("./pages/SelectionsPageRoute"));
+const SelectionPageRoute = lazy(() => import("./pages/SelectionPageRoute"));
 const LoginPage = lazy(() => import("./pages/LoginPage"));
 const OnboardingPage = lazy(() => import("./pages/OnboardingPage"));
 const NotFoundPage = lazy(() => import("./pages/NotFoundPage"));
@@ -157,6 +159,8 @@ export default function App() {
             <Route path="/classement" element={<ClassementPage />} />
             <Route path="/la-revue" element={<JournalPage />} />
             <Route path="/la-revue/:slug" element={<ArticlePage />} />
+            <Route path="/selections" element={<SelectionsPageRoute />} />
+            <Route path="/selections/:slug" element={<SelectionPageRoute />} />
             <Route path="/livre/:slug" element={<BookPageRoute />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/parametres" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />

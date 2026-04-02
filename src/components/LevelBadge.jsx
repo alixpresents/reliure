@@ -1,5 +1,5 @@
-export default function LevelBadge({ levelName, totalPoints, monthlyPoints }) {
-  if (!levelName || totalPoints == null) return null;
+export default function LevelBadge({ levelName }) {
+  if (!levelName) return null;
   return (
     <span
       className="inline-flex items-center gap-1.5 font-body"
@@ -11,12 +11,7 @@ export default function LevelBadge({ levelName, totalPoints, monthlyPoints }) {
         borderRadius: 10,
       }}
     >
-      {levelName} · {totalPoints} encre
-      {monthlyPoints > 0 && (
-        <span style={{ color: "var(--color-success)", fontSize: 10, fontWeight: 500 }}>
-          +{monthlyPoints} ce mois
-        </span>
-      )}
+      {levelName}
     </span>
   );
 }

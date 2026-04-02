@@ -46,7 +46,7 @@ function RankRow({ entry, rank, highlight = false }) {
         </div>
       </div>
       <div className="text-[14px] font-body font-semibold shrink-0" style={{ color: "var(--text-primary)" }}>
-        {pts} <span className="font-normal text-[12px]" style={{ color: "var(--text-muted)" }}>encre</span>
+        {pts} <span className="font-normal text-[12px]" style={{ color: "var(--text-muted)" }}>{pts > 1 ? "points" : "point"}</span>
       </div>
     </div>
   );
@@ -138,7 +138,7 @@ export default function ClassementPage() {
               <p className="text-[13px] font-body m-0" style={{ color: "var(--text-secondary)" }}>
                 Ton classement ce mois : <strong style={{ color: "var(--text-primary)" }}>#{userRank}</strong>
                 {" · "}
-                <strong style={{ color: "var(--text-primary)" }}>{userEntry.month_points} encre</strong> gagnée
+                <strong style={{ color: "var(--text-primary)" }}>{userEntry.month_points} {userEntry.month_points > 1 ? "points" : "point"}</strong> gagné{userEntry.month_points > 1 ? "s" : ""}
               </p>
             ) : (
               <p className="text-[13px] font-body m-0" style={{ color: "var(--text-muted)" }}>
@@ -150,7 +150,7 @@ export default function ClassementPage() {
               <p className="text-[13px] font-body m-0" style={{ color: "var(--text-secondary)" }}>
                 Ton classement tout temps : <strong style={{ color: "var(--text-primary)" }}>#{userRank}</strong>
                 {" · "}
-                <strong style={{ color: "var(--text-primary)" }}>{userEntry.total_points} encre</strong> au total
+                <strong style={{ color: "var(--text-primary)" }}>{userEntry.total_points} {userEntry.total_points > 1 ? "points" : "point"}</strong> au total
               </p>
             ) : (
               <p className="text-[13px] font-body m-0" style={{ color: "var(--text-muted)" }}>

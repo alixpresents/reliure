@@ -27,7 +27,7 @@ async function fetchUserBadges(userId) {
   const now = new Date().toISOString();
   const { data } = await supabase
     .from("user_badges")
-    .select("id, badge_id, awarded_at, expires_at, is_pinned, badge_definitions(id, name, description, category, icon, points, sort_order)")
+    .select("id, badge_id, awarded_at, expires_at, is_pinned, badge_definitions(id, name, description, category, icon, icon_key, points, sort_order, tier)")
     .eq("user_id", userId)
     .order("awarded_at", { ascending: false })
     .limit(100);
@@ -88,7 +88,7 @@ export function useAllBadgeDefinitions() {
     queryFn: async () => {
       const { data } = await supabase
         .from("badge_definitions")
-        .select("id, name, description, category, icon, points, sort_order, tier, is_active")
+        .select("id, name, description, category, icon, icon_key, points, sort_order, tier, group_key, is_active")
         .eq("is_active", true)
         .order("sort_order", { ascending: true })
         .limit(200);

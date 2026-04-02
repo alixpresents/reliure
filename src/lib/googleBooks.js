@@ -62,7 +62,7 @@ function setCache(q, results) {
 
 let googleBooksDisabledUntil = 0; // timestamp ms
 
-function isGoogleBooksAvailable() {
+export function isGoogleBooksAvailable() {
   return Date.now() > googleBooksDisabledUntil;
 }
 
