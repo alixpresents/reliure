@@ -1,6 +1,5 @@
 import { supabase } from "./supabase";
 import { searchOpenLibrary } from "./openLibrarySearch";
-import { searchFnac } from "./fnacSearch";
 
 // ═══════════════════════════════════════════════
 // Helpers
@@ -271,11 +270,9 @@ export async function searchBooks(query, { onDbResults } = {}) {
 
   let googleResults = [];
   let olResults = [];
-  let fnacResults = [];
   let googleRaw = 0;
   let skipReason = null;
   let olActuallyCalled = false;
-  let fnacActuallyCalled = false;
 
   if (skipGoogle) {
     if (isbnFound) skipReason = "isbn_found";
@@ -285,14 +282,8 @@ export async function searchBooks(query, { onDbResults } = {}) {
 
   const t_ext_start = performance.now();
   if (!skipGoogle) {
-    // Étape 2 : Google Books + Fnac en parallèle (db < 3)
-    fnacActuallyCalled = true;
-    const [gRes, fRes] = await Promise.all([
-      fetchGoogleBooks(query),
-      searchFnac(query),
-    ]);
-    googleResults = gRes;
-    fnacResults = fRes;
+    // Étape 2 : Google Books seul (OL uniquement si circuit breaker actif)
+    googleResults = await fetchGoogleBooks(query);
     googleRaw = googleResults._rawCount || 0;
   } else if (skipReason === "circuit_breaker") {
     // Google est down — Open Library comme découverte de secours
@@ -302,7 +293,7 @@ export async function searchBooks(query, { onDbResults } = {}) {
   const t_google = skipGoogle ? 0 : Math.round(performance.now() - t_ext_start);
   const t_total = Math.round(performance.now() - t0);
 
-  const final = deduplicateResults(dbResults, googleResults, olResults, fnacResults).slice(0, 10);
+  const final = deduplicateResults(dbResults, googleResults, olResults).slice(0, 10);
 
   // Métadonnées skip logic (attachées au tableau)
   final._skippedGoogle = skipGoogle;
@@ -311,7 +302,6 @@ export async function searchBooks(query, { onDbResults } = {}) {
   // Logging structuré
   const googleUseful = final.filter(r => r._source === "google").length;
   const olUseful = final.filter(r => r._source === "openlibrary").length;
-  const fnacUseful = final.filter(r => r._source === "fnac").length;
   console.log("[search-analytics]", JSON.stringify({
     query,
     ts: new Date().toISOString(),
@@ -324,9 +314,6 @@ export async function searchBooks(query, { onDbResults } = {}) {
     olCalled: olActuallyCalled,
     olResults: olResults.length,
     olUseful,
-    fnacCalled: fnacActuallyCalled,
-    fnacResults: fnacResults.length,
-    fnacUseful,
     skipped: skipGoogle,
     skipReason,
     circuitBreakerActive: !isGoogleBooksAvailable(),
