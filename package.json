@@ -11,6 +11,7 @@
     "lint": "eslint .",
     "typecheck": "react-router typegen && tsc",
     "_dev:old": "vite",
+    "build:local": "node --env-file=.env node_modules/.bin/react-router build && node --env-file=.env scripts/generate-sitemap.mjs",
     "_build:old": "vite build"
   },
   "dependencies": {
