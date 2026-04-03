@@ -2,6 +2,9 @@
   "buildCommand": "npm run build",
   "outputDirectory": "build/client",
   "trailingSlash": false,
+  "redirects": [
+    { "source": "/", "destination": "/explorer", "permanent": true }
+  ],
   "rewrites": [
     { "source": "/(.*)", "destination": "/__spa-fallback.html" }
   ],
