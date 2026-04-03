@@ -296,7 +296,7 @@ export default function FeedPage() {
       ) : (
         <div className="py-12 text-center font-body">
           <div className="text-sm" style={{ color: "var(--text-tertiary)" }}>Suis des lecteurs pour voir leur activité ici.</div>
-          <button onClick={() => nav("/explorer")} className="mt-4 px-5 py-2.5 rounded-[20px] text-[13px] font-medium border-none cursor-pointer hover:opacity-80 transition-colors duration-150" style={{ backgroundColor: "var(--text-primary)", color: "var(--bg-primary)" }}>Explorer</button>
+          <button onClick={() => nav("/")} className="mt-4 px-5 py-2.5 rounded-[20px] text-[13px] font-medium border-none cursor-pointer hover:opacity-80 transition-colors duration-150" style={{ backgroundColor: "var(--text-primary)", color: "var(--bg-primary)" }}>Explorer</button>
         </div>
       )}
     </div>

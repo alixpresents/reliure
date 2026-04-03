@@ -29,14 +29,14 @@ export default function Header({ onSearch, onClose, searchOpen, searchGo, search
 
   const navItems = isLoggedIn
     ? [
-        ["/explorer", "Explorer"],
+        ["/", "Explorer"],
         ["/citations", "Citations"],
         ["/fil", "Fil"],
         ["/defis", "Défis"],
-        [username ? `/${username}` : "/explorer", "Profil"],
+        [username ? `/${username}` : "/", "Profil"],
       ]
     : [
-        ["/explorer", "Explorer"],
+        ["/", "Explorer"],
         ["/citations", "Citations"],
       ];
 
@@ -49,7 +49,7 @@ export default function Header({ onSearch, onClose, searchOpen, searchGo, search
   return (
     <header className="sticky top-0 z-50 backdrop-blur-[12px] border-b" style={{ backgroundColor: "var(--header-bg)", borderColor: "var(--border-default)" }}>
       <div className="max-w-[1060px] mx-auto flex items-center h-[52px] px-3 sm:px-6 gap-2 sm:gap-3 relative">
-        <Link to="/explorer" className="flex items-center gap-1.5 mr-2 no-underline">
+        <Link to="/" className="flex items-center gap-1.5 mr-2 no-underline">
           <span className="text-[17px] font-bold tracking-tight font-body" style={{ color: "var(--text-primary)" }}>reliure</span>
           <span className="text-[8px] font-semibold rounded-[3px] px-[5px] py-[2px] font-body" style={{ backgroundColor: "var(--text-primary)", color: "var(--bg-primary)" }}>
             BETA

@@ -27,7 +27,7 @@ export default function TagPage() {
         <div className="py-12 text-center">
           <div className="text-[15px] font-body" style={{ color: "var(--text-tertiary)" }}>Aucun livre pour ce thème pour l'instant.</div>
           <div className="text-[13px] font-body mt-2 mb-6" style={{ color: "var(--text-tertiary)" }}>La communauté grandit — reviens bientôt.</div>
-          <Link to="/explorer" className="text-[13px] font-medium font-body no-underline border-b pb-px hover:opacity-60 transition-opacity duration-150" style={{ color: "var(--text-primary)", borderColor: "var(--text-primary)" }}>
+          <Link to="/" className="text-[13px] font-medium font-body no-underline border-b pb-px hover:opacity-60 transition-opacity duration-150" style={{ color: "var(--text-primary)", borderColor: "var(--text-primary)" }}>
             Explorer tous les livres →
           </Link>
         </div>
@@ -52,7 +52,7 @@ export default function TagPage() {
           </div>
           {sparse && (
             <div className="mt-8 text-center">
-              <Link to="/explorer" className="text-[13px] font-medium font-body no-underline border-b pb-px hover:opacity-60 transition-opacity duration-150" style={{ color: "var(--text-primary)", borderColor: "var(--text-primary)" }}>
+              <Link to="/" className="text-[13px] font-medium font-body no-underline border-b pb-px hover:opacity-60 transition-opacity duration-150" style={{ color: "var(--text-primary)", borderColor: "var(--text-primary)" }}>
                 Explorer tous les livres →
               </Link>
             </div>

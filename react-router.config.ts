@@ -11,7 +11,6 @@ export default {
     // Static pages
     const paths = [
       "/",
-      "/explorer",
       "/citations",
       "/la-revue",
       "/defis",

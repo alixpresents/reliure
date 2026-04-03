@@ -133,7 +133,7 @@ function AppShell() {
   // Redirect after sign-in
   useEffect(() => {
     const handler = () => {
-      const redirect = localStorage.getItem("reliure_redirect_after_login") || "/explorer";
+      const redirect = localStorage.getItem("reliure_redirect_after_login") || "/";
       localStorage.removeItem("reliure_redirect_after_login");
       navigate(redirect);
     };
@@ -168,7 +168,7 @@ function AppShell() {
         <Suspense fallback={null}>
           <OnboardingPage onComplete={(uname) => {
             refetch();
-            navigate(uname ? `/${uname}` : "/explorer");
+            navigate(uname ? `/${uname}` : "/");
             setWalkthroughActive(true);
           }} />
         </Suspense>

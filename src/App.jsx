@@ -75,7 +75,7 @@ export default function App() {
   // Redirect after sign-in
   useEffect(() => {
     const handler = () => {
-      const redirect = localStorage.getItem("reliure_redirect_after_login") || "/explorer";
+      const redirect = localStorage.getItem("reliure_redirect_after_login") || "/";
       localStorage.removeItem("reliure_redirect_after_login");
       navigate(redirect);
     };
@@ -111,7 +111,7 @@ export default function App() {
         <Suspense fallback={null}>
           <OnboardingPage onComplete={(uname) => {
             refetch();
-            navigate(uname ? `/${uname}` : "/explorer");
+            navigate(uname ? `/${uname}` : "/");
             setWalkthroughActive(true);
           }} />
         </Suspense>
@@ -150,8 +150,8 @@ export default function App() {
       <div className={`max-w-[760px] mx-auto px-4 sm:px-6 ${isLoggedIn ? "pb-20" : "pb-32"}`}>
         <Suspense fallback={null}>
           <Routes>
-            <Route path="/" element={<Navigate to="/explorer" replace />} />
-            <Route path="/explorer" element={<ExplorePage />} />
+            <Route path="/" element={<Navigate to="/" replace />} />
+            <Route path="/" element={<ExplorePage />} />
             <Route path="/explorer/theme/:tag" element={<TagPage />} />
             <Route path="/citations" element={<CitationsPage />} />
             <Route path="/fil" element={<ProtectedRoute><FeedPage /></ProtectedRoute>} />

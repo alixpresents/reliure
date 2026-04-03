@@ -616,7 +616,7 @@ export default function ProfilePage({ viewedProfile, initialTab }) {
   const { likedSet: listLikedSet, initialSet: listInitialSet, toggle: toggleListLike } = useLikes(listIds, "list");
   const [showCreateList, setShowCreateList] = useState(false);
   const { toast, showToast } = useToast();
-  const onSearch = () => navigate("/explorer");
+  const onSearch = () => navigate("/");
   const onBackfill = () => navigate("/backfill");
 
   // Normalize reading books from Supabase
@@ -1056,7 +1056,7 @@ export default function ProfilePage({ viewedProfile, initialTab }) {
                     📥 Importer depuis Goodreads
                   </button>
                   <button
-                    onClick={() => navigate("/explorer")}
+                    onClick={() => navigate("/")}
                     className="px-5 py-2.5 rounded-[20px] text-[13px] font-medium font-body bg-transparent cursor-pointer transition-colors duration-150"
                     style={{ color: "var(--text-primary)", border: "1px solid var(--border-default)" }}
                   >
@@ -1158,7 +1158,7 @@ export default function ProfilePage({ viewedProfile, initialTab }) {
               </div>
               {isOwnProfile && (
                 <button
-                  onClick={() => navigate("/explorer")}
+                  onClick={() => navigate("/")}
                   className="mt-3 px-4 py-2 rounded-[20px] text-[12px] font-medium font-body bg-transparent cursor-pointer transition-colors duration-150"
                   style={{ color: "var(--text-primary)", border: "1px solid var(--border-default)" }}
                 >
@@ -1213,7 +1213,7 @@ export default function ProfilePage({ viewedProfile, initialTab }) {
               {isOwnProfile ? (
                 <>
                   <div className="text-sm font-body" style={{ color: "var(--text-tertiary)" }}>Tu n'as pas encore écrit de critique.</div>
-                  <button onClick={() => navigate("/explorer")} className="mt-4 px-5 py-2.5 rounded-[20px] text-[13px] font-medium font-body border-none cursor-pointer hover:opacity-80 transition-colors duration-150" style={{ backgroundColor: "var(--text-primary)", color: "var(--bg-primary)" }}>Explorer des livres</button>
+                  <button onClick={() => navigate("/")} className="mt-4 px-5 py-2.5 rounded-[20px] text-[13px] font-medium font-body border-none cursor-pointer hover:opacity-80 transition-colors duration-150" style={{ backgroundColor: "var(--text-primary)", color: "var(--bg-primary)" }}>Explorer des livres</button>
                 </>
               ) : (
                 <div className="text-sm font-body" style={{ color: "var(--text-tertiary)" }}>Aucune critique pour l'instant.</div>

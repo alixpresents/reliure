@@ -1,11 +1,11 @@
 import { type RouteConfig, index, route, layout } from "@react-router/dev/routes";
 
 export default [
-  // / → redirect to /explorer
-  index("pages/IndexRedirect.jsx"),
+  // / → ExplorePage (primary route)
+  index("pages/ExplorePageRoute.jsx"),
 
   // Global pages
-  route("explorer", "pages/ExplorePageRoute.jsx"),
+  route("explorer", "pages/IndexRedirect.jsx"), // redirect → /
   route("explorer/theme/:tag", "pages/TagPage.jsx"),
   route("citations", "pages/CitationsPage.jsx"),
   route("defis", "pages/ChallengesPage.jsx"),

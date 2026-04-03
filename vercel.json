@@ -3,7 +3,7 @@
   "outputDirectory": "build/client",
   "trailingSlash": false,
   "redirects": [
-    { "source": "/", "destination": "/explorer", "permanent": true }
+    { "source": "/explorer", "destination": "/", "permanent": true }
   ],
   "rewrites": [
     { "source": "/(.*)", "destination": "/__spa-fallback.html" }

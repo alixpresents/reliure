@@ -21,7 +21,7 @@ export default function LoginPage() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (user) navigate("/explorer", { replace: true });
+    if (user) navigate("/", { replace: true });
   }, [user, navigate]);
 
   const [email, setEmail] = useState("");
