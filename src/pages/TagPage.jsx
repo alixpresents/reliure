@@ -1,3 +1,17 @@
+export function meta({ params }) {
+  const tag = decodeURIComponent(params.tag || "");
+  return [
+    { title: `${tag} — Reliure` },
+    { name: "description", content: `Découvrez les meilleurs livres de ${tag} sélectionnés par la communauté Reliure.` },
+    { property: "og:title", content: `${tag} — Reliure` },
+    { property: "og:description", content: `Découvrez les meilleurs livres de ${tag} sélectionnés par la communauté Reliure.` },
+    { property: "og:type", content: "website" },
+    { property: "og:site_name", content: "Reliure" },
+    { name: "twitter:card", content: "summary_large_image" },
+    { tagName: "link", rel: "canonical", href: `${import.meta.env.VITE_SITE_URL || "https://www.reliure.page"}/explorer/theme/${params.tag}` },
+  ];
+}
+
 import { useParams, useNavigate, Link } from "react-router-dom";
 import Img from "../components/Img";
 import Label from "../components/Label";
@@ -19,7 +33,17 @@ export default function TagPage() {
         ← Retour
       </button>
       <Label>Thème</Label>
-      <h2 className="text-[22px] font-normal mb-1 font-display">{decodedTag}</h2>
+      <div className="flex items-baseline gap-2 mb-1">
+        <h2 className="text-[22px] font-normal font-display">{decodedTag}</h2>
+        {!loading && books.length > 0 && (
+          <span className="text-[13px] font-body" style={{ color: "var(--text-tertiary)" }}>{books.length} livre{books.length > 1 ? "s" : ""}</span>
+        )}
+      </div>
+      {!loading && books.length > 0 && (
+        <p className="text-[14px] font-body mb-4" style={{ color: "var(--text-tertiary)" }}>
+          Les meilleurs livres de {decodedTag} sélectionnés par la communauté Reliure.
+        </p>
+      )}
 
       {loading ? (
         <div className="py-8 text-center text-[13px] font-body" style={{ color: "var(--text-tertiary)" }}>Chargement...</div>
@@ -37,9 +61,6 @@ export default function TagPage() {
             <p className="text-[13px] font-body mt-1 mb-4 bg-surface rounded-lg px-4 py-3 border" style={{ color: "var(--text-tertiary)", borderColor: "var(--border-default)" }}>
               Seulement {books.length} livre{books.length > 1 ? "s" : ""} pour ce thème pour l'instant. La communauté grandit — reviens bientôt.
             </p>
-          )}
-          {!sparse && (
-            <p className="text-[13px] mt-1 mb-5 font-body" style={{ color: "var(--text-tertiary)" }}>{books.length} livre{books.length > 1 ? "s" : ""}</p>
           )}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             {books.map(book => (
