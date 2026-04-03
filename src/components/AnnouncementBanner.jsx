@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export default function AnnouncementBanner({
   pill = "Bêta",
@@ -7,9 +7,14 @@ export default function AnnouncementBanner({
   ctaHref = "/login",
   storageKey = "reliure_banner_dismissed_v1",
 }) {
-  const [dismissed, setDismissed] = useState(
-    () => typeof window !== "undefined" && !!localStorage.getItem(storageKey)
-  );
+  // Start visible (matches prerendered HTML), then check localStorage after hydration
+  const [dismissed, setDismissed] = useState(false);
+
+  useEffect(() => {
+    if (localStorage.getItem(storageKey)) {
+      setDismissed(true);
+    }
+  }, [storageKey]);
 
   if (dismissed) return null;
 
