@@ -642,7 +642,14 @@ export default function BookPage({ book }) {
         </div>
         <div className="flex-1 pt-1">
           <h1 className="m-0 text-[26px] font-normal leading-tight font-display">{book.t}</h1>
-          <div className="text-[15px] mt-1.5 font-body" style={{ color: "var(--text-tertiary)" }}>{book.a}</div>
+          <div className="text-[15px] mt-1.5 font-body" style={{ color: "var(--text-tertiary)" }}>
+            {(book.a || "").split(", ").map((author, i, arr) => (
+              <span key={author}>
+                <a href={`/?q=${encodeURIComponent(author)}`} className="no-underline hover:underline" style={{ color: "var(--text-secondary)" }}>{author}</a>
+                {i < arr.length - 1 && ", "}
+              </span>
+            ))}
+          </div>
           <div className="text-[13px] mt-1 font-body" style={{ color: "var(--text-tertiary)" }}>{book.y || book.publication_date}{(book.p || book.page_count) ? ` · ${book.p || book.page_count} pages` : ""}</div>
 
           {/* Modifier la fiche */}
