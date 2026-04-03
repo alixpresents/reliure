@@ -2,6 +2,130 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { getCorsHeaders } from "../_shared/cors.ts";
 
 // ---------------------------------------------------------------------------
+// Electre NG — source de référence pour les livres francophones
+// ---------------------------------------------------------------------------
+let electreToken: string | null = null;
+let electreTokenExpiresAt = 0;
+
+async function getElectreToken(): Promise<string> {
+  const now = Date.now();
+  if (electreToken && electreTokenExpiresAt > now + 60_000) {
+    return electreToken;
+  }
+
+  const authUrl = Deno.env.get("ELECTRE_AUTH_URL");
+  const username = Deno.env.get("ELECTRE_USERNAME");
+  const password = Deno.env.get("ELECTRE_PASSWORD");
+
+  if (!authUrl || !username || !password) {
+    throw new Error("Missing Electre credentials");
+  }
+
+  const res = await fetch(authUrl, {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({
+      grant_type: "password",
+      client_id: "api-client",
+      username,
+      password,
+      scope: "roles",
+    }),
+    signal: AbortSignal.timeout(8000),
+  });
+
+  if (!res.ok) throw new Error(`Electre auth failed: ${res.status}`);
+  const data = await res.json();
+  electreToken = data.access_token;
+  electreTokenExpiresAt = now + (data.expires_in || 300) * 1000;
+  return electreToken!;
+}
+
+interface ElectreNotice {
+  noticeId?: string;
+  oeuvreId?: string;
+  titre?: string;
+  sousTitre?: string;
+  auteurs?: Array<{ nom?: string; prenom?: string; role?: string }>;
+  editeur?: string;
+  collection?: string;
+  dateParution?: string;
+  nbPages?: number;
+  couverture?: string;
+  resume?: string;
+  quatriemeDeCouverture?: string;
+  langue?: string;
+  genres?: string[];
+  fiction?: boolean;
+  disponibilite?: string;
+  ean?: string;
+}
+
+function parseElectreNotice(
+  notice: ElectreNotice,
+): BookMeta & {
+  electre_notice_id: string | null;
+  oeuvre_id: string | null;
+  collection_name: string | null;
+  flag_fiction: boolean | null;
+  quatrieme_de_couverture: string | null;
+  disponibilite: string | null;
+} {
+  const authors = notice.auteurs
+    ?.filter((a) => !a.role || a.role === "auteur" || a.role === "Auteur")
+    .map((a) => [a.prenom, a.nom].filter(Boolean).join(" "))
+    .filter(Boolean);
+
+  return {
+    title: notice.titre || null,
+    subtitle: notice.sousTitre || null,
+    authors: authors?.length ? authors : null,
+    publisher: notice.editeur || null,
+    publication_date: notice.dateParution || null,
+    page_count: notice.nbPages || null,
+    cover_url: notice.couverture || null,
+    description: notice.resume || notice.quatriemeDeCouverture || null,
+    language: notice.langue || null,
+    genres: notice.genres?.length ? notice.genres : null,
+    electre_notice_id: notice.noticeId || null,
+    oeuvre_id: notice.oeuvreId || null,
+    collection_name: notice.collection || null,
+    flag_fiction: notice.fiction ?? null,
+    quatrieme_de_couverture: notice.quatriemeDeCouverture || null,
+    disponibilite: notice.disponibilite || null,
+  };
+}
+
+async function fetchElectre(isbn: string) {
+  const apiUrl = Deno.env.get("ELECTRE_API_URL");
+  if (!apiUrl) return null;
+
+  try {
+    const token = await getElectreToken();
+    const params = new URLSearchParams();
+    params.append("ean", isbn);
+    params.append("catalogue", "livre");
+    params.append("editions-liees", "false");
+
+    const res = await fetch(`${apiUrl}/notices/eans?${params}`, {
+      headers: { Authorization: `Bearer ${token}` },
+      signal: AbortSignal.timeout(8000),
+    });
+
+    if (!res.ok) return null;
+    const data = await res.json();
+
+    // L'API retourne un tableau de notices — prendre la première
+    const notices = Array.isArray(data) ? data : data.notices || data.results || [];
+    if (!notices.length) return null;
+
+    return parseElectreNotice(notices[0]);
+  } catch {
+    return null;
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Google Books
 // ---------------------------------------------------------------------------
 async function fetchGoogleBooks(isbn: string) {
@@ -266,50 +390,60 @@ function mergeSources(
   openLib: BookMeta | null,
   bnf: BookMeta | null,
   fallback: any,
+  electre: ReturnType<typeof parseElectreNotice> | null = null,
 ): BookMeta {
   return {
+    // Electre > BnF > Google > OL (sources FR prioritaires)
     title:
-      pick(bnf?.title, google?.title, openLib?.title, fallback?.title) ||
+      pick(electre?.title, bnf?.title, google?.title, openLib?.title, fallback?.title) ||
       "Sans titre",
-    subtitle: pick(google?.subtitle, openLib?.subtitle, fallback?.subtitle),
+    subtitle: pick(electre?.subtitle, google?.subtitle, openLib?.subtitle, fallback?.subtitle),
     authors:
       pick(
+        electre?.authors,
         google?.authors,
         bnf?.authors,
         openLib?.authors,
         fallback?.authors,
       ) || [],
     publisher: pick(
+      electre?.publisher,
       bnf?.publisher,
       openLib?.publisher,
       google?.publisher,
       fallback?.publisher,
     ),
     publication_date: pick(
+      electre?.publication_date,
       bnf?.publication_date,
       google?.publication_date,
       openLib?.publication_date,
       fallback?.publishedDate,
     ),
     page_count: pick(
+      electre?.page_count,
       openLib?.page_count,
       google?.page_count,
       bnf?.page_count,
       fallback?.pageCount,
     ),
+    // Couverture : Electre > Google (zoom 2) > OL
     cover_url: pick(
+      electre?.cover_url,
       google?.cover_url,
       openLib?.cover_url,
       bnf?.cover_url,
       fallback?.coverUrl,
     ),
+    // Description : Electre (4ème de couv ou résumé) > Google > OL
     description: pick(
+      electre?.description,
       google?.description,
       openLib?.description,
       fallback?.description,
     ),
-    language: pick(bnf?.language, google?.language) || "fr",
-    genres: pick(google?.genres, openLib?.genres) || [],
+    language: pick(electre?.language, bnf?.language, google?.language) || "fr",
+    genres: pick(electre?.genres, google?.genres, openLib?.genres) || [],
   };
 }
 
@@ -406,7 +540,7 @@ Deno.serve(async (req) => {
     }
 
     // Fetch all sources in parallel — never let one failure block the rest
-    const [google, openLib, bnf, metasData] = await Promise.all([
+    const [google, openLib, bnf, metasData, electreData] = await Promise.all([
       fetchGoogleBooks(isbn).catch((e) => {
         console.error("Google Books error:", e.message);
         return null;
@@ -420,13 +554,17 @@ Deno.serve(async (req) => {
         return null;
       }),
       fetchMetasBooks(isbn).catch(() => null),
+      fetchElectre(isbn).catch((e) => {
+        console.error("Electre error:", e.message);
+        return null;
+      }),
     ]);
 
     console.log(
-      `[book_import] ${isbn} — Google:${!!google} OL:${!!openLib} BnF:${!!bnf} MetasBooks:${!!metasData}`,
+      `[book_import] ${isbn} — Electre:${!!electreData} Google:${!!google} OL:${!!openLib} BnF:${!!bnf} MetasBooks:${!!metasData}`,
     );
 
-    const merged = mergeSources(google, openLib, bnf, fallback);
+    const merged = mergeSources(google, openLib, bnf, fallback, electreData);
 
     // MetasBooks enrichment — comble les champs vides après fusion principale
     let enrichedByMetasbooks = false;
@@ -481,23 +619,40 @@ Deno.serve(async (req) => {
       supabase,
     );
 
+    // Determine source tag
+    let sourceTag = "multi_api";
+    if (electreData) sourceTag = "multi_api_electre";
+    else if (enrichedByMetasbooks) sourceTag = "multi_api_metasbooks";
+
+    const insertPayload: Record<string, unknown> = {
+      isbn_13: isbn,
+      title: merged.title,
+      subtitle: merged.subtitle,
+      authors: merged.authors,
+      publisher: merged.publisher,
+      publication_date: merged.publication_date,
+      cover_url: merged.cover_url,
+      page_count: merged.page_count,
+      description: merged.description,
+      language: merged.language,
+      genres: merged.genres,
+      source: sourceTag,
+      slug,
+    };
+
+    // Electre-specific fields
+    if (electreData) {
+      insertPayload.electre_notice_id = electreData.electre_notice_id;
+      insertPayload.oeuvre_id = electreData.oeuvre_id;
+      insertPayload.collection_name = electreData.collection_name;
+      insertPayload.flag_fiction = electreData.flag_fiction;
+      insertPayload.quatrieme_de_couverture = electreData.quatrieme_de_couverture;
+      insertPayload.disponibilite = electreData.disponibilite;
+    }
+
     const { data: book, error } = await supabase
       .from("books")
-      .insert({
-        isbn_13: isbn,
-        title: merged.title,
-        subtitle: merged.subtitle,
-        authors: merged.authors,
-        publisher: merged.publisher,
-        publication_date: merged.publication_date,
-        cover_url: merged.cover_url,
-        page_count: merged.page_count,
-        description: merged.description,
-        language: merged.language,
-        genres: merged.genres,
-        source: enrichedByMetasbooks ? "multi_api_metasbooks" : "multi_api",
-        slug,
-      })
+      .insert(insertPayload)
       .select("*")
       .single();
 

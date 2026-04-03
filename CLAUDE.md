@@ -87,26 +87,27 @@ Liste dans `src/constants/reserved-usernames.js`. Vérifiés à l'inscription (f
 
 ## Sources de métadonnées livres
 
-Par priorité :
-1. **Google Books API** — via edge function proxy `google-books-proxy` (rotation de clés dynamiques `GOOGLE_BOOKS_KEY_N`, cache 6h dans `search_cache`)
-2. **BnF SRU** — import par ISBN dans `book_import` + recherche parallèle (`src/lib/bnfSearch.js`)
-3. **Wikidata** — batch uniquement (trop lent en temps réel). **Ne jamais faire confiance aux ISBN Wikidata.**
-4. **Open Library API** — parallèle avec Google quand DB < 3 résultats. Seule source quand circuit breaker Google actif.
-5. **MetasBooks** — enrichissement post-merge dans `book_import` uniquement
-6. **Claude Haiku** — fallback IA via `book_ai_enrich`. Source `ai_enriched`, badge "À vérifier" si `ai_confidence < 0.7`. Déclenché via BackfillPage uniquement.
+Stratégie hybride, par priorité :
+1. **Electre NG API** — source de référence pour les livres francophones. Appelé en parallèle dans `book_import` (OAuth2 password flow, token cache module-level). Edge function proxy `electre-proxy` disponible pour les appels batch. Colonnes exclusives : `electre_notice_id`, `oeuvre_id`, `collection_name`, `flag_fiction`, `quatrieme_de_couverture`, `disponibilite`. Source taggée `multi_api_electre`. Script batch : `scripts/enrich-from-electre.mjs` (dry-run par défaut, batches de 100 EANs, ne remplit que les champs NULL).
+2. **Google Books API** — via edge function proxy `google-books-proxy` (rotation de clés dynamiques `GOOGLE_BOOKS_KEY_N`, cache 6h dans `search_cache`)
+3. **BnF SRU** — import par ISBN dans `book_import` + recherche parallèle (`src/lib/bnfSearch.js`)
+4. **Wikidata** — batch uniquement (trop lent en temps réel). **Ne jamais faire confiance aux ISBN Wikidata.**
+5. **Open Library API** — parallèle avec Google quand DB < 3 résultats. Seule source quand circuit breaker Google actif.
+6. **MetasBooks** — enrichissement post-merge dans `book_import` uniquement
+7. **Claude Haiku** — fallback IA via `book_ai_enrich`. Source `ai_enriched`, badge "À vérifier" si `ai_confidence < 0.7`. Déclenché via BackfillPage uniquement.
 
-**`book_import`** (`supabase/functions/book_import/index.ts`) : 4 sources en parallèle par ISBN, fusion par priorité, slug, upsert. `verify_jwt = false` (catalogue partagé). Fallback client-side si échec.
+**`book_import`** (`supabase/functions/book_import/index.ts`) : **5 sources en parallèle** par ISBN (Electre, Google, OL, BnF, MetasBooks), fusion par priorité, slug, upsert. `verify_jwt = false` (catalogue partagé). Fallback client-side si échec.
 
 ### Priorité de fusion par champ
-- `title` : BnF > Google > OL
-- `authors` : Google > BnF > OL
-- `publisher` : BnF > OL > Google
-- `publication_date` : BnF > Google > OL
-- `page_count` : OL > Google > BnF
-- `cover_url` : Google (zoom 2) > OL
-- `description` : Google > OL
-- `language` : BnF > Google
-- `genres` : Google > OL
+- `title` : Electre > BnF > Google > OL
+- `authors` : Electre > Google > BnF > OL
+- `publisher` : Electre > BnF > OL > Google
+- `publication_date` : Electre > BnF > Google > OL
+- `page_count` : Electre > OL > Google > BnF
+- `cover_url` : Electre > Google (zoom 2) > OL
+- `description` : Electre (résumé/4ème couv) > Google > OL
+- `language` : Electre > BnF > Google
+- `genres` : Electre > Google > OL
 
 ### Recherche (`src/lib/googleBooks.js`)
 
@@ -123,7 +124,7 @@ Scripts dans `scripts/` et `seeds/`. Tous : dry-run par défaut, `--apply` pour 
 ## Architecture de données
 
 ### Tables principales
-`users`, `books` (avec `slug`, `description`, `ai_confidence`), `reviews` (avec `reply_count`), `review_replies`, `reading_status` (avec `is_reread`), `reading_log_tags`, `user_favorites` (position 1-4), `lists` (avec colonnes `is_curated`/`curator_*`), `list_items`, `follows`, `activity`, `quotes`, `likes` (polymorphe), `search_cache`, `badge_definitions`, `user_badges` (max 3 `is_pinned`), `user_points`, `point_events`, `reserved_usernames`, `notifications`.
+`users`, `books` (avec `slug`, `description`, `ai_confidence`, `electre_notice_id`, `oeuvre_id`, `collection_name`, `flag_fiction`, `quatrieme_de_couverture`, `disponibilite`), `reviews` (avec `reply_count`), `review_replies`, `reading_status` (avec `is_reread`), `reading_log_tags`, `user_favorites` (position 1-4), `lists` (avec colonnes `is_curated`/`curator_*`), `list_items`, `follows`, `activity`, `quotes`, `likes` (polymorphe), `search_cache`, `badge_definitions`, `user_badges` (max 3 `is_pinned`), `user_points`, `point_events`, `reserved_usernames`, `notifications`.
 
 Schéma complet : `schema.sql`.
 
@@ -140,6 +141,7 @@ Reliure regroupe les éditions par oeuvre. Vérification ISBN exact puis titre n
 - `user_favorites` swap : delete+reinsert (pas d'update) pour le CHECK position 1-4
 - `useProfileData` distingue `diaryBooks` (read + finished_at) et `allReadBooks` (tous les "read")
 - Seuil bilan annuel : 5 livres lus (logique frontend)
+- Electre comme source #1 : appelé directement dans `book_import` (pas de hop via `electre-proxy`) pour réduire la latence. `electre-proxy` existe pour les appels batch externes. `oeuvre_id` Electre = futur regroupement des éditions
 
 ## Design system
 
