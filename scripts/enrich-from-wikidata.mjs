@@ -171,7 +171,7 @@ async function findExisting(title, authors, isbn13) {
 // ─── SPARQL / Wikidata ────────────────────────────────────────────
 
 const SPARQL_ENDPOINT = "https://query.wikidata.org/sparql";
-const USER_AGENT = "Reliure/1.0 (contact@reliure.app) Node.js/enrichment-script";
+const USER_AGENT = "Reliure/1.0 (contact@reliure.page) Node.js/enrichment-script";
 
 async function sparqlQuery(sparql) {
   const url = `${SPARQL_ENDPOINT}?query=${encodeURIComponent(sparql)}&format=json`;
