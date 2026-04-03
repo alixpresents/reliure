@@ -104,7 +104,7 @@ async function serveBookOG(res, slug) {
     title: `${title} | ${SITE_NAME}`,
     description,
     url: `${SITE_URL}/livre/${slug}`,
-    image: book.cover_url || null,
+    image: `${SITE_URL}/api/og-image?slug=${encodeURIComponent(slug)}`,
     ogType: "book",
   });
 }
