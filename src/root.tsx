@@ -31,6 +31,7 @@ import BadgeToast from "./components/BadgeToast";
 import { useToast } from "./hooks/useToast";
 import { useTheme } from "./hooks/useTheme";
 import { useNewBadges } from "./hooks/useNewBadges";
+import { Analytics } from '@vercel/analytics/react';
 import "./index.css";
 
 const OnboardingPage = lazy(() => import("./pages/OnboardingPage"));
@@ -88,6 +89,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         {children}
         <ScrollRestoration />
         <Scripts />
+      <Analytics />
       </body>
     </html>
   );
