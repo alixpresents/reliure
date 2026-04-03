@@ -97,7 +97,7 @@ async function serveFallback(res) {
   } catch (err) {
     console.error("[og-image] fallback error:", err);
     res.setHeader("Content-Type", "text/plain");
-    return res.status(500).send(err.stack || err.message || String(err));
+    return res.status(500).send("Image generation failed");
   }
 }
 
@@ -284,7 +284,6 @@ export default async function handler(req, res) {
     return sendPng(res, png);
   } catch (err) {
     console.error("[og-image] render error:", err);
-    res.setHeader("Content-Type", "text/plain");
-    return res.status(500).send(err.stack || err.message || String(err));
+    return serveFallback(res);
   }
 }
