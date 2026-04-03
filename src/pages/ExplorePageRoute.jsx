@@ -69,7 +69,7 @@ export function meta() {
   ];
 }
 
-import { lazy, Suspense, useRef } from "react";
+import { lazy, Suspense, useRef, useState, useEffect } from "react";
 import { useLoaderData } from "react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import Skeleton from "../components/Skeleton";
@@ -246,19 +246,23 @@ function CacheSeeder({ loaderData, children }) {
 
 export default function ExplorePageRoute() {
   const loaderData = useLoaderData();
-  const isServer = typeof window === "undefined";
+  const [hydrated, setHydrated] = useState(false);
 
-  if (isServer) {
-    return loaderData ? <ExploreSeoContent data={loaderData} /> : <ExploreSkeleton />;
-  }
+  useEffect(() => {
+    setHydrated(true);
+  }, []);
 
   return (
     <CacheSeeder loaderData={loaderData}>
-      <div className="sk-fade">
-        <Suspense fallback={<ExploreSkeleton />}>
-          <ExplorePage />
-        </Suspense>
-      </div>
+      {!hydrated ? (
+        loaderData ? <ExploreSeoContent data={loaderData} /> : <ExploreSkeleton />
+      ) : (
+        <div className="sk-fade">
+          <Suspense fallback={<ExploreSkeleton />}>
+            <ExplorePage />
+          </Suspense>
+        </div>
+      )}
     </CacheSeeder>
   );
 }
