@@ -18,7 +18,7 @@ export default memo(function Img({ book, w, h, onClick, className = "", priority
       {src && !imgFailed && (
         <img
           src={src}
-          alt=""
+          alt={book.t ? `Couverture de ${book.t}${book.a ? ` par ${book.a}` : ""}` : "Couverture de livre"}
           loading={priority ? "eager" : "lazy"}
           className="w-full h-full object-cover block absolute inset-0"
           onLoad={e => { if (e.target.naturalWidth < 10 || e.target.naturalHeight < 10) setImgFailed(true); }}
