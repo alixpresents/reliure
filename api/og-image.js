@@ -130,22 +130,24 @@ export default async function handler(req, res) {
   const authors = parseAuthors(book.authors);
   const title = book.title || "Sans titre";
   const desc = book.description
-    ? book.description.slice(0, 120) +
-      (book.description.length > 120 ? "…" : "")
+    ? book.description.slice(0, 100) +
+      (book.description.length > 100 ? "…" : "")
     : "";
-  const titleFontSize = title.length > 40 ? 34 : 42;
+  const titleFontSize = title.length > 40 ? 32 : 36;
 
-  const textChildren = [
+  // Groupe texte bas-gauche
+  const textGroupChildren = [
     {
       type: "div",
       props: {
         style: {
+          display: "flex",
           fontFamily: "EB Garamond",
           fontSize: titleFontSize,
           fontWeight: 400,
-          color: "#e8e5df",
+          color: "#ffffff",
           lineHeight: 1.2,
-          marginBottom: 10,
+          marginBottom: 6,
         },
         children: title,
       },
@@ -153,125 +155,138 @@ export default async function handler(req, res) {
   ];
 
   if (authors) {
-    textChildren.push({
+    textGroupChildren.push({
       type: "div",
       props: {
-        style: { fontSize: 20, color: "#8a8680", marginBottom: desc ? 20 : 30 },
+        style: {
+          display: "flex",
+          fontSize: 18,
+          color: "rgba(255,255,255,0.7)",
+          marginBottom: desc ? 8 : 0,
+        },
         children: authors,
       },
     });
   }
 
   if (desc) {
-    textChildren.push({
+    textGroupChildren.push({
       type: "div",
       props: {
         style: {
-          fontSize: 15,
-          color: "#6a6560",
-          lineHeight: 1.6,
-          marginBottom: 30,
+          display: "flex",
+          fontSize: 14,
+          color: "rgba(255,255,255,0.5)",
         },
         children: desc,
       },
     });
   }
 
-  textChildren.push({
-    type: "div",
-    props: {
-      style: { display: "flex", alignItems: "center", gap: 12 },
-      children: [
+  // Layers de l'image ou fond solide si pas de cover
+  const backgroundLayers = book.cover_url
+    ? [
+        // Couverture plein cadre
         {
-          type: "div",
+          type: "img",
           props: {
-            style: { width: 30, height: 1, backgroundColor: "#555" },
+            src: book.cover_url,
+            style: {
+              position: "absolute",
+              top: 0,
+              left: 0,
+              width: "100%",
+              height: "100%",
+              objectFit: "cover",
+            },
           },
         },
+        // Gradient overlay
         {
           type: "div",
           props: {
             style: {
-              fontSize: 13,
-              color: "#6a6560",
-              letterSpacing: "0.12em",
-              fontWeight: 500,
+              display: "flex",
+              position: "absolute",
+              top: 0,
+              left: 0,
+              width: "100%",
+              height: "100%",
+              backgroundImage:
+                "linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.4) 40%, rgba(0,0,0,0.05) 70%, transparent 100%)",
             },
-            children: "RELIURE",
           },
         },
-      ],
-    },
-  });
-
-  const coverElement = book.cover_url
-    ? {
-        type: "img",
-        props: {
-          src: book.cover_url,
-          width: 220,
-          height: 330,
-          style: { borderRadius: 4, objectFit: "cover" },
-        },
-      }
-    : {
-        type: "div",
-        props: {
-          style: {
-            width: 220,
-            height: 330,
-            borderRadius: 4,
-            backgroundColor: "#2a2928",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            padding: 20,
-            fontFamily: "EB Garamond",
-            fontSize: 22,
-            color: "#8a8680",
-            textAlign: "center",
-          },
-          children: title,
-        },
-      };
+      ]
+    : [];
 
   const markup = {
     type: "div",
     props: {
       style: {
+        display: "flex",
         width: "100%",
         height: "100%",
-        display: "flex",
-        alignItems: "center",
+        position: "relative",
         backgroundColor: "#1a1918",
       },
       children: [
+        ...backgroundLayers,
+        // Couche contenu
         {
           type: "div",
           props: {
             style: {
-              width: 380,
+              display: "flex",
+              position: "absolute",
+              top: 0,
+              left: 0,
+              width: "100%",
               height: "100%",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              flexShrink: 0,
-              padding: "40px 20px 40px 50px",
+              alignItems: "flex-end",
             },
-            children: coverElement,
-          },
-        },
-        {
-          type: "div",
-          props: {
-            style: {
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "center",
-              flex: 1,
-              padding: "40px 50px 40px 20px",
-            },
-            children: textChildren,
+            children: [
+              // Barre du bas
+              {
+                type: "div",
+                props: {
+                  style: {
+                    display: "flex",
+                    width: "100%",
+                    justifyContent: "space-between",
+                    alignItems: "flex-end",
+                    padding: "40px",
+                  },
+                  children: [
+                    // Groupe texte gauche
+                    {
+                      type: "div",
+                      props: {
+                        style: {
+                          display: "flex",
+                          flexDirection: "column",
+                        },
+                        children: textGroupChildren,
+                      },
+                    },
+                    // Branding droite
+                    {
+                      type: "div",
+                      props: {
+                        style: {
+                          display: "flex",
+                          fontSize: 12,
+                          color: "rgba(255,255,255,0.5)",
+                          letterSpacing: "0.1em",
+                          fontWeight: 500,
+                        },
+                        children: "RELIURE",
+                      },
+                    },
+                  ],
+                },
+              },
+            ],
           },
         },
       ],
