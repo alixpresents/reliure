@@ -16,7 +16,7 @@ let fontData = null;
 async function loadFont() {
   if (fontData) return fontData;
   const res = await fetch(
-    "https://raw.githubusercontent.com/google/fonts/main/ofl/ebgaramond/EBGaramond%5Bwght%5D.ttf",
+    "https://raw.githubusercontent.com/octaviopardo/EBGaramond12/master/fonts/ttf/EBGaramond-Regular.ttf",
   );
   fontData = Buffer.from(await res.arrayBuffer());
   return fontData;
