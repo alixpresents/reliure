@@ -6,6 +6,16 @@
     { "source": "/explorer", "destination": "/", "permanent": true }
   ],
   "rewrites": [
+    {
+      "source": "/livre/:slug",
+      "has": [{ "type": "header", "key": "user-agent", "value": "(?i).*(facebookexternalhit|Twitterbot|LinkedInBot|Discordbot|Slackbot|WhatsApp|TelegramBot|Googlebot|bingbot|Applebot|Pinterestbot|redditbot).*" }],
+      "destination": "/api/og?type=book&slug=:slug"
+    },
+    {
+      "source": "/selections/:slug",
+      "has": [{ "type": "header", "key": "user-agent", "value": "(?i).*(facebookexternalhit|Twitterbot|LinkedInBot|Discordbot|Slackbot|WhatsApp|TelegramBot|Googlebot|bingbot|Applebot|Pinterestbot|redditbot).*" }],
+      "destination": "/api/og?type=selection&slug=:slug"
+    },
     { "source": "/(.*)", "destination": "/__spa-fallback.html" }
   ],
   "headers": [
