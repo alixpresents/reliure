@@ -19,11 +19,14 @@ export default {
       "/classement",
     ];
 
-    // Book slugs
+    // Book slugs — top 1000 most active (at least 1 review, quote or reading_status)
     const { data: books } = await supabase
       .from("books")
-      .select("slug")
-      .not("slug", "is", null);
+      .select("slug, rating_count")
+      .not("slug", "is", null)
+      .gt("rating_count", 0)
+      .order("rating_count", { ascending: false })
+      .limit(1000);
     if (books) {
       paths.push(...books.map((b: { slug: string }) => `/livre/${b.slug}`));
     }
