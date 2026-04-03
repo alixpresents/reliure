@@ -12,7 +12,7 @@ export function useProfile() {
     setLoading(true);
     const { data } = await supabase
       .from("users")
-      .select("*")
+      .select("id, username, display_name, avatar_url, bio, created_at")
       .eq("id", user.id)
       .single();
     setProfile(data ?? null);
