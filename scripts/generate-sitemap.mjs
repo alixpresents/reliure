@@ -10,7 +10,7 @@ if (!url || !key) {
 }
 
 const supabase = createClient(url, key);
-const BASE_URL = "https://reliure.app";
+const BASE_URL = process.env.SITE_URL || process.env.VITE_SITE_URL || "https://reliure.app";
 
 async function generateSitemap() {
   const urls = [];
