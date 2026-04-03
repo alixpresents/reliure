@@ -434,6 +434,23 @@ export default function BookPage({ book }) {
     })();
   }, [bookId, isUuid]);
 
+  // Autres éditions (même oeuvre_id Electre)
+  const oeuvreId = book._supabase?.oeuvre_id;
+  const { data: otherEditions = [] } = useQuery({
+    queryKey: ["otherEditions", oeuvreId, bookId],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("books")
+        .select("id, slug, title, cover_url, publisher, publication_date")
+        .eq("oeuvre_id", oeuvreId)
+        .neq("id", bookId)
+        .limit(6);
+      return data || [];
+    },
+    enabled: !!oeuvreId && isUuid,
+    staleTime: 10 * 60 * 1000,
+  });
+
   // Sync from DB on load
   useEffect(() => {
     if (statusLoading) return;
@@ -1144,13 +1161,26 @@ export default function BookPage({ book }) {
         )}
 
         {bt === "éditions" && (
-          <div className="flex gap-2.5">
-            {[{ l: "Poche", p: "Folio", y: "2008" }, { l: "Relié", p: "Gallimard", y: "2004" }, { l: "Audio", p: "Audible", y: "2019" }].map((e, i) => (
-              <div key={i} className="p-3.5 px-4 bg-surface rounded-lg flex-1 cursor-pointer hover:bg-tag-bg">
-                <div className="text-[13px] font-semibold font-body">{e.l}</div>
-                <div className="text-xs mt-[3px] font-body" style={{ color: "var(--text-tertiary)" }}>{e.p} · {e.y}</div>
+          <div>
+            {otherEditions.length > 0 ? (
+              <div className="grid grid-cols-3 sm:grid-cols-4 gap-4">
+                {otherEditions.map(ed => {
+                  const edBook = { id: ed.id, t: ed.title, c: ed.cover_url, slug: ed.slug };
+                  const year = ed.publication_date ? ed.publication_date.slice(0, 4) : null;
+                  return (
+                    <div key={ed.id} className="text-center">
+                      <Img book={edBook} w={100} h={150} onClick={() => go(edBook)} className="w-full h-auto aspect-[2/3]" />
+                      {ed.publisher && <div className="text-[11px] font-medium mt-1.5 overflow-hidden text-ellipsis whitespace-nowrap font-body">{ed.publisher}</div>}
+                      {year && <div className="text-[10px] mt-0.5 font-body" style={{ color: "var(--text-tertiary)" }}>{year}</div>}
+                    </div>
+                  );
+                })}
               </div>
-            ))}
+            ) : (
+              <div className="py-6 text-center text-[13px] font-body" style={{ color: "var(--text-tertiary)" }}>
+                {oeuvreId ? "Aucune autre édition trouvée." : "Données d'éditions non disponibles pour ce livre."}
+              </div>
+            )}
           </div>
         )}
       </div>
