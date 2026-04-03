@@ -23,42 +23,16 @@ L'app ne doit jamais ressembler à un tableur ou à un webzine. C'est un objet c
 
 ## Paysage concurrentiel
 
-### Babelio (concurrent direct #1)
-- ~1,3M inscrits, fondé en 2007, leader francophone
-- Forces : base de données massive (accès FEL/Dilicom), 3,3M de critiques, SEO dominant sur les fiches livres FR, partenariats éditeurs (Masse Critique), légitimité institutionnelle (Défi Babelio dans les écoles)
-- Faiblesses : UX datée (n'a pas évolué depuis 10 ans), app mobile faible, design webzine plutôt qu'outil personnel
-- Leur base de données s'appuie sur le FEL (Fichier Exhaustif du Livre via Dilicom, 1,4M titres, 60 données par notice, B2B payant) + enrichissement communautaire (182K associations manuelles, 286K regroupements algorithmiques) + veille presse (70 médias, 250 prix littéraires, 200K biographies auteurs)
-- Monétisation : pub + partenariats éditeurs + Babelthèque (service pour bibliothèques publiques) + data analytics
+| Concurrent | Utilisateurs | Points clés |
+|-----------|-------------|-------------|
+| **Babelio** (#1 FR) | ~1,3M | Base massive (FEL/Dilicom), 3,3M critiques, SEO dominant. UX datée. |
+| **Gleeph** | ~750K | Mobile-first, librairies indep. Pas de critiques, pas de web. |
+| **Booknode** | ~500K | Niche YA/Fantasy, notation multicritères. App mobile buggée. |
+| **The StoryGraph** | 5M | Benchmark UX (mood, pace, stats). Anglophone uniquement. |
+| **SensCritique** | ~1M | Généraliste culturel. Livres = segment secondaire. |
+| **Livraddict** | ~80K | Communauté fidèle, sagas. Pas d'app, stagnant. |
 
-### Gleeph (concurrent direct #2)
-- ~750K utilisateurs, fondé en 2019, La Rochelle, 3M€ levés
-- Forces : mobile-first, scan code-barres, lien librairies indépendantes, 50%+ des users <24 ans, soutien BPI/Banque des Territoires
-- Faiblesses : pas de critiques sur les fiches livres, pas de version web, base incomplète sur les anciens livres, navigation parfois confuse
-- Côté B2B : plateforme Bookmetrie pour les pros du livre (Gallimard, Hachette, Relay)
-
-### Booknode
-- ~500K inscrits, fondé en 2008, communauté orientée YA/Fantasy/Romance
-- Forces : notation multicritères (scénario, écriture, suspense, personnages), forums actifs, bonne gestion des sagas
-- Faiblesses : audience niche (YA), design conventionnel, app mobile buggée
-
-### The StoryGraph (benchmark UX)
-- 5M utilisateurs (jan 2026), fondé en 2019 par Nadia Odunayo
-- Forces : UX best-in-class, stats de lecture détaillées (mood, pace, genre), import Goodreads, croissance organique via BookTok, App Store Award 2025
-- Faiblesses pour nous : anglophone, pas de traduction FR, base francophone faible
-- C'est le modèle à suivre pour l'UX et les features, adapté au marché FR
-
-### SensCritique
-- ~1M membres, généraliste culturel (films, séries, livres, musique, jeux)
-- Les livres sont un segment secondaire, pas d'outils de gestion de bibliothèque
-
-### Livraddict
-- ~80K membres, bénévole, excellente gestion des sagas, communauté fidèle mais stagnante, pas d'app mobile
-
-### Angles d'attaque
-1. Cibler la frustration UX des utilisateurs Babelio/Booknode
-2. Proposer ce que Gleeph ne fait pas : critiques, stats avancées, version web
-3. Être le "StoryGraph français" avec base optimisée pour les éditions francophones
-4. L'import de données depuis Babelio/Booknode/Goodreads est crucial pour réduire la friction de migration
+**Angles d'attaque** : cibler la frustration UX de Babelio/Booknode ; proposer ce que Gleeph ne fait pas (critiques, web, stats) ; être le StoryGraph français. L'import depuis Babelio/Goodreads est crucial pour réduire la friction de migration.
 
 ## Stack technique
 
@@ -68,7 +42,7 @@ L'app ne doit jamais ressembler à un tableur ou à un webzine. C'est un objet c
 > - Ne JAMAIS suggérer des patterns Next.js (App Router, Server Components, etc.)
 > - Le bundler est Vite, le déploiement est Vercel via un build Vite standard
 
-- **Frontend** : React + Vite + React Router (BrowserRouter)
+- **Frontend** : React + Vite + React Router v7 Framework Mode (SSG + SPA)
 - **Backend** : Supabase (auth, PostgreSQL, storage, realtime, edge functions)
 - **Styling** : Tailwind CSS (migré depuis CSS-in-JS)
 - **Data fetching / cache** : TanStack Query (`@tanstack/react-query`) — tous les hooks de lecture utilisent `useQuery`, invalidation cross-cache après mutations. Config globale : `staleTime: 5min`, `gcTime: 30min`, `refetchOnWindowFocus: false`. QueryClient initialisé dans `src/root.tsx`.
@@ -178,94 +152,35 @@ L'edge function `book_import` (`supabase/functions/book_import/index.ts`) interr
 
 ### Qualité des résultats de recherche (`src/lib/googleBooks.js`)
 
-Architecture DB-first : la base locale (3830+ livres) est la source primaire, Google Books sert uniquement à la découverte.
+Architecture DB-first. `searchBooks(query)` : RPC PostgreSQL `search_books_v2` en premier → skip logic (≥3 résultats DB → skip Google+OL) → Google Books proxy + Open Library en parallèle si nécessaire.
 
-`searchBooks(query)` fonctionne en séquentiel (RPC-first) avec skip logic :
+**RPC `search_books_v2`** : cross-field matching (titre + auteurs), scoring de pertinence (match exact +100, commence par +50), normalisation apostrophes (migrations 022, 023), branche ISBN, matching compact (LETRANGER → L'étranger).
 
-1. **Recherche locale** via RPC PostgreSQL `search_books_v2` (migrations `008`, `022`, `023`) :
-   - **Cross-field matching** : chaque mot significatif (>2 chars) doit être présent dans le titre OU dans les auteurs (`bool_and` sur `title LIKE OR authors LIKE`). Permet "Victor Hugo Les Misérables", "Madame Bovary Flaubert".
-   - **Fallback mots courts** (migration `023`) : si tous les mots font ≤2 chars (`sig_count = 0`), utilise tous les mots dans le matching au lieu de retourner 0. Évite le 0-résultat sur "la bo", "le de", etc.
-   - **Scoring de pertinence** : match exact titre (+100), titre commence par query (+50), couverture titre (×30), couverture auteur (×5), rating_count en tie-breaker. Garantit que "Les Misérables" remonte avant des livres parasites.
-   - **Matching compact** : pour les queries mono-token ≥5 chars (ex: "LETRANGER"), compare sans espaces ni ponctuation → matche "L'étranger". Étendu aux bi-tokens courts (migration `023`) : "le bo" → "lebo" peut matcher.
-   - **Branche ISBN** : si la query est un nombre de 10-13 chiffres, match sur `isbn_13` insensible aux tirets (migration `023` : `regexp_replace` côté DB).
-   - **Normalisation apostrophes** (migration `022_fix_apostrophe_search.sql`) : toutes les variantes d'apostrophes (' U+2019, ' U+2018, ‚ ‹ › ' `) sont normalisées en espace côté query ET côté champs DB (CTE `norm`) avant comparaison. Gère accents via `unaccent(lower())`.
-2. **Skip logic** (économie quota Google Books, ~60% d'appels évités) :
-   - Si RPC retourne ≥ 3 résultats → skip Google + OL (`db_sufficient`)
-   - Si query est un ISBN et RPC retourne ≥ 1 résultat → skip Google + OL (`isbn_found`)
-   - Sinon → appel Google Books proxy + Open Library en parallèle
-   - Si circuit breaker Google actif → Open Library seul comme source de découverte
-   - Le tableau retourné porte `_skippedGoogle` et `_skipReason` en propriétés
-3. **Google Books** (conditionnel) : via edge function `google-books-proxy` (rotation de clés **dynamiques** `GOOGLE_BOOKS_KEY_N`, cache serveur 6h, fallback quota anonyme). Résultats filtrés côté client (sans couverture, sans ISBN, éditeurs parasites, mots-clés parasites exclus), limités à 8 après filtre. `cleanTitle()` nettoie les sous-titres promotionnels (patterns regex : `-–` genre/année, `: roman/polar/...`, `: + 21 chars`, `(...)` en fin). **Circuit breaker** : si le proxy retourne 429 (toutes clés épuisées), l'API est désactivée pendant 15 minutes (module-level `googleBooksDisabledUntil`). `isGoogleBooksAvailable()` exportée depuis `googleBooks.js`.
-4. **Open Library** (conditionnel) : appelé en parallèle avec Google (ou seul si circuit breaker actif). `src/lib/openLibrarySearch.js`, timeout 4s, même filtrage BAD_TITLE/BAD_PUBLISHERS. Résultats `_source: "openlibrary"`, jamais prioritaires sur DB ou Google.
+**Skip logic** : `db_sufficient` (≥3 résultats) ou `isbn_found` (ISBN + ≥1 résultat) → ~60% d'appels Google évités.
 
-**Logging** : chaque appel `searchBooks()` émet un `console.log('[search-analytics]', JSON.stringify({...}))` avec les compteurs DB, Google, OL, skip. Greppable dans les logs Vercel.
+**Circuit breaker** : si `google-books-proxy` retourne 429, Google désactivé 15 min → OL seul. `isGoogleBooksAvailable()` exportée.
 
-**Smart-search aligné** : `useSmartSearch` dans `Search.jsx` est désactivé quand `dbResultCount >= 3` et que la query n'est pas en langage naturel — cohérent avec la skip logic. **Zero-result fast path** : si 0 résultat de toutes les sources classiques, l'IA est déclenchée immédiatement (debounce 0ms au lieu de 300ms), avec message "Aucun résultat local — recherche approfondie..." pendant le chargement. **Mode NL** (`isNL = looksLikeNaturalLanguage(q)`) : debounce 300ms, résultats IA affichés **en premier** (sans ✨ séparateur), résultats classiques sous label "Autres résultats", message "Recherche approfondie…" immédiat en haut de dropdown.
+**Auto-enrichissement** : après smart-search, livres avec ISBN non encore en base importés en fire-and-forget via `book_import`.
 
-**Auto-enrichissement** : après chaque réponse smart-search, les livres avec ISBN valide qui ne sont pas encore en base sont importés en fire-and-forget via `book_import`. Les prochaines recherches du même livre trouveront un résultat DB directement.
-
-**Déduplication** : 3 sources dédupliquées. Priorité DB > Google > OL. Les résultats OL qui partagent ISBN ou titre normalisé avec DB ou Google sont supprimés.
-
-**Format de retour** (`{ googleId, _source, dbId, slug, title, authors, coverUrl, isbn13, ... }`) — même format pour DB et Google, consommé directement par `Search.jsx`.
-
-**`searchSuggestions.js`** : autocomplete dynamique depuis Supabase (ilike titre par popularité, cache 1 min). N'est plus appelé dans le pipeline principal (remplacé par la RPC).
+**Déduplication** : priorité DB > Google > OL. Format retour : `{ googleId, _source, dbId, slug, title, authors, coverUrl, isbn13, ... }`.
 
 ### Recherche assistée IA (`supabase/functions/smart-search/index.ts` + `src/hooks/useSmartSearch.js`)
 
-Filet de secours intelligent qui enrichit le pipeline classique. Activé dès 2 caractères (debounce 300ms) seulement si `dbResultCount < 3` ou si la query est en langage naturel (`looksLikeNaturalLanguage`). Désactivé quand la DB suffit (aligné avec la skip logic Google). Le coût est amorti par le cache `search_cache` (7 jours).
+Filet de secours intelligent. Activé si `dbResultCount < 3` ou query en langage naturel (`looksLikeNaturalLanguage`). Désactivé quand la DB suffit.
 
-**Edge function `smart-search`** :
-- Appelle Claude Haiku (`claude-haiku-4-5-20251001`) avec un system prompt spécialisé livres francophones
-- Retourne `{ books: [{title, author, isbn13, why}], ghost, interpreted_as }`
-- Cache des résultats dans `search_cache` (7 jours, clé = query normalisée NFD+lowercase)
-- Accès cache via `service_role` uniquement (pas de RLS publique)
-- Toujours retourne 200 même en cas d'erreur (ne casse jamais la recherche)
-- Requiert `ANTHROPIC_API_KEY` en secret Supabase
+- **Edge function** : Claude Haiku, retourne `{ books, ghost, interpreted_as }`, cache `search_cache` 7 jours, toujours 200 (ne casse jamais la recherche)
+- **Hook** : `useSmartSearch(query, { enabled, debounceMs })`, debounce 300ms, AbortController
+- **Ghost text** : accepté Tab/ArrowRight, rejeté Escape
+- **Mode classique** : résultats IA sous les classiques avec ✨, dédoublonnés
+- **Mode NL** (`isNL = true`) : résultats IA **en premier**, classiques sous "Autres résultats"
+- **Clic résultat IA** → cascade : `best.score >= 100` + ISBN → `book_import` direct ; sinon Google + `scoreMatch()` ; sinon cascade BnF
+- **Clic résultat DB** → navigation directe via `slug ?? dbId`
 
-**Table `search_cache`** (`migrations/004_search_cache.sql`) :
-- `query_normalized text` (PK), `response jsonb`, `hit_count int`, `expires_at timestamptz` (7 jours)
-- Index sur `expires_at`, RLS activée (service_role only)
+### Enrichissement batch et seeds
 
-**Hook `useSmartSearch(query, { enabled, debounceMs })`** :
-- Debounce **300ms** par défaut, AbortController pour annulation
-- Retourne `{ books, ghost, interpretedAs, isLoading }`
-- `looksLikeNaturalLanguage(query)` : détecte les mots-clés NL ou queries ≥ 4 mots
+Scripts dans `scripts/` (batch ponctuel) et `seeds/` (enrichissement continu). Tous : dry-run par défaut, `--apply` pour exécuter, `--limit N` / `--offset N`.
 
-**Intégration dans `Search.jsx`** :
-- Ghost text : overlay invisible aligné sur l'input, accepté par Tab/ArrowRight, rejeté par Escape
-- `displayResults` useMemo : quand l'IA a répondu, filtre les résultats classiques — confirmés (titre + auteur matching) en premier, non-confirmés limités à 2. `aiConfirmedMap` lie chaque résultat classique au livre IA correspondant.
-- **Mode classique** : résultats IA affichés sous les résultats classiques avec indicateur ✨, dédoublonnés par titre normalisé
-- **Mode NL** (`isNL = true`) : résultats IA en **premier**, résultats classiques sous label "Autres résultats", message "Recherche approfondie…" immédiat sans attendre la réponse IA
-- IA activée uniquement si résultats classiques < 2 OU query en langage naturel (`looksLikeNaturalLanguage`)
-- Clic sur un résultat IA → **cascade avec scoring** : (0) si `best.score >= 100` et ISBN disponible → appel direct `book_import` edge function (import complet 4 sources) avant navigation ; (1) sinon, si Google disponible, recherche Google + `scoreMatch()` (seuil > 0) ; (2) si Google indisponible (circuit breaker), cascade BnF : ISBN via `book_import`, puis BnF SRU titre+auteur, puis import direct en dernier recours
-- Clic sur un résultat DB → navigation directe via `slug ?? dbId` sans passer par importBook
-- Indicateur "Recherche approfondie…" pendant le chargement IA
-- Le SYSTEM_PROMPT de `smart-search` retourne l'ISBN de l'édition poche française (Folio, LdP, Points…)
-
-### Enrichissement batch de la base locale
-
-Scripts dans `scripts/`, rapports dans `reports/`. Pipeline exécuté en mars 2026 : +93 livres importés via BnF+OL (0 appel Google).
-
-- `scripts/identify-missing-books.mjs` — liste curatée ~200 livres FR + extraction queries search_cache → `reports/missing-books.json`
-- `scripts/validate-isbn.mjs` — validation ISBN via checksum + Open Library + BnF SRU. `--apply` nullifie les invalides.
-- `scripts/resolve-isbn-bnf.mjs` — résolution ISBN par titre+auteur via BnF SRU (UNIMARC). 78,5% de taux de résolution. `--apply` met à jour missing-books.json.
-- `scripts/batch-import-missing.mjs` — import batch, 3 modes : `--source edge` (edge function), `--source direct` (BnF+OL, 0 Google), `--source google`. Dry-run par défaut, `--apply` pour importer.
-- `scripts/enrich-from-wikidata.mjs` — enrichissement via Wikidata SPARQL. Deux modes :
-  - `--mode enrich` (défaut) : enrichit les livres DB avec description/genres manquants via recherche SPARQL titre+auteur. Score minimum 40 pour éviter les faux matchs. Rate limit 200ms entre requêtes.
-  - `--mode import` : importe les classiques de `reports/wikidata-candidates.json` (liste curatée ~55 QIDs) via cascade Wikidata→`book_import` edge function. Ne jamais importer sans passer par `book_import` (validation ISBN checksum + déduplication).
-  - Options : `--apply`, `--limit N`, `--offset N`, `--verbose`. Checkpoint toutes les 50 entrées → `reports/wikidata-progress.json`. Rapport final → `reports/wikidata-report.json`.
-
-**Leçon critique** : ne jamais faire confiance aux ISBN générés par un LLM (88% d'hallucinations constatées). Toujours valider via source externe. Même règle pour Wikidata : certains QID n'ont pas d'ISBN-13 ou ont des ISBN erronés — le script valide via checksum avant tout import.
-
-### Scripts d'enrichissement continu (seeds/)
-
-Scripts autonomes dans `seeds/` pour enrichir les métadonnées des livres existants. Tous utilisent `@supabase/supabase-js`, env via `node --env-file=.env`. Dry-run par défaut, `--apply` pour exécuter. Options communes : `--limit N`, `--offset N`.
-
-- `seeds/enrich-incomplete-books.js` — enrichit les livres avec ISBN mais sans cover ou description en les repassant dans l'edge function `book_import`. Options : `--cover-only`.
-- `seeds/recover-covers.js` — récupère les couvertures manquantes par recherche titre+auteur sur Google Books puis Open Library (fallback). Nettoyage titre (suffixes parasites, sous-titres, séries). Détection auto quota Google (429 → bascule OL-only).
-- `seeds/recover-descriptions.js` — récupère les descriptions manquantes par recherche titre+auteur sur Google Books puis Open Library (fallback via work detail). Seuil minimum 50 chars. Warning à 900 appels Google (quota 1000/jour).
-- `seeds/generate-descriptions.js` — génère des descriptions FR via Claude Haiku (API Anthropic directe). 5 appels parallèles, 50ms entre chaque. Checkpoint `descriptions-progress.json` toutes les 200 requêtes. Options : `--cost-only`. Coût estimé : ~$0.0005/livre.
-- `seeds/scrape-sc-list.js` — scrape une liste SensCritique via Playwright (headless). Gère infinite scroll, ISBN optionnel, merge, checkpoint Ctrl+C.
+Voir les commentaires en tête de chaque fichier pour les options détaillées. **Règle critique** : ne jamais faire confiance aux ISBN d'un LLM ou de Wikidata — toujours valider via checksum avant import. Passer par `book_import` edge function (validation + déduplication garanties).
 
 ## Architecture de données
 
@@ -312,55 +227,19 @@ Reliure regroupe les éditions par oeuvre (comme Letterboxd : un film = une fich
 ## Design system
 
 ### Typographie
-- **Display** : EB Garamond (roman) — titres de section, titres de livres dans les fiches, headings éditoriaux, nom de profil. Italic réservé aux citations « » et au fallback cover uniquement.
-- **Body** : Geist — tout le reste (nav, labels, corps de texte, métadonnées)
+- **Display** : EB Garamond (roman) — titres de section, titres de livres dans les fiches, headings éditoriaux, nom de profil. Italic réservé aux citations « » et au fallback cover uniquement. Classe Tailwind : `font-display`.
+- **Body** : Geist — tout le reste (nav, labels, corps de texte, métadonnées). Classe : `font-body`.
 - Pas de mélange de poids fantaisistes : 400 regular, 500 medium, 600 semibold, 700 bold
 
 ### Palette de couleurs — CSS custom properties (dark mode ready)
 
-Toutes les couleurs UI sont gérées via CSS custom properties dans `src/index.css` (`:root` pour light, `[data-theme="dark"]` pour dark). Les variables `@theme` de Tailwind (`--color-*`) pointent vers ces custom properties pour que les classes utilitaires (`bg-surface`, `bg-cover-fallback`, etc.) switchent automatiquement.
+Toutes les couleurs via CSS custom properties dans `src/index.css` (`:root` light, `[data-theme="dark"]` dark). Les variables `@theme` Tailwind (`--color-*`) pointent vers ces custom properties — les classes utilitaires (`bg-surface`, `bg-cover-fallback`, etc.) switchent automatiquement.
 
-**Variables principales** (valeurs light / dark) :
-- `--bg-primary` : `#fff` / `#131211` — fond principal
-- `--bg-surface` : `#fafaf8` / `#1a1918` — fond surface
-- `--bg-elevated` : `#fff` / `#222120` — fond élevé (modals, cards, skeletons)
-- `--text-primary` : `#1a1a1a` / `#e8e5df` — titres, noms, UI principale
-- `--text-body` : `#333` / `#c5c2ba` — critiques, articles, contenu de lecture longue
-- `--text-secondary` : `#666` / `#9c9890` — bio, auteurs, métadonnées
-- `--text-tertiary` : `#767676` / `#706c65` — labels, timestamps, compteurs
-- `--text-muted` : `#b5b0a8` / `#363330` — placeholders très discrets
-- `--border-subtle` : `#f0f0f0` / `#262422` — séparateurs fins
-- `--border-default` : `#eee` / `#302e2b` — bordures de composants
-- `--header-bg` : `rgba(255,255,255,0.92)` / `rgba(19,18,17,0.95)` — header backdrop
-- `--avatar-bg` : `#f0ede8` / `#2a2724` — fond avatar initiales
-- `--cover-fallback` : `#e8e4de` / `#2a2724` — fond couverture fallback
-- `--tag-bg` : `#f5f3f0` / `#1e1d1b` — fond tags
-- `--tag-border` : `#eee` / `#302e2b` — bordure tags
-- `--tag-text` : `#777` / `#7a756d` — texte tags
-- `--focus-ring` : `#1a1a1a` / `#e8e5df` — outline focus clavier
-- `--star-empty` : `#ddd` / `#3a3630` — étoiles non remplies
-- `--shadow-cover` : `0 1px 3px rgba(0,0,0,0.08)` / `0 1px 4px rgba(0,0,0,0.4)` — ombre couvertures
+**Convention** : toujours `var(--xxx)` en inline style ou classe Tailwind. Jamais de hex hardcodé. Voir `src/index.css` pour le catalogue complet des variables (`--bg-*`, `--text-*`, `--border-*`, `--color-*`).
 
-**Couleurs sémantiques** (switchent entre light et dark) :
-- `--color-star` : `#D4883A` — étoiles / notation (identique light/dark)
-- `--color-spoiler` : `#e25555` — spoiler tag (identique light/dark)
-- `--color-success` : `#2E7D32` / `#4ade80` — succès texte
-- `--color-success-bg` : `#e8f5e9` / `#1a2e1a` — succès fond
-- `--color-error` : `#c00` / `#f87171` — erreur texte
-- `--color-error-bg` : `#fff3f3` / `#2a1515` — erreur fond
-- `--color-error-border` : `#fdd` / `#4a2020` — erreur bordure
-- `--color-warn-text` : `#8B6914` / `#e8c547` — warning texte
-- `--color-warn-bg` : `#fef9e7` / `#2a2515` — warning fond
-- `--color-warn-border` : `#f0e68c` / `#4a3d12` — warning bordure
-- `--color-wip-text` : `#8B6914` / `#d4a843` — badge Aperçu texte
-- `--color-wip-bg` : `#faf6f0` / `#231f15` — badge Aperçu fond
-- `--color-wip-border` : `#e8dfd2` / `#3d3520` — badge Aperçu bordure
+**Bouton inversé** (CTA principal) : `style={{ backgroundColor: "var(--text-primary)", color: "var(--bg-primary)" }}` + `hover:opacity-80`.
 
-**Convention** : pour les nouvelles couleurs, toujours utiliser `var(--xxx)` en inline style ou la classe Tailwind correspondante (ex: `bg-cover-fallback`). Ne jamais hardcoder de hex pour les couleurs UI.
-
-**Bouton inversé** (CTA principal) : `style={{ backgroundColor: "var(--text-primary)", color: "var(--bg-primary)" }}` + `hover:opacity-80`. Jamais de `bg-[#1a1a1a] text-white`.
-
-**Track de barre de progression** : utiliser `bg-[var(--border-default)]` pour le fond vide — `bg-avatar-bg` est invisible en dark mode (même teinte que le fond de surface).
+**Track de barre de progression** : `bg-[var(--border-default)]` pour le fond vide (`bg-avatar-bg` est invisible en dark mode).
 
 ### Dark mode
 
@@ -370,7 +249,7 @@ Toutes les couleurs UI sont gérées via CSS custom properties dans `src/index.c
 - Applique `data-theme="light|dark"` sur `<html>`
 - Pas de `prefers-color-scheme` — toggle manuel uniquement pour la beta
 - Bouton lune/soleil dans le Header entre la recherche et la cloche notifications
-- `useTheme()` appelé dans `App.jsx`, `theme` + `toggleTheme` passés au Header
+- `useTheme()` appelé dans `root.tsx`, `theme` + `toggleTheme` passés au Header
 
 ### Layout
 - Max-width contenu : `760px` (single column, optimal pour lecture longue)
@@ -381,19 +260,19 @@ Toutes les couleurs UI sont gérées via CSS custom properties dans `src/index.c
 
 ### Composants clés
 - **WipBanner** : bandeau fond `var(--color-wip-bg)` / texte `var(--color-wip-text)` / border `var(--color-wip-border)` — affiché en haut des pages "Aperçu" (La Revue, Défis). Pill "Aperçu" également visible dans la nav du Header sur ces deux liens.
-- **Img** : couverture avec fallback Instrument Serif italic centré, max 2 lignes, `clamp(9px, 12%, 13px)`, fond `#e8e4de`, couleur `#999` — affiché quand `cover_url` est null ou si l'image échoue. `alt=""` pour éviter le texte alt navigateur. Hover lift + shadow quand cliquable.
+- **Img** : couverture avec fallback EB Garamond italic centré, max 2 lignes, `clamp(9px, 12%, 13px)`, fond `#e8e4de`, couleur `#999` — affiché quand `cover_url` est null ou si l'image échoue. `alt=""` pour éviter le texte alt navigateur. Hover lift + shadow quand cliquable.
 - **Stars** : étoiles de notation read-only (couleur `#D4883A`)
 - **InteractiveStars** : étoiles cliquables avec hover scale, pop animation, accessibilité (role, tabIndex, aria-label)
 - **Avatar** : avatar initiales circulaire (fond `#f0ede8`). Taille via prop `s` (px). Src via prop `src` (fallback sur initiales). Styles inline : `borderRadius: "50%"`, `overflow: "hidden"` sur le conteneur ; `objectFit: "cover"`, `objectPosition: "center"` sur l'img.
 - **Tag** : pill cliquable avec hover state pour les thèmes descriptifs
 - **Pill** : bouton de statut (En cours / Lu / À lire / Abandonné) avec active:scale-95
-- **Heading** : heading de section en Instrument Serif italic avec lien optionnel à droite
+- **Heading** : heading de section en EB Garamond italic avec lien optionnel à droite
 - **Label** : label uppercase discret pour les sous-sections (10px, tracking 2px, muted)
 - **HScroll** : conteneur de scroll horizontal sans scrollbar
 - **LikeButton** : coeur toggle avec animation scale, compteur, couleur spoiler quand liked
 - **Search** : dropdown de recherche ancré au header (420px, border-radius 12, pas d'overlay plein écran). Filtres chips (Tout/Livres/Auteurs/Lecteurs). Click-outside + Escape ferment. Rendu dans `Header.jsx`.
 - **ContentMenu** : menu "···" édition/suppression pour critiques et citations. Visible uniquement si `user.id === item.user_id`. Desktop : opacity 0 → 1 au hover du parent (`group`/`group-hover`). Mobile : toujours visible. Menu contextuel (blanc, border, shadow) avec "✏️ Modifier" (modal inline) et "🗑 Supprimer" (confirmation "Oui/Annuler"). Modal d'édition : textarea pré-rempli + InteractiveStars + checkbox spoilers pour les critiques. Intégré dans BookPage, ProfilePage, ExplorePage, FeedPage, CitationsPage.
-- **AnnouncementBanner** : bandeau au-dessus du header (fond `#1a1a1a`, texte blanc). Props : `pill`, `message`, `ctaLabel`, `ctaHref`, `storageKey`. Fermable via localStorage. Affiché dans `App.jsx` avant le Header.
+- **AnnouncementBanner** : bandeau au-dessus du header (fond `#1a1a1a`, texte blanc). Props : `pill`, `message`, `ctaLabel`, `ctaHref`, `storageKey`. Fermable via localStorage. Affiché dans `root.tsx` avant le Header.
 - **Toast** : notification d'erreur fixe, centrée en bas (z-10000), fond `var(--text-primary)`, texte `var(--bg-primary)`, animation slide-up 180ms, auto-dismiss 3s. Hook `useToast()` → `{ toast, showToast }` (src/hooks/useToast.js). Déclenché sur les erreurs de mutation (likes, follows, création de liste, publication de citation). Intégré dans BookPage, ProfilePage, ExplorePage, FeedPage, CitationsPage, CreateListModal.
 - **CreatorBadge** : `src/components/CreatorBadge.jsx` — pill inline (11px, fond `var(--creator-bg)`, texte `var(--creator-text)`, bordure `var(--creator-border)`, border-radius 999). Texte : "✦ Créateur". Rendu à côté du `@username` sur le profil et dans `UserName`.
 - **UserName** : `src/components/UserName.jsx` — lien `@handle` avec prop `isCreator` optionnelle. Si `isCreator=true`, affiche `<CreatorBadge />` à la suite du lien. Utilisé partout où on affiche un auteur de critique/citation.
@@ -471,7 +350,7 @@ Toutes les couleurs UI sont gérées via CSS custom properties dans `src/index.c
 - "Défis" (pas "Challenges" — terme français pour les challenges de lecture)
 
 ### Navigation
-React Router (BrowserRouter). Header avec NavLink. Navigation via `useNav()` context (goToBook) et `useNavigate()`.
+React Router v7 Framework Mode. Header avec NavLink. Navigation via `useNav()` context (goToBook) et `useNavigate()`.
 6 sections principales : Explorer, Citations, Fil, Défis, Profil | La Revue (séparée visuellement, serif italic).
 Onglets profil : Journal (diary), Bibliothèque, À lire, Mes critiques, Mes citations, Mes listes, Bilan.
 Chaque onglet a sa propre URL (`/:username/critiques`, etc.).
@@ -482,12 +361,12 @@ Chaque onglet a sa propre URL (`/:username/critiques`, etc.).
 
 #### Auth
 - Magic link + OAuth Google via Supabase Auth
-- **LoginPage** : Google OAuth (CTA primaire avec icône SVG officielle), magic link par email (secondaire), mot de passe (lien discret révélant le champ en `animate-page-in`). `CoverBackdrop` en fond. Tagline Instrument Serif 32px. Confirmation envoi lien avec "Utiliser une autre adresse".
+- **LoginPage** : Google OAuth (CTA primaire avec icône SVG officielle), magic link par email (secondaire), mot de passe (lien discret révélant le champ en `animate-page-in`). `CoverBackdrop` en fond. Tagline EB Garamond 32px. Confirmation envoi lien avec "Utiliser une autre adresse".
 - **Onboarding flow 3 étapes** : pseudo (step 0) → ajout de livres (step 1, max 5, sans notation, status `read`, question "Quels livres t'ont marqué ?") → preview profil (step 2)
 - `StepWelcome` supprimé — le pitch est dans LoginPage
 - `StepProfilePreview` : avatar initiales + "Bienvenue, @username" + mini-preview couvertures + 2 CTAs ("📚 Ajouter d'autres lectures" → `/backfill`, "Explorer la communauté →" → `/explorer`)
 - `CoverBackdrop` extrait dans `src/components/CoverBackdrop.jsx` (partagé LoginPage + OnboardingPage)
-- Détection nouvel utilisateur dans `App.jsx` : `needsOnboarding = isLoggedIn && !profile` — si l'user n'a pas de row dans `users`, affiche directement `OnboardingPage` (pas de route dédiée)
+- Détection nouvel utilisateur dans `root.tsx` : `needsOnboarding = isLoggedIn && !profile` — si l'user n'a pas de row dans `users`, affiche directement `OnboardingPage` (pas de route dédiée)
 - ProtectedRoute pour les pages /fil, /parametres, /backfill
 - **Pré-remplissage username via query param** : `OnboardingPage` lit `?username=` depuis l'URL (`useSearchParams`). `StepUsername` attend que `userEmail` soit disponible avant d'appliquer le pré-remplissage (évite le flash). Validation via RPC `check_username_availability` — si email correspond → status `reserved_for_you` (bordure verte, message "Ce pseudo t'est réservé ✦"). Soumission appelle `claim_reserved_username` pour supprimer la réservation.
 
@@ -530,7 +409,7 @@ Chaque onglet a sa propre URL (`/:username/critiques`, etc.).
 - Onglet Bibliothèque : 3 modes grille/liste/étagère, ratings réels
   - Grille : `grid-cols-5 sm:grid-cols-8`, ratio 2:3, fallback Img
   - Étagère : 5 livres/rangée mobile, 8 desktop, covers 80×120px, rotation alternée ±1.5°/1°, planche bois, fallback Img
-  - État vide (`isOwnProfile`) : titre Instrument Serif italic, accroche, bouton "📥 Importer depuis Goodreads" → /backfill, bouton "Parcourir les livres" → /explorer, mention Babelio/Livraddict
+  - État vide (`isOwnProfile`) : titre EB Garamond italic, accroche, bouton "📥 Importer depuis Goodreads" → /backfill, bouton "Parcourir les livres" → /explorer, mention Babelio/Livraddict
 - Onglet Journal : diary (lectures avec date), calendrier visuel
 - Onglet Mes citations : titre du livre cliquable → `/livre/:slug`
 - Onglet Bilan : stats réelles (total, année, pages, note moy), chronologie, top noté
@@ -638,18 +517,6 @@ Tables privées (owner only) : `reading_log_tags`
 
 Les opérations d'écriture (INSERT/UPDATE/DELETE) exigent toujours `auth.uid() = user_id`.
 
-## Hooks profil — paramètre `profileUserId`
-
-Les hooks suivants acceptent un `profileUserId` optionnel pour charger les données d'un profil visité (y compris pour les visiteurs non connectés). Si omis, ils utilisent `user.id` (comportement legacy).
-
-- `useProfileData(profileUserId?)` — statuts, diary, stats, bilan
-- `useFavorites(profileUserId?)` — quatre favoris
-- `useMyLists(profileUserId?)` — listes (filtrées sur `is_public` pour les visiteurs)
-- `useMyReviews(profileUserId?)` — critiques
-- `useMyQuotes(profileUserId?)` — citations
-- `useReadingList(statusFilter, profileUserId?)` — en cours de lecture
-
-Dans `ProfilePage`, tous ces hooks reçoivent `viewedProfile?.id`.
 
 ## Pages publiques (sans connexion)
 
@@ -663,39 +530,15 @@ Toutes les pages sont accessibles sans compte, sauf `/fil`, `/parametres`, `/bac
 
 ## Logique profil visiteur vs. propriétaire
 
-**Header profil** : toutes les données viennent de `viewedProfile` (Supabase). Aucune valeur hardcodée.
-- `display_name || username` — nom affiché
-- `@username` — sous le nom
-- `bio` — affiché seulement si non null
-- `avatar_url` — `Avatar` supporte `src` (prop optionnelle), fallback sur initiales
-- Badges : badge `creator` implémenté — `useUserBadges(profileId)` → `{ hasCreator }`, `<CreatorBadge />` affiché à côté du `@username` si `hasCreator`. Attribution manuelle via `scripts/award-creator-badge.js`.
+`isOwnProfile = user?.id === viewedProfile?.id` contrôle l'affichage conditionnel.
 
-Variable `isOwnProfile = user?.id === viewedProfile?.id` contrôle l'affichage conditionnel.
+**Les hooks `useProfileData`, `useFavorites`, `useMyLists`, `useMyReviews`, `useMyQuotes`, `useReadingList`** acceptent un `profileUserId` optionnel. Dans `ProfilePage`, ils reçoivent `viewedProfile?.id` (supporte visiteurs non connectés).
 
-**Visible uniquement si `isOwnProfile`**
-- Bandeau backfill ("Tu as lu d'autres livres ?")
-- Édition inline du profil (pas de bouton "Modifier le profil" — voir ci-dessous)
-- Bouton "+ Nouvelle liste" + CTA dans l'état vide listes
-- Drag & drop sur les quatre favoris (prop `isOwner` de `FavoritesSection`)
-- Édition inline de la progression de lecture + bannière de complétion (`ReadingItem` prop `isOwner`)
-- Tous les CTAs d'action dans les états vides (chercher, ajouter, créer)
+**Visible uniquement si `isOwnProfile`** : bandeau backfill, édition inline (avatar, nom, bio), "+ Nouvelle liste", drag & drop favoris, CTAs états vides.
 
-**Édition inline du profil (isOwnProfile)**
-- **Avatar** : hover → overlay appareil photo SVG. Clic → file picker (jpg/png/webp, max 1 Mo). Compression canvas côté client (max 400×400px, JPEG 0.85). Upload vers Supabase Storage bucket `avatars` (`${user.id}/avatar.jpg`, upsert). `avatar_url` mis à jour via UPDATE `users` + optimistic local state. Cache-bust via `?t=timestamp`.
-- **Nom affiché** : clic → input inline, même taille/style, bordure bottom 1px uniquement. Entrée ou blur → UPDATE `users.display_name` (max 50 chars). Escape annule.
-- **Bio** : si null → placeholder italic "Ajoute une bio..." cliquable. Clic → textarea avec compteur /160. Cmd+Entrée ou blur → UPDATE `users.bio` (max 160 chars). Escape annule.
-- **Paramètres** : page `/parametres` accessible directement par URL. Aucun bouton ou lien Paramètres affiché sur la page profil — l'édition inline suffit pour avatar/nom/bio.
+**Édition inline** : avatar uploadable (bucket `avatars`, canvas 400×400 JPEG 0.85), nom inline (max 50), bio textarea (max 160, compteur). Pas de bouton Paramètres sur le profil — `/parametres` accessible par URL directe.
 
-**Quatre favoris** : section masquée pour les visiteurs si `favorites.some(f => f.book)` est faux.
-
-**États vides selon contexte**
-| Onglet | isOwnProfile | !isOwnProfile |
-|--------|-------------|----------------|
-| Journal | "Ton journal de lecture est vide. Ajoute ton premier livre." + Chercher | "Aucune lecture enregistrée pour l'instant." |
-| Bibliothèque | Titre Instrument Serif "Ta bibliothèque t'attend." + accroche + deux CTAs ("📥 Importer depuis Goodreads" → /backfill, "Parcourir les livres" → /explorer) + note Babelio/Livraddict | "Aucun livre dans la bibliothèque." |
-| Critiques | "Tu n'as pas encore écrit de critique." + Explorer | "Aucune critique pour l'instant." |
-| Citations | "Tu n'as pas encore sauvegardé de citation." | "Aucune citation pour l'instant." |
-| Listes | "Tu n'as pas encore créé de liste." + Nouvelle liste | "Aucune liste publique pour l'instant." |
+**États vides** : messages distincts `isOwnProfile` / `!isOwnProfile` — CTAs d'action uniquement pour le propriétaire.
 
 ## Ce qu'on ne fait PAS au MVP
 
@@ -723,7 +566,7 @@ Variable `isOwnProfile = user?.id === viewedProfile?.id` contrôle l'affichage c
 9. ✅ Listes (créer, ordonner, partager, tri, notes par livre, section "Dans des listes" sur BookPage)
 10. La Revue (éditorial)
 11. Défis de lecture (challenges)
-12. Pages publiques (profil, listes, critiques — SEO + partage social)
+12. ✅ Prerendering & SEO — React Router v7 Framework Mode (avril 2026) : pages pré-rendues, meta tags, JSON-LD, sitemap
 
 
 ## Fichiers de référence

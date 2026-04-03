@@ -1,15 +1,3 @@
-export function meta() {
-  return [
-    { title: "Explorer — Reliure" },
-    { name: "description", content: "Découvrez les livres populaires, les critiques récentes et les citations marquantes sur Reliure, le réseau social de lecture francophone." },
-    { property: "og:title", content: "Explorer — Reliure" },
-    { property: "og:description", content: "Découvrez les livres populaires, les critiques récentes et les citations marquantes sur Reliure, le réseau social de lecture francophone." },
-    { property: "og:type", content: "website" },
-    { property: "og:site_name", content: "Reliure" },
-    { name: "twitter:card", content: "summary_large_image" },
-  ];
-}
-
 import { useState, useEffect, useRef, useMemo, memo } from "react";
 import { Link } from "react-router-dom";
 import Img from "../components/Img";

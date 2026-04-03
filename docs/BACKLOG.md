@@ -1778,4 +1778,40 @@ C'est le moyen le plus rapide de résoudre le problème de la bibliothèque vide
 
 - `books.babelio_popular_year integer[]` — ajoutée via `schema.sql` (ALTER TABLE). Tableau des années où le livre figure dans les classements Babelio (ex : `[2024, 2025]`). Null = pas dans les classements.
 
-*Dernière mise à jour : 2 avril 2026 — Entrées 30-33 : réponses aux critiques, notifications in-app, app native, scan bibliothèque IA. Entrée 34 : Explorer Babelio + Sélections*
+---
+
+## 35. Prerendering & SEO — React Router v7 Framework Mode
+
+**Statut :** ✅ Fait (avril 2026)
+**Portée :** Infrastructure build/déploiement — impact SEO sur toutes les pages publiques
+
+### Ce qui a été fait
+
+Migration de la SPA pure vers **React Router v7 Framework Mode** (`ssr: false` + `prerender()`). Le build génère du HTML statique pour toutes les pages publiques.
+
+**Architecture :**
+- `react-router.config.ts` : config prerender, fetch des ~1000 slugs livres + usernames depuis Supabase au build
+- `src/root.tsx` : nouveau shell HTML + providers (remplace `index.html` + `main.jsx` + `App.jsx`)
+- `src/routes.ts` : config déclarative des routes
+- Pattern `loader` (build-time, Node) + `clientLoader` (browser, singleton Supabase) sur BookPageRoute et ProfilePageRoute
+- Pas de `clientLoader.hydrate = true` (cassait les meta tags en rendant les données async)
+
+**SEO livré :**
+- `<title>`, `og:*`, `twitter:*` corrects dans le HTML prérendu
+- `schema.org/Book` JSON-LD sur les fiches livres
+- `sitemap.xml` généré post-build (`scripts/generate-sitemap.mjs`, ~1026 URLs)
+- `robots.txt` copié automatiquement dans `build/client/`
+- SPA fallback `__spa-fallback.html` pour les pages protégées et le contenu nouveau post-deploy
+
+**Vercel :**
+- `outputDirectory: build/client`, rewrite SPA vers `__spa-fallback.html`
+- Cache immutable sur `/assets/`, `trailingSlash: false`
+- Build time ~5 min (prerendering ~1000 pages)
+
+**Fixes réalisés pendant la migration :**
+- `parseAuthors()` gère `authors` comme array OU JSON string (Supabase JSONB)
+- Singleton Supabase dans `clientLoader` (évite Multiple GoTrueClient warning)
+- `data-theme` sur `<html>` via inline script (évite hydration mismatch)
+- Google Fonts en non-bloquant (`rel="preload" as="style" onLoad={fn}`)
+
+*Dernière mise à jour : 2 avril 2026 — Entrées 30-33 : réponses aux critiques, notifications in-app, app native, scan bibliothèque IA. Entrée 34 : Explorer Babelio + Sélections. Entrée 35 : Prerendering & SEO RR7*

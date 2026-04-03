@@ -213,12 +213,14 @@ create index likes_user_idx on public.likes (user_id);
 -- ─── User Favorites ─────────────────────────
 -- Quatre favoris affichés sur le profil
 create table public.user_favorites (
+  id uuid default uuid_generate_v4() primary key,
   user_id uuid references public.users(id) on delete cascade not null,
   book_id uuid references public.books(id) on delete cascade not null,
   position smallint not null check (position >= 1 and position <= 4),
   note text check (char_length(note) <= 24),
+  created_at timestamptz default now() not null,
 
-  primary key (user_id, position),
+  unique (user_id, position),
   unique (user_id, book_id)
 );
 
@@ -426,6 +428,10 @@ alter table public.books add column if not exists ai_confidence numeric(3,2);
 -- Tableau d'années où le livre apparaît dans les classements Babelio (ex: [2024, 2025])
 -- Utilisé par useBabelioPopular() pour la section Explorer "Plébiscités par les lecteurs francophones"
 alter table public.books add column if not exists babelio_popular_year integer[];
+
+-- lists : slug unique par user (migration slugs listes)
+alter table public.lists add column if not exists slug text;
+create unique index if not exists lists_user_slug_idx on public.lists (user_id, slug) where slug is not null;
 
 -- lists : sélections curées (migration supabase/migrations/018_curated_selections)
 alter table public.lists
