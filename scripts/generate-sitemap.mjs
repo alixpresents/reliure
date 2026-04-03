@@ -26,12 +26,14 @@ async function generateSitemap() {
   ];
   urls.push(...staticPages);
 
-  // Livres
+  // Livres — top 1000 most active
   const { data: books, error: booksError } = await supabase
     .from("books")
-    .select("slug, created_at")
+    .select("slug, created_at, rating_count")
     .not("slug", "is", null)
-    .order("rating_count", { ascending: false });
+    .gt("rating_count", 0)
+    .order("rating_count", { ascending: false })
+    .limit(1000);
 
   if (booksError) {
     console.error("[sitemap] Error fetching books:", booksError.message);
