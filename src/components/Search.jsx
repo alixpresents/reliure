@@ -71,6 +71,7 @@ export default function Search({ open, onClose, go, initialQuery = "" }) {
   const [userResults, setUserResults] = useState([]);
   const [userSuggestionLabel, setUserSuggestionLabel] = useState("Lecteurs");
   const [ghostDismissed, setGhostDismissed] = useState(false);
+  const [showAllAI, setShowAllAI] = useState(false);
   const [deepSearching, setDeepSearching] = useState(false);
   const [authMessage, setAuthMessage] = useState(null);
   const timer = useRef(null);
@@ -103,7 +104,7 @@ export default function Search({ open, onClose, go, initialQuery = "" }) {
   const ghost = rawGhost && !ghostDismissed ? rawGhost : null;
 
   // Reset ghost dismissal when query changes
-  useEffect(() => { setGhostDismissed(false); }, [q]);
+  useEffect(() => { setGhostDismissed(false); setShowAllAI(false); }, [q]);
 
   useEffect(() => {
     if (open) {
@@ -493,6 +494,9 @@ export default function Search({ open, onClose, go, initialQuery = "" }) {
     ab => !displayResults.some(cr => normalize(cr.title) === normalize(ab.title))
   );
 
+  const visibleAIBooks = showAllAI ? filteredAIBooks : filteredAIBooks.slice(0, 3);
+  const hasMoreAI = filteredAIBooks.length > 3;
+
   // Filtered views
   const showBooks = filter === "all" || filter === "books" || filter === "authors";
   const showUsers = filter === "all" || filter === "users";
@@ -685,7 +689,7 @@ export default function Search({ open, onClose, go, initialQuery = "" }) {
             {/* NL mode: résultats IA EN PREMIER, sans séparateur ✨ */}
             {isNL && showAI && filteredAIBooks.length > 0 && (
               <>
-                {filteredAIBooks.map((aiBook, i) => (
+                {visibleAIBooks.map((aiBook, i) => (
                   <div
                     key={`ai-${i}`}
                     onClick={() => handleAIBookClick(aiBook)}
@@ -701,6 +705,15 @@ export default function Search({ open, onClose, go, initialQuery = "" }) {
                     </div>
                   </div>
                 ))}
+                {hasMoreAI && !showAllAI && (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setShowAllAI(true); }}
+                    className="w-full py-2 text-center text-[12px] font-medium font-body cursor-pointer border-none transition-colors duration-100 hover:opacity-70"
+                    style={{ background: "transparent", color: "var(--text-tertiary)" }}
+                  >
+                    Voir plus de suggestions ✨
+                  </button>
+                )}
               </>
             )}
 
@@ -788,7 +801,7 @@ export default function Search({ open, onClose, go, initialQuery = "" }) {
                     Compris : « {interpretedAs} »
                   </div>
                 )}
-                {filteredAIBooks.map((aiBook, i) => (
+                {visibleAIBooks.map((aiBook, i) => (
                   <div
                     key={`ai-${i}`}
                     onClick={() => handleAIBookClick(aiBook)}
@@ -804,6 +817,15 @@ export default function Search({ open, onClose, go, initialQuery = "" }) {
                     </div>
                   </div>
                 ))}
+                {hasMoreAI && !showAllAI && (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setShowAllAI(true); }}
+                    className="w-full py-2 text-center text-[12px] font-medium font-body cursor-pointer border-none transition-colors duration-100 hover:opacity-70"
+                    style={{ background: "transparent", color: "var(--text-tertiary)" }}
+                  >
+                    Voir plus de suggestions ✨
+                  </button>
+                )}
               </>
             )}
 

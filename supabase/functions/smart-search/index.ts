@@ -29,7 +29,7 @@ Réponds UNIQUEMENT avec un JSON valide (pas de backticks, pas de texte avant/ap
 }
 
 Règles :
-- 1 à 5 livres max, classés par probabilité décroissante
+- 1 à 8 livres max, classés par probabilité décroissante
 - Privilégier les éditions françaises et la littérature francophone
 - "ghost" = la suite du texte tapé si c'est un début de titre/auteur.
   Format : "suite du titre — auteur". Exemples :
@@ -117,7 +117,7 @@ Deno.serve(async (req) => {
       },
       body: JSON.stringify({
         model: "claude-haiku-4-5-20251001",
-        max_tokens: 400,
+        max_tokens: 700,
         temperature: 0,
         system: SYSTEM_PROMPT,
         messages: [{ role: "user", content: query }],
@@ -151,7 +151,7 @@ Deno.serve(async (req) => {
       result = { books: [], ghost: null, interpreted_as: null };
     }
     // Sanitize
-    result.books = (result.books || []).slice(0, 5);
+    result.books = (result.books || []).slice(0, 8);
     if (typeof result.ghost !== "string") result.ghost = null;
     if (typeof result.interpreted_as !== "string") result.interpreted_as = null;
 
