@@ -119,6 +119,11 @@ details > summary::-webkit-details-marker { display: none; }
 }
 .animate-badge-toast-in { animation: badgeToastIn 300ms ease-out both; }
 
+@keyframes pulsingDot {
+  0%, 80%, 100% { opacity: 0.2; transform: scale(0.8); }
+  40% { opacity: 1; transform: scale(1); }
+}
+
 @keyframes confirmPop {
   0%   { transform: scale(1);    box-shadow: 0 0 0 0 rgba(22, 163, 74, 0); }
   35%  { transform: scale(1.05); box-shadow: 0 0 0 4px rgba(22, 163, 74, 0.18); }

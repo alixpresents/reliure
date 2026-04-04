@@ -644,7 +644,7 @@ export default function Search({ open, onClose, go, initialQuery = "" }) {
             {/* NL mode: "Recherche approfondie..." immédiatement dès que l'IA charge */}
             {isNL && aiLoading && (
               <div className="py-2.5 text-center text-[11px] font-body" style={{ color: "var(--text-tertiary)" }}>
-                Recherche approfondie…
+                Recherche approfondie<PulsingDots />
               </div>
             )}
 
@@ -832,7 +832,7 @@ export default function Search({ open, onClose, go, initialQuery = "" }) {
             {/* Non-NL: indicateur Wave 2 en bas */}
             {!isNL && (deepSearching || aiLoading) && displayResults.length > 0 && (
               <div className="text-center py-2.5 text-[11px] font-body" style={{ color: "var(--text-tertiary)" }}>
-                Recherche approfondie…
+                Recherche approfondie<PulsingDots />
               </div>
             )}
           </>
@@ -855,6 +855,25 @@ export default function Search({ open, onClose, go, initialQuery = "" }) {
         </div>
       )}
     </div>
+  );
+}
+
+function PulsingDots() {
+  return (
+    <span className="inline-flex gap-[3px] ml-1">
+      {[0, 1, 2].map(i => (
+        <span
+          key={i}
+          className="inline-block rounded-full"
+          style={{
+            width: 3,
+            height: 3,
+            backgroundColor: "var(--text-tertiary)",
+            animation: `pulsingDot 1.4s ease-in-out ${i * 0.2}s infinite`,
+          }}
+        />
+      ))}
+    </span>
   );
 }
 
