@@ -429,6 +429,42 @@ alter table public.books add column if not exists ai_confidence numeric(3,2);
 -- Utilisé par useBabelioPopular() pour la section Explorer "Plébiscités par les lecteurs francophones"
 alter table public.books add column if not exists babelio_popular_year integer[];
 
+-- books : Electre NG (migration 027_electre_integration.sql)
+-- Source de référence pour les livres francophones
+alter table public.books add column if not exists electre_notice_id text;
+alter table public.books add column if not exists oeuvre_id text;
+alter table public.books add column if not exists collection_name text;
+alter table public.books add column if not exists flag_fiction boolean;
+alter table public.books add column if not exists quatrieme_de_couverture text;
+alter table public.books add column if not exists disponibilite text;
+
+create unique index if not exists books_electre_notice_id_idx
+  on public.books (electre_notice_id) where electre_notice_id is not null;
+create index if not exists books_oeuvre_id_idx
+  on public.books (oeuvre_id) where oeuvre_id is not null;
+
+-- books : colonnes normalisées GENERATED ALWAYS STORED pour search_books_v2
+-- Élimine le CTE de normalisation à chaque appel (full scan → index GIN trigram)
+-- Nécessite l'extension pg_trgm + unaccent
+alter table public.books add column if not exists norm_title text
+  generated always as (
+    regexp_replace(
+      unaccent(lower(regexp_replace(title, E'[\u2018\u2019\u201A\u2039\u203A''`]', ' ', 'g'))),
+      '[^a-z0-9 ]', ' ', 'g'
+    )
+  ) stored;
+
+alter table public.books add column if not exists norm_authors text
+  generated always as (
+    regexp_replace(
+      unaccent(lower(regexp_replace(authors::text, E'[\u2018\u2019\u201A\u2039\u203A''`]', ' ', 'g'))),
+      '[^a-z0-9 ]', ' ', 'g'
+    )
+  ) stored;
+
+create index if not exists books_norm_title_trgm_idx on public.books using gin (norm_title gin_trgm_ops);
+create index if not exists books_norm_authors_trgm_idx on public.books using gin (norm_authors gin_trgm_ops);
+
 -- lists : slug unique par user (migration slugs listes)
 alter table public.lists add column if not exists slug text;
 create unique index if not exists lists_user_slug_idx on public.lists (user_id, slug) where slug is not null;
@@ -464,9 +500,9 @@ alter table public.search_cache enable row level security;
 create policy "search_cache service_role only" on public.search_cache
   using (false);  -- bloque anon + authenticated, seul service_role (bypass RLS) peut lire/écrire
 
--- RPC search_books_v2 — DB-first avec scoring et normalisation apostrophes
--- Voir migration 022_fix_apostrophe_search.sql pour la version complète
--- (cross-field matching, CTE norm, branche ISBN, matching compact)
+-- RPC search_books_v2 — DB-first avec scoring et colonnes STORED norm_title/norm_authors
+-- Voir migration 028_optimize_search_rpc.sql pour la version complète
+-- (cross-field matching, index GIN trigram, branche ISBN, matching compact, colonnes Electre)
 
 -- ─── Pseudos réservés ────────────────────────
 -- migration supabase/migrations/017_creator_badge.sql

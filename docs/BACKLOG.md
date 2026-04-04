@@ -1814,4 +1814,61 @@ Migration de la SPA pure vers **React Router v7 Framework Mode** (`ssr: false` +
 - `data-theme` sur `<html>` via inline script (évite hydration mismatch)
 - Google Fonts en non-bloquant (`rel="preload" as="style" onLoad={fn}`)
 
-*Dernière mise à jour : 2 avril 2026 — Entrées 30-33 : réponses aux critiques, notifications in-app, app native, scan bibliothèque IA. Entrée 34 : Explorer Babelio + Sélections. Entrée 35 : Prerendering & SEO RR7*
+---
+
+## 36. Intégration Electre NG API
+
+**Statut :** ✅ Fait (avril 2026)
+**Portée :** Data pipeline — source de métadonnées #1 pour les livres francophones
+
+### Ce qui a été fait
+
+Electre NG est désormais la **source de référence prioritaire** dans le pipeline d'import. Appelé en parallèle avec Google, OL, BnF et MetasBooks dans `book_import`.
+
+**Infrastructure :**
+- Migration `027_electre_integration.sql` : 6 colonnes sur `books` (`electre_notice_id`, `oeuvre_id`, `collection_name`, `flag_fiction`, `quatrieme_de_couverture`, `disponibilite`) + index
+- `supabase/functions/electre-proxy/index.ts` : edge function proxy pour appels batch (OAuth2 password flow, token cache module-level)
+- `fetchElectre()` direct dans `book_import` (pas de hop réseau via proxy) avec cache token
+- `parseElectreNotice()` : extraction des champs Electre vers BookMeta
+
+**Priorités de fusion (Electre first) :**
+- `title` : Electre > BnF > Google > OL
+- `authors` : Electre > Google > BnF > OL
+- `publisher` : Electre > BnF > OL > Google
+- `cover_url` : Electre > Google (zoom 2) > OL
+- `description` : Electre (résumé/4ème couv) > Google > OL
+
+**Batch enrichissement :** `scripts/enrich-from-electre.mjs` (dry-run par défaut, `--apply`, batches de 100 EANs, ne remplit que les champs NULL)
+
+**Onglet Éditions (BookPage) :** query `books.eq('oeuvre_id', currentBook.oeuvre_id)` — grille de couvertures cliquables avec éditeur et année. Fallback message si pas d'oeuvre_id.
+
+---
+
+## 37. Optimisation recherche et prerendering
+
+**Statut :** ✅ Fait (avril 2026)
+**Portée :** Performance build + runtime recherche
+
+### Prerendering sélectif (react-router.config.ts + generate-sitemap.mjs)
+- Seuls les **top 1000 livres actifs** (`rating_count > 0`, triés DESC) sont prerendus au build
+- Sitemap aligné sur la même logique
+- Les autres livres restent accessibles via le SPA fallback `__spa-fallback.html`
+- Réduit significativement le temps de build
+
+### search_books_v2 — colonnes STORED (migration 028)
+- Ajout de `norm_title` et `norm_authors` comme colonnes `GENERATED ALWAYS STORED` sur `books`
+- Index trigram GIN (`gin_trgm_ops`) sur les deux colonnes
+- Suppression du CTE `norm` qui recalculait la normalisation pour chaque ligne à chaque appel (full scan ~3s sur 30K livres)
+- La RPC lit directement les colonnes stockées — scoring et matching inchangés
+- SELECT final étendu avec les 6 colonnes Electre + `norm_title`/`norm_authors`
+
+### CORS centralisé
+- `supabase/functions/_shared/cors.ts` : fallback `reliure.page` + `www.reliure.page` + `localhost:5173`
+- Les 7 edge functions importent `getCorsHeaders` depuis ce fichier unique
+
+### Auth guard import IA (Search.jsx)
+- `handleAIBookClick` vérifie `useAuth()` avant tout import
+- Si non connecté : message "Connectez-vous pour ajouter ce livre à Reliure" avec lien login
+- Plus de retry silencieux sur 401
+
+*Dernière mise à jour : 4 avril 2026 — Entrées 36-37 : Electre NG, optimisation recherche/prerendering, CORS, auth guard import IA*

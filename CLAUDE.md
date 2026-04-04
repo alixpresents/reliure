@@ -45,7 +45,7 @@ Différenciateurs : journal éditorial intégré (La Revue), citations comme fea
 - Chaque route exporte `meta()` pour `<title>`, `og:*`, `twitter:*`
 - JSON-LD `schema.org/Book` sur les fiches livres
 - `scripts/generate-sitemap.mjs` génère `sitemap.xml` post-build
-- Build time ~5 min (prerendering ~1000 pages)
+- Build time réduit : prerendering limité aux top 1000 livres actifs (`rating_count > 0`) + profils
 
 ### Fichiers clés
 - `react-router.config.ts`, `src/root.tsx`, `src/routes.ts`
@@ -54,8 +54,8 @@ Différenciateurs : journal éditorial intégré (La Revue), citations comme fea
 ## Routes
 
 ### Pages globales
-- `/` → redirige vers `/explorer`
-- `/explorer` → ExplorePage
+- `/` → ExplorePage (route primaire)
+- `/explorer` → redirige vers `/` (301)
 - `/explorer/theme/:tag` → TagPage
 - `/citations` → CitationsPage
 - `/fil` → FeedPage (protégée)
@@ -113,7 +113,7 @@ Stratégie hybride, par priorité :
 
 Architecture DB-first : RPC `search_books_v2` en premier → skip logic (≥3 résultats DB → skip Google+OL) → Google+OL en parallèle si nécessaire.
 
-- **`search_books_v2`** : cross-field matching, scoring de pertinence, normalisation apostrophes, matching compact (LETRANGER → L'étranger)
+- **`search_books_v2`** : cross-field matching, scoring de pertinence, colonnes STORED `norm_title`/`norm_authors` avec index trigram GIN (migration 028), matching compact (LETRANGER → L'étranger)
 - **Skip logic** : ~60% d'appels Google évités
 - **Circuit breaker** : 429 → Google désactivé 15 min → OL seul
 - **Recherche IA** (`smart-search`) : Claude Haiku, cache 7j, ghost text, mode NL. Toujours retourne 200.
@@ -124,7 +124,7 @@ Scripts dans `scripts/` et `seeds/`. Tous : dry-run par défaut, `--apply` pour 
 ## Architecture de données
 
 ### Tables principales
-`users`, `books` (avec `slug`, `description`, `ai_confidence`, `electre_notice_id`, `oeuvre_id`, `collection_name`, `flag_fiction`, `quatrieme_de_couverture`, `disponibilite`), `reviews` (avec `reply_count`), `review_replies`, `reading_status` (avec `is_reread`), `reading_log_tags`, `user_favorites` (position 1-4), `lists` (avec colonnes `is_curated`/`curator_*`), `list_items`, `follows`, `activity`, `quotes`, `likes` (polymorphe), `search_cache`, `badge_definitions`, `user_badges` (max 3 `is_pinned`), `user_points`, `point_events`, `reserved_usernames`, `notifications`.
+`users`, `books` (avec `slug`, `description`, `ai_confidence`, `electre_notice_id`, `oeuvre_id`, `collection_name`, `flag_fiction`, `quatrieme_de_couverture`, `disponibilite`, `norm_title`/`norm_authors` GENERATED STORED), `reviews` (avec `reply_count`), `review_replies`, `reading_status` (avec `is_reread`), `reading_log_tags`, `user_favorites` (position 1-4), `lists` (avec colonnes `is_curated`/`curator_*`), `list_items`, `follows`, `activity`, `quotes`, `likes` (polymorphe), `search_cache`, `badge_definitions`, `user_badges` (max 3 `is_pinned`), `user_points`, `point_events`, `reserved_usernames`, `notifications`.
 
 Schéma complet : `schema.sql`.
 
@@ -141,7 +141,11 @@ Reliure regroupe les éditions par oeuvre. Vérification ISBN exact puis titre n
 - `user_favorites` swap : delete+reinsert (pas d'update) pour le CHECK position 1-4
 - `useProfileData` distingue `diaryBooks` (read + finished_at) et `allReadBooks` (tous les "read")
 - Seuil bilan annuel : 5 livres lus (logique frontend)
-- Electre comme source #1 : appelé directement dans `book_import` (pas de hop via `electre-proxy`) pour réduire la latence. `electre-proxy` existe pour les appels batch externes. `oeuvre_id` Electre = futur regroupement des éditions
+- Electre comme source #1 : appelé directement dans `book_import` (pas de hop via `electre-proxy`) pour réduire la latence. `electre-proxy` existe pour les appels batch externes. `oeuvre_id` Electre = regroupement des éditions
+- Onglet "Éditions" sur BookPage : query `books.eq('oeuvre_id', oeuvreId)` si `oeuvre_id` présent, grille de couvertures cliquables
+- CORS centralisé : `supabase/functions/_shared/cors.ts` — fallback `reliure.page` + `www.reliure.page` + localhost. Toutes les edge functions importent `getCorsHeaders` depuis ce fichier unique
+- Prerendering sélectif : seuls les top 1000 livres actifs (`rating_count > 0`) sont prerendus. Sitemap aligné. Les autres livres sont accessibles en SPA via fallback
+- Import IA (Search.jsx) : bloqué si non connecté, message "Connectez-vous pour ajouter ce livre" avec lien login
 
 ## Design system
 
@@ -185,6 +189,7 @@ Toutes les couleurs via CSS custom properties dans `src/index.css` (`:root` ligh
   - `["favorites", userId]`, `["followCounts", userId]`, `["readingList", statusFilter, userId]`
   - `["babelioPopular"]`, `["popularReviews"]`, `["popularQuotes"]`, `["popularLists"]`
   - `["booksByGenre", genre]`, `["feed"]`, `["reviewReplies", reviewId]`
+  - `["otherEditions", oeuvreId, bookId]`, `["bookCuratedSelections", bookId]`
   - `["notifications"]` (staleTime 1min), `["unreadCount"]` (staleTime 30s)
 - **Invalidation cross-cache** : après mutation, invalider toutes les queryKeys affectées.
 - **Optimistic UI** : préserver le pattern `safeMutation` + `useRef` pour les toggles likes.
