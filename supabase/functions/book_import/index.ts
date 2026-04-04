@@ -450,6 +450,10 @@ function mergeSources(
 // ---------------------------------------------------------------------------
 // Anti-doublons : recherche par titre normalisé + auteur
 // ---------------------------------------------------------------------------
+// IMPORTANT: cette normalisation est dupliquée dans :
+// - src/utils/deduplicateBook.js (normalizeTitle)
+// - supabase/functions/book_import/index.ts (normTitle)
+// Toute modification doit être faite dans les deux fichiers.
 function normTitle(t: string): string {
   return t
     .replace(/[\u2018\u2019\u201A\u2039\u203A''`]/g, " ")
@@ -486,7 +490,7 @@ async function findByTitleAuthor(
   const { data: candidates } = await supabase
     .from("books")
     .select("*")
-    .ilike("title", `%${firstWord}%`)
+    .ilike("norm_title", `%${firstWord}%`)
     .limit(20);
 
   if (!candidates?.length) return null;

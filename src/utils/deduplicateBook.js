@@ -10,6 +10,11 @@
  * "Je rouille : roman" → "je rouille"
  * "L'Étranger" → "letranger"
  * "  Belle du Seigneur  " → "belle du seigneur"
+ *
+ * IMPORTANT: cette normalisation est dupliquée dans :
+ * - src/utils/deduplicateBook.js (normalizeTitle)
+ * - supabase/functions/book_import/index.ts (normTitle)
+ * Toute modification doit être faite dans les deux fichiers.
  */
 function normalizeTitle(title) {
   return title
@@ -89,8 +94,8 @@ export async function findExistingBook(supabase, { title, authors, isbn13 }) {
 
   const { data: candidates } = await supabase
     .from("books")
-    .select("*")
-    .ilike("title", `%${firstWord}%`)
+    .select("id, title, authors, slug, isbn_13, cover_url, publication_date, page_count, avg_rating, rating_count, description, genres, source, language, ai_confidence")
+    .ilike("norm_title", `%${firstWord}%`)
     .limit(20);
 
   if (!candidates?.length) return null;
