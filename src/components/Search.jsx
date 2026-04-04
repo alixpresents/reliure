@@ -32,15 +32,7 @@ async function fetchUsers(query, limit = 5) {
     req = req.order("created_at", { ascending: false });
   }
   const { data: users } = await req.limit(limit);
-  if (!users?.length) return [];
-
-  const userIds = users.map(u => u.id);
-  const { data: readRows } = await supabase
-    .from("reading_status").select("user_id")
-    .in("user_id", userIds).eq("status", "read");
-  const countMap = {};
-  for (const r of (readRows || [])) countMap[r.user_id] = (countMap[r.user_id] || 0) + 1;
-  return users.map(u => ({ ...u, readCount: countMap[u.id] || 0 }));
+  return (users || []).map(u => ({ ...u, readCount: 0 }));
 }
 
 const FILTERS = [
@@ -307,34 +299,45 @@ export default function Search({ open, onClose, go, initialQuery = "" }) {
     if (addedGoogleIds.has(key)) return;
     setImporting(key);
 
-    // 1. Essai par ISBN si disponible (résultat exact)
     const isbn = gb.isbn13 || gb.isbn10 || gb.isbn || null;
-    let bookResults = [];
+
+    // 1. Check direct en base par ISBN (pas de searchBooks)
     if (isbn) {
-      bookResults = await searchBooks(`isbn:${isbn}`);
-    }
+      const cleanISBN = isbn.replace(/-/g, "");
+      const { data: existing } = await supabase
+        .from("books")
+        .select("id, slug")
+        .eq("isbn_13", cleanISBN)
+        .maybeSingle();
 
-    // 2. Fallback : recherche par titre+auteur
-    if (!bookResults.length) {
-      const query = `${gb.title} ${gb.authors?.[0] || ""}`.trim();
-      bookResults = await searchBooks(query);
-    }
-
-    if (bookResults.length > 0) {
-      const normStr = s => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9\s]/g, "").trim();
-      const targetNorm = normStr(gb.title);
-      const match = bookResults.find(r => {
-        const rNorm = normStr(r.title);
-        return rNorm.includes(targetNorm) || targetNorm.includes(rNorm);
-      });
-      if (match) {
+      if (existing) {
         setImporting(null);
-        await handleSelect(match);
+        handleClose();
+        setQ("");
+        setResults([]);
+        navigate(`/livre/${existing.slug || existing.id}`);
         return;
       }
     }
 
-    // Fallback : import direct avec les données BnF
+    // 2. Pas en base → import via book_import edge function si ISBN dispo
+    if (isbn) {
+      try {
+        const { data, error } = await supabase.functions.invoke("book_import", {
+          body: { isbn: isbn.replace(/-/g, "") },
+        });
+        if (!error && data?.id) {
+          setImporting(null);
+          handleClose();
+          setQ("");
+          setResults([]);
+          navigate(`/livre/${data.slug || data.id}`);
+          return;
+        }
+      } catch { /* book_import failed, continue to fallback */ }
+    }
+
+    // 3. Fallback : import direct avec les données BnF
     const book = await importBook({
       title: gb.title,
       authors: gb.authors || [],
@@ -855,7 +858,7 @@ function UserRow({ u, onSelect }) {
       <div className="flex-1 min-w-0">
         <div className="text-[13px] font-medium font-body truncate">{name}</div>
         <div className="text-[11px] font-body" style={{ color: "var(--text-tertiary)" }}>
-          @{u.username}{u.readCount > 0 ? ` · ${u.readCount} livre${u.readCount > 1 ? "s" : ""} lu${u.readCount > 1 ? "s" : ""}` : ""}
+          @{u.username}
         </div>
       </div>
     </div>
