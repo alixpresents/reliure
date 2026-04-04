@@ -203,10 +203,14 @@ function deduplicateResults(dbResults, googleResults, olResults = []) {
   const dbIsbns = new Set(dbResults.map(r => r.isbn13).filter(Boolean));
   const dbTitles = new Set(dbResults.map(r => strip(r.title)));
 
-  // Filtrer les résultats Google qui dupliquent un résultat DB
+  // Filtrer les résultats Google (dédup vs DB + dédup intra-Google)
+  const seenGoogleTitles = new Set();
   const uniqueGoogle = googleResults.filter(g => {
     if (g.isbn13 && dbIsbns.has(g.isbn13)) return false;
     if (dbTitles.has(strip(g.title))) return false;
+    const key = strip(g.title);
+    if (seenGoogleTitles.has(key)) return false;
+    seenGoogleTitles.add(key);
     return true;
   });
 
@@ -220,11 +224,15 @@ function deduplicateResults(dbResults, googleResults, olResults = []) {
     ...uniqueGoogle.map(r => strip(r.title)),
   ]);
 
-  // Filtrer les résultats OL — DB et Google ont la priorité
+  // Filtrer les résultats OL (dédup vs DB+Google + dédup intra-OL)
+  const seenOLTitles = new Set();
   const uniqueOL = olResults.filter(ol => {
     if (!ol.title) return false;
     if (ol.isbn13 && knownIsbns.has(ol.isbn13)) return false;
     if (knownTitles.has(strip(ol.title))) return false;
+    const key = strip(ol.title);
+    if (seenOLTitles.has(key)) return false;
+    seenOLTitles.add(key);
     return true;
   });
 
