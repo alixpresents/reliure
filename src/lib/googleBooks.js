@@ -198,7 +198,7 @@ async function fetchGoogleBooks(query) {
 // Déduplication
 // ═══════════════════════════════════════════════
 
-function deduplicateResults(dbResults, googleResults, olResults = [], fnacResults = []) {
+function deduplicateResults(dbResults, googleResults, olResults = []) {
   // Les résultats DB sont TOUJOURS en premier et jamais supprimés
   const dbIsbns = new Set(dbResults.map(r => r.isbn13).filter(Boolean));
   const dbTitles = new Set(dbResults.map(r => strip(r.title)));
@@ -228,18 +228,7 @@ function deduplicateResults(dbResults, googleResults, olResults = [], fnacResult
     return true;
   });
 
-  // Fnac : dédup par titre uniquement (isbn13 souvent null)
-  const allKnownTitles = new Set([
-    ...knownTitles,
-    ...uniqueOL.map(r => strip(r.title)),
-  ]);
-  const uniqueFnac = fnacResults.filter(f => {
-    if (!f.title) return false;
-    if (allKnownTitles.has(strip(f.title))) return false;
-    return true;
-  });
-
-  return [...dbResults, ...uniqueGoogle, ...uniqueOL, ...uniqueFnac];
+  return [...dbResults, ...uniqueGoogle, ...uniqueOL];
 }
 
 // ═══════════════════════════════════════════════
@@ -311,7 +300,7 @@ export async function searchBooks(query, { onDbResults } = {}) {
     googleCalled: !skipGoogle,
     googleRaw,
     googleFiltered: googleResults.length,
-    googleDeduped: googleResults.length - (googleResults.length - googleUseful),
+    googleDeduped: googleResults.length - googleUseful,
     googleUseful,
     olCalled: olActuallyCalled,
     olResults: olResults.length,
