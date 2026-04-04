@@ -1,7 +1,7 @@
 const envOrigins = Deno.env.get("ALLOWED_ORIGINS");
 const ALLOWED_ORIGINS: string[] = envOrigins
   ? envOrigins.split(",").map((s) => s.trim()).filter(Boolean)
-  : ["https://reliure.page", "http://localhost:5173"];
+  : ["https://reliure.page", "https://www.reliure.page", "http://localhost:5173"];
 
 export function getCorsHeaders(req: Request) {
   const origin = req.headers.get("origin") || "";
