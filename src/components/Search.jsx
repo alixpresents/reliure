@@ -86,7 +86,8 @@ export default function Search({ open, onClose, go, initialQuery = "" }) {
   // AI smart search — aligned with skip logic: disabled when DB returns ≥ 3 (unless NL query)
   const dbResultCount = results.filter(r => r._source === "db").length;
   const isNL = !atMode && q.length >= 2 && looksLikeNaturalLanguage(q);
-  const aiEnabled = !atMode && q.length >= 2 && (dbResultCount < 3 || isNL);
+  const wordCount = q.trim().split(/\s+/).length;
+  const aiEnabled = !atMode && q.length >= 2 && (dbResultCount < 3 || isNL || wordCount >= 3);
 
   // Fast-path: if 0 results from all sources, trigger AI immediately (no debounce)
   const zeroResults = !loading && results.length === 0 && q.length >= 2 && !atMode;
