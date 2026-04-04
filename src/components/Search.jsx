@@ -6,6 +6,7 @@ import { resetIOSZoom } from "../lib/resetZoom";
 import { supabase } from "../lib/supabase";
 import { searchBnF } from "../lib/bnfSearch";
 import { useSmartSearch, looksLikeNaturalLanguage } from "../hooks/useSmartSearch";
+import { useAuth } from "../lib/AuthContext";
 import Avatar from "./Avatar";
 import Skeleton from "./Skeleton";
 
@@ -51,6 +52,7 @@ const FILTERS = [
 
 export default function Search({ open, onClose, go, initialQuery = "" }) {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [q, setQ] = useState("");
   const [filter, setFilter] = useState("all");
   const [results, setResults] = useState([]);
@@ -62,6 +64,7 @@ export default function Search({ open, onClose, go, initialQuery = "" }) {
   const [userSuggestionLabel, setUserSuggestionLabel] = useState("Lecteurs");
   const [ghostDismissed, setGhostDismissed] = useState(false);
   const [deepSearching, setDeepSearching] = useState(false);
+  const [authMessage, setAuthMessage] = useState(null);
   const timer = useRef(null);
   const searchSeq = useRef(0);
   const inputRef = useRef(null);
@@ -253,6 +256,7 @@ export default function Search({ open, onClose, go, initialQuery = "" }) {
 
   const handleClose = () => {
     resetIOSZoom();
+    setAuthMessage(null);
     onClose();
   };
 
@@ -353,6 +357,11 @@ export default function Search({ open, onClose, go, initialQuery = "" }) {
   };
 
   const handleAIBookClick = async (aiBook) => {
+    if (!user) {
+      setAuthMessage("Connectez-vous pour ajouter ce livre à Reliure");
+      return;
+    }
+    setAuthMessage(null);
     setLoading(true);
 
     const normStr = str => (str ?? "")
@@ -603,6 +612,13 @@ export default function Search({ open, onClose, go, initialQuery = "" }) {
       <div className="overflow-y-auto flex-1" style={{ maxHeight: 360 }}>
         {loading && (
           <div className="py-6 text-center text-[13px] font-body" style={{ color: "var(--text-tertiary)" }}>Recherche...</div>
+        )}
+
+        {authMessage && (
+          <div className="mx-4 mt-2 mb-1 px-3 py-2.5 rounded-lg text-[13px] font-body text-center" style={{ backgroundColor: "var(--bg-secondary)", color: "var(--text-secondary)" }}>
+            {authMessage}{" "}
+            <a href="/login" onClick={handleClose} className="font-medium no-underline" style={{ color: "var(--text-primary)" }}>Se connecter →</a>
+          </div>
         )}
 
         {/* @ mode */}
