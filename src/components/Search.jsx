@@ -72,6 +72,7 @@ export default function Search({ open, onClose, go, initialQuery = "" }) {
   const [userSuggestionLabel, setUserSuggestionLabel] = useState("Lecteurs");
   const [ghostDismissed, setGhostDismissed] = useState(false);
   const [showAllAI, setShowAllAI] = useState(false);
+  const [showAllClassic, setShowAllClassic] = useState(false);
   const [deepSearching, setDeepSearching] = useState(false);
   const [authMessage, setAuthMessage] = useState(null);
   const timer = useRef(null);
@@ -105,7 +106,7 @@ export default function Search({ open, onClose, go, initialQuery = "" }) {
   const ghost = rawGhost && !ghostDismissed ? rawGhost : null;
 
   // Reset ghost dismissal and "see more" when query changes
-  useEffect(() => { setGhostDismissed(false); setShowAllAI(false); }, [q]);
+  useEffect(() => { setGhostDismissed(false); setShowAllAI(false); setShowAllClassic(false); }, [q]);
 
   useEffect(() => {
     if (open) {
@@ -655,8 +656,15 @@ export default function Search({ open, onClose, go, initialQuery = "" }) {
               </>
             )}
 
-            {/* Classic book results — Change 3: uses `results` directly (no displayResults cap) */}
-            {showBooks && results.map(gb => {
+            {/* Classic book results — capped at 5 when AI suggestions exist */}
+            {showBooks && (() => {
+              const cappedResults = filteredAIBooks.length > 0 && !showAllClassic
+                ? results.slice(0, 5)
+                : results;
+              const hiddenCount = filteredAIBooks.length > 0 ? results.length - 5 : 0;
+              return (
+                <>
+                  {cappedResults.map(gb => {
               const isDb = gb._source === "db";
               const isBnF = gb._source === "bnf";
               const itemKey = gb.googleId ?? (isDb ? `db:${gb.dbId}` : `bnf:${gb.isbn13 ?? gb.title}`);
@@ -712,7 +720,19 @@ export default function Search({ open, onClose, go, initialQuery = "" }) {
                   )}
                 </div>
               );
-            })}
+              })}
+                  {hiddenCount > 0 && !showAllClassic && (
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setShowAllClassic(true); }}
+                      className="w-full py-1.5 text-center font-body border-none cursor-pointer transition-colors duration-100 hover:opacity-70"
+                      style={{ background: "transparent", fontSize: 11, color: "var(--text-tertiary)" }}
+                    >
+                      +{hiddenCount} autres résultats
+                    </button>
+                  )}
+                </>
+              );
+            })()}
 
             {/* AI results — Change 3: unified block (no isNL split), always below classic results */}
             {showAI && filteredAIBooks.length > 0 && (
