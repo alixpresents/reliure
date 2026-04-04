@@ -35,6 +35,22 @@ async function fetchUsers(query, limit = 5) {
   return (users || []).map(u => ({ ...u, readCount: 0 }));
 }
 
+function matchesAIBook(result, aiBook) {
+  const rTitle = normalize(result.title);
+  const rAuthor = normalizeAuthor(result.authors?.[0] || "");
+  const aiTitle = normalize(aiBook.title);
+  const aiAuthor = normalizeAuthor(aiBook.author || "");
+
+  if (rTitle === aiTitle) return true;
+
+  if (aiAuthor && rAuthor && rAuthor === aiAuthor) {
+    const firstWord = aiTitle.split(" ")[0];
+    if (firstWord.length >= 3 && rTitle.includes(firstWord)) return true;
+  }
+
+  return false;
+}
+
 const FILTERS = [
   { key: "all", label: "Tout" },
   { key: "books", label: "Livres" },
@@ -174,13 +190,7 @@ export default function Search({ open, onClose, go, initialQuery = "" }) {
   // Hooks inconditionnels — DOIVENT être avant tout return conditionnel
 
   const isAIConfirmed = (r, aiBooksList) =>
-    aiBooksList.some(ai => {
-      const aiTitle = normalize(ai.title);
-      const aiAuthor = normalizeAuthor(ai.author || "");
-      const rTitle = normalize(r.title);
-      const rAuthor = normalizeAuthor(r.authors?.[0] || "");
-      return rTitle === aiTitle || (aiAuthor && rAuthor === aiAuthor && rTitle.includes(aiTitle.split(" ")[0]));
-    });
+    aiBooksList.some(ai => matchesAIBook(r, ai));
 
   // Map résultat classique → livre IA correspondant (pour import par ISBN canonique)
   const aiConfirmedMap = useMemo(() => {
@@ -188,11 +198,7 @@ export default function Search({ open, onClose, go, initialQuery = "" }) {
     if (!aiBooks.length) return map;
     for (const r of results) {
       for (const ai of aiBooks) {
-        const aiTitle = normalize(ai.title);
-        const aiAuthor = normalizeAuthor(ai.author || "");
-        const rTitle = normalize(r.title);
-        const rAuthor = normalizeAuthor(r.authors?.[0] || "");
-        if (rTitle === aiTitle || (aiAuthor && rAuthor === aiAuthor && rTitle.includes(aiTitle.split(" ")[0]))) {
+        if (matchesAIBook(r, ai)) {
           const key = r.googleId || r.isbn13 || r.title;
           map.set(key, ai);
           break;
@@ -205,24 +211,8 @@ export default function Search({ open, onClose, go, initialQuery = "" }) {
   const displayResults = useMemo(() => {
     if (!aiBooks.length || !results.length) return results;
 
-    const normT = (s) => normalize(s);
-    const normA = (s) =>
-      normalize(s)
-        .replace(/\([^)]*\)/g, "")
-        .replace(/[^a-z\s]/g, "")
-        .trim()
-        .split(/\s+/)
-        .sort()
-        .join(" ");
-
     const confirmed = results.filter(r =>
-      aiBooks.some(ai => {
-        const aiTitle = normT(ai.title);
-        const aiAuthor = normA(ai.author || "");
-        const rTitle = normT(r.title);
-        const rAuthor = normA(r.authors?.[0] || "");
-        return rTitle === aiTitle && aiAuthor && rAuthor && rAuthor === aiAuthor;
-      })
+      aiBooks.some(ai => matchesAIBook(r, ai))
     );
 
     const unconfirmed = results
