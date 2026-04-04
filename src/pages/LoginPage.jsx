@@ -20,16 +20,28 @@ export default function LoginPage() {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    if (!authLoading && user) navigate("/", { replace: true });
-  }, [user, authLoading, navigate]);
-
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
   const [error, setError] = useState(null);
+
+  useEffect(() => {
+    if (!authLoading && user) navigate("/", { replace: true });
+  }, [user, authLoading, navigate]);
+
+  // Tant que l'auth charge OU que l'user est connecté (redirect imminent),
+  // ne pas afficher le formulaire — évite le flash pendant getSession()
+  if (authLoading || user) {
+    return (
+      <div className="flex items-center justify-center" style={{ minHeight: "100dvh", backgroundColor: "var(--bg-primary)" }}>
+        <span className="text-[20px] font-bold tracking-tight font-body" style={{ color: "var(--text-primary)" }}>
+          reliure
+        </span>
+      </div>
+    );
+  }
 
   const handleGoogleLogin = async () => {
     setLoading(true);
