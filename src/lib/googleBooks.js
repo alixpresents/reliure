@@ -236,7 +236,14 @@ function deduplicateResults(dbResults, googleResults, olResults = []) {
     return true;
   });
 
-  return [...dbResults, ...uniqueGoogle, ...uniqueOL];
+  // Dédup finale — attrape les doublons intra-source (ex: 2 éditions DB même titre+auteur)
+  const seen = new Set();
+  return [...dbResults, ...uniqueGoogle, ...uniqueOL].filter(r => {
+    const key = strip(r.title) + '|' + strip(r.authors?.[0] || '');
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
 }
 
 // ═══════════════════════════════════════════════
