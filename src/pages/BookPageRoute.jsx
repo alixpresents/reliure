@@ -1,5 +1,3 @@
-import { createClient } from "@supabase/supabase-js";
-
 async function queryBookData(supabase, params) {
   const { data: book } = await supabase
     .from("books")
@@ -17,15 +15,6 @@ async function queryBookData(supabase, params) {
     .limit(5);
 
   return { book, reviews: reviews || [] };
-}
-
-// loader runs at build time during prerendering — own createClient (Node env)
-export async function loader({ params }) {
-  const supabase = createClient(
-    import.meta.env.VITE_SUPABASE_URL,
-    import.meta.env.VITE_SUPABASE_ANON_KEY
-  );
-  return queryBookData(supabase, params);
 }
 
 // clientLoader runs in the browser — uses the singleton to avoid GoTrueClient warning
