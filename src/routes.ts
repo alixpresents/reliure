@@ -31,6 +31,4 @@ export default [
   route(":username", "pages/ProfilePageRoute.jsx", { id: "profile" }),
   route(":username/:tab", "pages/ProfilePageTabRoute.jsx", { id: "profile-tab" }),
 
-  // 404
-  route("*", "pages/NotFoundPage.jsx"),
 ] satisfies RouteConfig;

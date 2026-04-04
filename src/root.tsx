@@ -4,7 +4,10 @@ import {
   Outlet,
   Scripts,
   ScrollRestoration,
+  useRouteError,
+  isRouteErrorResponse,
 } from "react-router";
+import NotFoundPage from "./pages/NotFoundPage";
 
 export function meta() {
   return [
@@ -95,6 +98,28 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
 export function HydrateFallback() {
   return <div id="splash">reliure</div>;
+}
+
+export function ErrorBoundary() {
+  const error = useRouteError();
+
+  if (isRouteErrorResponse(error) && error.status === 404) {
+    return <NotFoundPage />;
+  }
+
+  return (
+    <div className="min-h-screen flex flex-col items-center justify-center px-4 font-body"
+         style={{ backgroundColor: "var(--bg-primary)", color: "var(--text-primary)" }}>
+      <h1 className="font-display text-[22px] mb-2">Quelque chose s'est cassé.</h1>
+      <p className="text-[14px] mb-6" style={{ color: "var(--text-secondary)" }}>
+        Une erreur inattendue est survenue. Réessaie ou reviens à l'accueil.
+      </p>
+      <a href="/"
+         style={{ padding: "10px 24px", borderRadius: "8px", backgroundColor: "var(--text-primary)", color: "var(--bg-primary)", fontSize: "14px", fontWeight: 500, textDecoration: "none" }}>
+        Retour à l'accueil
+      </a>
+    </div>
+  );
 }
 
 function AppShell() {
