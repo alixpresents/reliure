@@ -17,7 +17,7 @@ import { useAuth } from "../lib/AuthContext";
 import CoverBackdrop from "../components/CoverBackdrop";
 
 export default function LoginPage() {
-  const { user, loading: authLoading } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
 
   const [email, setEmail] = useState("");
@@ -28,20 +28,12 @@ export default function LoginPage() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    if (!authLoading && user) navigate("/", { replace: true });
-  }, [user, authLoading, navigate]);
+    if (user) navigate("/", { replace: true });
+  }, [user, navigate]);
 
-  // Tant que l'auth charge OU que l'user est connecté (redirect imminent),
-  // ne pas afficher le formulaire — évite le flash pendant getSession()
-  if (authLoading || user) {
-    return (
-      <div className="flex items-center justify-center" style={{ minHeight: "100dvh", backgroundColor: "var(--bg-primary)" }}>
-        <span className="text-[20px] font-bold tracking-tight font-body" style={{ color: "var(--text-primary)" }}>
-          reliure
-        </span>
-      </div>
-    );
-  }
+  // root.tsx bloque le rendu tant que auth charge — si user est truthy ici,
+  // le navigate est en cours, on n'affiche rien
+  if (user) return null;
 
   const handleGoogleLogin = async () => {
     setLoading(true);
