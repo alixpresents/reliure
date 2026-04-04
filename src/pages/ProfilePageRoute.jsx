@@ -18,7 +18,12 @@ export async function loader({ params }) {
     import.meta.env.VITE_SUPABASE_URL,
     import.meta.env.VITE_SUPABASE_ANON_KEY
   );
-  return queryProfileData(supabase, params);
+  try {
+    return await queryProfileData(supabase, params);
+  } catch {
+    // Profil introuvable ou timeout Supabase — ne pas crasher le build
+    return { notFound: true };
+  }
 }
 
 // clientLoader runs in the browser — uses the singleton to avoid GoTrueClient warning
@@ -146,6 +151,13 @@ export default function ProfilePageRoute() {
 
   // SSR: render SEO-safe content
   if (isServer) {
+    if (loaderData?.notFound) {
+      return (
+        <div className="py-16 text-center text-[15px] font-body" style={{ color: "var(--text-tertiary)" }}>
+          Profil introuvable.
+        </div>
+      );
+    }
     if (loaderData?.profile) {
       return <ProfileSeoContent profile={loaderData.profile} />;
     }
