@@ -79,6 +79,7 @@ export default function Search({ open, onClose, go, initialQuery = "" }) {
   const searchSeq = useRef(0);
   const inputRef = useRef(null);
   const dropdownRef = useRef(null);
+  const resultsRef = useRef(null);
   const multiAddMode = useRef(false);
 
   const atMode = q.startsWith("@");
@@ -322,6 +323,7 @@ export default function Search({ open, onClose, go, initialQuery = "" }) {
   const handleAIBookClick = async (aiBook) => {
     if (!user) {
       setAuthMessage("Connectez-vous pour ajouter ce livre à Reliure");
+      resultsRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
     setAuthMessage(null);
@@ -593,7 +595,7 @@ export default function Search({ open, onClose, go, initialQuery = "" }) {
       </div>
 
       {/* Résultats */}
-      <div className="overflow-y-auto flex-1" style={{ maxHeight: 360 }}>
+      <div ref={resultsRef} className="overflow-y-auto flex-1" style={{ maxHeight: 360 }}>
 
         {authMessage && (
           <div className="mx-4 mt-2 mb-1 px-3 py-2.5 rounded-lg text-[13px] font-body text-center" style={{ backgroundColor: "var(--bg-secondary)", color: "var(--text-secondary)" }}>
