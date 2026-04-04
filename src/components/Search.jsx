@@ -83,7 +83,7 @@ export default function Search({ open, onClose, go, initialQuery = "" }) {
   const atMode = q.startsWith("@");
   const atQuery = q.slice(1);
 
-  // AI smart search — aligned with skip logic: disabled when DB returns ≥ 3 (unless NL query)
+  // AI smart search — enabled for NL, low DB results, or 3+ word queries
   const dbResultCount = results.filter(r => r._source === "db").length;
   const isNL = !atMode && q.length >= 2 && looksLikeNaturalLanguage(q);
   const wordCount = q.trim().split(/\s+/).length;
@@ -104,7 +104,7 @@ export default function Search({ open, onClose, go, initialQuery = "" }) {
 
   const ghost = rawGhost && !ghostDismissed ? rawGhost : null;
 
-  // Reset ghost dismissal when query changes
+  // Reset ghost dismissal and "see more" when query changes
   useEffect(() => { setGhostDismissed(false); setShowAllAI(false); }, [q]);
 
   useEffect(() => {
@@ -119,7 +119,7 @@ export default function Search({ open, onClose, go, initialQuery = "" }) {
       setVisible(false);
       setQ("");
     }
-  }, [open]); // initialQuery lu à l'ouverture via closure, pas besoin dans les deps
+  }, [open]); // initialQuery lu à l'ouverture via closure
 
   // Close on Escape
   useEffect(() => {
@@ -191,50 +191,17 @@ export default function Search({ open, onClose, go, initialQuery = "" }) {
 
   // Hooks inconditionnels — DOIVENT être avant tout return conditionnel
 
-  const isAIConfirmed = (r, aiBooksList) =>
-    aiBooksList.some(ai => matchesAIBook(r, ai));
-
-  // Map résultat classique → livre IA correspondant (pour import par ISBN canonique)
-  const aiConfirmedMap = useMemo(() => {
-    const map = new Map();
-    if (!aiBooks.length) return map;
-    for (const r of results) {
-      for (const ai of aiBooks) {
-        if (matchesAIBook(r, ai)) {
-          const key = r.googleId || r.isbn13 || r.title;
-          map.set(key, ai);
-          break;
-        }
-      }
-    }
-    return map;
-  }, [results, aiBooks]);
-
-  const displayResults = useMemo(() => {
-    if (!aiBooks.length || !results.length) return results;
-
-    const confirmed = results.filter(r =>
-      aiBooks.some(ai => matchesAIBook(r, ai))
-    );
-
-    const unconfirmed = results
-      .filter(r => !confirmed.includes(r))
-      .slice(0, 2);
-
-    return [...confirmed, ...unconfirmed];
-  }, [results, aiBooks]);
-
   // For "authors" filter: group books by first author
   const authorGroups = useMemo(() => {
     if (filter !== "authors") return null;
     const groups = new Map();
-    for (const gb of displayResults) {
+    for (const gb of results) {
       const author = gb.authors?.[0] || "Auteur inconnu";
       if (!groups.has(author)) groups.set(author, []);
       groups.get(author).push(gb);
     }
     return groups;
-  }, [filter, displayResults]);
+  }, [filter, results]);
 
   if (!open) return null;
 
@@ -357,7 +324,8 @@ export default function Search({ open, onClose, go, initialQuery = "" }) {
       return;
     }
     setAuthMessage(null);
-    setLoading(true);
+    // Change 2: per-item spinner instead of full loading gate
+    setImporting('ai-' + aiBook.title);
 
     const normStr = str => (str ?? "")
       .toLowerCase()
@@ -383,7 +351,7 @@ export default function Search({ open, onClose, go, initialQuery = "" }) {
     };
 
     const navigateToBook = (book) => {
-      setLoading(false);
+      setImporting(null);
       handleClose();
       setQ("");
       setResults([]);
@@ -416,7 +384,7 @@ export default function Search({ open, onClose, go, initialQuery = "" }) {
           }
           // Fallback si pas d'ISBN ou edge function échoue
           await handleSelect(best.r);
-          setLoading(false);
+          setImporting(null);
           return;
         }
         // score < 100 → laisser la cascade BnF prendre le relais
@@ -458,7 +426,7 @@ export default function Search({ open, onClose, go, initialQuery = "" }) {
     if (book) {
       navigateToBook(book);
     } else {
-      setLoading(false);
+      setImporting(null);
       console.warn("[search-ai-import] all fallbacks failed for:", aiBook.title);
     }
   };
@@ -492,11 +460,14 @@ export default function Search({ open, onClose, go, initialQuery = "" }) {
 
   // Deduplicated AI books (exclude titles already in classic results)
   const filteredAIBooks = aiBooks.filter(
-    ab => !displayResults.some(cr => normalize(cr.title) === normalize(ab.title))
+    ab => !results.some(cr => normalize(cr.title) === normalize(ab.title))
   );
 
   const visibleAIBooks = showAllAI ? filteredAIBooks : filteredAIBooks.slice(0, 3);
   const hasMoreAI = filteredAIBooks.length > 3;
+
+  // Change 1: stale = loading with previous results still in state
+  const isShowingStale = loading && results.length > 0;
 
   // Filtered views
   const showBooks = filter === "all" || filter === "books" || filter === "authors";
@@ -528,9 +499,23 @@ export default function Search({ open, onClose, go, initialQuery = "" }) {
     >
       {/* Input row */}
       <div className="flex items-center gap-2 px-3" style={{ height: 44, borderBottom: "0.5px solid var(--border-subtle)" }}>
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="2" className="shrink-0">
-          <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
-        </svg>
+        {/* Change 1: spinner in loupe while searching */}
+        {loading || deepSearching ? (
+          <div
+            className="animate-spin shrink-0"
+            style={{
+              width: 15,
+              height: 15,
+              borderRadius: "50%",
+              border: "2px solid var(--border-default)",
+              borderTopColor: "var(--text-muted)",
+            }}
+          />
+        ) : (
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="2" className="shrink-0">
+            <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
+          </svg>
+        )}
 
         <div className="relative flex-1 min-w-0">
           {ghost && (
@@ -608,9 +593,6 @@ export default function Search({ open, onClose, go, initialQuery = "" }) {
 
       {/* Résultats */}
       <div className="overflow-y-auto flex-1" style={{ maxHeight: 360 }}>
-        {loading && (
-          <div className="py-6 text-center text-[13px] font-body" style={{ color: "var(--text-tertiary)" }}>Recherche...</div>
-        )}
 
         {authMessage && (
           <div className="mx-4 mt-2 mb-1 px-3 py-2.5 rounded-lg text-[13px] font-body text-center" style={{ backgroundColor: "var(--bg-secondary)", color: "var(--text-secondary)" }}>
@@ -619,7 +601,7 @@ export default function Search({ open, onClose, go, initialQuery = "" }) {
           </div>
         )}
 
-        {/* @ mode */}
+        {/* @ mode — keeps its own loading gate since it clears results immediately */}
         {!loading && atMode && (
           <>
             {userResults.length > 0 ? (
@@ -639,38 +621,24 @@ export default function Search({ open, onClose, go, initialQuery = "" }) {
           </>
         )}
 
-        {/* Normal mode */}
-        {!loading && !atMode && (
-          <>
-            {/* NL mode: "Recherche approfondie..." immédiatement dès que l'IA charge */}
-            {isNL && aiLoading && (
-              <div className="py-2.5 text-center text-[11px] font-body" style={{ color: "var(--text-tertiary)" }}>
-                Recherche approfondie<PulsingDots />
-              </div>
-            )}
+        {/* Normal mode — Change 1: no !loading gate; stale results show at reduced opacity */}
+        {!atMode && (
+          <div style={{ opacity: isShowingStale ? 0.4 : 1, pointerEvents: isShowingStale ? "none" : "auto" }}>
 
-            {/* Non-NL: zero results, AI still searching */}
-            {!isNL && zeroResults && aiLoading && (
+            {/* Zero results states */}
+            {zeroResults && aiLoading && (
               <div className="py-6 text-center text-[13px] font-body" style={{ color: "var(--text-tertiary)" }}>
                 Aucun résultat local — recherche approfondie...
               </div>
             )}
-            {/* Non-NL: zero results, AI finished, nothing found */}
-            {!isNL && zeroResults && !aiLoading && filteredAIBooks.length === 0 && userResults.length === 0 && (
+            {zeroResults && !aiLoading && filteredAIBooks.length === 0 && userResults.length === 0 && (
               <div className="py-6 text-center text-[13px] font-body" style={{ color: "var(--text-tertiary)" }}>
                 Aucun résultat trouvé.
               </div>
             )}
-            {/* Non-NL: had some results but display filtering removed them all */}
-            {!isNL && !zeroResults && q.length >= 2 && displayResults.length === 0 && userResults.length === 0 && !aiLoading && filteredAIBooks.length === 0 && (
+            {!zeroResults && q.length >= 2 && results.length === 0 && userResults.length === 0 && !aiLoading && filteredAIBooks.length === 0 && (
               <div className="py-6 text-center text-[13px] font-body" style={{ color: "var(--text-tertiary)" }}>
                 Aucun résultat pour cette recherche.
-              </div>
-            )}
-            {/* NL: aucun résultat IA ni classique */}
-            {isNL && !aiLoading && filteredAIBooks.length === 0 && displayResults.length === 0 && userResults.length === 0 && (
-              <div className="py-6 text-center text-[13px] font-body" style={{ color: "var(--text-tertiary)" }}>
-                Aucun résultat trouvé.
               </div>
             )}
 
@@ -679,7 +647,7 @@ export default function Search({ open, onClose, go, initialQuery = "" }) {
               <>
                 <div className="px-4 pt-2.5 pb-1 text-[10px] uppercase tracking-[1.5px] font-body font-medium" style={{ color: "var(--text-tertiary)" }}>Lecteurs</div>
                 {userResults.map(u => <UserRow key={u.id} u={u} onSelect={handleSelectUser} />)}
-                {showBooks && displayResults.length > 0 && (
+                {showBooks && results.length > 0 && (
                   <div className="px-4 pt-2.5 pb-1 text-[10px] uppercase tracking-[1.5px] font-body font-medium" style={{ color: "var(--text-tertiary)" }}>
                     Livres
                   </div>
@@ -687,46 +655,8 @@ export default function Search({ open, onClose, go, initialQuery = "" }) {
               </>
             )}
 
-            {/* NL mode: résultats IA EN PREMIER, sans séparateur ✨ */}
-            {isNL && showAI && filteredAIBooks.length > 0 && (
-              <>
-                {visibleAIBooks.map((aiBook, i) => (
-                  <div
-                    key={`ai-${i}`}
-                    onClick={() => handleAIBookClick(aiBook)}
-                    className="flex gap-2.5 py-2 px-4 items-center cursor-pointer hover:bg-surface transition-colors duration-100"
-                  >
-                    <div className="rounded-sm bg-avatar-bg flex items-center justify-center text-[10px] shrink-0" style={{ width: 24, height: 36, color: "var(--text-tertiary)" }}>✨</div>
-                    <div className="flex-1 min-w-0">
-                      <div className="text-[13px] font-medium font-body truncate">{aiBook.title}</div>
-                      <div className="text-[11px] font-body truncate" style={{ color: "var(--text-tertiary)" }}>{aiBook.author}</div>
-                      {aiBook.why && (
-                        <div className="text-[11px] font-body mt-0.5" style={{ color: "var(--text-tertiary)" }}>→ {aiBook.why}</div>
-                      )}
-                    </div>
-                  </div>
-                ))}
-                {hasMoreAI && !showAllAI && (
-                  <button
-                    onClick={(e) => { e.stopPropagation(); setShowAllAI(true); }}
-                    className="w-full py-2 text-center text-[12px] font-medium font-body cursor-pointer border-none transition-colors duration-100 hover:opacity-70"
-                    style={{ background: "transparent", color: "var(--text-tertiary)" }}
-                  >
-                    Voir plus de suggestions ✨
-                  </button>
-                )}
-              </>
-            )}
-
-            {/* NL mode: label "Autres résultats" avant les résultats classiques */}
-            {isNL && showBooks && displayResults.length > 0 && filteredAIBooks.length > 0 && (
-              <div className="px-4 pt-2.5 pb-1 text-[10px] uppercase tracking-[1.5px] font-body font-medium" style={{ color: "var(--text-tertiary)" }}>
-                Autres résultats
-              </div>
-            )}
-
-            {/* Classic book results */}
-            {showBooks && displayResults.map(gb => {
+            {/* Classic book results — Change 3: uses `results` directly (no displayResults cap) */}
+            {showBooks && results.map(gb => {
               const isDb = gb._source === "db";
               const isBnF = gb._source === "bnf";
               const itemKey = gb.googleId ?? (isDb ? `db:${gb.dbId}` : `bnf:${gb.isbn13 ?? gb.title}`);
@@ -784,10 +714,10 @@ export default function Search({ open, onClose, go, initialQuery = "" }) {
               );
             })}
 
-            {/* Non-NL mode: résultats IA en dessous avec séparateur ✨ */}
-            {!isNL && showAI && filteredAIBooks.length > 0 && (
+            {/* AI results — Change 3: unified block (no isNL split), always below classic results */}
+            {showAI && filteredAIBooks.length > 0 && (
               <>
-                {displayResults.length > 0 && (
+                {results.length > 0 && (
                   <div className="flex items-center gap-2 px-4 py-2.5">
                     <div className="flex-1 h-px" style={{ backgroundColor: "var(--border-subtle)" }} />
                     <span className="text-[10px] uppercase tracking-widest font-medium font-body" style={{ color: "var(--text-tertiary)" }}>
@@ -797,27 +727,44 @@ export default function Search({ open, onClose, go, initialQuery = "" }) {
                     <div className="flex-1 h-px" style={{ backgroundColor: "var(--border-subtle)" }} />
                   </div>
                 )}
-                {displayResults.length === 0 && interpretedAs && (
+                {results.length === 0 && interpretedAs && (
                   <div className="px-4 py-2 text-xs font-body" style={{ color: "var(--text-tertiary)" }}>
                     Compris : « {interpretedAs} »
                   </div>
                 )}
-                {visibleAIBooks.map((aiBook, i) => (
-                  <div
-                    key={`ai-${i}`}
-                    onClick={() => handleAIBookClick(aiBook)}
-                    className="flex gap-2.5 py-2 px-4 items-center cursor-pointer hover:bg-surface transition-colors duration-100"
-                  >
-                    <div className="rounded-sm bg-avatar-bg flex items-center justify-center text-[10px] shrink-0" style={{ width: 24, height: 36, color: "var(--text-tertiary)" }}>✨</div>
-                    <div className="flex-1 min-w-0">
-                      <div className="text-[13px] font-medium font-body truncate">{aiBook.title}</div>
-                      <div className="text-[11px] font-body truncate" style={{ color: "var(--text-tertiary)" }}>{aiBook.author}</div>
-                      {aiBook.why && (
-                        <div className="text-[11px] font-body mt-0.5" style={{ color: "var(--text-tertiary)" }}>→ {aiBook.why}</div>
-                      )}
+                {visibleAIBooks.map((aiBook, i) => {
+                  // Change 2: per-item spinner on the clicked row
+                  const isImportingThis = importing === 'ai-' + aiBook.title;
+                  return (
+                    <div
+                      key={`ai-${i}`}
+                      onClick={() => !isImportingThis && handleAIBookClick(aiBook)}
+                      className={`flex gap-2.5 py-2 px-4 items-center transition-colors duration-100 ${isImportingThis ? "opacity-60" : "cursor-pointer hover:bg-surface"}`}
+                    >
+                      <div className="rounded-sm bg-avatar-bg flex items-center justify-center text-[10px] shrink-0" style={{ width: 24, height: 36, color: "var(--text-tertiary)" }}>
+                        {isImportingThis ? (
+                          <div
+                            className="animate-spin"
+                            style={{
+                              width: 12,
+                              height: 12,
+                              borderRadius: "50%",
+                              border: "1.5px solid var(--border-default)",
+                              borderTopColor: "var(--text-muted)",
+                            }}
+                          />
+                        ) : "✨"}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-[13px] font-medium font-body truncate">{aiBook.title}</div>
+                        <div className="text-[11px] font-body truncate" style={{ color: "var(--text-tertiary)" }}>{aiBook.author}</div>
+                        {aiBook.why && (
+                          <div className="text-[11px] font-body mt-0.5" style={{ color: "var(--text-tertiary)" }}>→ {aiBook.why}</div>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
                 {hasMoreAI && !showAllAI && (
                   <button
                     onClick={(e) => { e.stopPropagation(); setShowAllAI(true); }}
@@ -830,13 +777,13 @@ export default function Search({ open, onClose, go, initialQuery = "" }) {
               </>
             )}
 
-            {/* Non-NL: indicateur Wave 2 en bas */}
-            {!isNL && (deepSearching || aiLoading) && displayResults.length > 0 && (
+            {/* Wave 2 indicator — Change 3: no !isNL condition */}
+            {(deepSearching || aiLoading) && results.length > 0 && (
               <div className="text-center py-2.5 text-[11px] font-body" style={{ color: "var(--text-tertiary)" }}>
                 Recherche approfondie<PulsingDots />
               </div>
             )}
-          </>
+          </div>
         )}
       </div>
 
