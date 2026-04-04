@@ -160,7 +160,19 @@ function AppShell() {
   const searchGo = searchCb || goToBook;
 
   const isLoggedIn = !!user;
-  const needsOnboarding = isLoggedIn && !profile && typeof window !== "undefined" && !localStorage.getItem("reliure_onboarding_done");
+
+  // Loading gate — ne rien décider tant que l'auth et le profil ne sont pas résolus
+  if (authLoading || (isLoggedIn && profileLoading)) {
+    return (
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: "var(--bg-primary)" }}>
+        <span className="text-[20px] font-bold tracking-tight font-body" style={{ color: "var(--text-primary)" }}>
+          reliure
+        </span>
+      </div>
+    );
+  }
+
+  const needsOnboarding = isLoggedIn && !profileLoading && !profile && typeof window !== "undefined" && !localStorage.getItem("reliure_onboarding_done");
 
   if (needsOnboarding) {
     return (

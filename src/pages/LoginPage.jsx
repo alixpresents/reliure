@@ -17,12 +17,12 @@ import { useAuth } from "../lib/AuthContext";
 import CoverBackdrop from "../components/CoverBackdrop";
 
 export default function LoginPage() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (user) navigate("/", { replace: true });
-  }, [user, navigate]);
+    if (!authLoading && user) navigate("/", { replace: true });
+  }, [user, authLoading, navigate]);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
