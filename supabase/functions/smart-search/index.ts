@@ -92,7 +92,7 @@ Deno.serve(async (req) => {
         .from("search_cache")
         .update({ hit_count: (cached.hit_count || 0) + 1 })
         .eq("query_normalized", normalizedQuery)
-        .then(() => {});
+        .then(null, () => {});
 
       return Response.json(cached.response, { headers: getCorsHeaders(req) });
     }
@@ -146,6 +146,15 @@ Deno.serve(async (req) => {
       result = { books: [], ghost: null, interpreted_as: null };
     }
 
+    // Validate structure before caching
+    if (!result || !Array.isArray(result.books)) {
+      result = { books: [], ghost: null, interpreted_as: null };
+    }
+    // Sanitize
+    result.books = (result.books || []).slice(0, 5);
+    if (typeof result.ghost !== "string") result.ghost = null;
+    if (typeof result.interpreted_as !== "string") result.interpreted_as = null;
+
     // Store in cache (7 days)
     await supabase.from("search_cache").upsert({
       query_normalized: normalizedQuery,
@@ -155,25 +164,6 @@ Deno.serve(async (req) => {
         Date.now() + 7 * 24 * 60 * 60 * 1000,
       ).toISOString(),
     });
-
-    // Auto-enrichment: import AI-discovered books into DB (fire-and-forget)
-    if (result.books?.length > 0) {
-      for (const book of result.books) {
-        if (book.isbn13 && /^\d{13}$/.test(book.isbn13)) {
-          // Check if already in DB before importing
-          const { count } = await supabase
-            .from("books")
-            .select("id", { count: "exact", head: true })
-            .eq("isbn_13", book.isbn13);
-          if (!count || count === 0) {
-            // Fire-and-forget: don't await, don't block the response
-            supabase.functions.invoke("book_import", {
-              body: { isbn: book.isbn13 },
-            }).catch(() => {}); // silently ignore errors
-          }
-        }
-      }
-    }
 
     return Response.json(result, { headers: getCorsHeaders(req) });
   } catch (error) {
