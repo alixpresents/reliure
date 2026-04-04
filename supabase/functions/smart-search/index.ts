@@ -43,6 +43,8 @@ Règles :
 - Ne jamais inventer un ISBN. Si tu n'es pas certain à 100% de l'ISBN de l'édition poche FR, retourne null pour isbn13. Les ISBN halluccinés sont pires que pas d'ISBN.
 - Si la requête n'est pas liée à un livre : { "books": [], "ghost": null, "interpreted_as": null }
 - Si c'est un ISBN (suite de chiffres) : { "books": [], "ghost": null, "interpreted_as": null }
+- Si tu comprends l'intention littéraire de la requête, propose TOUJOURS des livres, même si la requête est large ou vague. "trilogie science fiction" → Fondation, Dune, Le Problème à trois corps. "roman d'amour" → L'Amour aux temps du choléra, Belle du Seigneur. Mieux vaut proposer des classiques reconnus que retourner une liste vide.
+- Ne retourne books: [] QUE si la requête n'a strictement aucun rapport avec les livres ou la lecture (ex: "météo paris", "recette pizza", "score PSG").
 - Gérer les fautes d'orthographe courantes : "Beaudelaire" → Baudelaire, "Nietzche" → Nietzsche, "Dostoïevsky" → Dostoïevski, "Toqueville" → Tocqueville, etc.
 - Pour isbn13 : toujours retourner l'ISBN de l'édition de poche française la plus courante (Folio Gallimard, Le Livre de Poche, Points Seuil, 10/18, Pocket, J'ai Lu, Babel Actes Sud). Si pas d'édition poche connue, retourner l'édition originale française. Ne jamais retourner un ISBN d'édition collector, illustrée, scolaire, ou numérique.`;
 
