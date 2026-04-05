@@ -5,7 +5,7 @@ export const RESERVED_USERNAMES = new Set([
   "blog", "boutique", "vod", "podcast", "prix", "auteurs", "auteur", "editeurs", "editeur",
   "librairies", "librairie", "club", "clubs", "magazine", "revue", "agenda", "evenements",
   "partenaires", "presse", "pro", "entreprise", "equipe", "emplois", "careers",
-  "bibliotheque", "critiques", "listes", "liste", "bilan",
+  "bibliotheque", "critiques", "listes", "liste", "bilan","boussole",
   // Génériques
   "admin", "api", "app", "about", "help", "search", "settings", "static", "assets",
   "public", "private", "dashboard", "account", "accounts", "signup", "register", "logout",

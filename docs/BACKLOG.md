@@ -844,50 +844,43 @@ Un champ rejeté ne consomme pas de crédit.
 
 ---
 
-## 15. Recommandations personnalisées IA
+## 15. Recommandations personnalisées IA ("Tu pourrais aimer")
 
-**Statut :** Post-bêta · Différenciateur majeur
-**Portée :** Nouvelle section profil + algorithme de recommandation
+**Statut :** ✅ Implémenté — 5 avril 2026
+**Portée :** Section profil + edge function + cache DB
 
-### Le concept
-"Basé sur tes 5 derniers livres, tu pourrais aimer..."
-Une recommandation personnalisée générée par IA à partir
-de l'historique de lecture réel de l'utilisateur.
-Ni Letterboxd ni Babelio ne font ça bien.
-C'est un territoire libre sur le marché francophone.
+### Ce qui est implémenté
 
-### Pourquoi c'est fort
-- La recommandation algorithmique classique nécessite
-  des millions d'utilisateurs (cold start problem)
-- L'IA générative peut faire des recommandations
-  pertinentes dès le premier utilisateur, à partir
-  de seulement 5-10 livres lus
-- C'est visible, utile, et immédiatement perçu
-  comme de la valeur par l'utilisateur
+**Migration `030_book_recommendations.sql`** :
+- Table `book_recommendations` : `user_id` (UNIQUE), `recommendations` (jsonb), `model_used`, `tokens_used`, `context_hash` (SHA-256), `generated_at`, `expires_at`
+- RLS : lecture/écriture owner only
+- Note : pas d'index partiel `WHERE expires_at > now()` (now() non IMMUTABLE en PostgreSQL)
 
-### Implémentation envisagée
-- Déclenchement : quand l'user a 5+ livres lus
-- Contexte envoyé à Claude Sonnet :
-  liste des livres lus avec notes, auteurs, années, thèmes
-- Output : 3 recommandations avec explication courte
-  "Parce que tu as aimé Bolaño, tu pourrais aimer..."
-- Affichage : section "Pour toi" sur la page Explorer
-  ou widget sur le profil
-- Rafraîchissement : hebdomadaire ou après 3 nouvelles lectures
-- Cache Supabase : stocker les recommandations pour ne pas
-  recalculer à chaque visite
+**Edge function `book-recommendations`** :
+- Flow : JWT auth → cache check → rate limit 24h → collectSignals → guard < 5 livres (204) → context hash check → Claude Sonnet → parse → resolve books → filter existants → require ≥ 3 valides → upsert → retour
+- `collectSignals()` : reading_status + reviews comme 2 requêtes séparées (pas de FK entre les deux tables, PostgREST join embedded échoue silencieusement). Construit un `reviewMap: Map<book_id, {rating, body}>`.
+- `buildWeightedContext()` : favoris ×5, note 5 ×4, relecture ×4, note 4 ×3, citations ×2.5, critique ×2, abandonné ×(−2), note 1-2 ×(−3)
+- Résolution de chaque reco : ISBN-13 checksum → lookup DB → findByTitleAuthor → book_import si absent
+- Context hash (SHA-256) : skip Sonnet si profil inchangé, renouveler seulement `expires_at`
 
-### Modèle recommandé
-Claude Sonnet (meilleure qualité de recommandation
-que Haiku pour ce type de raisonnement littéraire).
-Coût estimé : ~$0.01 par génération, 1x/semaine max.
+**Hook `useRecommendations(userId)`** :
+- TanStack Query `["recommendations", userId]`, staleTime 10min, gcTime 30min
+- 204 → `{ notEnough: true }`, `rate_limited` flag géré
+- `dismissed` state client-side, `generateRecommendations()` (invalidation), `dismissRecommendation(bookId)`
 
-### Ce qu'on ne fait PAS en v1
-- Pas de recommandations temps réel
-- Pas d'explication algorithmique visible ("parce que
-  tu as noté X étoiles à Y") — garder ça magique
-- Pas de recommandations sociales (ce que tes amis lisent
-  est dans le fil, pas dans les recommandations perso)
+**Composant `RecommendationsSection`** :
+- ProfilePage, `isOwnProfile` uniquement, après "En cours"
+- 5 états : notEnough→null, isError→toast seul, isLoading→skeleton, all-dismissed→message + lien refresh, display
+- Couvertures responsive `clamp(90px, 24vw, 110px)`, `<Img className="w-full">` pour remplir le wrapper
+- Clic couverture → raison expandée, `key={selectedReco.book_id}` déclenche l'animation `recoReasonIn` à chaque changement
+- "＋ À lire" : upsert reading_status + dismiss animé + toast, "Pas intéressé" : dismiss, "Voir le livre" : navigate
+- Dismiss : `dismissingIds` Set, opacity+scale 200ms puis retrait DOM
+- Refresh : spinner CSS `spin` quand `refreshPending && isFetching`, "↻ Demain" quand rate limited
+
+### Ce qu'on ne fait PAS
+- Pas de recommandations sociales (fil d'activité pour ça)
+- Pas de filtrage collaboratif (l'IA résout le cold start dès 5 livres)
+- Pas de micro-questionnaire "tu aimes plutôt…" (l'IA déduit depuis l'historique)
 
 ---
 
@@ -1871,4 +1864,49 @@ Electre NG est désormais la **source de référence prioritaire** dans le pipel
 - Si non connecté : message "Connectez-vous pour ajouter ce livre à Reliure" avec lien login
 - Plus de retry silencieux sur 401
 
-*Dernière mise à jour : 4 avril 2026 — Entrées 36-37 : Electre NG, optimisation recherche/prerendering, CORS, auth guard import IA*
+---
+
+## 38. Boussole — Découverte par ambiance et intrigue
+
+**Statut :** ✅ Implémenté — 5 avril 2026
+**Portée :** `/explorer/boussole` + table `book_facets` + tagging IA
+
+### Ce qui est implémenté
+
+**Table `book_facets`** (migration antérieure) :
+- `book_id` (FK), `moods` (text[]), `rythme`, `registre`, `protag_age`, `protag_genre`, `intrigues` (text[])
+- Valeurs validées : moods (contemplatif, mélancolique, joyeux, sombre, drôle, poétique, intense, relaxant), rythme (lent, moyen, rapide), registre (léger, sérieux, les_deux), protag_age (enfant, ado, adulte, senior, mixte), protag_genre (femme, homme, non_binaire, mixte, absent), intrigues (amour, amitié, famille, deuil, identité, voyage, enquête, guerre, nature, politique, rédemption, survie)
+- RPC `search_boussole(p_moods, p_rythme, p_registre, p_protag_age, p_protag_genre, p_intrigues, p_limit, p_offset)` — opérateurs d'overlap `&&` pour les arrays, filtres optionnels
+
+**Tagging IA automatique (`scripts/tag-book-facets.mjs`)** :
+- Script batch : livres fiction avec description ≥ 50 chars, pas encore dans `book_facets`
+- Pagination 1000 lignes / page pour dépasser la limite Supabase
+- Claude Haiku : prompt structuré → JSON validé → upsert `book_facets`
+- Dry-run par défaut, `--apply` pour exécuter, `--limit N` pour tester
+
+**Tagging fire-and-forget dans `book_import`** :
+- Après chaque upsert de livre avec `flag_fiction = true` et description ≥ 50 chars
+- Vérifie l'absence dans `book_facets` avant d'appeler Haiku
+- `.catch(e => console.error(...))` — ne bloque pas la réponse
+
+**Hook `useBoussole(filters)`** (`src/hooks/useBoussole.js`) :
+- TanStack Query `["boussole", ...filterValues]`, staleTime 5min
+- `enabled: !!hasAnyFilter` (strict boolean TanStack Query v5)
+- Normalise les résultats RPC en objets `{ id, t, a, c, slug }`
+
+**Page `BoussolePage`** (`src/pages/BoussolePage.jsx`) :
+- 2 onglets : "Ambiance" (moods + rythme + registre) et "Personnage & Intrigue" (protag_age, protag_genre, intrigues)
+- Filtres partagés entre les deux onglets (état unique au niveau page)
+- Moods : max 3 sélectionnables, Intrigues : max 2
+- État vide : 6 raccourcis thématiques ("Un roman mélancolique", "Quelque chose d'intense"...)
+- Grille de résultats avec animation staggered `boussoleCardIn` (60ms par carte)
+- SEO : `meta()` export, prerendering ajouté dans `react-router.config.ts`
+- Sitemap : `{ loc: "/explorer/boussole", priority: "0.6", changefreq: "weekly" }`
+
+**CTA sur ExplorePage** :
+- Card cliquable `→ /explorer/boussole` entre la barre de recherche et les thèmes
+- "Quel livre pour toi en ce moment ? / Trouve par ambiance, intrigue, personnage"
+
+---
+
+*Dernière mise à jour : 5 avril 2026 — Entrées 15, 38 : Recommandations IA "Tu pourrais aimer" (Phase 1+2+polish), Boussole (découverte par facets), tagging facets fire-and-forget*
