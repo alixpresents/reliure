@@ -62,6 +62,7 @@ Différenciateurs : journal éditorial intégré (La Revue), citations comme fea
 ### Pages globales
 - `/` → ExplorePage (route primaire)
 - `/explorer` → redirige vers `/` (301)
+- `/explorer/boussole` → BoussolePage (découverte par humeur/intrigue)
 - `/explorer/theme/:tag` → TagPage
 - `/citations` → CitationsPage
 - `/fil` → FeedPage (protégée)
@@ -132,7 +133,7 @@ Scripts dans `scripts/` et `seeds/`. Tous : dry-run par défaut, `--apply` pour 
 ## Architecture de données
 
 ### Tables principales
-`users`, `books` (avec `slug`, `description`, `ai_confidence`, `electre_notice_id`, `oeuvre_id`, `collection_name`, `flag_fiction`, `quatrieme_de_couverture`, `disponibilite`, `norm_title`/`norm_authors` GENERATED STORED), `reviews` (avec `reply_count`), `review_replies`, `reading_status` (avec `is_reread`), `reading_log_tags`, `user_favorites` (position 1-4), `lists` (avec colonnes `is_curated`/`curator_*`), `list_items`, `follows`, `activity`, `quotes`, `likes` (polymorphe), `search_cache`, `badge_definitions`, `user_badges` (max 3 `is_pinned`), `user_points`, `point_events`, `reserved_usernames`, `notifications`.
+`users`, `books` (avec `slug`, `description`, `ai_confidence`, `electre_notice_id`, `oeuvre_id`, `collection_name`, `flag_fiction`, `quatrieme_de_couverture`, `disponibilite`, `norm_title`/`norm_authors` GENERATED STORED), `reviews` (avec `reply_count`), `review_replies`, `reading_status` (avec `is_reread`), `reading_log_tags`, `user_favorites` (position 1-4), `lists` (avec colonnes `is_curated`/`curator_*`), `list_items`, `follows`, `activity`, `quotes`, `likes` (polymorphe), `search_cache`, `badge_definitions`, `user_badges` (max 3 `is_pinned`), `user_points`, `point_events`, `reserved_usernames`, `notifications`, `book_facets` (moods, rythme, registre, protag, intrigues — feature Boussole).
 
 Schéma complet : `schema.sql`.
 
@@ -199,6 +200,7 @@ Toutes les couleurs via CSS custom properties dans `src/index.css` (`:root` ligh
   - `["booksByGenre", genre]`, `["feed"]`, `["reviewReplies", reviewId]`
   - `["otherEditions", oeuvreId, bookId]`, `["bookCuratedSelections", bookId]`
   - `["notifications"]` (staleTime 1min), `["unreadCount"]` (staleTime 30s)
+  - `["boussole", filters]`, `["boussoleCount"]`
 - **Invalidation cross-cache** : après mutation, invalider toutes les queryKeys affectées.
 - **Optimistic UI** : préserver le pattern `safeMutation` + `useRef` pour les toggles likes.
 
@@ -222,7 +224,7 @@ Onglets profil : Journal, Bibliothèque, À lire, Mes critiques, Mes citations, 
 
 ## RLS
 
-Tables lecture publique : `users`, `books`, `reading_status`, `user_favorites`, `reviews`, `quotes`, `follows`.
+Tables lecture publique : `users`, `books`, `reading_status`, `user_favorites`, `reviews`, `quotes`, `follows`, `book_facets`.
 Lecture conditionnelle : `lists` (is_public OR owner), `list_items` (via parent list).
 Privées : `reading_log_tags`, `point_events`.
 Écriture : toujours `auth.uid() = user_id`.

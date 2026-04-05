@@ -645,3 +645,37 @@ create policy "Supprimer ses notifications" on public.notifications for delete u
 -- Triggers : trg_notify_follow (follows), trg_notify_like (likes), trg_notify_badge (user_badges)
 -- Nettoyage : pg_cron cleanup-old-notifications (>90 jours, dimanche 3h)
 -- Realtime : ALTER PUBLICATION supabase_realtime ADD TABLE public.notifications
+
+-- ═══════════════════════════════════════════════
+-- Table book_facets (migration 029_book_facets.sql)
+-- Feature Boussole : découverte par humeur, personnage et intrigue
+-- ═══════════════════════════════════════════════
+
+-- Fonction de validation : chaque élément d'un array doit être dans la liste autorisée
+-- validate_facet_array(arr text[], allowed text[]) → boolean
+
+create table public.book_facets (
+  book_id uuid references public.books(id) on delete cascade primary key,
+  moods text[] default '{}',         -- max 4 parmi : réconfortant, sombre, drôle, mélancolique, haletant, contemplatif, dérangeant, lumineux, sensuel, poétique
+  rythme text check (rythme in ('lent', 'rapide')),
+  registre text check (registre in ('léger', 'grave', 'ironique')),
+  protag_age text check (protag_age in ('enfant', 'ado', 'jeune_adulte', 'age_mur', 'senior')),
+  protag_genre text check (protag_genre in ('femme', 'homme', 'non_binaire', 'collectif')),
+  intrigues text[] default '{}',     -- max 4 parmi : quête, famille, amour, deuil, identité, voyage, guerre, société, survie, amitié
+  source text default 'ai' check (source in ('ai', 'community', 'editorial')),
+  confidence numeric(3,2) default 0.5,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+create index book_facets_moods_idx on public.book_facets using gin (moods);
+create index book_facets_intrigues_idx on public.book_facets using gin (intrigues);
+create index book_facets_scalar_idx on public.book_facets (rythme, registre, protag_age, protag_genre);
+
+alter table public.book_facets enable row level security;
+create policy "book_facets_public_read" on public.book_facets for select using (true);
+-- Écriture via service key uniquement (scripts batch)
+
+-- RPC search_boussole(p_moods, p_rythme, p_registre, p_protag_age, p_protag_genre, p_intrigues, p_limit, p_offset)
+-- Retourne books + facets + relevance_score (nb de filtres matchés), triés par pertinence puis rating_count
+-- Filtre confidence >= 0.5
