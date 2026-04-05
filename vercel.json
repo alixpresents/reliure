@@ -3,7 +3,8 @@
   "outputDirectory": "build/client",
   "trailingSlash": false,
   "redirects": [
-    { "source": "/explorer", "destination": "/", "permanent": true }
+    { "source": "/explorer", "destination": "/", "permanent": true },
+    { "source": "/:path(.*)", "has": [{ "type": "host", "value": "www.reliure.page" }], "destination": "https://reliure.page/:path", "permanent": true }
   ],
   "rewrites": [
     {
