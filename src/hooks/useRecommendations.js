@@ -7,7 +7,7 @@ export function useRecommendations(userId) {
   // Dismissed book IDs — client-side only, not persisted
   const [dismissed, setDismissed] = useState([]);
 
-  const { data, isLoading, isError } = useQuery({
+  const { data, isLoading, isFetching, isError } = useQuery({
     queryKey: ["recommendations", userId],
     queryFn: async () => {
       const { data, error } = await supabase.functions.invoke(
@@ -43,6 +43,7 @@ export function useRecommendations(userId) {
     notEnough: data?.notEnough ?? false,
     rateLimited: data?.rate_limited ?? false,
     isLoading,
+    isFetching,
     isError,
     generateRecommendations,
     dismissRecommendation,
