@@ -53,7 +53,7 @@ export function meta({ data, params }) {
     { name: "twitter:card", content: "summary_large_image" },
     { name: "twitter:title", content: `${book.title} — ${authors}` },
     { name: "twitter:image", content: book.cover_url || "" },
-    { tagName: "link", rel: "canonical", href: `${import.meta.env.VITE_SITE_URL || "https://www.reliure.page"}/livre/${params.slug}` },
+    { tagName: "link", rel: "canonical", href: `${import.meta.env.VITE_SITE_URL || "https://reliure.page"}/livre/${params.slug}` },
   ];
 }
 

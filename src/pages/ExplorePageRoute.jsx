@@ -66,7 +66,7 @@ export function meta() {
     { property: "og:type", content: "website" },
     { property: "og:site_name", content: "Reliure" },
     { name: "twitter:card", content: "summary_large_image" },
-    { tagName: "link", rel: "canonical", href: `${import.meta.env.VITE_SITE_URL || "https://www.reliure.page"}/` },
+    { tagName: "link", rel: "canonical", href: `${import.meta.env.VITE_SITE_URL || "https://reliure.page"}/` },
   ];
 }
 
