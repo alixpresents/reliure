@@ -133,7 +133,7 @@ Scripts dans `scripts/` et `seeds/`. Tous : dry-run par défaut, `--apply` pour 
 ## Architecture de données
 
 ### Tables principales
-`users`, `books` (avec `slug`, `description`, `ai_confidence`, `electre_notice_id`, `oeuvre_id`, `collection_name`, `flag_fiction`, `quatrieme_de_couverture`, `disponibilite`, `norm_title`/`norm_authors` GENERATED STORED), `reviews` (avec `reply_count`), `review_replies`, `reading_status` (avec `is_reread`), `reading_log_tags`, `user_favorites` (position 1-4), `lists` (avec colonnes `is_curated`/`curator_*`), `list_items`, `follows`, `activity`, `quotes`, `likes` (polymorphe), `search_cache`, `badge_definitions`, `user_badges` (max 3 `is_pinned`), `user_points`, `point_events`, `reserved_usernames`, `notifications`, `book_facets` (moods, rythme, registre, protag, intrigues — feature Boussole).
+`users`, `books` (avec `slug`, `description`, `ai_confidence`, `electre_notice_id`, `oeuvre_id`, `collection_name`, `flag_fiction`, `quatrieme_de_couverture`, `disponibilite`, `norm_title`/`norm_authors` GENERATED STORED), `reviews` (avec `reply_count`), `review_replies`, `reading_status` (avec `is_reread`), `reading_log_tags`, `user_favorites` (position 1-4), `lists` (avec colonnes `is_curated`/`curator_*`), `list_items`, `follows`, `activity`, `quotes`, `likes` (polymorphe), `search_cache`, `badge_definitions`, `user_badges` (max 3 `is_pinned`), `user_points`, `point_events`, `reserved_usernames`, `notifications`, `book_facets` (moods, rythme, registre, protag, intrigues — feature Boussole), `book_recommendations` (recos IA personnalisées, 1 set/user, TTL 7j, owner-only).
 
 Schéma complet : `schema.sql`.
 
@@ -201,6 +201,7 @@ Toutes les couleurs via CSS custom properties dans `src/index.css` (`:root` ligh
   - `["otherEditions", oeuvreId, bookId]`, `["bookCuratedSelections", bookId]`
   - `["notifications"]` (staleTime 1min), `["unreadCount"]` (staleTime 30s)
   - `["boussole", filters]`, `["boussoleCount"]`
+  - `["recommendations", userId]` (staleTime 10min, cache DB 7j, rate limit 1/24h)
 - **Invalidation cross-cache** : après mutation, invalider toutes les queryKeys affectées.
 - **Optimistic UI** : préserver le pattern `safeMutation` + `useRef` pour les toggles likes.
 
@@ -226,7 +227,7 @@ Onglets profil : Journal, Bibliothèque, À lire, Mes critiques, Mes citations, 
 
 Tables lecture publique : `users`, `books`, `reading_status`, `user_favorites`, `reviews`, `quotes`, `follows`, `book_facets`.
 Lecture conditionnelle : `lists` (is_public OR owner), `list_items` (via parent list).
-Privées : `reading_log_tags`, `point_events`.
+Privées : `reading_log_tags`, `point_events`, `book_recommendations` (owner-only SELECT, écriture via edge function service_role).
 Écriture : toujours `auth.uid() = user_id`.
 `notifications` : lecture/update/delete owner only, INSERT via triggers SECURITY DEFINER.
 
@@ -236,7 +237,7 @@ Toutes accessibles sans compte sauf `/fil`, `/parametres`, `/backfill`. `isOwnPr
 
 ## Ce qu'on ne fait PAS au MVP
 
-- Pas de recommandations algorithmiques, pas de clubs de lecture, pas d'app mobile native (PWA)
+- Pas de recommandations collaborative filtering (les recos sont LLM content-based via `book-recommendations` edge function), pas de clubs de lecture, pas d'app mobile native (PWA)
 - Pas de messagerie privée, pas de scan code-barres, pas de lien librairies
 - Pas de notifications push, pas de table AUTHORS séparée (JSONB suffit)
 - Pas de micro-questionnaire post-lecture (les facets sont enrichis par IA batch uniquement)

@@ -24,6 +24,7 @@ import CreateListModal from "../components/CreateListModal";
 import Skeleton from "../components/Skeleton";
 import Toast from "../components/Toast";
 import RoleBadge from "../components/RoleBadge";
+import RecommendationsSection from "../components/RecommendationsSection";
 import LevelBadge from "../components/LevelBadge";
 import { useToast } from "../hooks/useToast";
 import { useUserRole } from "../hooks/useUserRole";
@@ -932,6 +933,9 @@ export default function ProfilePage({ viewedProfile, initialTab }) {
           </EmptyState>
         )}
       </div>
+
+      {/* Tu pourrais aimer — owner only */}
+      {isOwnProfile && <RecommendationsSection userId={user.id} />}
 
       {/* Tabs */}
       <div className="border-t border-border-light">
