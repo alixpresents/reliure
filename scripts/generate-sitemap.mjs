@@ -23,6 +23,7 @@ async function generateSitemap() {
     { loc: "/la-revue", priority: "0.6", changefreq: "weekly" },
     { loc: "/defis", priority: "0.5", changefreq: "weekly" },
     { loc: "/selections", priority: "0.7", changefreq: "weekly" },
+    { loc: "/explorer/boussole", priority: "0.6", changefreq: "weekly" },
   ];
   urls.push(...staticPages);
 

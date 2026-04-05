@@ -17,6 +17,7 @@ export default {
       "/login",
       "/selections",
       "/classement",
+      "/explorer/boussole",
     ];
 
     // Book slugs — top 1000 most active (at least 1 review, quote or reading_status)

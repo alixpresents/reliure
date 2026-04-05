@@ -34,7 +34,7 @@ export function useBoussole(filters) {
       if (error) throw error;
       return data ?? [];
     },
-    enabled: hasAnyFilter,
+    enabled: !!hasAnyFilter,
     staleTime: 5 * 60 * 1000,
   });
 
