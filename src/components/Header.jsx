@@ -1,8 +1,9 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, lazy, Suspense } from "react";
 import { NavLink, Link, useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 import Avatar from "./Avatar";
-import Search from "./Search";
+
+const Search = lazy(() => import("./Search"));
 import NotificationBell from "./NotificationBell";
 import NotificationPanel from "./NotificationPanel";
 import { useNotifications } from "../hooks/useNotifications";
@@ -10,6 +11,11 @@ import { getNotificationLink } from "../utils/notificationHelpers";
 
 export default function Header({ onSearch, onClose, searchOpen, searchGo, searchInitialQuery = "", initials = "?", username, avatarUrl, isLoggedIn = true, theme, toggleTheme }) {
   const [menuOpen, setMenuOpen] = useState(false);
+  // Lazy-mount Search : ne charger le chunk qu'à la première ouverture
+  const [searchMounted, setSearchMounted] = useState(false);
+  useEffect(() => {
+    if (searchOpen && !searchMounted) setSearchMounted(true);
+  }, [searchOpen, searchMounted]);
   const [notifOpen, setNotifOpen] = useState(false);
   const navigate = useNavigate();
   const { notifications, unreadCount, isLoading: notifLoading, markAsRead, markOneAsRead } = useNotifications();
@@ -209,8 +215,12 @@ export default function Header({ onSearch, onClose, searchOpen, searchGo, search
           </Link>
         )}
 
-        {/* Search dropdown — positioned relative to header bar */}
-        <Search open={searchOpen} onClose={onClose} go={searchGo} initialQuery={searchInitialQuery} />
+        {/* Search dropdown — chargé lazily à la première ouverture */}
+        {searchMounted && (
+          <Suspense fallback={null}>
+            <Search open={searchOpen} onClose={onClose} go={searchGo} initialQuery={searchInitialQuery} />
+          </Suspense>
+        )}
       </div>
     </header>
   );
