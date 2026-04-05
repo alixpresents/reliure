@@ -7,17 +7,6 @@ import {
   useRouteError,
   isRouteErrorResponse,
 } from "react-router";
-import NotFoundPage from "./pages/NotFoundPage";
-
-export function meta() {
-  return [
-    { title: "Reliure — Le réseau social de lecture francophone" },
-    { name: "description", content: "Reliure est une bibliothèque personnelle et un réseau social littéraire pour la communauté francophone. Critiques, citations, listes et journal de lecture." },
-    { property: "og:site_name", content: "Reliure" },
-    { property: "og:type", content: "website" },
-    { name: "twitter:card", content: "summary_large_image" },
-  ];
-}
 import { useState, useEffect, lazy, Suspense } from "react";
 import { useNavigate } from "react-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -28,15 +17,26 @@ import AnnouncementBanner from "./components/AnnouncementBanner";
 import ScrollToTop from "./components/ScrollToTop";
 import { NavigationProvider } from "./lib/NavigationContext";
 import JoinBanner from "./components/JoinBanner";
-import OnboardingTooltip from "./components/OnboardingTooltip";
 import Toast from "./components/Toast";
-import BadgeToast from "./components/BadgeToast";
 import { useToast } from "./hooks/useToast";
 import { useTheme } from "./hooks/useTheme";
 import { useNewBadges } from "./hooks/useNewBadges";
 import "./index.css";
 
+const NotFoundPage = lazy(() => import("./pages/NotFoundPage"));
 const OnboardingPage = lazy(() => import("./pages/OnboardingPage"));
+const OnboardingTooltip = lazy(() => import("./components/OnboardingTooltip"));
+const BadgeToast = lazy(() => import("./components/BadgeToast"));
+
+export function meta() {
+  return [
+    { title: "Reliure — Le réseau social de lecture francophone" },
+    { name: "description", content: "Reliure est une bibliothèque personnelle et un réseau social littéraire pour la communauté francophone. Critiques, citations, listes et journal de lecture." },
+    { property: "og:site_name", content: "Reliure" },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary_large_image" },
+  ];
+}
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -97,14 +97,24 @@ export function Layout({ children }: { children: React.ReactNode }) {
 }
 
 export function HydrateFallback() {
-  return <div id="splash">reliure</div>;
+  return (
+    <div id="splash">
+      <h1 style={{ fontFamily: "'EB Garamond', serif", fontSize: "clamp(22px, 5vw, 26px)", fontWeight: 400, lineHeight: 1.3, textAlign: "center", maxWidth: 480, margin: 0, padding: "0 24px", color: "inherit" }}>
+        La bibliothèque personnelle des lecteurs francophones.
+      </h1>
+    </div>
+  );
 }
 
 export function ErrorBoundary() {
   const error = useRouteError();
 
   if (isRouteErrorResponse(error) && error.status === 404) {
-    return <NotFoundPage />;
+    return (
+      <Suspense fallback={<div style={{ minHeight: "100vh", background: "var(--bg-primary)" }} />}>
+        <NotFoundPage />
+      </Suspense>
+    );
   }
 
   return (
@@ -189,10 +199,10 @@ function AppShell() {
   // Loading gate — ne rien décider tant que l'auth et le profil ne sont pas résolus
   if (authLoading || (isLoggedIn && profileLoading)) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: "var(--bg-primary)" }}>
-        <span className="text-[20px] font-bold tracking-tight font-body" style={{ color: "var(--text-primary)" }}>
-          reliure
-        </span>
+      <div className="min-h-screen flex items-center justify-center px-6" style={{ backgroundColor: "var(--bg-primary)" }}>
+        <h1 className="font-display font-normal text-center" style={{ fontSize: "clamp(22px, 5vw, 26px)", lineHeight: 1.3, maxWidth: 480, margin: 0, color: "var(--text-primary)" }}>
+          La bibliothèque personnelle des lecteurs francophones.
+        </h1>
       </div>
     );
   }
@@ -249,13 +259,19 @@ function AppShell() {
       </NavigationProvider>
       {!isLoggedIn && <JoinBanner />}
       {walkthroughActive && (
-        <OnboardingTooltip
-          onComplete={() => setWalkthroughActive(false)}
-          showToast={showToast}
-        />
+        <Suspense fallback={null}>
+          <OnboardingTooltip
+            onComplete={() => setWalkthroughActive(false)}
+            showToast={showToast}
+          />
+        </Suspense>
       )}
       {toast.visible && <Toast message={toast.message} />}
-      {isLoggedIn && <BadgeToast badge={newBadge} onDismiss={dismissBadge} />}
+      {isLoggedIn && newBadge && (
+        <Suspense fallback={null}>
+          <BadgeToast badge={newBadge} onDismiss={dismissBadge} />
+        </Suspense>
+      )}
     </div>
   );
 }
