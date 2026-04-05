@@ -260,7 +260,7 @@ export default function RecommendationsSection({ userId }) {
                   book={book}
                   w={110}
                   h={165}
-                  className="w-full"
+                  className="w-full h-full"
                   onClick={() => handleBookClick(reco.book_id)}
                 />
               </div>
@@ -333,13 +333,15 @@ export default function RecommendationsSection({ userId }) {
             >
               Pas intéressé
             </button>
-            <button
-              onClick={() => navigate(`/livre/${selectedReco.slug || selectedReco.book_id}`)}
-              className="font-body bg-transparent border-none cursor-pointer underline transition-opacity duration-150 hover:opacity-70"
-              style={{ fontSize: 11, color: "var(--text-muted)", padding: 0 }}
-            >
-              Voir le livre
-            </button>
+            {selectedReco.slug && (
+              <button
+                onClick={() => navigate(`/livre/${selectedReco.slug}`)}
+                className="font-body bg-transparent border-none cursor-pointer underline transition-opacity duration-150 hover:opacity-70"
+                style={{ fontSize: 11, color: "var(--text-muted)", padding: 0 }}
+              >
+                Voir le livre
+              </button>
+            )}
           </div>
         </div>
       )}

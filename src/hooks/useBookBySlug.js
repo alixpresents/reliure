@@ -18,12 +18,21 @@ export function mapBook(data) {
   };
 }
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 async function fetchBook(slug) {
   const _t0 = performance.now();
-  let { data, error } = await supabase.from("books").select("*").eq("slug", slug).single();
-  if (error || !data) {
+  let data;
+  if (UUID_RE.test(slug)) {
     const res = await supabase.from("books").select("*").eq("id", slug).single();
     data = res.data;
+  } else {
+    const res = await supabase.from("books").select("*").eq("slug", slug).single();
+    data = res.data;
+    if (!data) {
+      const res2 = await supabase.from("books").select("*").eq("id", slug).single();
+      data = res2.data;
+    }
   }
   console.log('[perf] useBookBySlug:', Math.round(performance.now() - _t0), 'ms');
   if (!data) throw new Error("not_found");

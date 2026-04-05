@@ -2,10 +2,16 @@ import { useState, useCallback } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../lib/supabase";
 
+function getDismissedKey(uid) { return `reliure_dismissed_recos_${uid}`; }
+
+function readDismissed(uid) {
+  if (!uid) return [];
+  try { return JSON.parse(localStorage.getItem(getDismissedKey(uid)) || "[]"); } catch { return []; }
+}
+
 export function useRecommendations(userId) {
   const queryClient = useQueryClient();
-  // Dismissed book IDs — client-side only, not persisted
-  const [dismissed, setDismissed] = useState([]);
+  const [dismissed, setDismissed] = useState(() => readDismissed(userId));
 
   const { data, isLoading, isFetching, isError } = useQuery({
     queryKey: ["recommendations", userId],
@@ -27,12 +33,18 @@ export function useRecommendations(userId) {
   });
 
   const generateRecommendations = useCallback(() => {
+    if (userId) localStorage.removeItem(getDismissedKey(userId));
+    setDismissed([]);
     queryClient.invalidateQueries({ queryKey: ["recommendations", userId] });
   }, [queryClient, userId]);
 
   const dismissRecommendation = useCallback((bookId) => {
-    setDismissed(prev => [...prev, bookId]);
-  }, []);
+    setDismissed(prev => {
+      const next = [...prev, bookId];
+      if (userId) localStorage.setItem(getDismissedKey(userId), JSON.stringify(next));
+      return next;
+    });
+  }, [userId]);
 
   const recommendations = (data?.recommendations ?? []).filter(
     r => !dismissed.includes(r.book_id),
