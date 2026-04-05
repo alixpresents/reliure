@@ -504,6 +504,135 @@ async function findByTitleAuthor(
 }
 
 // ---------------------------------------------------------------------------
+// Facet tagging — fire-and-forget, called after successful book upsert
+// ---------------------------------------------------------------------------
+
+const VALID_MOODS = new Set([
+  "réconfortant", "sombre", "drôle", "mélancolique", "haletant",
+  "contemplatif", "dérangeant", "lumineux", "sensuel", "poétique",
+]);
+const VALID_INTRIGUES = new Set([
+  "quête", "famille", "amour", "deuil", "identité",
+  "voyage", "guerre", "société", "survie", "amitié",
+]);
+const VALID_RYTHME = new Set(["lent", "rapide"]);
+const VALID_REGISTRE = new Set(["léger", "grave", "ironique"]);
+const VALID_PROTAG_AGE = new Set(["enfant", "ado", "jeune_adulte", "age_mur", "senior"]);
+const VALID_PROTAG_GENRE = new Set(["femme", "homme", "non_binaire", "collectif"]);
+
+async function tagBookFacets(
+  // deno-lint-ignore no-explicit-any
+  supabase: any,
+  bookId: string,
+  title: string | null,
+  authors: string[] | null,
+  description: string | null,
+  genres: string[] | null,
+  publicationDate: string | null,
+  pageCount: number | null,
+): Promise<void> {
+  if (!description || description.length < 50) return;
+
+  const { data: existing } = await supabase
+    .from("book_facets")
+    .select("book_id")
+    .eq("book_id", bookId)
+    .maybeSingle();
+  if (existing) return;
+
+  const anthropicKey = Deno.env.get("ANTHROPIC_API_KEY");
+  if (!anthropicKey) return;
+
+  const t = title || "";
+  const a = Array.isArray(authors) ? authors.join(", ") : (authors || "");
+  const desc = description.slice(0, 1500);
+  const g = genres || [];
+  const year = publicationDate ? publicationDate.slice(0, 4) : null;
+
+  const prompt = `Tu es un bibliothécaire expert. Analyse ce livre et retourne UNIQUEMENT un JSON valide, sans markdown.
+
+Titre : "${t}"
+Auteur(s) : "${a}"
+Description : "${desc}"
+Genres : ${JSON.stringify(g)}
+Année : ${year || "inconnue"}
+Pages : ${pageCount || "inconnu"}
+
+Retourne :
+{
+  "moods": ["mot1", "mot2"],
+  "rythme": "lent" ou "rapide",
+  "registre": "léger", "grave" ou "ironique",
+  "protag_age": "enfant", "ado", "jeune_adulte", "age_mur" ou "senior",
+  "protag_genre": "femme", "homme", "non_binaire" ou "collectif",
+  "intrigues": ["mot1", "mot2"],
+  "confidence": 0.85
+}
+
+Règles :
+- moods : 1 à 3 valeurs parmi UNIQUEMENT : réconfortant, sombre, drôle, mélancolique, haletant, contemplatif, dérangeant, lumineux, sensuel, poétique
+- intrigues : 1 à 3 valeurs parmi UNIQUEMENT : quête, famille, amour, deuil, identité, voyage, guerre, société, survie, amitié
+- rythme : "lent" si roman d'ambiance/introspectif, "rapide" si thriller/page-turner/aventure
+- registre : "léger" si ton détendu/humoristique, "grave" si ton sérieux/dramatique, "ironique" si satire/distance/cynisme
+- protag_age : âge du protagoniste principal. "collectif" pour protag_genre si pas de protagoniste unique
+- confidence : 0.9+ si tu connais bien le livre, 0.7-0.9 si tu déduis de la description, <0.7 si tu devines
+- Si la description est trop courte ou vague pour un champ, mets null pour ce champ`;
+
+  const res = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: {
+      "x-api-key": anthropicKey,
+      "anthropic-version": "2023-06-01",
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({
+      model: "claude-haiku-4-5-20251001",
+      max_tokens: 400,
+      temperature: 0,
+      messages: [{ role: "user", content: prompt }],
+    }),
+    signal: AbortSignal.timeout(12000),
+  });
+
+  if (!res.ok) throw new Error(`Haiku HTTP ${res.status}`);
+
+  const haikuData = await res.json();
+  const raw = haikuData?.content?.[0]?.text || "";
+  const cleaned = raw.replace(/```json\s*/g, "").replace(/```\s*/g, "").trim();
+  const parsed = JSON.parse(cleaned);
+
+  const moods = Array.isArray(parsed.moods)
+    ? parsed.moods.filter((m: string) => VALID_MOODS.has(m)).slice(0, 4)
+    : [];
+  const intrigues = Array.isArray(parsed.intrigues)
+    ? parsed.intrigues.filter((i: string) => VALID_INTRIGUES.has(i)).slice(0, 4)
+    : [];
+  const rythme = VALID_RYTHME.has(parsed.rythme) ? parsed.rythme : null;
+  const registre = VALID_REGISTRE.has(parsed.registre) ? parsed.registre : null;
+  const protag_age = VALID_PROTAG_AGE.has(parsed.protag_age) ? parsed.protag_age : null;
+  const protag_genre = VALID_PROTAG_GENRE.has(parsed.protag_genre) ? parsed.protag_genre : null;
+  const confidence = typeof parsed.confidence === "number"
+    ? Math.min(1, Math.max(0, parsed.confidence))
+    : 0.5;
+
+  const { error: upsertErr } = await supabase.from("book_facets").upsert({
+    book_id: bookId,
+    moods,
+    rythme,
+    registre,
+    protag_age,
+    protag_genre,
+    intrigues,
+    source: "ai",
+    confidence,
+    updated_at: new Date().toISOString(),
+  }, { onConflict: "book_id" });
+
+  if (upsertErr) throw new Error(`Upsert: ${upsertErr.message}`);
+  console.log(`[book_import] facets tagged: ${t} — ${moods.join(", ")} | ${intrigues.join(", ")}`);
+}
+
+// ---------------------------------------------------------------------------
 // Handler
 // ---------------------------------------------------------------------------
 Deno.serve(async (req) => {
@@ -667,6 +796,18 @@ Deno.serve(async (req) => {
         headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
       });
     }
+
+    // Fire-and-forget facet tagging — ne bloque pas la réponse
+    tagBookFacets(
+      supabase,
+      book.id,
+      book.title,
+      book.authors as string[],
+      book.description,
+      book.genres as string[],
+      book.publication_date,
+      book.page_count,
+    ).catch(e => console.error("[book_import] facet tagging failed:", e.message));
 
     return new Response(JSON.stringify(book), {
       headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },

@@ -54,25 +54,50 @@ const VALID_PROTAG_GENRE = new Set(['femme', 'homme', 'non_binaire', 'collectif'
 // ─── Fetch candidates ───────────────────────────────────────────
 
 async function fetchCandidates() {
-  const { data, error } = await supabase
-    .from('books')
-    .select('id, title, authors, description, genres, publication_date, page_count, flag_fiction')
-    .not('description', 'is', null)
-    .order('rating_count', { ascending: false, nullsFirst: false });
+  // Paginer pour récupérer tous les livres fiction avec description
+  let allBooks = [];
+  const PAGE_SIZE = 1000;
+  let offset = 0;
 
-  if (error) throw new Error(`Supabase query failed: ${error.message}`);
+  while (true) {
+    const { data, error } = await supabase
+      .from('books')
+      .select('id, title, authors, description, genres, publication_date, page_count, flag_fiction')
+      .eq('flag_fiction', true)
+      .not('description', 'is', null)
+      .order('id')
+      .range(offset, offset + PAGE_SIZE - 1);
+
+    if (error) throw new Error(`Supabase query failed: ${error.message}`);
+    if (!data || data.length === 0) break;
+
+    allBooks.push(...data);
+    if (data.length < PAGE_SIZE) break;
+    offset += PAGE_SIZE;
+  }
+
+  console.log(`  ${C.dim}${allBooks.length} livres fiction récupérés (${Math.ceil(allBooks.length / PAGE_SIZE)} pages)${C.reset}`);
 
   // Filtrer côté JS : description >= 50 chars
-  let candidates = (data || []).filter(b => (b.description || '').length >= 50);
+  let candidates = allBooks.filter(b => (b.description || '').length >= 50);
 
   // Exclure les livres déjà taggés (sauf --force)
   if (!FORCE) {
-    const { data: existing, error: exErr } = await supabase
-      .from('book_facets')
-      .select('book_id');
-    if (exErr) throw new Error(`book_facets query failed: ${exErr.message}`);
-    const tagged = new Set((existing || []).map(r => r.book_id));
-    candidates = candidates.filter(b => !tagged.has(b.id));
+    // Paginer aussi book_facets
+    const existingIds = new Set();
+    let facetOffset = 0;
+    while (true) {
+      const { data: existing, error: exErr } = await supabase
+        .from('book_facets')
+        .select('book_id')
+        .range(facetOffset, facetOffset + PAGE_SIZE - 1);
+      if (exErr) throw new Error(`book_facets query failed: ${exErr.message}`);
+      if (!existing || existing.length === 0) break;
+      for (const r of existing) existingIds.add(r.book_id);
+      if (existing.length < PAGE_SIZE) break;
+      facetOffset += PAGE_SIZE;
+    }
+    candidates = candidates.filter(b => !existingIds.has(b.id));
   }
 
   return candidates;

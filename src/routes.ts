@@ -7,6 +7,7 @@ export default [
   // Global pages
   route("explorer", "pages/IndexRedirect.jsx"), // redirect → /
   route("explorer/theme/:tag", "pages/TagPage.jsx"),
+  route("explorer/boussole", "pages/BoussolePage.jsx"),
   route("citations", "pages/CitationsPage.jsx"),
   route("defis", "pages/ChallengesPage.jsx"),
   route("classement", "pages/ClassementPage.jsx"),

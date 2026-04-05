@@ -132,6 +132,11 @@ details > summary::-webkit-details-marker { display: none; }
 }
 .animate-confirm-pop { animation: confirmPop 300ms ease-out both; }
 
+@keyframes boussoleCardIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
 /* Focus visible — accessibilité clavier (WCAG 2.4.7) */
 [role="button"]:focus-visible,
 button:focus-visible,

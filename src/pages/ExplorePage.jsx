@@ -311,6 +311,26 @@ export default function ExplorePage() {
         </div>
       </div>
 
+      {/* CTA Boussole */}
+      <Link
+        to="/explorer/boussole"
+        className="flex items-center gap-3 mb-5 py-3 px-4 rounded-lg transition-colors duration-150 no-underline group"
+        style={{ backgroundColor: "var(--bg-surface)", border: "1px solid var(--border-default)" }}
+      >
+        <span className="text-[20px]">🧭</span>
+        <div className="flex-1">
+          <div className="text-[14px] font-medium font-body" style={{ color: "var(--text-primary)" }}>
+            Quel livre pour toi en ce moment ?
+          </div>
+          <div className="text-[12px] font-body" style={{ color: "var(--text-tertiary)" }}>
+            Trouve par ambiance, intrigue, personnage
+          </div>
+        </div>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="2" className="shrink-0">
+          <polyline points="9 18 15 12 9 6" />
+        </svg>
+      </Link>
+
       {/* Tags — liste curatée */}
       <div className="mb-6">
         <Label>Parcourir par thème</Label>

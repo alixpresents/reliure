@@ -239,6 +239,7 @@ Toutes accessibles sans compte sauf `/fil`, `/parametres`, `/backfill`. `isOwnPr
 - Pas de recommandations algorithmiques, pas de clubs de lecture, pas d'app mobile native (PWA)
 - Pas de messagerie privée, pas de scan code-barres, pas de lien librairies
 - Pas de notifications push, pas de table AUTHORS séparée (JSONB suffit)
+- Pas de micro-questionnaire post-lecture (les facets sont enrichis par IA batch uniquement)
 
 ## Fichiers de référence
 
