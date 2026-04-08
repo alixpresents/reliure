@@ -50,12 +50,6 @@ export async function loader() {
   return queryExploreData(supabase);
 }
 
-// clientLoader runs in the browser — uses the singleton to avoid GoTrueClient warning
-import { supabase as supabaseSingleton } from "../lib/supabase";
-
-export async function clientLoader() {
-  return queryExploreData(supabaseSingleton);
-}
 
 export function meta() {
   return [
