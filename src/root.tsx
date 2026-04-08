@@ -21,6 +21,7 @@ import Toast from "./components/Toast";
 import { useToast } from "./hooks/useToast";
 import { useTheme } from "./hooks/useTheme";
 import { useNewBadges } from "./hooks/useNewBadges";
+import { LOADER_QUOTES } from "./constants/loader-quotes";
 import "./index.css";
 
 const NotFoundPage = lazy(() => import("./pages/NotFoundPage"));
@@ -94,11 +95,13 @@ export function Layout({ children }: { children: React.ReactNode }) {
 }
 
 export function HydrateFallback() {
+  const randomQuote = LOADER_QUOTES[Math.floor(Math.random() * LOADER_QUOTES.length)];
   return (
     <div id="splash">
-      <h1 style={{ fontFamily: "'EB Garamond', serif", fontSize: "clamp(22px, 5vw, 26px)", fontWeight: 400, lineHeight: 1.3, textAlign: "center", maxWidth: 480, margin: 0, padding: "0 24px", color: "inherit" }}>
-        La bibliothèque personnelle des lecteurs francophones.
-      </h1>
+      <div style={{ maxWidth: 480, padding: "0 24px" }}>
+        <p className="font-display italic text-center">{randomQuote.quote}</p>
+        <p className="font-body text-sm text-center" style={{ color: "var(--text-secondary)" }}>— {randomQuote.author}</p>
+      </div>
     </div>
   );
 }
@@ -139,6 +142,7 @@ function AppShell() {
   const [walkthroughActive, setWalkthroughActive] = useState(false);
   const { toast, showToast } = useToast();
   const { theme, toggleTheme } = useTheme();
+  const randomQuote = LOADER_QUOTES[Math.floor(Math.random() * LOADER_QUOTES.length)];
   const { badge: newBadge, dismiss: dismissBadge } = useNewBadges();
 
   useEffect(() => {
@@ -197,9 +201,10 @@ function AppShell() {
   if (authLoading || (isLoggedIn && profileLoading)) {
     return (
       <div className="min-h-screen flex items-center justify-center px-6" style={{ backgroundColor: "var(--bg-primary)" }}>
-        <h1 className="font-display font-normal text-center" style={{ fontSize: "clamp(22px, 5vw, 26px)", lineHeight: 1.3, maxWidth: 480, margin: 0, color: "var(--text-primary)" }}>
-          La bibliothèque personnelle des lecteurs francophones.
-        </h1>
+        <div style={{ maxWidth: 480 }}>
+          <p className="font-display italic text-center">{randomQuote.quote}</p>
+          <p className="font-body text-sm text-center" style={{ color: "var(--text-secondary)" }}>— {randomQuote.author}</p>
+        </div>
       </div>
     );
   }
