@@ -17,12 +17,6 @@ async function queryBookData(supabase, params) {
   return { book, reviews: reviews || [] };
 }
 
-// clientLoader runs in the browser — uses the singleton to avoid GoTrueClient warning
-import { supabase as supabaseSingleton } from "../lib/supabase";
-
-export async function clientLoader({ params }) {
-  return queryBookData(supabaseSingleton, params);
-}
 
 export function meta({ data, params }) {
   if (!data?.book) {
