@@ -7,6 +7,7 @@ const ALLOWED_HOSTS = [
   "images.centprod.com",
   "books.google.com",
   "covers.openlibrary.org",
+  "media.senscritique.com",
   "surapdwhffynilpwdlkx.supabase.co",
 ];
 
