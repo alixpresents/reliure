@@ -16,9 +16,11 @@ import { useListBySlug, deleteList } from "../hooks/useLists";
 import { useLikes } from "../hooks/useLikes";
 import { useAuth } from "../lib/AuthContext";
 import { useNav } from "../lib/NavigationContext";
+import { useToast } from "../hooks/useToast";
 import { supabase } from "../lib/supabase";
 import Img from "../components/Img";
 import LikeButton from "../components/LikeButton";
+import Toast from "../components/Toast";
 
 const SORT_OPTIONS = [
   { key: "manual", label: "Ordre manuel" },
@@ -34,6 +36,7 @@ export default function ListPage() {
   const { user } = useAuth();
   const { goToBook, openSearchFor } = useNav();
   const navigate = useNavigate();
+  const { toast, showToast } = useToast();
   const [editing, setEditing] = useState(false);
   const [editingTitle, setEditingTitle] = useState(false);
   const [editingDesc, setEditingDesc] = useState(false);
@@ -117,8 +120,15 @@ export default function ListPage() {
   const handleAddBook = () => {
     openSearchFor(async (book) => {
       const bookId = book._supabase?.id || book.id;
-      if (bookIdsInList.has(bookId)) return;
-      await addBook(bookId);
+      if (bookIdsInList.has(bookId)) {
+        showToast("Ce livre est déjà dans cette liste");
+        return { keepOpen: true };
+      }
+      const result = await addBook(bookId);
+      if (result?.error) {
+        showToast("Ce livre est déjà dans cette liste");
+        return { keepOpen: true };
+      }
       bookIdsInList.add(bookId);
       return { keepOpen: true };
     });
@@ -156,6 +166,7 @@ export default function ListPage() {
   });
 
   return (
+    <>
     <div className="py-6">
       {/* Header */}
       <div className="mb-6">
@@ -447,5 +458,7 @@ export default function ListPage() {
         </div>
       )}
     </div>
+    {toast.visible && <Toast message={toast.message} />}
+    </>
   );
 }

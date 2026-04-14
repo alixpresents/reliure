@@ -64,11 +64,12 @@ export function useListBySlug(slugOrId) {
   const addBook = async (bookId) => {
     if (!user || !list) return;
     const maxPos = (list.list_items || []).reduce((m, i) => Math.max(m, i.position), 0);
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("list_items")
       .insert({ list_id: list.id, book_id: bookId, position: maxPos + 1 })
       .select("id, book_id, position, note, books(id, title, authors, cover_url, slug, page_count)")
       .single();
+    if (error) return { error };
     if (data) setList(prev => ({ ...prev, list_items: [...(prev.list_items || []), data] }));
     return data;
   };
