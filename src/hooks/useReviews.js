@@ -25,7 +25,7 @@ export function useBookReviews(bookId) {
   return { reviews, loading, refetch: fetch };
 }
 
-export function useMyReviews(profileUserId) {
+export function useMyReviews(profileUserId, { enabled: hookEnabled = true } = {}) {
   const { user } = useAuth();
   const targetId = profileUserId || user?.id;
   const queryClient = useQueryClient();
@@ -42,7 +42,7 @@ export function useMyReviews(profileUserId) {
         .limit(50);
       return data ?? [];
     },
-    enabled: !!targetId,
+    enabled: !!targetId && hookEnabled,
   });
 
   const refetch = useCallback(

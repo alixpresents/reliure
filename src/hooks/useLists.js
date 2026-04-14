@@ -5,7 +5,7 @@ import { useAuth } from "../lib/AuthContext";
 import { slugify, generateUniqueSlug } from "../utils/slugify";
 import { logActivity } from "./useActivity";
 
-export function useMyLists(profileUserId) {
+export function useMyLists(profileUserId, { enabled: hookEnabled = true } = {}) {
   const { user } = useAuth();
   const targetId = profileUserId || user?.id;
   const isOwner = !!user && user.id === targetId;
@@ -23,7 +23,7 @@ export function useMyLists(profileUserId) {
       const { data } = await query.limit(30);
       return data ?? [];
     },
-    enabled: !!targetId,
+    enabled: !!targetId && hookEnabled,
   });
 
   const refetch = useCallback(

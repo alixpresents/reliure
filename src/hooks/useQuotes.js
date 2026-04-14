@@ -24,7 +24,7 @@ export function useBookQuotes(bookId) {
   return { quotes, loading, refetch: fetch };
 }
 
-export function useMyQuotes(profileUserId) {
+export function useMyQuotes(profileUserId, { enabled: hookEnabled = true } = {}) {
   const { user } = useAuth();
   const targetId = profileUserId || user?.id;
   const queryClient = useQueryClient();
@@ -41,7 +41,7 @@ export function useMyQuotes(profileUserId) {
       if (error) throw error;
       return data ?? [];
     },
-    enabled: !!targetId,
+    enabled: !!targetId && hookEnabled,
   });
 
   const refetch = useCallback(

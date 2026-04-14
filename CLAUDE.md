@@ -148,7 +148,8 @@ Reliure regroupe les éditions par oeuvre. Vérification ISBN exact puis titre n
 - `activity` = event log polymorphe, feed = requête sur les activités des follows
 - `likes` polymorphe (target_type), compteur maintenu par trigger
 - `user_favorites` swap : delete+reinsert (pas d'update) pour le CHECK position 1-4
-- `useProfileData` distingue `diaryBooks` (read + finished_at) et `allReadBooks` (tous les "read")
+- `useProfileData` : 2 requêtes PostgREST (reading_status + reviews), dérive `diaryBooks` et `allReadBooks` côté client. `allReadBooks` supprimé du return (non consommé). Les "reading" books sont dérivés depuis `allStatuses` dans ProfilePage.
+- **Onglets profil lazy-loaded** : `useMyReviews`, `useMyQuotes`, `useMyLists` acceptent `{ enabled }` — seul l'onglet actif déclenche sa requête. Les données above-the-fold (diary, stats, favoris, follow counts) se chargent immédiatement.
 - Seuil bilan annuel : 5 livres lus (logique frontend)
 - Electre comme source #1 : appelé directement dans `book_import` (pas de hop via `electre-proxy`) pour réduire la latence. `electre-proxy` existe pour les appels batch externes. `oeuvre_id` Electre = regroupement des éditions
 - Onglet "Éditions" sur BookPage : query `books.eq('oeuvre_id', oeuvreId)` si `oeuvre_id` présent, grille de couvertures cliquables

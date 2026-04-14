@@ -5,7 +5,6 @@ import Avatar from "../components/Avatar";
 import Label from "../components/Label";
 import LikeButton from "../components/LikeButton";
 import InteractiveStars from "../components/InteractiveStars";
-import { useReadingList } from "../hooks/useReadingStatus";
 import { useProfileData } from "../hooks/useProfileData";
 import { useMyReviews } from "../hooks/useReviews";
 import { useMyQuotes } from "../hooks/useQuotes";
@@ -567,13 +566,13 @@ export default function ProfilePage({ viewedProfile, initialTab }) {
     const url = URL.createObjectURL(file);
     img.onload = () => {
       URL.revokeObjectURL(url);
-      const MAX = 400;
+      const MAX = 200;
       const ratio = Math.min(MAX / img.width, MAX / img.height, 1);
       const canvas = document.createElement("canvas");
       canvas.width = Math.round(img.width * ratio);
       canvas.height = Math.round(img.height * ratio);
       canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
-      canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error("canvas toBlob failed")), "image/jpeg", 0.85);
+      canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error("canvas toBlob failed")), "image/jpeg", 0.70);
     };
     img.onerror = () => { URL.revokeObjectURL(url); reject(new Error("image load failed")); };
     img.src = url;
@@ -604,14 +603,14 @@ export default function ProfilePage({ viewedProfile, initialTab }) {
     setUploadingAvatar(false);
   };
   const isOwnProfile = user?.id === profileId;
-  const { books: dbReading, refetch: refetchReading } = useReadingList("reading", profileId);
   const profileData = useProfileData(profileId);
-  const { reviews: myReviews, refetch: refetchReviews } = useMyReviews(profileId);
-  const { quotes: myQuotes, refetch: refetchQuotes } = useMyQuotes(profileId);
+  const dbReading = useMemo(() => (profileData.allStatuses || []).filter(s => s.status === "reading"), [profileData.allStatuses]);
+  const { reviews: myReviews, refetch: refetchReviews } = useMyReviews(profileId, { enabled: tab === "mes critiques" });
+  const { quotes: myQuotes, refetch: refetchQuotes } = useMyQuotes(profileId, { enabled: tab === "mes citations" });
   const { followers, following: followingCount } = useFollowCounts(profileId);
   const { following: isFollowing, follow, unfollow } = useFollow(!isOwnProfile ? profileId : null);
   const { favorites, loading: favoritesLoading, setFavorite, removeFavorite, swapPositions, updateNote } = useFavorites(profileId);
-  const { lists: myLists, refetch: refetchLists } = useMyLists(profileId);
+  const { lists: myLists, refetch: refetchLists } = useMyLists(profileId, { enabled: tab === "mes listes" });
   const { hasCreator } = useUserBadges(profileId);
   const listIds = myLists.map(l => l.id);
   const { likedSet: listLikedSet, initialSet: listInitialSet, toggle: toggleListLike } = useLikes(listIds, "list");
@@ -641,7 +640,6 @@ export default function ProfilePage({ viewedProfile, initialTab }) {
     if (item?._statusId) {
       await supabase.from("reading_status").update({ status: "read", finished_at: new Date().toISOString() }).eq("id", item._statusId);
     }
-    refetchReading();
     profileData.refetch();
   };
 
