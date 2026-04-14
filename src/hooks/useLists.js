@@ -70,7 +70,12 @@ export function useListBySlug(slugOrId) {
       .select("id, book_id, position, note, books(id, title, authors, cover_url, slug, page_count)")
       .single();
     if (error) return { error };
-    if (data) setList(prev => ({ ...prev, list_items: [...(prev.list_items || []), data] }));
+    if (data?.books) {
+      setList(prev => ({ ...prev, list_items: [...(prev.list_items || []), data] }));
+    } else {
+      // books join null (livre fraîchement importé) → refetch complet
+      await fetch();
+    }
     return data;
   };
 
