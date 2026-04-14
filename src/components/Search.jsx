@@ -353,13 +353,32 @@ export default function Search({ open, onClose, go, initialQuery = "" }) {
       return score;
     };
 
-    const navigateToBook = (book) => {
+    // Normalise un livre importé et l'envoie au callback go (comme handleSelect)
+    const selectImportedBook = async (book) => {
       setImporting(null);
-      handleClose();
-      setQ("");
-      setResults([]);
-      if (book?.slug) navigate(`/livre/${book.slug}`);
-      else if (book?.id) navigate(`/livre/${book.id}`);
+      const normalized = {
+        id: book.id,
+        t: book.title,
+        a: Array.isArray(book.authors) ? book.authors.join(", ") : (book.authors || ""),
+        c: book.cover_url,
+        y: book.publication_date ? parseInt(book.publication_date) : null,
+        p: book.page_count,
+        r: book.avg_rating || 0,
+        rt: book.rating_count || 0,
+        tags: Array.isArray(book.genres) ? book.genres : [],
+        desc: book.description,
+        awards: [],
+        _supabase: book,
+      };
+      const result = await go(normalized);
+      if (result && result.keepOpen) {
+        multiAddMode.current = true;
+        inputRef.current?.focus();
+      } else {
+        handleClose();
+        setQ("");
+        setResults([]);
+      }
     };
 
     // ── Branche 1 : Google Books disponible → recherche + scoring ──
@@ -381,7 +400,7 @@ export default function Search({ open, onClose, go, initialQuery = "" }) {
               body: { isbn: best.r.isbn13 },
             });
             if (!error && data?.id) {
-              navigateToBook(data);
+              await selectImportedBook(data);
               return;
             }
           }
@@ -407,7 +426,7 @@ export default function Search({ open, onClose, go, initialQuery = "" }) {
           body: { isbn },
         });
         if (!error && data?.id) {
-          navigateToBook(data);
+          await selectImportedBook(data);
           return;
         }
       }
@@ -427,7 +446,7 @@ export default function Search({ open, onClose, go, initialQuery = "" }) {
     });
 
     if (book) {
-      navigateToBook(book);
+      await selectImportedBook(book);
     } else {
       setImporting(null);
       console.warn("[search-ai-import] all fallbacks failed for:", aiBook.title);
