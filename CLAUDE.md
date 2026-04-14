@@ -40,6 +40,8 @@ Différenciateurs : journal éditorial intégré (La Revue), citations comme fea
 - `loader` (build-time, Node) crée son propre `createClient` ; `clientLoader` (browser) utilise le singleton `supabase` de `src/lib/supabase.js`
 - **`clientLoader.hydrate = true` n'est PAS utilisé** — cassait les meta tags en rendant les données asynchrones
 - Coexistence avec TanStack Query : le clientLoader fetch les données initiales, `useQuery` prend le relais
+- **Hydratation + valeurs aléatoires** : `Math.random()` au scope du composant cause React error #418 (mismatch SSG/client). Pattern correct : `useState(() => Math.random()...)` + `suppressHydrationWarning` sur l'élément texte (le `<p>` ou `<span>`, pas le conteneur parent).
+- **WebSocket Supabase en dev** : React 19 StrictMode double-mount les effets → le channel Realtime est créé puis détruit avant connexion → warning "WebSocket closed before connection". Bénin, n'apparaît pas en production.
 
 ### SEO
 - Chaque route exporte `meta()` pour `<title>`, `og:*`, `twitter:*`
@@ -179,6 +181,9 @@ Toutes les couleurs via CSS custom properties dans `src/index.css` (`:root` ligh
 
 ### Layout
 - Max-width : `760px`, header sticky blur, couvertures ratio 2:3, carousels horizontaux
+
+### Upload avatar
+- Compression canvas avant upload : **200×200px max, JPEG qualité 0.70** (affiché à ~104px, 200 = 2× retina). Ne pas augmenter — l'ancienne valeur 400×400/0.85 produisait des fichiers de ~1 MB.
 
 ### Skeleton loading
 - Composant global `src/components/Skeleton.jsx` avec classes `.sk` et `.sk-fade`

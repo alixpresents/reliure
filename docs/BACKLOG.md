@@ -372,6 +372,43 @@ bookshops
 
 ---
 
+---
+
+## 4. Proxy d'images couvertures
+
+**Statut :** Tech debt identifié · Post-bêta
+**Contexte :** Audit performance avril 2026
+
+### Le problème
+
+Les couvertures venant de sources externes (Electre : `media.electre-ng-horsprod.com`, centprod : `images.centprod.com`, Google Books) sont servies en taille originale (~200-300 KB par image) alors qu'elles s'affichent en 88×132px dans les carousels. Sur un profil avec 50+ livres, ça représente plusieurs MB de transfert inutile.
+
+Les URLs sources ne supportent pas de paramètres de resize :
+- Electre : `HASH.jpg` — pas de resize côté CDN
+- centprod : `cover-large.jpg` — suffix `-large`, `-medium` à investiguer
+- Google Books : `zoom=2` → medium (déjà utilisé), `zoom=1` → small (~50px, trop petit)
+
+### La solution
+
+Proxifier les couvertures via **Supabase Storage + Supabase Image Transformations** (plan Pro) :
+1. Au moment de l'import d'un livre, télécharger la couverture et la stocker dans le bucket `covers/`
+2. Servir depuis l'URL Supabase avec `?width=176&quality=80` (176px = 88px × 2× retina)
+3. Le CDN Supabase met en cache la version redimensionnée
+
+Alternativement : un **worker Vercel/Cloudflare** qui proxifie et redimensionne à la volée (plus flexible, pas de migration de données).
+
+### Impact estimé
+
+- Couvertures actuelles : ~200-300 KB → **~8-15 KB** après resize 176px
+- Gain sur un profil (50 livres) : ~14 MB → ~600 KB
+
+### Ce qu'on ne fait PAS en v1
+
+- Pas de re-migration des couvertures existantes en DB (trop long, à faire en batch progressif)
+- Pas de stockage de toutes les couvertures en Supabase Storage (coût stockage à évaluer)
+
+---
+
 ## To Do — Contacts & Outreach
 
 - [ ] **Contacter Incipit (Leonard)** — Explorer une synergie potentielle avec leur projet

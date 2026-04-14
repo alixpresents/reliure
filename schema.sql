@@ -679,3 +679,33 @@ create policy "book_facets_public_read" on public.book_facets for select using (
 -- RPC search_boussole(p_moods, p_rythme, p_registre, p_protag_age, p_protag_genre, p_intrigues, p_limit, p_offset)
 -- Retourne books + facets + relevance_score (nb de filtres matchés), triés par pertinence puis rating_count
 -- Filtre confidence >= 0.5
+
+-- ═══════════════════════════════════════════════
+-- Table book_recommendations (migration 030_book_recommendations.sql)
+-- Recommandations IA personnalisées, 1 set/user, TTL 7j
+-- Écriture via edge function book-recommendations (service_role)
+-- Lecture owner-only (RLS)
+-- ═══════════════════════════════════════════════
+
+create table if not exists public.book_recommendations (
+  id           uuid primary key default gen_random_uuid(),
+  user_id      uuid not null references public.users(id) on delete cascade,
+  books        jsonb not null default '[]'::jsonb, -- [{book_id, title, authors, cover_url, slug, reason}]
+  generated_at timestamptz not null default now(),
+  expires_at   timestamptz not null default (now() + interval '7 days'),
+  unique (user_id)
+);
+
+create index if not exists book_recommendations_user_idx    on public.book_recommendations (user_id);
+create index if not exists book_recommendations_expires_idx on public.book_recommendations (expires_at);
+
+alter table public.book_recommendations enable row level security;
+create policy "book_recommendations owner read" on public.book_recommendations
+  for select using (auth.uid() = user_id);
+-- INSERT/UPDATE via service_role uniquement (edge function book-recommendations)
+
+-- Edge function book-recommendations :
+-- Rate limit : 1 appel/24h par user (vérifié sur generated_at)
+-- Cache DB : TTL 7j (expires_at), retournées si non expirées
+-- Modèle : Claude Haiku, content-based (titres + auteurs lus par l'user)
+-- QueryKey client : ["recommendations", userId] staleTime 10min
