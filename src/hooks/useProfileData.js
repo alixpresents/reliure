@@ -6,7 +6,6 @@ import { useAuth } from "../lib/AuthContext";
 const EMPTY = {
   allStatuses: [],
   diaryBooks: [],
-  allReadBooks: [],
   reviews: [],
   reviewMap: new Map(),
   stats: { total: 0, thisYear: 0, pagesThisYear: 0, avgRating: 0, reviewsCount: 0, readNoDate: 0 },
@@ -20,26 +19,11 @@ async function fetchProfileData(targetId) {
   const yearStart = new Date(currentYear, 0, 1);
   const yearEnd = new Date(currentYear + 1, 0, 1);
 
-  const [statusesRes, diaryRes, readRes, reviewsRes] = await Promise.allSettled([
+  const [statusesRes, reviewsRes] = await Promise.allSettled([
     supabase
       .from("reading_status")
-      .select("*, books(id, title, authors, cover_url, slug, publication_date, page_count, avg_rating)")
+      .select("id, book_id, status, created_at, finished_at, is_reread, current_page, books(id, title, authors, cover_url, slug, page_count, avg_rating)")
       .eq("user_id", targetId)
-      .order("created_at", { ascending: false })
-      .limit(500),
-    supabase
-      .from("reading_status")
-      .select("*, books(id, title, authors, cover_url, slug, publication_date, page_count, avg_rating)")
-      .eq("user_id", targetId)
-      .eq("status", "read")
-      .not("finished_at", "is", null)
-      .order("finished_at", { ascending: false })
-      .limit(500),
-    supabase
-      .from("reading_status")
-      .select("*, books(id, title, authors, cover_url, slug, publication_date, page_count, avg_rating)")
-      .eq("user_id", targetId)
-      .eq("status", "read")
       .order("created_at", { ascending: false })
       .limit(500),
     supabase
@@ -51,14 +35,14 @@ async function fetchProfileData(targetId) {
   ]);
 
   if (statusesRes.status === "rejected") console.error("[useProfileData] allStatuses:", statusesRes.reason);
-  if (diaryRes.status === "rejected") console.error("[useProfileData] diaryBooks:", diaryRes.reason);
-  if (readRes.status === "rejected") console.error("[useProfileData] allReadBooks:", readRes.reason);
   if (reviewsRes.status === "rejected") console.error("[useProfileData] reviews:", reviewsRes.reason);
 
   const statuses = statusesRes.status === "fulfilled" ? (statusesRes.value.data || []) : [];
-  const diary = diaryRes.status === "fulfilled" ? (diaryRes.value.data || []) : [];
-  const allRead = readRes.status === "fulfilled" ? (readRes.value.data || []) : [];
   const revs = reviewsRes.status === "fulfilled" ? (reviewsRes.value.data || []) : [];
+
+  // Derive diaryBooks and allReadBooks from statuses (previously 2 separate queries)
+  const diary = statuses.filter(s => s.status === "read" && s.finished_at).sort((a, b) => new Date(b.finished_at) - new Date(a.finished_at));
+  const allRead = statuses.filter(s => s.status === "read");
 
   const total = statuses.length;
   const allReadThisYear = allRead.filter(r => {
@@ -103,7 +87,6 @@ async function fetchProfileData(targetId) {
   return {
     allStatuses: statuses,
     diaryBooks: diary,
-    allReadBooks: allRead,
     reviews: revs,
     reviewMap,
     stats: { total, thisYear, pagesThisYear, avgRating, reviewsCount: revsThisYear.length, readNoDate: statuses.filter(s => s.status === "read" && !s.finished_at).length },

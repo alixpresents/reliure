@@ -97,10 +97,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
 export function HydrateFallback() {
   const [randomQuote] = useState(() => LOADER_QUOTES[Math.floor(Math.random() * LOADER_QUOTES.length)]);
   return (
-    <div id="splash" suppressHydrationWarning>
+    <div id="splash">
       <div style={{ maxWidth: 480, padding: "0 24px" }}>
-        <p className="font-display italic text-center">{randomQuote.quote}</p>
-        <p className="font-body text-sm text-center" style={{ color: "var(--text-secondary)" }}>— {randomQuote.author}</p>
+        <p className="font-display italic text-center" suppressHydrationWarning>{randomQuote.quote}</p>
+        <p className="font-body text-sm text-center" style={{ color: "var(--text-secondary)" }} suppressHydrationWarning>— {randomQuote.author}</p>
       </div>
     </div>
   );
@@ -200,10 +200,10 @@ function AppShell() {
   // Loading gate — ne rien décider tant que l'auth et le profil ne sont pas résolus
   if (authLoading || (isLoggedIn && profileLoading)) {
     return (
-      <div className="min-h-screen flex items-center justify-center px-6" style={{ backgroundColor: "var(--bg-primary)" }} suppressHydrationWarning>
+      <div className="min-h-screen flex items-center justify-center px-6" style={{ backgroundColor: "var(--bg-primary)" }}>
         <div style={{ maxWidth: 480 }}>
-          <p className="font-display italic text-center">{randomQuote.quote}</p>
-          <p className="font-body text-sm text-center" style={{ color: "var(--text-secondary)" }}>— {randomQuote.author}</p>
+          <p className="font-display italic text-center" suppressHydrationWarning>{randomQuote.quote}</p>
+          <p className="font-body text-sm text-center" style={{ color: "var(--text-secondary)" }} suppressHydrationWarning>— {randomQuote.author}</p>
         </div>
       </div>
     );
