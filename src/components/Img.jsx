@@ -1,9 +1,17 @@
 import { useState, memo } from "react";
 
+function proxyUrl(url, width) {
+  if (!url) return url;
+  if (import.meta.env.DEV) return url;
+  if (url.includes('/avatars/')) return url;
+  return `/api/image-proxy?url=${encodeURIComponent(url)}&w=${width}&q=75`;
+}
+
 export default memo(function Img({ book, w, h, onClick, className = "", priority = false }) {
   const hasOverride = className.includes("w-full");
   const [imgFailed, setImgFailed] = useState(false);
-  const src = book.c;
+  const displayWidth = w ? Math.round(w * 2) : 200;
+  const src = proxyUrl(book.c, displayWidth);
   const showFallback = !src || imgFailed;
 
   return (
