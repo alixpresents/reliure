@@ -56,6 +56,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
       <head>
         <meta charSet="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <link rel="preconnect" href="https://surapdwhffynilpwdlkx.supabase.co" />
+        <link rel="preconnect" href="https://media.electre-ng-horsprod.com" />
+        <link rel="preconnect" href="https://books.google.com" />
         <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📖</text></svg>" />
         <link rel="preload" href="/fonts/eb-garamond-latin.woff2" as="font" type="font/woff2" crossOrigin="" />
         <script dangerouslySetInnerHTML={{ __html: `
