@@ -47,6 +47,21 @@ export { fetchDilicom };
 // Helpers
 // ═══════════════════════════════════════════════
 
+function stripGoogleDescription(str) {
+  if (!str) return null;
+  return str
+    .replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&nbsp;/g, " ")
+    .replace(/&eacute;/g, "é").replace(/&egrave;/g, "è")
+    .replace(/&ecirc;/g, "ê").replace(/&ocirc;/g, "ô")
+    .replace(/&agrave;/g, "à").replace(/&ccedil;/g, "ç")
+    .replace(/&rsquo;/g, "\u2019").replace(/&laquo;/g, "«")
+    .replace(/&raquo;/g, "»").replace(/&hellip;/g, "…")
+    .replace(/<br\s*\/?>/gi, "\n").replace(/<\/p>/gi, "\n\n")
+    .replace(/<\/li>/gi, "\n").replace(/<[^>]+>/g, "")
+    .replace(/\n{3,}/g, "\n\n").trim() || null;
+}
+
 function strip(s) {
   return (s || "")
     .normalize("NFD")
@@ -222,7 +237,7 @@ async function fetchGoogleBooks(query) {
           coverUrl: cover,
           pageCount: v.pageCount || null,
           isbn13: isbn?.identifier || null,
-          description: v.description || null,
+          description: stripGoogleDescription(v.description),
         };
       });
     filtered._rawCount = items.length;
@@ -337,7 +352,8 @@ export async function searchBooks(query, { onDbResults } = {}) {
   let olResults = [];
   let googleCalled = false;
   let olCalled = false;
-  const fusedSufficient = fusedPool.length >= 3;
+  const hasExactTitleMatch = fusedPool.length >= 1 && fusedPool[0]._score >= 200;
+  const fusedSufficient = fusedPool.length >= 3 || hasExactTitleMatch;
   const t_ext_start = performance.now();
 
   if (!fusedSufficient) {

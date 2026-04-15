@@ -220,6 +220,21 @@ async function fetchDilicom(isbn: string): Promise<Partial<BookMeta> | null> {
 // ---------------------------------------------------------------------------
 // Google Books
 // ---------------------------------------------------------------------------
+function stripGoogleDescription(str: string | null): string | null {
+  if (!str) return null;
+  return str
+    .replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&nbsp;/g, " ")
+    .replace(/&eacute;/g, "é").replace(/&egrave;/g, "è")
+    .replace(/&ecirc;/g, "ê").replace(/&ocirc;/g, "ô")
+    .replace(/&agrave;/g, "à").replace(/&ccedil;/g, "ç")
+    .replace(/&rsquo;/g, "\u2019").replace(/&laquo;/g, "«")
+    .replace(/&raquo;/g, "»").replace(/&hellip;/g, "…")
+    .replace(/<br\s*\/?>/gi, "\n").replace(/<\/p>/gi, "\n\n")
+    .replace(/<\/li>/gi, "\n").replace(/<[^>]+>/g, "")
+    .replace(/\n{3,}/g, "\n\n").trim() || null;
+}
+
 async function fetchGoogleBooks(isbn: string) {
   const key = Deno.env.get("GOOGLE_BOOKS_KEY");
   const url = `https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}${key ? `&key=${key}` : ""}`;
@@ -248,7 +263,7 @@ async function fetchGoogleBooks(isbn: string) {
     publication_date: v.publishedDate || null,
     page_count: v.pageCount || null,
     cover_url: cover,
-    description: v.description || null,
+    description: stripGoogleDescription(v.description),
     language: v.language || null,
     genres: v.categories || null,
   };

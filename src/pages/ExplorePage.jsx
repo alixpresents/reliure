@@ -116,9 +116,11 @@ export default function ExplorePage() {
   const [searchResults, setSearchResults] = useState([]);
   const [searchLoading, setSearchLoading] = useState(false);
   const [searchDone, setSearchDone] = useState(false);
+  const [noResultsVisible, setNoResultsVisible] = useState(false);
   const [importing, setImporting] = useState(null);
   const [showResults, setShowResults] = useState(false);
   const searchTimer = useRef(null);
+  const noResultsTimerRef = useRef(null);
   const wrapperRef = useRef(null);
   const inputRef = useRef(null);
   const dilicomWarmRef = useRef(false);
@@ -144,21 +146,31 @@ export default function ExplorePage() {
   // Debounced search
   useEffect(() => {
     clearTimeout(searchTimer.current);
+    clearTimeout(noResultsTimerRef.current);
     if (!query || query.length < 2) {
       setSearchResults([]);
       setSearchLoading(false);
       setSearchDone(false);
+      setNoResultsVisible(false);
       return;
     }
     setSearchLoading(true);
     setSearchDone(false);
+    setNoResultsVisible(false);
     searchTimer.current = setTimeout(async () => {
       const results = await searchBooks(query);
       setSearchResults(results);
       setSearchLoading(false);
       setSearchDone(true);
+      if (results.length === 0) {
+        // Attendre 6s avant d'afficher "Aucun résultat" — couvre le cold start Dilicom (~4-5s)
+        noResultsTimerRef.current = setTimeout(() => setNoResultsVisible(true), 6000);
+      }
     }, 400);
-    return () => clearTimeout(searchTimer.current);
+    return () => {
+      clearTimeout(searchTimer.current);
+      clearTimeout(noResultsTimerRef.current);
+    };
   }, [query]);
 
   // Close on click outside
@@ -339,7 +351,7 @@ export default function ExplorePage() {
                   ))}
                 </div>
               )}
-              {searchDone && !searchLoading && searchResults.length === 0 && (
+              {searchDone && !searchLoading && searchResults.length === 0 && noResultsVisible && (
                 <div className="py-5 text-center text-[13px] font-body" style={{ color: "var(--text-tertiary)" }}>Aucun résultat.</div>
               )}
               {searchResults.map(gb => {

@@ -8,7 +8,7 @@ function normalizeBook(b) {
     t: b.title,
     a: Array.isArray(b.authors) ? b.authors.join(", ") : (b.authors || ""),
     c: b.cover_url,
-    y: b.publication_date ? parseInt(b.publication_date) : null,
+    y: b.publication_date || null,
     p: b.page_count || 0,
     r: b.avg_rating || 0,
     rt: b.rating_count || 0,

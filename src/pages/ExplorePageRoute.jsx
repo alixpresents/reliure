@@ -86,7 +86,7 @@ function normalizeBook(b) {
     t: b.title,
     a: parseAuthors(b.authors).join(", "),
     c: b.cover_url,
-    y: b.publication_date ? parseInt(b.publication_date) : null,
+    y: b.publication_date || null,
     p: b.page_count || 0,
     r: b.avg_rating || 0,
     rt: b.rating_count || 0,
@@ -227,13 +227,21 @@ function CacheSeeder({ loaderData, children }) {
 
   if (loaderData && loaderData !== prevData.current) {
     prevData.current = loaderData;
-    queryClient.setQueryData(["babelioPopular"], loaderData.babelioPopular.map(normalizeBook));
-    queryClient.setQueryData(["popularReviews"], loaderData.popularReviews);
-    queryClient.setQueryData(["popularQuotes"], loaderData.popularQuotes);
-    queryClient.setQueryData(["popularLists"], loaderData.popularLists);
-    queryClient.setQueryData(["curatedSelections"], loaderData.curatedSelections);
-    queryClient.setQueryData(["classement", "alltime"], loaderData.ranking);
-    queryClient.setQueryData(["creatorIds"], new Set(loaderData.creatorIds));
+    // Ne pas écraser le cache avec [] si le build a échoué à fetcher — laisser queryFn s'exécuter
+    if (loaderData.babelioPopular.length > 0)
+      queryClient.setQueryData(["babelioPopular"], loaderData.babelioPopular.map(normalizeBook));
+    if (loaderData.popularReviews.length > 0)
+      queryClient.setQueryData(["popularReviews"], loaderData.popularReviews);
+    if (loaderData.popularQuotes.length > 0)
+      queryClient.setQueryData(["popularQuotes"], loaderData.popularQuotes);
+    if (loaderData.popularLists.length > 0)
+      queryClient.setQueryData(["popularLists"], loaderData.popularLists);
+    if (loaderData.curatedSelections.length > 0)
+      queryClient.setQueryData(["curatedSelections"], loaderData.curatedSelections);
+    if (loaderData.ranking.length > 0)
+      queryClient.setQueryData(["classement", "alltime"], loaderData.ranking);
+    if (loaderData.creatorIds.length > 0)
+      queryClient.setQueryData(["creatorIds"], new Set(loaderData.creatorIds));
   }
 
   return children;
