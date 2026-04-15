@@ -21,34 +21,32 @@ const supabase = createClient(SUPABASE_URL, SERVICE_KEY);
 function decodeHtmlEntities(str) {
   if (!str) return null;
 
-  const NAMED = {
-    "&lt;": "<", "&gt;": ">", "&amp;": "&", "&quot;": '"',
-    "&apos;": "'", "&nbsp;": " ",
-    "&eacute;": "é", "&egrave;": "è", "&ecirc;": "ê", "&euml;": "ë",
-    "&agrave;": "à", "&acirc;": "â", "&auml;": "ä",
-    "&ugrave;": "ù", "&ucirc;": "û", "&uuml;": "ü",
-    "&icirc;": "î", "&iuml;": "ï",
-    "&ocirc;": "ô", "&ouml;": "ö",
-    "&ccedil;": "ç",
-    "&Eacute;": "É", "&Egrave;": "È", "&Ecirc;": "Ê",
-    "&Agrave;": "À", "&Acirc;": "Â",
-    "&Ucirc;": "Û", "&Icirc;": "Î", "&Ocirc;": "Ô",
-    "&Ccedil;": "Ç",
-    "&rsquo;": "\u2019", "&lsquo;": "\u2018",
-    "&rdquo;": "\u201D", "&ldquo;": "\u201C",
-    "&mdash;": "\u2014", "&ndash;": "\u2013",
-    "&hellip;": "\u2026", "&oelig;": "\u0153", "&OElig;": "\u0152",
-  };
-
-  let out = str;
-  out = out.replace(/&amp;(#?\w+;)/g, "&$1");
-  for (const [entity, char] of Object.entries(NAMED)) {
-    out = out.replaceAll(entity, char);
+  function decodeOnce(s) {
+    return s
+      .replace(/&amp;([a-z]+;)/gi, "&$1")
+      .replace(/&amp;#(\d+);/g, "&#$1;")
+      .replace(/&eacute;/g, "é").replace(/&egrave;/g, "è")
+      .replace(/&ecirc;/g, "ê").replace(/&euml;/g, "ë")
+      .replace(/&ocirc;/g, "ô").replace(/&iuml;/g, "ï")
+      .replace(/&icirc;/g, "î").replace(/&agrave;/g, "à")
+      .replace(/&acirc;/g, "â").replace(/&ugrave;/g, "ù")
+      .replace(/&ucirc;/g, "û").replace(/&ccedil;/g, "ç")
+      .replace(/&rsquo;/g, "\u2019").replace(/&lsquo;/g, "\u2018")
+      .replace(/&laquo;/g, "«").replace(/&raquo;/g, "»")
+      .replace(/&hellip;/g, "…").replace(/&mdash;/g, "—")
+      .replace(/&ndash;/g, "–").replace(/&nbsp;/g, " ")
+      .replace(/&Eacute;/g, "É").replace(/&Egrave;/g, "È")
+      .replace(/&Ecirc;/g, "Ê").replace(/&Agrave;/g, "À")
+      .replace(/&Ccedil;/g, "Ç")
+      .replace(/&lt;/g, "<").replace(/&gt;/g, ">")
+      .replace(/&amp;/g, "&").replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'").replace(/&apos;/g, "'")
+      .replace(/&#(\d+);/g, (_, code) => String.fromCharCode(parseInt(code)));
   }
-  out = out.replace(/&#(\d+);/g, (_, n) => String.fromCharCode(parseInt(n)));
-  out = out.replace(/&#x([0-9a-fA-F]+);/g, (_, h) => String.fromCharCode(parseInt(h, 16)));
 
-  return out;
+  let result = decodeOnce(str);
+  if (hasHtmlEntities(result)) result = decodeOnce(result);
+  return result;
 }
 
 function stripHtml(str) {
@@ -63,23 +61,21 @@ function stripHtml(str) {
 }
 
 function hasHtmlEntities(str) {
-  return str && (
-    str.includes("&lt;") ||
-    str.includes("&gt;") ||
-    str.includes("&amp;") ||
-    str.includes("&#") ||
-    str.includes("&eacute;") ||
-    str.includes("&egrave;") ||
-    str.includes("&ecirc;") ||
-    str.includes("&agrave;") ||
-    str.includes("&ccedil;") ||
-    str.includes("&rsquo;") ||
-    str.includes("&oelig;") ||
-    str.includes("&hellip;") ||
-    str.includes("&mdash;") ||
-    str.includes("&ndash;") ||
-    str.includes("&nbsp;") ||
-    /<br[\s/]|<div|<p[ >]|<span/i.test(str)
+  if (!str) return false;
+  return (
+    /&amp;[a-z]+;/i.test(str) ||
+    /&amp;#\d+;/.test(str) ||
+    str.includes("&lt;") || str.includes("&gt;") ||
+    str.includes("&eacute;") || str.includes("&egrave;") ||
+    str.includes("&ecirc;") || str.includes("&ocirc;") ||
+    str.includes("&icirc;") || str.includes("&agrave;") ||
+    str.includes("&ugrave;") || str.includes("&ccedil;") ||
+    str.includes("&rsquo;") || str.includes("&laquo;") ||
+    str.includes("&raquo;") || str.includes("&hellip;") ||
+    str.includes("&nbsp;") || str.includes("&Eacute;") ||
+    str.includes("<br") || str.includes("<div") ||
+    str.includes("<em>") || str.includes("<strong>") ||
+    str.includes("<p>") || str.includes("<p ")
   );
 }
 

@@ -31,6 +31,7 @@ import ReviewReplies from "../components/ReviewReplies";
 import Toast from "../components/Toast";
 import { useToast } from "../hooks/useToast";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
+import { extractYear } from "../utils/extractYear";
 
 function LoginModal({ book, onClose, onNavigate }) {
   useEffect(() => {
@@ -667,7 +668,7 @@ export default function BookPage({ book }) {
               </span>
             ))}
           </div>
-          <div className="text-[13px] mt-1 font-body" style={{ color: "var(--text-tertiary)" }}>{book.y || book.publication_date}{(book.p || book.page_count) ? ` · ${book.p || book.page_count} pages` : ""}</div>
+          <div className="text-[13px] mt-1 font-body" style={{ color: "var(--text-tertiary)" }}>{extractYear(book.y || book.publication_date)}{(book.p || book.page_count) ? ` · ${book.p || book.page_count} pages` : ""}</div>
 
           {/* Modifier la fiche */}
           {user && isUuid && (
@@ -1166,7 +1167,7 @@ export default function BookPage({ book }) {
               <div className="grid grid-cols-3 sm:grid-cols-4 gap-4">
                 {otherEditions.map(ed => {
                   const edBook = { id: ed.id, t: ed.title, c: ed.cover_url, slug: ed.slug };
-                  const year = ed.publication_date ? ed.publication_date.slice(0, 4) : null;
+                  const year = extractYear(ed.publication_date);
                   return (
                     <div key={ed.id} className="text-center">
                       <Img book={edBook} w={100} h={150} onClick={() => go(edBook)} className="w-full h-auto aspect-[2/3]" />

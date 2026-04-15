@@ -57,6 +57,7 @@ import { useParams } from "react-router-dom";
 import { useBookBySlug, mapBook } from "../hooks/useBookBySlug";
 import NotFoundPage from "./NotFoundPage";
 import Skeleton from "../components/Skeleton";
+import { extractYear } from "../utils/extractYear";
 
 // Lazy-load BookPage to keep its browser-only deps out of the SSR bundle
 const BookPage = lazy(() => import("./BookPage"));
@@ -143,7 +144,7 @@ function BookSeoContent({ book, reviews }) {
           {authors && <p style={{ color: "var(--text-secondary)" }}>{authors}</p>}
           {book.publisher && (
             <p className="text-sm" style={{ color: "var(--text-tertiary)" }}>
-              {book.publisher}{book.publication_date ? `, ${book.publication_date}` : ""}
+              {book.publisher}{book.publication_date ? `, ${extractYear(book.publication_date)}` : ""}
             </p>
           )}
           {book.description && (

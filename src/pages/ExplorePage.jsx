@@ -200,20 +200,35 @@ export default function ExplorePage() {
       return;
     }
 
-    // External result — import then navigate
-    const importingKey = gb.googleId ?? `ext:${gb.isbn13 ?? gb.title}`;
-    setImporting(importingKey);
+    // Vérifier si déjà en DB par ISBN (import précédent)
+    if (gb.isbn13) {
+      const { data: existing } = await supabase
+        .from("books")
+        .select("id, slug")
+        .eq("isbn_13", gb.isbn13)
+        .maybeSingle();
+
+      if (existing?.slug) {
+        setShowResults(false);
+        setQuery("");
+        navigate(`/livre/${existing.slug}`);
+        return;
+      }
+    }
+
+    // Pas en DB → lancer import + fermer dropdown immédiatement
+    const importKey = gb.isbn13 ?? gb.title;
+    setImporting(importKey);
     showToast("Chargement du livre…");
+    setShowResults(false);
+    setQuery("");
+
     const book = await importBook(gb);
     setImporting(null);
 
-    if (book) {
-      setShowResults(false);
-      setQuery("");
-      setSearchResults([]);
-      if (book.slug) navigate(`/livre/${book.slug}`);
-      else if (book.id) navigate(`/livre/${book.id}`);
-    }
+    if (book?.slug) navigate(`/livre/${book.slug}`);
+    else if (book?.id) navigate(`/livre/${book.id}`);
+    else showToast("Livre introuvable — réessaie.");
   };
 
   const showDropdown = showResults && query.length >= 1;
@@ -222,6 +237,12 @@ export default function ExplorePage() {
 
   return (
     <div>
+      {importing && (
+        <div
+          className="fixed top-0 left-0 right-0 z-50 h-0.5 animate-pulse"
+          style={{ backgroundColor: "var(--text-primary)" }}
+        />
+      )}
       {toast.visible && <Toast message={toast.message} />}
       {/* Hero — visiteurs non connectés uniquement */}
       {!user && (
@@ -304,11 +325,11 @@ export default function ExplorePage() {
               {searchLoading && searchResults.length === 0 && (
                 <div className="py-3 px-4 flex flex-col gap-2.5">
                   {[1, 2, 3].map(i => (
-                    <div key={i} className="flex gap-3 items-center py-1">
+                    <div key={i} className="flex gap-3 items-center py-1.5">
                       <div className="sk rounded-sm shrink-0" style={{ width: 28, height: 42 }} />
                       <div className="flex-1 flex flex-col gap-2">
-                        <div className="sk rounded-sm" style={{ width: `${55 + i * 8}%`, height: 13 }} />
-                        <div className="sk rounded-sm" style={{ width: `${30 + i * 5}%`, height: 11 }} />
+                        <div className="sk rounded-sm" style={{ width: `${50 + i * 10}%`, height: 13 }} />
+                        <div className="sk rounded-sm" style={{ width: `${28 + i * 6}%`, height: 11 }} />
                       </div>
                     </div>
                   ))}
