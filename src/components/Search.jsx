@@ -480,6 +480,15 @@ export default function Search({ open, onClose, go, initialQuery = "" }) {
   };
 
   const handleInputKeyDown = (e) => {
+    if (e.key === "Enter") {
+      const trimmed = q.trim();
+      if (trimmed.length >= 2) {
+        e.preventDefault();
+        onClose();
+        navigate(`/recherche?q=${encodeURIComponent(trimmed)}`);
+        return;
+      }
+    }
     if (ghost) {
       if (e.key === "Tab" || (e.key === "ArrowRight" && e.target.selectionStart === q.length)) {
         e.preventDefault();
