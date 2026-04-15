@@ -122,10 +122,13 @@ Stratégie hybride, par priorité :
 
 ### Recherche (`src/lib/googleBooks.js`)
 
-Architecture DB-first : RPC `search_books_v2` en premier → skip logic (≥3 résultats DB → skip externes) → Dilicom en premier → Google seulement si Dilicom insuffisant → OL en fallback si Google down.
+Architecture parallèle Tier 1 : DB locale + Dilicom en `Promise.all` → merge scoré + dédup → Google seulement si pool fusé < 3 → OL en fallback si Google down.
 
-- **`search_books_v2`** : cross-field matching, scoring de pertinence, colonnes STORED `norm_title`/`norm_authors` avec index trigram GIN (migration 028), matching compact (LETRANGER → L'étranger)
-- **Skip logic** : ≥3 résultats DB → skip all externes. Sinon Dilicom d'abord, Google seulement si Dilicom < 3 résultats combinés.
+- **Tier 1 (toujours, en parallèle)** : `searchLocalBooks` (RPC `search_books_v2`) + `fetchDilicom` — Dilicom n'est jamais skippé (sauf ISBN exact trouvé en DB → court-circuit total)
+- **Tier 2 (conditionnel)** : Google Books si pool fusé DB+Dilicom < 3 résultats (quota limité, circuit breaker)
+- **Tier 3** : Open Library si Google down
+- **`search_books_v2`** : cross-field matching, scoring de pertinence avec bonus phrase-substring (+60), colonnes STORED `norm_title`/`norm_authors` avec index trigram GIN (migration 028), matching compact (LETRANGER → L'étranger)
+- **Merge scoré** : exact match (+200) > préfixe (+100) > substring (+50) > auteur (+40) > bonus DB (+15) > popularité. Dédup par ISBN puis titre normalisé.
 - **Circuit breaker** : 429 → Google désactivé 15 min → OL seul
 - **Recherche IA** (`smart-search`) : Claude Haiku, cache 7j, ghost text, mode NL. Toujours retourne 200. Retourne jusqu'à **8 suggestions** (max_tokens 700). Haiku doit toujours proposer des livres si l'intention est littéraire — `books: []` réservé aux requêtes hors-livres (météo, recettes…).
 - **`aiEnabled`** : activé si `dbResultCount < 3 || isNL || wordCount >= 3`. Les requêtes 3+ mots sont considérées thématiques même si la DB retourne ≥3 résultats mécaniques.

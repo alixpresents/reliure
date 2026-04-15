@@ -115,10 +115,8 @@ function disableGoogleBooks(durationMs = 15 * 60 * 1000) {
 }
 
 // ═══════════════════════════════════════════════
-// TIER 1 : Recherche base locale
+// TIER 1a : Recherche base locale (RPC)
 // ═══════════════════════════════════════════════
-// Pas de RPC. Requêtes Supabase directes, simples, fiables.
-// 3 stratégies séquentielles avec fallback.
 
 async function searchLocalBooks(query) {
   try {
@@ -180,12 +178,10 @@ const BAD_PUBLISHERS = [
 
 async function fetchGoogleBooks(query) {
   try {
-    // Appel via edge function proxy (rotation de clés + cache côté serveur)
     const { data, error } = await supabase.functions.invoke("google-books-proxy", {
       body: { query: query.trim() },
     });
     if (error) {
-      // Si le proxy retourne 429 → toutes les clés épuisées → circuit breaker
       if (error.message?.includes("429") || error.status === 429) {
         disableGoogleBooks();
       }
@@ -237,97 +233,6 @@ async function fetchGoogleBooks(query) {
 }
 
 // ═══════════════════════════════════════════════
-// Déduplication
-// ═══════════════════════════════════════════════
-
-function deduplicateResults(dbResults, googleResults, olResults = []) {
-  // Les résultats DB sont TOUJOURS en premier et jamais supprimés
-  const dbIsbns = new Set(dbResults.map(r => r.isbn13).filter(Boolean));
-  const dbTitles = new Set(dbResults.map(r => strip(r.title)));
-
-  // Filtrer les résultats Google (dédup vs DB + dédup intra-Google)
-  const seenGoogleTitles = new Set();
-  const uniqueGoogle = googleResults.filter(g => {
-    if (g.isbn13 && dbIsbns.has(g.isbn13)) return false;
-    if (dbTitles.has(strip(g.title))) return false;
-    const key = strip(g.title);
-    if (seenGoogleTitles.has(key)) return false;
-    seenGoogleTitles.add(key);
-    return true;
-  });
-
-  // Construire les sets de ce qui existe déjà (DB + Google retenu)
-  const knownIsbns = new Set([
-    ...dbIsbns,
-    ...uniqueGoogle.map(r => r.isbn13).filter(Boolean),
-  ]);
-  const knownTitles = new Set([
-    ...dbTitles,
-    ...uniqueGoogle.map(r => strip(r.title)),
-  ]);
-
-  // Filtrer les résultats OL (dédup vs DB+Google + dédup intra-OL)
-  const seenOLTitles = new Set();
-  const uniqueOL = olResults.filter(ol => {
-    if (!ol.title) return false;
-    if (ol.isbn13 && knownIsbns.has(ol.isbn13)) return false;
-    if (knownTitles.has(strip(ol.title))) return false;
-    const key = strip(ol.title);
-    if (seenOLTitles.has(key)) return false;
-    seenOLTitles.add(key);
-    return true;
-  });
-
-  // Dédup finale — attrape les doublons intra-source (ex: 2 éditions DB même titre+auteur)
-  const seen = new Set();
-  return [...dbResults, ...uniqueGoogle, ...uniqueOL].filter(r => {
-    const key = strip(r.title) + '|' + strip(r.authors?.[0] || '');
-    if (seen.has(key)) return false;
-    seen.add(key);
-    return true;
-  });
-}
-
-// ═══════════════════════════════════════════════
-// Skip logic — pertinence du top résultat DB
-// ═══════════════════════════════════════════════
-
-function isDbSufficient(query, dbResults) {
-  if (dbResults.length === 0) return false;
-
-  const q = strip(query);
-  const top = dbResults[0];
-  const topTitle = strip(top.title || "");
-  const topAuthor = strip((top.authors?.[0] || ""));
-
-  // Match fort : titre exact ou auteur exact → skip
-  if (topTitle === q || topAuthor === q) return dbResults.length >= 1;
-
-  // Match préfixe fort : le titre DB commence par la query
-  if (topTitle.startsWith(q)) return dbResults.length >= 1;
-
-  // Match partiel : query contenue dans le titre ou vice-versa → skip si >= 2
-  if (topTitle.includes(q) || q.includes(topTitle)) return dbResults.length >= 2;
-
-  // Overlap de mots
-  const queryWords = q.split(" ").filter(w => w.length > 2);
-  if (queryWords.length === 0) return dbResults.length >= 3;
-  const topTitleWords = topTitle.split(" ");
-
-  const overlap = queryWords.filter(w =>
-    topTitleWords.some(tw => tw.includes(w) || w.includes(tw))
-  );
-  const overlapRatio = overlap.length / queryWords.length;
-
-  // Requête courte (≤ 3 mots) : seuil plus strict car faux positifs fréquents
-  const isShortQuery = queryWords.length <= 3;
-
-  if (overlapRatio >= 0.8) return isShortQuery ? dbResults.length >= 5 : dbResults.length >= 3;
-  if (overlapRatio >= 0.5) return dbResults.length >= 7;
-  return false; // mauvais overlap → ne pas skipper, appeler les sources externes
-}
-
-// ═══════════════════════════════════════════════
 // Main export
 // ═══════════════════════════════════════════════
 
@@ -339,93 +244,166 @@ export async function searchBooks(query, { onDbResults } = {}) {
 
   const t0 = performance.now();
 
-  // Étape 1 : RPC locale (rapide, ~50ms)
-  const t_db_start = performance.now();
-  const localBooks = await searchLocalBooks(query);
-  const t_db = Math.round(performance.now() - t_db_start);
-  const dbResults = localBooks.map(formatDbResult);
-
-  // Skip logic : déterminer si les sources externes sont nécessaires
   const digits = query.replace(/[^0-9]/g, "");
   const isISBN = digits.length >= 10 && digits.length <= 13;
-  const isbnFound = isISBN && dbResults.length >= 1;
-  const dbSufficient = isDbSufficient(query, dbResults);
-  const skipGoogle = dbSufficient || isbnFound || !isGoogleBooksAvailable();
 
-  // Wave 1 callback — résultats DB disponibles avant les sources externes
-  onDbResults?.(dbResults, { skipGoogle });
+  // ── CAS ISBN : lookup exact, court-circuit total ──────────────────
+  if (isISBN) {
+    const t_db_start = performance.now();
+    const localBooks = await searchLocalBooks(query);
+    const t_db = Math.round(performance.now() - t_db_start);
+    const dbResults = localBooks.map(formatDbResult);
 
+    onDbResults?.(dbResults, { skipGoogle: true });
+
+    if (dbResults.length >= 1) {
+      const final = dbResults.slice(0, 10);
+      setCache(query, final);
+      console.log("[search-analytics]", JSON.stringify({
+        query, ts: new Date().toISOString(),
+        db: dbResults.length, dilicomCalled: false,
+        googleCalled: false, skipped: true, skipReason: "isbn_db_exact",
+        t_db, t_google: 0, t_total: Math.round(performance.now() - t0),
+      }));
+      return final;
+    }
+
+    // ISBN pas en DB → lookup Dilicom ISBN
+    const t_dil_start = performance.now();
+    const dilicomResults = await fetchDilicom(query, { isbn: digits });
+    const t_dilicom = Math.round(performance.now() - t_dil_start);
+
+    if (dilicomResults.length >= 1) {
+      const final = dilicomResults.slice(0, 10);
+      setCache(query, final);
+      console.log("[search-analytics]", JSON.stringify({
+        query, ts: new Date().toISOString(),
+        db: 0, dilicomCalled: true, dilicomResults: dilicomResults.length,
+        googleCalled: false, skipped: false, skipReason: null,
+        t_db, t_dilicom, t_total: Math.round(performance.now() - t0),
+      }));
+      return final;
+    }
+
+    return [];
+  }
+
+  // ── CAS TEXTE : DB + Dilicom en parallèle (TIER 1) ───────────────
+  const t_tier1_start = performance.now();
+
+  const [localBooks, dilicomResults] = await Promise.all([
+    searchLocalBooks(query),
+    fetchDilicom(query),
+  ]);
+
+  const t_tier1 = Math.round(performance.now() - t_tier1_start);
+  const dbResults = localBooks.map(formatDbResult);
+
+  // Wave 1 callback — résultats DB immédiats pour l'UI
+  onDbResults?.(dbResults, { skipGoogle: false });
+
+  // Scoring pour le tri fusé
+  const q = strip(query);
+  function scoreResult(r) {
+    const t = strip(r.title || "");
+    const a = strip(r.authors?.[0] || "");
+    let s = 0;
+    if (t === q) s += 200;
+    else if (t.startsWith(q)) s += 100;
+    else if (t.includes(q)) s += 50;
+    if (a === q || a.startsWith(q)) s += 40;
+    if (r._source === "db") s += 15; // bonus DB : données enrichies + slugs
+    s += Math.min(r._ratingCount || 0, 20);
+    return s;
+  }
+
+  // Dédup Dilicom vs DB (par ISBN puis titre normalisé)
+  const dbIsbns = new Set(dbResults.map(r => r.isbn13).filter(Boolean));
+  const dbTitlesNorm = new Set(dbResults.map(r => strip(r.title)));
+
+  const uniqueDilicom = dilicomResults.filter(d => {
+    if (d.isbn13 && dbIsbns.has(d.isbn13)) return false;
+    if (dbTitlesNorm.has(strip(d.title))) return false;
+    return true;
+  });
+
+  // Pool fusé Tier 1, trié par score
+  const fusedPool = [...dbResults, ...uniqueDilicom]
+    .map(r => ({ ...r, _score: scoreResult(r) }))
+    .sort((a, b) => b._score - a._score);
+
+  // ── TIER 2 : Google si pool fusé < 3 ──────────────────────────────
   let googleResults = [];
   let olResults = [];
-  let dilicomResults = [];
-  let googleRaw = 0;
-  let skipReason = null;
-  let olActuallyCalled = false;
-  let dilicomCalled = false;
-
-  if (skipGoogle) {
-    if (isbnFound) skipReason = "isbn_found";
-    else if (dbSufficient) skipReason = "db_sufficient";
-    else skipReason = "circuit_breaker";
-  }
-
+  let googleCalled = false;
+  let olCalled = false;
+  const fusedSufficient = fusedPool.length >= 3;
   const t_ext_start = performance.now();
-  if (!skipGoogle) {
-    // Étape 2 : Dilicom en premier (catalogue FR, couverture maximale)
-    dilicomCalled = true;
-    dilicomResults = await fetchDilicom(query);
 
-    // Dilicom a-t-il comblé le manque ?
-    const afterDilicom = deduplicateResults(dbResults, dilicomResults).length;
-    const dilicomSufficient = afterDilicom >= 3;
-
-    if (!dilicomSufficient && isGoogleBooksAvailable()) {
-      // Étape 3 : Google Books si Dilicom insuffisant
+  if (!fusedSufficient) {
+    if (isGoogleBooksAvailable()) {
+      googleCalled = true;
       googleResults = await fetchGoogleBooks(query);
-      googleRaw = googleResults._rawCount || 0;
-    } else if (!dilicomSufficient) {
-      // Google down → Open Library
-      olActuallyCalled = true;
+    } else {
+      olCalled = true;
       olResults = await searchOpenLibrary(query);
     }
-  } else if (skipReason === "circuit_breaker") {
-    // Google est down — Open Library comme découverte de secours
-    olActuallyCalled = true;
-    olResults = await searchOpenLibrary(query);
   }
-  const t_google = Math.round(performance.now() - t_ext_start);
+
+  const t_ext = Math.round(performance.now() - t_ext_start);
   const t_total = Math.round(performance.now() - t0);
 
-  const final = deduplicateResults(dbResults, [...dilicomResults, ...googleResults], olResults).slice(0, 10);
+  // Dédup Google/OL vs pool fusé
+  const fusedIsbns = new Set(fusedPool.map(r => r.isbn13).filter(Boolean));
+  const fusedTitles = new Set(fusedPool.map(r => strip(r.title)));
 
-  // Métadonnées skip logic (attachées au tableau)
-  final._skippedGoogle = skipGoogle;
-  final._skipReason = skipReason;
+  const uniqueGoogle = googleResults.filter(g => {
+    if (g.isbn13 && fusedIsbns.has(g.isbn13)) return false;
+    if (fusedTitles.has(strip(g.title))) return false;
+    return true;
+  });
 
-  // Logging structuré
-  const googleUseful = final.filter(r => r._source === "google").length;
-  const olUseful = final.filter(r => r._source === "openlibrary").length;
+  const uniqueOL = olResults.filter(ol => {
+    if (!ol.title) return false;
+    if (ol.isbn13 && fusedIsbns.has(ol.isbn13)) return false;
+    if (fusedTitles.has(strip(ol.title))) return false;
+    return true;
+  });
+
+  // Résultat final : fusedPool (DB+Dilicom triés) + Google + OL, dédup titre+auteur
+  const seen = new Set();
+  const final = [...fusedPool, ...uniqueGoogle, ...uniqueOL]
+    .filter(r => {
+      const key = strip(r.title) + '|' + strip(r.authors?.[0] || '');
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    })
+    .slice(0, 10);
+
+  // Analytics
   const dilicomUseful = final.filter(r => r._source === "dilicom").length;
+  const googleUseful = final.filter(r => r._source === "google").length;
+  const googleRaw = googleResults._rawCount || 0;
+
   console.log("[search-analytics]", JSON.stringify({
     query,
     ts: new Date().toISOString(),
     db: dbResults.length,
-    dilicomCalled,
+    dilicomCalled: true,
     dilicomResults: dilicomResults.length,
     dilicomUseful,
-    googleCalled: !skipGoogle && googleResults.length > 0,
+    googleCalled,
     googleRaw,
     googleFiltered: googleResults.length,
-    googleDeduped: googleResults.length - googleUseful,
     googleUseful,
-    olCalled: olActuallyCalled,
+    olCalled,
     olResults: olResults.length,
-    olUseful,
-    skipped: skipGoogle,
-    skipReason,
-    circuitBreakerActive: !isGoogleBooksAvailable(),
-    t_db,
-    t_google,
+    olUseful: final.filter(r => r._source === "openlibrary").length,
+    skipped: false,
+    skipReason: fusedSufficient ? "fused_sufficient" : null,
+    t_tier1,
+    t_ext,
     t_total,
   }));
 

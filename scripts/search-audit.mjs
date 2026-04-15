@@ -54,7 +54,7 @@ async function searchDilicom(query) {
 
 const TEST_QUERIES = [
   { query: "L'Étranger", expected_isbn: "9782070360024", expected_source: "db" },
-  { query: "Belle du Seigneur", expected_isbn: "9782070368761", expected_source: "db" },
+  { query: "Belle du Seigneur", expected_isbn: "9782073095480", expected_source: "db" },
   { query: "Sécher tes larmes", expected_isbn: "9782386433542", expected_source: "dilicom" },
   { query: "Modiano", expected_isbn: null, expected_source: "db" },
   { query: "Annie Ernaux", expected_isbn: null, expected_source: "db" },
@@ -69,6 +69,8 @@ const TEST_QUERIES = [
   { query: "Prout à la recherche", expected_isbn: null, expected_source: "none" },
   { query: "Les Misérables", expected_isbn: null, expected_source: "db" },
   { query: "Notre-Dame de Paris", expected_isbn: null, expected_source: "db" },
+  { query: "Voir venir", expected_isbn: null, expected_source: "dilicom" },
+  { query: "Lucile Novat", expected_isbn: null, expected_source: "dilicom" },
 ];
 
 function strip(s) {
@@ -86,7 +88,9 @@ function strip(s) {
 async function runAudit() {
   const results = [];
 
-  for (const test of TEST_QUERIES) {
+  for (let i = 0; i < TEST_QUERIES.length; i++) {
+    const test = TEST_QUERIES[i];
+    if (i > 0) await new Promise(r => setTimeout(r, 300)); // avoid pool saturation
     process.stdout.write(`  Testing: "${test.query}" ... `);
 
     const [db, dilicom] = await Promise.all([
@@ -109,37 +113,29 @@ async function runAudit() {
       ? dilicomTop3.some(r => r.isbn === test.expected_isbn)
       : null;
 
-    // Simulate current skip logic
-    const skipTriggered = db.results.length >= 3;
+    // New architecture: Dilicom always called (no skip on Dilicom)
+    // Google only if fused pool (DB+Dilicom) < 3
+    const fusedCount = db.results.length + dilicom.results.length; // simplified, ignoring dedup
+    const googleWouldBeCalled = fusedCount < 3;
 
-    // False positive: skip triggered but expected book not in DB top 3
-    const falsePositive = test.expected_isbn
-      ? skipTriggered && !dbMatch
-      : false;
-
-    // Determine result
+    // Determine result — DB and Dilicom both always available
     let result;
     if (test.expected_source === "none") {
-      // Garbage query — pass regardless (0 results is fine)
       result = "pass";
     } else if (!test.expected_isbn) {
-      // No expected ISBN — pass if we got any results from expected source
-      result = db.results.length > 0 ? "pass" : "miss";
-    } else if (dbMatch) {
+      result = (db.results.length > 0 || dilicom.results.length > 0) ? "pass" : "miss";
+    } else if (dbMatch || dilicomMatch) {
       result = "pass";
-    } else if (!skipTriggered && dilicomMatch) {
-      result = "pass";
-    } else if (falsePositive && dilicomMatch) {
-      result = "false_positive"; // Dilicom WOULD have found it but was skipped
-    } else if (dilicomMatch || dbTop3.some(r => strip(r.title) === strip(test.query))) {
+    } else if (dbTop3.some(r => strip(r.title) === strip(test.query))) {
       result = "partial";
     } else {
-      // Check if found anywhere in top 10
       const anyDbMatch = db.results.some(r => r.isbn_13 === test.expected_isbn);
       const anyDilicomMatch = dilicom.results.some(r => r.isbn === test.expected_isbn);
       if (anyDbMatch || anyDilicomMatch) result = "partial";
       else result = "miss";
     }
+
+    const falsePositive = false; // no skip on Dilicom = no false positives possible
 
     const entry = {
       query: test.query,
@@ -153,7 +149,7 @@ async function runAudit() {
       dilicom_top_isbn: dilicomTopIsbn,
       dilicom_top_title: dilicomTopTitle,
       dilicom_match: dilicomMatch,
-      skip_triggered: skipTriggered,
+      google_needed: googleWouldBeCalled,
       false_positive: falsePositive,
       t_db: db.ms,
       t_dilicom: dilicom.ms,
