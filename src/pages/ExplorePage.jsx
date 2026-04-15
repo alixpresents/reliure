@@ -216,8 +216,7 @@ export default function ExplorePage() {
     }
   };
 
-  const hasResults = query.length >= 2 && (searchResults.length > 0 || searchLoading);
-  const showDropdown = showResults && query.length >= 2;
+  const showDropdown = showResults && query.length >= 1;
 
   const allEmpty = !loadingBabelio && !loadingReviews && !loadingQuotes && !loadingLists && babelioBooks.length === 0 && reviews.length === 0 && quotes.length === 0 && lists.length === 0;
 
@@ -260,6 +259,17 @@ export default function ExplorePage() {
               className="flex-1 bg-transparent border-none outline-none font-body placeholder:text-[var(--text-tertiary)] min-w-0"
               style={{ fontSize: 16, color: "var(--text-primary)" }}
             />
+            {searchLoading && query.length >= 1 && (
+              <div className="shrink-0 pointer-events-none">
+                <div
+                  className="w-3.5 h-3.5 rounded-full border-2 animate-spin"
+                  style={{
+                    borderColor: "var(--border-default)",
+                    borderTopColor: "var(--text-secondary)",
+                  }}
+                />
+              </div>
+            )}
             {query && (
               <button
                 onClick={() => { setQuery(""); setSearchResults([]); setShowResults(false); inputRef.current?.focus(); }}
@@ -292,13 +302,13 @@ export default function ExplorePage() {
               }}
             >
               {searchLoading && searchResults.length === 0 && (
-                <div className="py-2 px-4 flex flex-col gap-2">
+                <div className="py-3 px-4 flex flex-col gap-2.5">
                   {[1, 2, 3].map(i => (
-                    <div key={i} className="flex gap-3 items-center py-1.5">
-                      <Skeleton.Cover w={28} h={42} className="rounded-sm" />
-                      <div className="flex-1 flex flex-col gap-1.5">
-                        <Skeleton.Text width="60%" height={13} />
-                        <Skeleton.Text width="35%" height={11} />
+                    <div key={i} className="flex gap-3 items-center py-1">
+                      <div className="sk rounded-sm shrink-0" style={{ width: 28, height: 42 }} />
+                      <div className="flex-1 flex flex-col gap-2">
+                        <div className="sk rounded-sm" style={{ width: `${55 + i * 8}%`, height: 13 }} />
+                        <div className="sk rounded-sm" style={{ width: `${30 + i * 5}%`, height: 11 }} />
                       </div>
                     </div>
                   ))}
