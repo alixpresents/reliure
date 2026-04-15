@@ -232,19 +232,36 @@ export default function ExplorePage() {
       }
     }
 
-    // Pas en DB → lancer import + fermer dropdown immédiatement
+    // Pas en DB → navigation immédiate + import en arrière-plan
     const importKey = gb.isbn13 ?? gb.title;
     setImporting(importKey);
-    showToast("Chargement du livre…");
     setShowResults(false);
     setQuery("");
 
-    const book = await importBook(gb);
-    setImporting(null);
+    navigate("/livre/importing", {
+      state: {
+        previewData: {
+          title: gb.title,
+          authors: gb.authors || [],
+          coverUrl: gb.coverUrl || null,
+          publisher: gb.publisher || null,
+          publishedDate: gb.publishedDate || null,
+          pageCount: gb.pageCount || null,
+          description: gb.description || null,
+          isbn13: gb.isbn13 || null,
+        },
+      },
+    });
 
-    if (book?.slug) navigate(`/livre/${book.slug}`);
-    else if (book?.id) navigate(`/livre/${book.id}`);
-    else showToast("Livre introuvable — réessaie.");
+    importBook(gb).then(book => {
+      setImporting(null);
+      if (book?.slug) navigate(`/livre/${book.slug}`, { replace: true });
+      else if (book?.id) navigate(`/livre/${book.id}`, { replace: true });
+      else {
+        navigate("/", { replace: true });
+        showToast("Livre introuvable — réessaie.");
+      }
+    });
   };
 
   const showDropdown = showResults && query.length >= 1;

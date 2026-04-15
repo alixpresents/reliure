@@ -53,7 +53,7 @@ export function meta({ data, params }) {
 
 import { lazy, Suspense } from "react";
 import { useLoaderData } from "react-router";
-import { useParams } from "react-router-dom";
+import { useParams, useLocation, Navigate } from "react-router-dom";
 import { useBookBySlug, mapBook } from "../hooks/useBookBySlug";
 import NotFoundPage from "./NotFoundPage";
 import Skeleton from "../components/Skeleton";
@@ -80,6 +80,63 @@ function BookSkeleton() {
             ))}
           </div>
         </div>
+      </div>
+    </div>
+  );
+}
+
+function BookSkeletonEnriched({ preview }) {
+  const authors = Array.isArray(preview.authors)
+    ? preview.authors.join(", ")
+    : preview.authors || "";
+
+  return (
+    <div className="sk-fade">
+      <div className="py-4">
+        <Skeleton.Text width={52} height={13} />
+      </div>
+      <div className="flex flex-col sm:flex-row gap-8 py-2 pb-6 items-center sm:items-start">
+        {preview.coverUrl ? (
+          <img
+            src={preview.coverUrl}
+            alt={preview.title || ""}
+            style={{ width: 180, height: 270, objectFit: "cover", borderRadius: 3, flexShrink: 0 }}
+          />
+        ) : (
+          <Skeleton.Cover w={180} h={270} />
+        )}
+        <div className="flex-1 pt-1 flex flex-col gap-3">
+          {preview.title ? (
+            <h1 className="font-display text-[24px] font-normal leading-snug"
+                style={{ color: "var(--text-primary)" }}>
+              {preview.title}
+            </h1>
+          ) : (
+            <Skeleton.Text width="68%" height={28} />
+          )}
+          {authors ? (
+            <div className="text-[15px] font-body" style={{ color: "var(--text-secondary)" }}>
+              {authors}
+            </div>
+          ) : (
+            <Skeleton.Text width="40%" height={15} />
+          )}
+          <Skeleton.Text width="30%" height={12} />
+          <div className="flex gap-1.5 flex-wrap mt-2">
+            {[72, 48, 56, 88].map((w, i) => (
+              <Skeleton className="rounded-full" key={i} style={{ width: w, height: 30 }} />
+            ))}
+          </div>
+          <div className="text-[12px] font-body mt-1" style={{ color: "var(--text-tertiary)" }}>
+            Chargement en cours…
+          </div>
+        </div>
+      </div>
+      <div className="flex flex-col gap-2 mt-4">
+        <Skeleton.Text width="100%" height={12} />
+        <Skeleton.Text width="95%" height={12} />
+        <Skeleton.Text width="88%" height={12} />
+        <Skeleton.Text width="72%" height={12} />
       </div>
     </div>
   );
@@ -174,10 +231,21 @@ function BookSeoContent({ book, reviews }) {
 export default function BookPageRoute() {
   const loaderData = useLoaderData();
   const { slug } = useParams();
+  const location = useLocation();
   const isServer = typeof window === "undefined";
 
-  // Hooks called unconditionally (Rules of Hooks)
-  const { book, loading, notFound } = useBookBySlug(slug);
+  // "importing" = route transitoire SPA (pas de fetch DB)
+  const isImporting = !isServer && slug === "importing";
+
+  // Hooks toujours appelés dans le même ordre (Rules of Hooks)
+  const { book, loading, notFound } = useBookBySlug(isImporting ? null : slug);
+
+  // Cas spécial : skeleton enrichi pendant l'import en arrière-plan
+  if (isImporting) {
+    const previewData = location.state?.previewData;
+    if (previewData) return <BookSkeletonEnriched preview={previewData} />;
+    return <Navigate to="/" replace />;
+  }
 
   // SSR: render SEO-safe content with loader data
   // (meta tags + JSON-LD are the real SEO wins — already in <head>)
