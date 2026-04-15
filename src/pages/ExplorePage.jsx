@@ -309,8 +309,10 @@ export default function ExplorePage() {
               onChange={e => { setQuery(e.target.value); setShowResults(true); }}
               onFocus={() => { handleSearchFocus(); if (query.length >= 1) setShowResults(true); }}
               onKeyDown={e => {
+                console.log("[debug] keydown:", e.key, "query:", query.trim().length);
                 if (e.key === "Enter" && query.trim().length >= 2) {
                   e.preventDefault();
+                  e.stopPropagation();
                   setShowResults(false);
                   navigate(`/recherche?q=${encodeURIComponent(query.trim())}`);
                 }
