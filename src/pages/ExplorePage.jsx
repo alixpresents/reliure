@@ -308,6 +308,13 @@ export default function ExplorePage() {
               value={query}
               onChange={e => { setQuery(e.target.value); setShowResults(true); }}
               onFocus={() => { handleSearchFocus(); if (query.length >= 1) setShowResults(true); }}
+              onKeyDown={e => {
+                if (e.key === "Enter" && query.trim().length >= 2) {
+                  e.preventDefault();
+                  setShowResults(false);
+                  navigate(`/recherche?q=${encodeURIComponent(query.trim())}`);
+                }
+              }}
               placeholder="Chercher des livres, auteurs, thèmes..."
               aria-label="Rechercher"
               className="flex-1 bg-transparent border-none outline-none font-body placeholder:text-[var(--text-tertiary)] min-w-0"

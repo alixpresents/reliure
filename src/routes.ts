@@ -16,6 +16,7 @@ export default [
   route("selections", "pages/SelectionsPageRoute.jsx"),
   route("selections/:slug", "pages/SelectionPageRoute.jsx"),
   route("livre/:slug", "pages/BookPageRoute.jsx"),
+  route("recherche", "pages/SearchPageRoute.jsx"),
   route("login", "pages/LoginPage.jsx"),
 
   // Protected pages
