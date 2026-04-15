@@ -15,7 +15,6 @@ export default [
   route("la-revue/:slug", "pages/ArticlePage.jsx"),
   route("selections", "pages/SelectionsPageRoute.jsx"),
   route("selections/:slug", "pages/SelectionPageRoute.jsx"),
-  route("livre/importing", "pages/BookPageRoute.jsx"),
   route("livre/:slug", "pages/BookPageRoute.jsx"),
   route("login", "pages/LoginPage.jsx"),
 
