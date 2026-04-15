@@ -31,6 +31,7 @@ const THEMES_PRINCIPAUX = [
 import { useLikes } from "../hooks/useLikes";
 import Skeleton from "../components/Skeleton";
 import { useAuth } from "../lib/AuthContext";
+import { supabase } from "../lib/supabase";
 import { useCuratedSelections } from "../hooks/useCuratedSelections";
 import CuratedSelectionCard from "../components/CuratedSelectionCard";
 
@@ -119,6 +120,7 @@ export default function ExplorePage() {
   const searchTimer = useRef(null);
   const wrapperRef = useRef(null);
   const inputRef = useRef(null);
+  const dilicomWarmRef = useRef(false);
 
   const { goToBook: go } = useNav();
   const navigate = useNavigate();
@@ -180,6 +182,13 @@ export default function ExplorePage() {
     return () => window.removeEventListener("keydown", handler);
   }, [showResults]);
 
+  const handleSearchFocus = () => {
+    if (dilicomWarmRef.current) return;
+    dilicomWarmRef.current = true;
+    supabase.functions.invoke("dilicom-search", { body: { query: "a", limit: 1 } })
+      .catch(() => {});
+  };
+
   const handleResultClick = async (gb) => {
     if (importing) return;
 
@@ -191,8 +200,10 @@ export default function ExplorePage() {
       return;
     }
 
-    // BnF or Google Books — import then navigate
-    setImporting(gb.googleId ?? gb.isbn13 ?? gb.title);
+    // External result — import then navigate
+    const importingKey = gb.googleId ?? `ext:${gb.isbn13 ?? gb.title}`;
+    setImporting(importingKey);
+    showToast("Chargement du livre…");
     const book = await importBook(gb);
     setImporting(null);
 
@@ -243,7 +254,7 @@ export default function ExplorePage() {
               ref={inputRef}
               value={query}
               onChange={e => { setQuery(e.target.value); setShowResults(true); }}
-              onFocus={() => { if (query.length >= 2) setShowResults(true); }}
+              onFocus={() => { handleSearchFocus(); if (query.length >= 2) setShowResults(true); }}
               placeholder="Chercher des livres, auteurs, thèmes..."
               aria-label="Rechercher"
               className="flex-1 bg-transparent border-none outline-none font-body placeholder:text-[var(--text-tertiary)] min-w-0"
@@ -276,16 +287,28 @@ export default function ExplorePage() {
                 maxHeight: 360,
                 overflowY: "auto",
                 zIndex: 100,
+                opacity: importing ? 0.6 : 1,
+                pointerEvents: importing ? "none" : "auto",
               }}
             >
               {searchLoading && searchResults.length === 0 && (
-                <div className="py-5 text-center text-[13px] font-body" style={{ color: "var(--text-tertiary)" }}>Recherche...</div>
+                <div className="py-2 px-4 flex flex-col gap-2">
+                  {[1, 2, 3].map(i => (
+                    <div key={i} className="flex gap-3 items-center py-1.5">
+                      <Skeleton.Cover w={28} h={42} className="rounded-sm" />
+                      <div className="flex-1 flex flex-col gap-1.5">
+                        <Skeleton.Text width="60%" height={13} />
+                        <Skeleton.Text width="35%" height={11} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
               )}
               {!searchLoading && query.length >= 2 && searchResults.length === 0 && (
                 <div className="py-5 text-center text-[13px] font-body" style={{ color: "var(--text-tertiary)" }}>Aucun résultat.</div>
               )}
               {searchResults.map(gb => {
-                const itemKey = gb.googleId ?? (gb._source === "db" ? `db:${gb.dbId}` : `bnf:${gb.isbn13 ?? gb.title}`);
+                const itemKey = gb.googleId ?? (gb._source === "db" ? `db:${gb.dbId}` : `ext:${gb.isbn13 ?? gb.title}`);
                 const isImporting = importing === itemKey;
                 return (
                   <div
@@ -304,6 +327,12 @@ export default function ExplorePage() {
                         {gb.authors?.join(", ")}{extractYear(gb.publishedDate) ? ` · ${extractYear(gb.publishedDate)}` : ""}
                       </div>
                     </div>
+                    {isImporting && (
+                      <div className="shrink-0 ml-2">
+                        <div className="w-4 h-4 rounded-full border-2 animate-spin"
+                          style={{ borderColor: "var(--border-default)", borderTopColor: "var(--text-primary)" }} />
+                      </div>
+                    )}
                   </div>
                 );
               })}
