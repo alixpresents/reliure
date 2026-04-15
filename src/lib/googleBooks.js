@@ -303,18 +303,27 @@ function isDbSufficient(query, dbResults) {
   // Match fort : titre exact ou auteur exact → skip
   if (topTitle === q || topAuthor === q) return dbResults.length >= 1;
 
+  // Match préfixe fort : le titre DB commence par la query
+  if (topTitle.startsWith(q)) return dbResults.length >= 1;
+
   // Match partiel : query contenue dans le titre ou vice-versa → skip si >= 2
   if (topTitle.includes(q) || q.includes(topTitle)) return dbResults.length >= 2;
 
-  // Match par overlap de mots
+  // Overlap de mots
   const queryWords = q.split(" ").filter(w => w.length > 2);
   if (queryWords.length === 0) return dbResults.length >= 3;
   const topTitleWords = topTitle.split(" ");
-  const overlap = queryWords.filter(w => topTitleWords.some(tw => tw.includes(w) || w.includes(tw)));
+
+  const overlap = queryWords.filter(w =>
+    topTitleWords.some(tw => tw.includes(w) || w.includes(tw))
+  );
   const overlapRatio = overlap.length / queryWords.length;
 
-  if (overlapRatio >= 0.8) return dbResults.length >= 3;
-  if (overlapRatio >= 0.5) return dbResults.length >= 5;
+  // Requête courte (≤ 3 mots) : seuil plus strict car faux positifs fréquents
+  const isShortQuery = queryWords.length <= 3;
+
+  if (overlapRatio >= 0.8) return isShortQuery ? dbResults.length >= 5 : dbResults.length >= 3;
+  if (overlapRatio >= 0.5) return dbResults.length >= 7;
   return false; // mauvais overlap → ne pas skipper, appeler les sources externes
 }
 

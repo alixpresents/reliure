@@ -6,6 +6,7 @@ import CoverBackdrop from "../components/CoverBackdrop";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../lib/AuthContext";
 import { searchBooks } from "../lib/googleBooks";
+import { extractYear } from "../utils/extractYear";
 import { importBook } from "../lib/importBook";
 import { RESERVED_USERNAMES } from "../constants/reserved-usernames";
 
@@ -250,7 +251,7 @@ function StepBooks({ picks, setPicks, onFinish, onSkip }) {
                   )}
                   <div className="min-w-0">
                     <div className="text-sm font-medium font-body truncate">{gb.title}</div>
-                    <div className="text-xs font-body" style={{ color: "var(--text-tertiary)" }}>{gb.authors.join(", ")}{gb.publishedDate ? ` · ${gb.publishedDate.slice(0, 4)}` : ""}</div>
+                    <div className="text-xs font-body" style={{ color: "var(--text-tertiary)" }}>{gb.authors.join(", ")}{extractYear(gb.publishedDate) ? ` · ${extractYear(gb.publishedDate)}` : ""}</div>
                   </div>
                 </div>
               ))}

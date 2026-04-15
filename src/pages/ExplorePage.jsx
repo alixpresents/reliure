@@ -12,6 +12,7 @@ import UserName from "../components/UserName";
 import { useCreatorIds } from "../hooks/useUserBadges";
 import ContentMenu from "../components/ContentMenu";
 import { useNav } from "../lib/NavigationContext";
+import { extractYear } from "../utils/extractYear";
 import { useNavigate } from "react-router-dom";
 import { useBabelioPopular, usePopularReviews, usePopularQuotes, usePopularLists } from "../hooks/useExplore";
 import { useClassement } from "../hooks/useClassement";
@@ -300,7 +301,7 @@ export default function ExplorePage() {
                     <div className="flex-1 min-w-0">
                       <div className="text-[14px] font-medium font-body truncate">{gb.title}</div>
                       <div className="text-[12px] font-body truncate" style={{ color: "var(--text-tertiary)" }}>
-                        {gb.authors?.join(", ")}{gb.publishedDate ? ` · ${gb.publishedDate.slice(0, 4)}` : ""}
+                        {gb.authors?.join(", ")}{extractYear(gb.publishedDate) ? ` · ${extractYear(gb.publishedDate)}` : ""}
                       </div>
                     </div>
                   </div>

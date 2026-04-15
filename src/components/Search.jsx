@@ -8,6 +8,7 @@ import { searchBnF } from "../lib/bnfSearch";
 import { useSmartSearch, looksLikeNaturalLanguage } from "../hooks/useSmartSearch";
 import { useAuth } from "../lib/AuthContext";
 import Avatar from "./Avatar";
+import { extractYear } from "../utils/extractYear";
 import Skeleton from "./Skeleton";
 
 function normalize(s) {
@@ -751,7 +752,7 @@ export default function Search({ open, onClose, go, initialQuery = "" }) {
                   <div className="flex-1 min-w-0">
                     <div className="text-[13px] font-medium font-body truncate">{gb.title}</div>
                     <div className="text-[11px] font-body truncate" style={{ color: "var(--text-tertiary)" }}>
-                      {gb.authors.join(", ")}{gb.publishedDate ? ` · ${gb.publishedDate.slice(0, 4)}` : ""}
+                      {gb.authors.join(", ")}{extractYear(gb.publishedDate) ? ` · ${extractYear(gb.publishedDate)}` : ""}
                     </div>
                   </div>
                   {added && (
