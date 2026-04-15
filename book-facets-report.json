@@ -1,0 +1,100 @@
+{
+  "timestamp": "2026-04-06T09:32:54.601Z",
+  "mode": "apply",
+  "force": false,
+  "stats": {
+    "tagged": 17799,
+    "skipped": 0,
+    "errors": 28,
+    "total": 17827
+  },
+  "lastTagged": [
+    {
+      "title": "Les silences des pères",
+      "moods": [
+        "mélancolique",
+        "contemplatif",
+        "poétique"
+      ],
+      "intrigues": [
+        "deuil",
+        "famille",
+        "identité"
+      ],
+      "rythme": "lent",
+      "registre": "grave",
+      "protag_age": "age_mur",
+      "protag_genre": "homme",
+      "confidence": 0.75
+    },
+    {
+      "title": "La fracture",
+      "moods": [
+        "sombre",
+        "dérangeant",
+        "haletant"
+      ],
+      "intrigues": [
+        "société",
+        "guerre",
+        "survie"
+      ],
+      "rythme": "rapide",
+      "registre": "grave",
+      "protag_age": "jeune_adulte",
+      "protag_genre": "homme",
+      "confidence": 0.75
+    },
+    {
+      "title": "Bleu pétrole",
+      "moods": [
+        "mélancolique",
+        "lumineux",
+        "contemplatif"
+      ],
+      "intrigues": [
+        "famille",
+        "société",
+        "survie"
+      ],
+      "rythme": "lent",
+      "registre": "grave",
+      "protag_age": "enfant",
+      "protag_genre": "femme",
+      "confidence": 0.75
+    },
+    {
+      "title": "La Vénitienne pour la scène",
+      "moods": [
+        "sensuel",
+        "drôle",
+        "dérangeant"
+      ],
+      "intrigues": [
+        "amour",
+        "société"
+      ],
+      "rythme": "rapide",
+      "registre": "ironique",
+      "protag_age": "jeune_adulte",
+      "protag_genre": "collectif",
+      "confidence": 0.75
+    },
+    {
+      "title": "Sudachi : the demon king incident. Vol. 2",
+      "moods": [
+        "drôle",
+        "réconfortant"
+      ],
+      "intrigues": [
+        "amitié",
+        "quête"
+      ],
+      "rythme": "rapide",
+      "registre": "léger",
+      "protag_age": "jeune_adulte",
+      "protag_genre": "collectif",
+      "confidence": 0.72
+    }
+  ]
+}

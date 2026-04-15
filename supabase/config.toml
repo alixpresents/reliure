@@ -1,3 +1,6 @@
+[functions.dilicom-search]
+verify_jwt = false
+
 [functions.book_ai_enrich]
 verify_jwt = true
 

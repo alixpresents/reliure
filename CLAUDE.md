@@ -97,33 +97,35 @@ Liste dans `src/constants/reserved-usernames.js`. Vérifiés à l'inscription (f
 ## Sources de métadonnées livres
 
 Stratégie hybride, par priorité :
-1. **Electre NG API** — source de référence pour les livres francophones. Appelé en parallèle dans `book_import` (OAuth2 password flow, token cache module-level). Edge function proxy `electre-proxy` disponible pour les appels batch. Colonnes exclusives : `electre_notice_id`, `oeuvre_id`, `collection_name`, `flag_fiction`, `quatrieme_de_couverture`, `disponibilite`. Source taggée `multi_api_electre`. Script batch : `scripts/enrich-from-electre.mjs` (dry-run par défaut, batches de 100 EANs, ne remplit que les champs NULL).
-2. **Google Books API** — via edge function proxy `google-books-proxy` (rotation de clés dynamiques `GOOGLE_BOOKS_KEY_N`, cache 6h dans `search_cache`)
-3. **BnF SRU** — import par ISBN dans `book_import` + recherche parallèle (`src/lib/bnfSearch.js`)
-4. **Wikidata** — batch uniquement (trop lent en temps réel). **Ne jamais faire confiance aux ISBN Wikidata.**
-5. **Open Library API** — parallèle avec Google quand DB < 3 résultats. Seule source quand circuit breaker Google actif.
-6. **MetasBooks** — enrichissement post-merge dans `book_import` uniquement
-7. **Claude Haiku** — fallback IA via `book_ai_enrich`. Source `ai_enriched`, badge "À vérifier" si `ai_confidence < 0.7`. Déclenché via BackfillPage uniquement.
+1. **Dilicom FEL Search** — catalogue physique français (~1.8M refs). Edge function `dilicom-search` : recherche texte (quickSearch) + lookup EAN (advancedSearch). SOAP/XML, parsing regex. Couvertures via `images.centprod.com`. Source taggée `multi_api_dilicom`. `verify_jwt = false`.
+2. **Electre NG API** — champs exclusifs : `electre_notice_id`, `oeuvre_id`, `collection_name`, `flag_fiction`, `quatrieme_de_couverture`. OAuth2 password flow, token cache module-level. Edge function proxy `electre-proxy` pour appels batch. Source taggée `multi_api_electre`. Script batch : `scripts/enrich-from-electre.mjs`.
+3. **Google Books API** — via edge function proxy `google-books-proxy` (rotation de clés dynamiques `GOOGLE_BOOKS_KEY_N`, cache 6h dans `search_cache`)
+4. **BnF SRU** — import par ISBN dans `book_import` + recherche parallèle (`src/lib/bnfSearch.js`)
+5. **Wikidata** — batch uniquement (trop lent en temps réel). **Ne jamais faire confiance aux ISBN Wikidata.**
+6. **Open Library API** — parallèle avec Google quand DB < 3 résultats. Seule source quand circuit breaker Google actif.
+7. **MetasBooks** — enrichissement post-merge dans `book_import` uniquement
+8. **Claude Haiku** — fallback IA via `book_ai_enrich`. Source `ai_enriched`, badge "À vérifier" si `ai_confidence < 0.7`. Déclenché via BackfillPage uniquement.
 
-**`book_import`** (`supabase/functions/book_import/index.ts`) : **5 sources en parallèle** par ISBN (Electre, Google, OL, BnF, MetasBooks), fusion par priorité, slug, upsert. `verify_jwt = false` (catalogue partagé). Fallback client-side si échec.
+**`book_import`** (`supabase/functions/book_import/index.ts`) : **6 sources en parallèle** par ISBN (Dilicom, Electre, Google, OL, BnF, MetasBooks), fusion par priorité, slug, upsert. `verify_jwt = false` (catalogue partagé). Fallback client-side si échec.
 
 ### Priorité de fusion par champ
-- `title` : Electre > BnF > Google > OL
-- `authors` : Electre > Google > BnF > OL
-- `publisher` : Electre > BnF > OL > Google
-- `publication_date` : Electre > BnF > Google > OL
-- `page_count` : Electre > OL > Google > BnF
-- `cover_url` : Electre > Google (zoom 2) > OL
-- `description` : Electre (résumé/4ème couv) > Google > OL
-- `language` : Electre > BnF > Google
-- `genres` : Electre > Google > OL
+- `title` : Electre > Dilicom > BnF > Google > OL
+- `authors` : Electre > Google > Dilicom > BnF > OL
+- `publisher` : Dilicom > Electre > BnF > OL > Google
+- `publication_date` : Electre > BnF > Dilicom > Google > OL
+- `page_count` : Electre > OL > Dilicom > Google > BnF
+- `cover_url` : Dilicom > Electre > Google (zoom 2) > OL
+- `description` : Electre (résumé/4ème couv) > Dilicom > Google > OL
+- `language` : Electre > Dilicom > BnF > Google
+- `genres` : Electre > Dilicom > Google > OL
+- `disponibilite` : Electre > Dilicom
 
 ### Recherche (`src/lib/googleBooks.js`)
 
-Architecture DB-first : RPC `search_books_v2` en premier → skip logic (≥3 résultats DB → skip Google+OL) → Google+OL en parallèle si nécessaire.
+Architecture DB-first : RPC `search_books_v2` en premier → skip logic (≥3 résultats DB → skip externes) → Dilicom en premier → Google seulement si Dilicom insuffisant → OL en fallback si Google down.
 
 - **`search_books_v2`** : cross-field matching, scoring de pertinence, colonnes STORED `norm_title`/`norm_authors` avec index trigram GIN (migration 028), matching compact (LETRANGER → L'étranger)
-- **Skip logic** : ~60% d'appels Google évités
+- **Skip logic** : ≥3 résultats DB → skip all externes. Sinon Dilicom d'abord, Google seulement si Dilicom < 3 résultats combinés.
 - **Circuit breaker** : 429 → Google désactivé 15 min → OL seul
 - **Recherche IA** (`smart-search`) : Claude Haiku, cache 7j, ghost text, mode NL. Toujours retourne 200. Retourne jusqu'à **8 suggestions** (max_tokens 700). Haiku doit toujours proposer des livres si l'intention est littéraire — `books: []` réservé aux requêtes hors-livres (météo, recettes…).
 - **`aiEnabled`** : activé si `dbResultCount < 3 || isNL || wordCount >= 3`. Les requêtes 3+ mots sont considérées thématiques même si la DB retourne ≥3 résultats mécaniques.

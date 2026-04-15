@@ -126,6 +126,98 @@ async function fetchElectre(isbn: string) {
 }
 
 // ---------------------------------------------------------------------------
+// Dilicom FEL Search — catalogue physique français (~1.8M refs)
+// ---------------------------------------------------------------------------
+async function fetchDilicom(isbn: string): Promise<Partial<BookMeta> | null> {
+  const login = Deno.env.get("DILICOM_LOGIN");
+  const password = Deno.env.get("DILICOM_PASSWORD");
+  if (!login || !password) return null;
+
+  const soap = `<?xml version="1.0" encoding="UTF-8"?>
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:def="http://fel-dlc-sne.dilicom.net/definitions/">
+  <soapenv:Header/>
+  <soapenv:Body>
+    <def:WebSearchRequest>
+      <def:login>${login}</def:login>
+      <def:password>${password}</def:password>
+      <def:pagination>
+        <def:nbResultsPerPage>1</def:nbResultsPerPage>
+        <def:currentPage>1</def:currentPage>
+        <def:includeNotice>true</def:includeNotice>
+      </def:pagination>
+      <def:catalog>MAT</def:catalog>
+      <def:advancedSearch>
+        <def:GTIN13>${isbn}</def:GTIN13>
+      </def:advancedSearch>
+    </def:WebSearchRequest>
+  </soapenv:Body>
+</soapenv:Envelope>`;
+
+  const res = await fetch("https://search-fel.centprod.com/v2/search-fel", {
+    method: "POST",
+    headers: { "Content-Type": "text/xml; charset=utf-8", "SOAPAction": "" },
+    body: soap,
+    signal: AbortSignal.timeout(8000),
+  });
+  if (!res.ok) return null;
+
+  const text = await res.text();
+
+  // Regex-based XML parsing (namespace-agnostic)
+  const tag = (xml: string, name: string): string | null => {
+    const re = new RegExp(`<(?:[\\w-]+:)?${name}[^>]*>([\\s\\S]*?)<\\/(?:[\\w-]+:)?${name}>`, "i");
+    const m = xml.match(re);
+    return m ? m[1].trim() : null;
+  };
+  const tagAll = (xml: string, name: string): string[] => {
+    const re = new RegExp(`<(?:[\\w-]+:)?${name}[^>]*>[\\s\\S]*?<\\/(?:[\\w-]+:)?${name}>`, "gi");
+    return xml.match(re) || [];
+  };
+  const attr = (block: string, attrName: string): string | null => {
+    const re = new RegExp(`${attrName}="([^"]*)"`, "i");
+    const m = block.match(re);
+    return m ? m[1] : null;
+  };
+
+  const beginBlock = tag(text, "begin");
+  if (!beginBlock) return null;
+
+  const productBlock = tag(beginBlock, "product") || beginBlock;
+  const title = tag(productBlock, "title");
+  if (!title) return null;
+
+  // Authors
+  const contributorBlocks = tagAll(beginBlock, "contributorRole");
+  const authors: string[] = [];
+  for (const cb of contributorBlocks) {
+    if (attr(cb, "Description") === "Auteur") {
+      const prenom = tag(cb, "nameBeforeKey") || "";
+      const nom = tag(cb, "keyName") || "";
+      const full = [prenom, nom].filter(Boolean).join(" ");
+      if (full) authors.push(full);
+    }
+  }
+
+  const clilRaw = tag(beginBlock, "level2-codeClil") || "";
+  const clilMatch = clilRaw.match(/\((\d+)\)/);
+  const clilLabel = clilRaw.replace(/\s*\(\d+\)/, "").trim() || null;
+
+  return {
+    title,
+    subtitle: tag(productBlock, "subTitle"),
+    authors: authors.length ? authors : null,
+    publisher: tag(productBlock, "imprintName"),
+    publication_date: tag(beginBlock, "publicationDate"),
+    page_count: parseInt(tag(beginBlock, "pagesNumber") || "0") || null,
+    cover_url: tag(beginBlock, "frontCoverLarge") || tag(beginBlock, "frontCoverMedium") || null,
+    description: tag(beginBlock, "description"),
+    language: tag(beginBlock, "language"),
+    genres: clilLabel ? [clilLabel] : null,
+    disponibilite: tag(beginBlock, "productAvailability"),
+  };
+}
+
+// ---------------------------------------------------------------------------
 // Google Books
 // ---------------------------------------------------------------------------
 async function fetchGoogleBooks(isbn: string) {
@@ -391,22 +483,25 @@ function mergeSources(
   bnf: BookMeta | null,
   fallback: any,
   electre: ReturnType<typeof parseElectreNotice> | null = null,
+  dilicom: Partial<BookMeta> | null = null,
 ): BookMeta {
   return {
-    // Electre > BnF > Google > OL (sources FR prioritaires)
+    // Electre > Dilicom > BnF > Google > OL (sources FR prioritaires)
     title:
-      pick(electre?.title, bnf?.title, google?.title, openLib?.title, fallback?.title) ||
+      pick(electre?.title, dilicom?.title, bnf?.title, google?.title, openLib?.title, fallback?.title) ||
       "Sans titre",
-    subtitle: pick(electre?.subtitle, google?.subtitle, openLib?.subtitle, fallback?.subtitle),
+    subtitle: pick(electre?.subtitle, dilicom?.subtitle, google?.subtitle, openLib?.subtitle, fallback?.subtitle),
     authors:
       pick(
         electre?.authors,
         google?.authors,
+        dilicom?.authors,
         bnf?.authors,
         openLib?.authors,
         fallback?.authors,
       ) || [],
     publisher: pick(
+      dilicom?.publisher,
       electre?.publisher,
       bnf?.publisher,
       openLib?.publisher,
@@ -416,6 +511,7 @@ function mergeSources(
     publication_date: pick(
       electre?.publication_date,
       bnf?.publication_date,
+      dilicom?.publication_date,
       google?.publication_date,
       openLib?.publication_date,
       fallback?.publishedDate,
@@ -423,27 +519,30 @@ function mergeSources(
     page_count: pick(
       electre?.page_count,
       openLib?.page_count,
+      dilicom?.page_count,
       google?.page_count,
       bnf?.page_count,
       fallback?.pageCount,
     ),
-    // Couverture : Electre > Google (zoom 2) > OL
+    // Couverture : Dilicom > Electre > Google (zoom 2) > OL
     cover_url: pick(
+      dilicom?.cover_url,
       electre?.cover_url,
       google?.cover_url,
       openLib?.cover_url,
       bnf?.cover_url,
       fallback?.coverUrl,
     ),
-    // Description : Electre (4ème de couv ou résumé) > Google > OL
+    // Description : Electre (4ème de couv) > Dilicom > Google > OL
     description: pick(
       electre?.description,
+      dilicom?.description,
       google?.description,
       openLib?.description,
       fallback?.description,
     ),
-    language: pick(electre?.language, bnf?.language, google?.language) || "fr",
-    genres: pick(electre?.genres, google?.genres, openLib?.genres) || [],
+    language: pick(electre?.language, dilicom?.language, bnf?.language, google?.language) || "fr",
+    genres: pick(electre?.genres, dilicom?.genres, google?.genres, openLib?.genres) || [],
   };
 }
 
@@ -673,7 +772,11 @@ Deno.serve(async (req) => {
     }
 
     // Fetch all sources in parallel — never let one failure block the rest
-    const [google, openLib, bnf, metasData, electreData] = await Promise.all([
+    const [dilicom, google, openLib, bnf, metasData, electreData] = await Promise.all([
+      fetchDilicom(isbn).catch((e) => {
+        console.error("Dilicom error:", e.message);
+        return null;
+      }),
       fetchGoogleBooks(isbn).catch((e) => {
         console.error("Google Books error:", e.message);
         return null;
@@ -694,10 +797,10 @@ Deno.serve(async (req) => {
     ]);
 
     console.log(
-      `[book_import] ${isbn} — Electre:${!!electreData} Google:${!!google} OL:${!!openLib} BnF:${!!bnf} MetasBooks:${!!metasData}`,
+      `[book_import] ${isbn} — Dilicom:${!!dilicom} Electre:${!!electreData} Google:${!!google} OL:${!!openLib} BnF:${!!bnf} MetasBooks:${!!metasData}`,
     );
 
-    const merged = mergeSources(google, openLib, bnf, fallback, electreData);
+    const merged = mergeSources(google, openLib, bnf, fallback, electreData, dilicom);
 
     // MetasBooks enrichment — comble les champs vides après fusion principale
     let enrichedByMetasbooks = false;
@@ -755,6 +858,7 @@ Deno.serve(async (req) => {
     // Determine source tag
     let sourceTag = "multi_api";
     if (electreData) sourceTag = "multi_api_electre";
+    else if (dilicom) sourceTag = "multi_api_dilicom";
     else if (enrichedByMetasbooks) sourceTag = "multi_api_metasbooks";
 
     const insertPayload: Record<string, unknown> = {
@@ -781,6 +885,8 @@ Deno.serve(async (req) => {
       insertPayload.flag_fiction = electreData.flag_fiction;
       insertPayload.quatrieme_de_couverture = electreData.quatrieme_de_couverture;
       insertPayload.disponibilite = electreData.disponibilite;
+    } else if (dilicom?.disponibilite) {
+      insertPayload.disponibilite = dilicom.disponibilite;
     }
 
     const { data: book, error } = await supabase

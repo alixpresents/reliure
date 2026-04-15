@@ -2,6 +2,41 @@ import { supabase } from "./supabase";
 import { searchOpenLibrary } from "./openLibrarySearch";
 
 // ═══════════════════════════════════════════════
+// Dilicom FEL Search (catalogue FR, ~1.8M refs)
+// ═══════════════════════════════════════════════
+
+async function fetchDilicom(query, { isbn } = {}) {
+  try {
+    const { data, error } = await supabase.functions.invoke("dilicom-search", {
+      body: isbn ? { isbn } : { query: query.trim(), limit: 10 },
+    });
+    if (error) return [];
+    return (data?.results || []).map(r => ({
+      googleId: null,
+      _source: "dilicom",
+      dbId: null,
+      slug: null,
+      title: r.title,
+      subtitle: r.subtitle || null,
+      authors: r.authors || [],
+      publisher: r.publisher || null,
+      publishedDate: r.publicationDate || null,
+      coverUrl: r.coverLarge || r.coverMedium || null,
+      pageCount: r.pages || null,
+      isbn13: r.isbn || null,
+      description: r.description || null,
+      _clilCode: r.clilCode || null,
+      _clilLabel: r.clilLabel || null,
+      _availability: r.availability || null,
+    }));
+  } catch {
+    return [];
+  }
+}
+
+export { fetchDilicom };
+
+// ═══════════════════════════════════════════════
 // Helpers
 // ═══════════════════════════════════════════════
 
@@ -276,9 +311,11 @@ export async function searchBooks(query, { onDbResults } = {}) {
 
   let googleResults = [];
   let olResults = [];
+  let dilicomResults = [];
   let googleRaw = 0;
   let skipReason = null;
   let olActuallyCalled = false;
+  let dilicomCalled = false;
 
   if (skipGoogle) {
     if (isbnFound) skipReason = "isbn_found";
@@ -288,18 +325,32 @@ export async function searchBooks(query, { onDbResults } = {}) {
 
   const t_ext_start = performance.now();
   if (!skipGoogle) {
-    // Étape 2 : Google Books seul (OL uniquement si circuit breaker actif)
-    googleResults = await fetchGoogleBooks(query);
-    googleRaw = googleResults._rawCount || 0;
+    // Étape 2 : Dilicom en premier (catalogue FR, couverture maximale)
+    dilicomCalled = true;
+    dilicomResults = await fetchDilicom(query);
+
+    // Dilicom a-t-il comblé le manque ?
+    const afterDilicom = deduplicateResults(dbResults, dilicomResults).length;
+    const dilicomSufficient = afterDilicom >= 3;
+
+    if (!dilicomSufficient && isGoogleBooksAvailable()) {
+      // Étape 3 : Google Books si Dilicom insuffisant
+      googleResults = await fetchGoogleBooks(query);
+      googleRaw = googleResults._rawCount || 0;
+    } else if (!dilicomSufficient) {
+      // Google down → Open Library
+      olActuallyCalled = true;
+      olResults = await searchOpenLibrary(query);
+    }
   } else if (skipReason === "circuit_breaker") {
     // Google est down — Open Library comme découverte de secours
     olActuallyCalled = true;
     olResults = await searchOpenLibrary(query);
   }
-  const t_google = skipGoogle ? 0 : Math.round(performance.now() - t_ext_start);
+  const t_google = Math.round(performance.now() - t_ext_start);
   const t_total = Math.round(performance.now() - t0);
 
-  const final = deduplicateResults(dbResults, googleResults, olResults).slice(0, 10);
+  const final = deduplicateResults(dbResults, [...dilicomResults, ...googleResults], olResults).slice(0, 10);
 
   // Métadonnées skip logic (attachées au tableau)
   final._skippedGoogle = skipGoogle;
@@ -308,11 +359,15 @@ export async function searchBooks(query, { onDbResults } = {}) {
   // Logging structuré
   const googleUseful = final.filter(r => r._source === "google").length;
   const olUseful = final.filter(r => r._source === "openlibrary").length;
+  const dilicomUseful = final.filter(r => r._source === "dilicom").length;
   console.log("[search-analytics]", JSON.stringify({
     query,
     ts: new Date().toISOString(),
     db: dbResults.length,
-    googleCalled: !skipGoogle,
+    dilicomCalled,
+    dilicomResults: dilicomResults.length,
+    dilicomUseful,
+    googleCalled: !skipGoogle && googleResults.length > 0,
     googleRaw,
     googleFiltered: googleResults.length,
     googleDeduped: googleResults.length - googleUseful,
