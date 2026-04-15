@@ -56,6 +56,33 @@ function escapeXml(s: string): string {
 }
 
 // ---------------------------------------------------------------------------
+// HTML entity decoding + strip (descriptions Dilicom contiennent du HTML encodé)
+// ---------------------------------------------------------------------------
+
+function decodeHtmlEntities(str: string | null): string | null {
+  if (!str) return null;
+  return str
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&amp;/g, "&")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&apos;/g, "'")
+    .replace(/&nbsp;/g, " ");
+}
+
+function stripHtml(str: string | null): string | null {
+  if (!str) return null;
+  return decodeHtmlEntities(str)!
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<\/p>/gi, "\n\n")
+    .replace(/<\/li>/gi, "\n")
+    .replace(/<[^>]+>/g, "")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+// ---------------------------------------------------------------------------
 // Regex-based XML parsing (reliable in Deno Edge Functions)
 // ---------------------------------------------------------------------------
 
@@ -143,7 +170,7 @@ function parseResults(xml: string): { total: number; results: DilicomResult[] } 
     const coverLarge = tag(prod, "frontCoverLarge");
     const coverMedium = tag(prod, "frontCoverMedium");
     const coverSmall = tag(prod, "frontCoverSmall");
-    const description = tag(prod, "description");
+    const description = stripHtml(tag(prod, "description"));
 
     // Descriptive detail
     const pagesRaw = tag(prod, "pagesNumber");
