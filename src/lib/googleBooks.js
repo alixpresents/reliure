@@ -7,8 +7,15 @@ import { searchOpenLibrary } from "./openLibrarySearch";
 
 async function fetchDilicom(query, { isbn } = {}) {
   try {
+    const digits = (query || "").replace(/[^0-9]/g, "");
+    const isISBN = !isbn && digits.length >= 10 && digits.length <= 13;
+    const body = isbn
+      ? { isbn }
+      : isISBN
+        ? { isbn: digits }
+        : { query: query.trim(), limit: 10 };
     const { data, error } = await supabase.functions.invoke("dilicom-search", {
-      body: isbn ? { isbn } : { query: query.trim(), limit: 10 },
+      body,
     });
     if (error) return [];
     return (data?.results || []).map(r => ({
@@ -282,6 +289,36 @@ function deduplicateResults(dbResults, googleResults, olResults = []) {
 }
 
 // ═══════════════════════════════════════════════
+// Skip logic — pertinence du top résultat DB
+// ═══════════════════════════════════════════════
+
+function isDbSufficient(query, dbResults) {
+  if (dbResults.length === 0) return false;
+
+  const q = strip(query);
+  const top = dbResults[0];
+  const topTitle = strip(top.title || "");
+  const topAuthor = strip((top.authors?.[0] || ""));
+
+  // Match fort : titre exact ou auteur exact → skip
+  if (topTitle === q || topAuthor === q) return dbResults.length >= 1;
+
+  // Match partiel : query contenue dans le titre ou vice-versa → skip si >= 2
+  if (topTitle.includes(q) || q.includes(topTitle)) return dbResults.length >= 2;
+
+  // Match par overlap de mots
+  const queryWords = q.split(" ").filter(w => w.length > 2);
+  if (queryWords.length === 0) return dbResults.length >= 3;
+  const topTitleWords = topTitle.split(" ");
+  const overlap = queryWords.filter(w => topTitleWords.some(tw => tw.includes(w) || w.includes(tw)));
+  const overlapRatio = overlap.length / queryWords.length;
+
+  if (overlapRatio >= 0.8) return dbResults.length >= 3;
+  if (overlapRatio >= 0.5) return dbResults.length >= 5;
+  return false; // mauvais overlap → ne pas skipper, appeler les sources externes
+}
+
+// ═══════════════════════════════════════════════
 // Main export
 // ═══════════════════════════════════════════════
 
@@ -299,11 +336,11 @@ export async function searchBooks(query, { onDbResults } = {}) {
   const t_db = Math.round(performance.now() - t_db_start);
   const dbResults = localBooks.map(formatDbResult);
 
-  // Skip logic : déterminer si Google est nécessaire
+  // Skip logic : déterminer si les sources externes sont nécessaires
   const digits = query.replace(/[^0-9]/g, "");
   const isISBN = digits.length >= 10 && digits.length <= 13;
-  const dbSufficient = dbResults.length >= 3;
   const isbnFound = isISBN && dbResults.length >= 1;
+  const dbSufficient = isDbSufficient(query, dbResults);
   const skipGoogle = dbSufficient || isbnFound || !isGoogleBooksAvailable();
 
   // Wave 1 callback — résultats DB disponibles avant les sources externes

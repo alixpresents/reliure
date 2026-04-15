@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { searchBooks, isGoogleBooksAvailable } from "../lib/googleBooks";
+import { searchBooks, isGoogleBooksAvailable, fetchDilicom } from "../lib/googleBooks";
 import { importBook } from "../lib/importBook";
 import { resetIOSZoom } from "../lib/resetZoom";
 import { supabase } from "../lib/supabase";
@@ -413,7 +413,25 @@ export default function Search({ open, onClose, go, initialQuery = "" }) {
       }
     }
 
-    // ── Branche 2 : Google indisponible ou 0 résultat → cascade BnF ──
+    // ── Branche 1b : Dilicom ISBN vérification ──
+    // Si smart-search a fourni un ISBN, vérifier via Dilicom (fiable pour les livres FR)
+    if (aiBook.isbn13) {
+      try {
+        const dilicomResults = await fetchDilicom(aiBook.isbn13, { isbn: aiBook.isbn13 });
+        if (dilicomResults.length > 0 && dilicomResults[0].isbn13) {
+          console.log("[search-ai-import] Dilicom verified ISBN:", dilicomResults[0].isbn13);
+          const { data, error } = await supabase.functions.invoke("book_import", {
+            body: { isbn: dilicomResults[0].isbn13 },
+          });
+          if (!error && data?.id) {
+            await selectImportedBook(data);
+            return;
+          }
+        }
+      } catch { /* Dilicom down — continuer */ }
+    }
+
+    // ── Branche 2 : BnF fallback ──
 
     // Recherche BnF par titre + auteur → récupérer un ISBN fiable
     try {

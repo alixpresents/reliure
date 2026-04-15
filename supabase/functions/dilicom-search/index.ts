@@ -7,6 +7,7 @@
 //   -d '{"isbn": "9782070360024"}'
 
 import { getCorsHeaders } from "../_shared/cors.ts";
+import { createClient } from "jsr:@supabase/supabase-js@2";
 
 // ---------------------------------------------------------------------------
 // SOAP envelope builders
@@ -230,6 +231,32 @@ Deno.serve(async (req) => {
       );
     }
 
+    // ── Cache lookup (6h TTL) ──
+    const cacheKey = `dilicom:${isbn || query.trim().toLowerCase()}`;
+    const supabase = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+    );
+    const { data: cached } = await supabase
+      .from("search_cache")
+      .select("response, hit_count")
+      .eq("query_normalized", cacheKey)
+      .gt("expires_at", new Date().toISOString())
+      .maybeSingle();
+
+    if (cached?.response) {
+      supabase
+        .from("search_cache")
+        .update({ hit_count: (cached.hit_count || 0) + 1 })
+        .eq("query_normalized", cacheKey)
+        .then(null, () => {});
+      console.log(`[dilicom-search] CACHE HIT: ${cacheKey}`);
+      return new Response(
+        JSON.stringify(cached.response),
+        { headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } },
+      );
+    }
+
     const login = Deno.env.get("DILICOM_LOGIN");
     const password = Deno.env.get("DILICOM_PASSWORD");
 
@@ -283,8 +310,18 @@ Deno.serve(async (req) => {
 
     console.log(`[dilicom-search] ${isbn ? `ISBN:${isbn}` : `q:"${query}"`} → ${parsed.results.length} results (total: ${parsed.total})`);
 
+    const responseBody = { total: parsed.total, page: page || 1, results: parsed.results };
+
+    // ── Cache write (6h TTL, fire-and-forget) ──
+    supabase.from("search_cache").upsert({
+      query_normalized: cacheKey,
+      response: responseBody,
+      hit_count: 1,
+      expires_at: new Date(Date.now() + 6 * 60 * 60 * 1000).toISOString(),
+    }).then(null, () => {});
+
     return new Response(
-      JSON.stringify({ total: parsed.total, page: page || 1, results: parsed.results }),
+      JSON.stringify(responseBody),
       { headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } },
     );
   } catch (err) {
