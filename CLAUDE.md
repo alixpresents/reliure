@@ -73,7 +73,7 @@ Différenciateurs : journal éditorial intégré (La Revue), citations comme fea
 - `/la-revue/:slug` → ArticlePage
 - `/selections` → SelectionsPage
 - `/selections/:slug` → SelectionPage
-- `/livre/:slug` → BookPage (slug généré à l'import, fallback ID)
+- `/livre/:slug` → BookPage (slug généré à l'import, fallback ID). Slug `"importing"` est un état transitoire SPA : `BookPageRoute` détecte `slug === "importing"` avant `useBookBySlug`, affiche `BookSkeletonEnriched` avec les données Dilicom passées en `location.state.previewData`, redirige vers `/` si accès direct sans state.
 - `/login` → LoginPage
 - `/parametres` → SettingsPage (protégée)
 - `/backfill` → BackfillPage (protégée)
@@ -122,10 +122,10 @@ Stratégie hybride, par priorité :
 
 ### Recherche (`src/lib/googleBooks.js`)
 
-Architecture parallèle Tier 1 : DB locale + Dilicom en `Promise.all` → merge scoré + dédup → Google seulement si pool fusé < 3 → OL en fallback si Google down.
+Architecture parallèle Tier 1 : DB locale + Dilicom en `Promise.all` → merge scoré + dédup → Google seulement si pool insuffisant → OL en fallback si Google down.
 
 - **Tier 1 (toujours, en parallèle)** : `searchLocalBooks` (RPC `search_books_v2`) + `fetchDilicom` — Dilicom n'est jamais skippé (sauf ISBN exact trouvé en DB → court-circuit total)
-- **Tier 2 (conditionnel)** : Google Books si pool fusé DB+Dilicom < 3 résultats (quota limité, circuit breaker)
+- **Tier 2 (conditionnel)** : Google Books si pool fusé DB+Dilicom < 3 résultats ET pas de `hasExactTitleMatch`. `hasExactTitleMatch` : `fusedPool[0]._score >= 200` → skip Google (Dilicom a déjà trouvé titre exact — évite 4-6s d'attente inutile)
 - **Tier 3** : Open Library si Google down
 - **`search_books_v2`** : cross-field matching, scoring de pertinence avec bonus phrase-substring (+60), colonnes STORED `norm_title`/`norm_authors` avec index trigram GIN (migration 028), matching compact (LETRANGER → L'étranger)
 - **Merge scoré** : exact match (+200) > préfixe (+100) > substring (+50) > auteur (+40) > bonus DB (+15) > popularité. Dédup par ISBN puis titre normalisé.
@@ -163,6 +163,9 @@ Reliure regroupe les éditions par oeuvre. Vérification ISBN exact puis titre n
 - CORS centralisé : `supabase/functions/_shared/cors.ts` — fallback `reliure.page` + `www.reliure.page` + localhost. Toutes les edge functions importent `getCorsHeaders` depuis ce fichier unique
 - Prerendering sélectif : seuls les top 1000 livres actifs (`rating_count > 0`) sont prerendus. Sitemap aligné. Les autres livres sont accessibles en SPA via fallback
 - Import IA (Search.jsx) : bloqué si non connecté, message "Connectez-vous pour ajouter ce livre" avec lien login
+- **Navigation optimiste import** : clic résultat Dilicom → `navigate("/livre/importing", { state: { previewData } })` immédiat → `importBook().then(navigate)` en arrière-plan. Pas d'`await`, pas de toast de chargement.
+- **`stripGoogleDescription()`** : appliqué dans `src/lib/googleBooks.js` et `supabase/functions/book_import/index.ts` — nettoie HTML (`<b>`, `<i>`, `<p>`, `<br/>`) et entités (`&lt;`, `&amp;`, etc.) des descriptions Google Books. Script batch : `scripts/fix-google-descriptions.mjs`.
+- **`CacheSeeder` (ExplorePageRoute)** : ne sette le cache TanStack Query que si les données ne sont pas vides — évite de bloquer les refetch si le build SSG a produit des tableaux vides (ex: timeout Supabase pendant le prerender).
 
 ## Design system
 
@@ -193,6 +196,8 @@ Toutes les couleurs via CSS custom properties dans `src/index.css` (`:root` ligh
 ### Skeleton loading
 - Composant global `src/components/Skeleton.jsx` avec classes `.sk` et `.sk-fade`
 - **Ne jamais utiliser `animate-pulse` de Tailwind** — utiliser uniquement `.sk`
+- Variables CSS dédiées dans `src/index.css` : `--bg-skeleton` (fond) et `--bg-skeleton-shine` (reflet shimmer). Ne jamais utiliser `--bg-elevated` ou `--border-subtle` pour les skeletons — contraste insuffisant en dark mode.
+- `BookSkeletonEnriched` (`BookPageRoute.jsx`) : skeleton enrichi pendant import Dilicom — affiche vraie couverture + titre + auteur si disponibles en `previewData`.
 
 ## Règles React — performance et boucles
 
