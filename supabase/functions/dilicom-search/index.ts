@@ -16,14 +16,25 @@ import { createClient } from "jsr:@supabase/supabase-js@2";
 function buildSoapEnvelope(
   login: string,
   password: string,
-  opts: { isbn?: string; query?: string; page?: number; limit?: number },
+  opts: { isbn?: string; query?: string; page?: number; limit?: number; forceQuickSearch?: boolean },
 ): string {
   const page = opts.page ?? 1;
   const limit = Math.min(opts.limit ?? 10, 30);
 
-  const searchClause = opts.isbn
-    ? `<def:advancedSearch><def:GTIN13>${opts.isbn}</def:GTIN13></def:advancedSearch>`
-    : `<def:quickSearch>${escapeXml(opts.query!)}</def:quickSearch>`;
+  let searchClause: string;
+  if (opts.isbn) {
+    searchClause = `<def:advancedSearch><def:GTIN13>${opts.isbn}</def:GTIN13></def:advancedSearch>`;
+  } else {
+    const query = opts.query!;
+    const wordCount = query.trim().split(/\s+/).length;
+    if (wordCount <= 4 && !opts.forceQuickSearch) {
+      // Requête courte → advancedSearch titre (évite matchs sur descriptions)
+      searchClause = `<def:advancedSearch><def:title>${escapeXml(query)}</def:title></def:advancedSearch>`;
+    } else {
+      // Requête longue ou fallback → quickSearch (titre + auteur + thème + description)
+      searchClause = `<def:quickSearch>${escapeXml(query)}</def:quickSearch>`;
+    }
+  }
 
   return `<?xml version="1.0" encoding="UTF-8"?>
 <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:def="http://fel-dlc-sne.dilicom.net/definitions/">
@@ -62,14 +73,40 @@ function escapeXml(s: string): string {
 
 function decodeHtmlEntities(str: string | null): string | null {
   if (!str) return null;
-  return str
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/&amp;/g, "&")
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
-    .replace(/&apos;/g, "'")
-    .replace(/&nbsp;/g, " ");
+
+  const NAMED: Record<string, string> = {
+    "&lt;": "<", "&gt;": ">", "&amp;": "&", "&quot;": '"',
+    "&apos;": "'", "&nbsp;": " ",
+    // Accents français
+    "&eacute;": "é", "&egrave;": "è", "&ecirc;": "ê", "&euml;": "ë",
+    "&agrave;": "à", "&acirc;": "â", "&auml;": "ä",
+    "&ugrave;": "ù", "&ucirc;": "û", "&uuml;": "ü",
+    "&icirc;": "î", "&iuml;": "ï",
+    "&ocirc;": "ô", "&ouml;": "ö",
+    "&ccedil;": "ç",
+    "&Eacute;": "É", "&Egrave;": "È", "&Ecirc;": "Ê",
+    "&Agrave;": "À", "&Acirc;": "Â",
+    "&Ucirc;": "Û", "&Icirc;": "Î", "&Ocirc;": "Ô",
+    "&Ccedil;": "Ç",
+    // Typographie
+    "&rsquo;": "\u2019", "&lsquo;": "\u2018",
+    "&rdquo;": "\u201D", "&ldquo;": "\u201C",
+    "&mdash;": "\u2014", "&ndash;": "\u2013",
+    "&hellip;": "\u2026", "&oelig;": "\u0153", "&OElig;": "\u0152",
+  };
+
+  let out = str;
+  // Double-encoding: &amp;eacute; → &eacute; → é
+  out = out.replace(/&amp;(#?\w+;)/g, "&$1");
+  // Named entities
+  for (const [entity, char] of Object.entries(NAMED)) {
+    out = out.replaceAll(entity, char);
+  }
+  // Numeric entities &#233; &#x00E9;
+  out = out.replace(/&#(\d+);/g, (_, n) => String.fromCharCode(parseInt(n)));
+  out = out.replace(/&#x([0-9a-fA-F]+);/g, (_, h) => String.fromCharCode(parseInt(h, 16)));
+
+  return out;
 }
 
 function stripHtml(str: string | null): string | null {
@@ -142,7 +179,7 @@ function parseResults(xml: string): { total: number; results: DilicomResult[] } 
     // Product info (nested in <product>)
     const productBlock = tag(prod, "product") || prod;
     const isbn = tag(productBlock, "GTIN13");
-    const title = tag(productBlock, "title");
+    const title = decodeHtmlEntities(tag(productBlock, "title"));
     if (!title) continue;
 
     const publisher = tag(productBlock, "imprintName");
@@ -190,7 +227,7 @@ function parseResults(xml: string): { total: number; results: DilicomResult[] } 
     results.push({
       isbn,
       title,
-      subtitle: tag(productBlock, "subTitle"),
+      subtitle: decodeHtmlEntities(tag(productBlock, "subTitle")),
       authors,
       publisher,
       publicationDate,
@@ -268,45 +305,63 @@ Deno.serve(async (req) => {
       );
     }
 
-    const soap = buildSoapEnvelope(login, password, {
-      isbn: isbn || undefined,
-      query: isbn ? undefined : query,
-      page: page || 1,
-      limit: limit || 10,
-    });
+    async function callDilicom(forceQuickSearch = false) {
+      const soap = buildSoapEnvelope(login, password, {
+        isbn: isbn || undefined,
+        query: isbn ? undefined : query,
+        page: page || 1,
+        limit: limit || 10,
+        forceQuickSearch,
+      });
 
-    const res = await fetch("https://search-fel.centprod.com/v2/search-fel", {
-      method: "POST",
-      headers: {
-        "Content-Type": "text/xml; charset=utf-8",
-        "SOAPAction": "",
-      },
-      body: soap,
-      signal: AbortSignal.timeout(8000),
-    });
+      const res = await fetch("https://search-fel.centprod.com/v2/search-fel", {
+        method: "POST",
+        headers: {
+          "Content-Type": "text/xml; charset=utf-8",
+          "SOAPAction": "",
+        },
+        body: soap,
+        signal: AbortSignal.timeout(8000),
+      });
 
-    if (!res.ok) {
-      console.error(`[dilicom-search] HTTP ${res.status}: ${await res.text().catch(() => "")}`);
+      if (!res.ok) {
+        console.error(`[dilicom-search] HTTP ${res.status}: ${await res.text().catch(() => "")}`);
+        return null;
+      }
+
+      // Handle possible latin-1 encoding
+      const buffer = await res.arrayBuffer();
+      let text: string;
+      try {
+        text = new TextDecoder("utf-8").decode(buffer);
+        if (text.includes("\u00c3\u00a9") || text.includes("\u00c3\u00a8") || text.includes("\u00c3\u00a0")) {
+          text = new TextDecoder("latin1").decode(buffer);
+        }
+      } catch {
+        text = new TextDecoder("latin1").decode(buffer);
+      }
+
+      return parseResults(text);
+    }
+
+    let parsed = await callDilicom();
+
+    if (!parsed) {
       return new Response(
         JSON.stringify({ total: 0, results: [] }),
         { headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } },
       );
     }
 
-    // Handle possible latin-1 encoding
-    const buffer = await res.arrayBuffer();
-    let text: string;
-    try {
-      text = new TextDecoder("utf-8").decode(buffer);
-      // Quick check for encoding artifacts (latin-1 bytes served as UTF-8)
-      if (text.includes("\u00c3\u00a9") || text.includes("\u00c3\u00a8") || text.includes("\u00c3\u00a0")) {
-        text = new TextDecoder("latin1").decode(buffer);
+    // Fallback: advancedSearch titre → 0 résultats → retry quickSearch
+    const wordCount = query ? query.trim().split(/\s+/).length : 0;
+    if (!isbn && parsed.results.length === 0 && wordCount <= 4) {
+      console.log(`[dilicom-search] advancedSearch 0 results for "${query}", fallback quickSearch`);
+      const fallback = await callDilicom(true);
+      if (fallback && fallback.results.length > 0) {
+        parsed = fallback;
       }
-    } catch {
-      text = new TextDecoder("latin1").decode(buffer);
     }
-
-    const parsed = parseResults(text);
 
     console.log(`[dilicom-search] ${isbn ? `ISBN:${isbn}` : `q:"${query}"`} → ${parsed.results.length} results (total: ${parsed.total})`);
 

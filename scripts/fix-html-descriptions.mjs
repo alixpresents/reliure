@@ -20,14 +20,35 @@ const supabase = createClient(SUPABASE_URL, SERVICE_KEY);
 
 function decodeHtmlEntities(str) {
   if (!str) return null;
-  return str
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/&amp;/g, "&")
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
-    .replace(/&apos;/g, "'")
-    .replace(/&nbsp;/g, " ");
+
+  const NAMED = {
+    "&lt;": "<", "&gt;": ">", "&amp;": "&", "&quot;": '"',
+    "&apos;": "'", "&nbsp;": " ",
+    "&eacute;": "é", "&egrave;": "è", "&ecirc;": "ê", "&euml;": "ë",
+    "&agrave;": "à", "&acirc;": "â", "&auml;": "ä",
+    "&ugrave;": "ù", "&ucirc;": "û", "&uuml;": "ü",
+    "&icirc;": "î", "&iuml;": "ï",
+    "&ocirc;": "ô", "&ouml;": "ö",
+    "&ccedil;": "ç",
+    "&Eacute;": "É", "&Egrave;": "È", "&Ecirc;": "Ê",
+    "&Agrave;": "À", "&Acirc;": "Â",
+    "&Ucirc;": "Û", "&Icirc;": "Î", "&Ocirc;": "Ô",
+    "&Ccedil;": "Ç",
+    "&rsquo;": "\u2019", "&lsquo;": "\u2018",
+    "&rdquo;": "\u201D", "&ldquo;": "\u201C",
+    "&mdash;": "\u2014", "&ndash;": "\u2013",
+    "&hellip;": "\u2026", "&oelig;": "\u0153", "&OElig;": "\u0152",
+  };
+
+  let out = str;
+  out = out.replace(/&amp;(#?\w+;)/g, "&$1");
+  for (const [entity, char] of Object.entries(NAMED)) {
+    out = out.replaceAll(entity, char);
+  }
+  out = out.replace(/&#(\d+);/g, (_, n) => String.fromCharCode(parseInt(n)));
+  out = out.replace(/&#x([0-9a-fA-F]+);/g, (_, h) => String.fromCharCode(parseInt(h, 16)));
+
+  return out;
 }
 
 function stripHtml(str) {
@@ -46,7 +67,19 @@ function hasHtmlEntities(str) {
     str.includes("&lt;") ||
     str.includes("&gt;") ||
     str.includes("&amp;") ||
-    str.includes("&#")
+    str.includes("&#") ||
+    str.includes("&eacute;") ||
+    str.includes("&egrave;") ||
+    str.includes("&ecirc;") ||
+    str.includes("&agrave;") ||
+    str.includes("&ccedil;") ||
+    str.includes("&rsquo;") ||
+    str.includes("&oelig;") ||
+    str.includes("&hellip;") ||
+    str.includes("&mdash;") ||
+    str.includes("&ndash;") ||
+    str.includes("&nbsp;") ||
+    /<br[\s/]|<div|<p[ >]|<span/i.test(str)
   );
 }
 
