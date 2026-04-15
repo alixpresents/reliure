@@ -204,7 +204,20 @@ function parseResults(xml: string): { total: number; results: DilicomResult[] } 
     const coverLarge = tag(prod, "frontCoverLarge");
     const coverMedium = tag(prod, "frontCoverMedium");
     const coverSmall = tag(prod, "frontCoverSmall");
-    const description = stripHtml(tag(prod, "description"));
+    const rawDescription = stripHtml(tag(prod, "description"));
+    const PLACEHOLDER_DESCRIPTIONS = [
+      "résumé à venir",
+      "description à venir",
+      "à venir",
+      "prochainement",
+    ];
+    const description = rawDescription &&
+      !PLACEHOLDER_DESCRIPTIONS.some(p => {
+        const d = rawDescription.toLowerCase().trim();
+        return d === p || d === p + ".";
+      })
+      ? rawDescription
+      : null;
 
     // Descriptive detail
     const pagesRaw = tag(prod, "pagesNumber");

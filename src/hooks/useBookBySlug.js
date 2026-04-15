@@ -7,7 +7,7 @@ export function mapBook(data) {
     t: data.title,
     a: Array.isArray(data.authors) ? data.authors.join(", ") : (data.authors || ""),
     c: data.cover_url,
-    y: data.publication_date ? parseInt(data.publication_date) : null,
+    y: data.publication_date || null,
     p: data.page_count || 0,
     r: data.avg_rating || 0,
     rt: data.rating_count || 0,

@@ -7,8 +7,8 @@ if (typeof document !== "undefined") {
     s.textContent =
       "@keyframes sk-shimmer{0%{transform:translateX(-100%)}100%{transform:translateX(100%)}}" +
       "@keyframes sk-fadein{from{opacity:0.4}to{opacity:1}}" +
-      ".sk{position:relative;overflow:hidden;background:var(--bg-elevated);}" +
-      ".sk::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent 0%,var(--border-subtle) 50%,transparent 100%);animation:sk-shimmer 1.4s ease-in-out infinite;}" +
+      ".sk{position:relative;overflow:hidden;background:var(--bg-skeleton);}" +
+      ".sk::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent 0%,var(--bg-skeleton-shine) 50%,transparent 100%);animation:sk-shimmer 1.4s ease-in-out infinite;}" +
       ".sk-fade{animation:sk-fadein 80ms ease-in-out;}";
     document.head.appendChild(s);
   }

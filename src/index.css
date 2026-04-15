@@ -93,6 +93,8 @@
   --creator-bg: #FBF5E9;
   --creator-text: #9A7340;
   --creator-border: #C9A96E;
+  --bg-skeleton: #ebebeb;
+  --bg-skeleton-shine: #f5f5f5;
 }
 
 [data-theme="dark"] {
@@ -131,6 +133,8 @@
   --creator-bg: #2a2315;
   --creator-text: #d4a843;
   --creator-border: #8B6914;
+  --bg-skeleton: #2e2c29;
+  --bg-skeleton-shine: #3a3835;
 }
 
 @layer base {

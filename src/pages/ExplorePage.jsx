@@ -115,6 +115,7 @@ export default function ExplorePage() {
   const [query, setQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [searchLoading, setSearchLoading] = useState(false);
+  const [searchDone, setSearchDone] = useState(false);
   const [importing, setImporting] = useState(null);
   const [showResults, setShowResults] = useState(false);
   const searchTimer = useRef(null);
@@ -146,13 +147,16 @@ export default function ExplorePage() {
     if (!query || query.length < 2) {
       setSearchResults([]);
       setSearchLoading(false);
+      setSearchDone(false);
       return;
     }
     setSearchLoading(true);
+    setSearchDone(false);
     searchTimer.current = setTimeout(async () => {
       const results = await searchBooks(query);
       setSearchResults(results);
       setSearchLoading(false);
+      setSearchDone(true);
     }, 400);
     return () => clearTimeout(searchTimer.current);
   }, [query]);
@@ -274,7 +278,7 @@ export default function ExplorePage() {
               ref={inputRef}
               value={query}
               onChange={e => { setQuery(e.target.value); setShowResults(true); }}
-              onFocus={() => { handleSearchFocus(); if (query.length >= 2) setShowResults(true); }}
+              onFocus={() => { handleSearchFocus(); if (query.length >= 1) setShowResults(true); }}
               placeholder="Chercher des livres, auteurs, thèmes..."
               aria-label="Rechercher"
               className="flex-1 bg-transparent border-none outline-none font-body placeholder:text-[var(--text-tertiary)] min-w-0"
@@ -335,7 +339,7 @@ export default function ExplorePage() {
                   ))}
                 </div>
               )}
-              {!searchLoading && query.length >= 2 && searchResults.length === 0 && (
+              {searchDone && !searchLoading && searchResults.length === 0 && (
                 <div className="py-5 text-center text-[13px] font-body" style={{ color: "var(--text-tertiary)" }}>Aucun résultat.</div>
               )}
               {searchResults.map(gb => {
