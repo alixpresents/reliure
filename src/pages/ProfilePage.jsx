@@ -316,8 +316,9 @@ function FavoritesSection({ favorites, isOwner, go, onAdd, onRemove, onSwap, onU
 
   return (
     <div className="border-t border-border-light py-6" data-onboarding="favorites">
-      <div className="mb-3">
+      <div className="mb-3 flex items-baseline gap-2">
         <div className="text-[10px] font-semibold uppercase tracking-[2px] font-body" style={{ color: "var(--text-tertiary)" }}>Quatre favoris</div>
+        {isOwner && <div className="text-[10px] font-body" style={{ color: "var(--text-muted)" }}>Glisse pour réordonner</div>}
       </div>
       <div ref={gridRef} className="grid grid-cols-4 gap-4">
         {[1, 2, 3, 4].map(pos => {
@@ -367,32 +368,51 @@ function FavoritesSection({ favorites, isOwner, go, onAdd, onRemove, onSwap, onU
                     <div style={{ position: "absolute", inset: 0, borderRadius: 3, border: "2px dashed var(--text-muted)", backgroundColor: "rgba(0,0,0,0.12)", pointerEvents: "none", zIndex: 10 }} />
                   )}
 
-                  {/* Drag handle — visual indicator only, drag is on the outer div */}
                   {isOwner && (
-                    <div
-                      className="absolute top-1.5 right-1.5 opacity-70 group-hover/fav:opacity-100 transition-opacity duration-150 select-none pointer-events-none"
-                      aria-hidden="true"
-                      style={{ backgroundColor: "rgba(0,0,0,0.55)", backdropFilter: "blur(4px)", borderRadius: 6, padding: "4px 6px" }}
-                    >
-                      <svg width="10" height="14" viewBox="0 0 10 14" fill="white">
-                        <circle cx="2" cy="2" r="1.5"/><circle cx="8" cy="2" r="1.5"/>
-                        <circle cx="2" cy="7" r="1.5"/><circle cx="8" cy="7" r="1.5"/>
-                        <circle cx="2" cy="12" r="1.5"/><circle cx="8" cy="12" r="1.5"/>
-                      </svg>
-                    </div>
-                  )}
+                    <>
+                      {/* Supprimer — haut gauche */}
+                      <Tooltip text="Retirer des favoris" strategy="fixed">
+                        <button
+                          onClick={e => { e.stopPropagation(); onRemove(pos); }}
+                          className="absolute top-1.5 left-1.5 flex items-center justify-center cursor-pointer border-none opacity-0 group-hover/fav:opacity-100 transition-opacity duration-150"
+                          aria-label="Retirer des favoris"
+                          style={{ backgroundColor: "rgba(0,0,0,0.55)", backdropFilter: "blur(4px)", borderRadius: 6, width: 24, height: 24 }}
+                        >
+                          <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round">
+                            <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                          </svg>
+                        </button>
+                      </Tooltip>
 
-                  {/* Swap button — bottom-right */}
-                  {isOwner && (
-                    <button
-                      onClick={e => { e.stopPropagation(); onAdd(pos); }}
-                      className="absolute bottom-1.5 right-1.5 flex items-center justify-center cursor-pointer border-none bg-transparent opacity-0 group-hover/fav:opacity-100 transition-opacity duration-150 p-0"
-                      aria-label="Remplacer le favori"
-                    >
-                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--bg-primary)" strokeWidth="2.5" strokeLinecap="round" style={{ filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.4))" }}>
-                        <path d="M17 1l4 4-4 4" /><path d="M3 11V9a4 4 0 0 1 4-4h14" /><path d="M7 23l-4-4 4-4" /><path d="M21 13v2a4 4 0 0 1-4 4H3" />
-                      </svg>
-                    </button>
+                      {/* Drag handle — haut droite */}
+                      <Tooltip text="Glisser pour réordonner" strategy="fixed">
+                        <div
+                          className="absolute top-1.5 right-1.5 flex items-center justify-center opacity-70 group-hover/fav:opacity-100 transition-opacity duration-150 select-none pointer-events-auto"
+                          aria-hidden="true"
+                          style={{ backgroundColor: "rgba(0,0,0,0.55)", backdropFilter: "blur(4px)", borderRadius: 6, padding: "4px 6px" }}
+                        >
+                          <svg width="10" height="14" viewBox="0 0 10 14" fill="white">
+                            <circle cx="2" cy="2" r="1.5"/><circle cx="8" cy="2" r="1.5"/>
+                            <circle cx="2" cy="7" r="1.5"/><circle cx="8" cy="7" r="1.5"/>
+                            <circle cx="2" cy="12" r="1.5"/><circle cx="8" cy="12" r="1.5"/>
+                          </svg>
+                        </div>
+                      </Tooltip>
+
+                      {/* Changer — bas droite */}
+                      <Tooltip text="Changer ce livre" strategy="fixed">
+                        <button
+                          onClick={e => { e.stopPropagation(); onAdd(pos); }}
+                          className="absolute bottom-1.5 right-1.5 flex items-center justify-center cursor-pointer border-none opacity-0 group-hover/fav:opacity-100 transition-opacity duration-150"
+                          aria-label="Changer ce livre"
+                          style={{ backgroundColor: "rgba(0,0,0,0.55)", backdropFilter: "blur(4px)", borderRadius: 6, width: 24, height: 24 }}
+                        >
+                          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round">
+                            <path d="M17 1l4 4-4 4" /><path d="M3 11V9a4 4 0 0 1 4-4h14" /><path d="M7 23l-4-4 4-4" /><path d="M21 13v2a4 4 0 0 1-4 4H3" />
+                          </svg>
+                        </button>
+                      </Tooltip>
+                    </>
                   )}
                 </div>
 
@@ -412,6 +432,7 @@ function FavoritesSection({ favorites, isOwner, go, onAdd, onRemove, onSwap, onU
               onDragOver={e => handleDragOver(e, pos)}
               onDrop={e => handleDrop(e, pos)}
             >
+              <Tooltip text="Ajouter un favori" strategy="fixed">
               <div
                 role="button"
                 tabIndex={0}
@@ -422,6 +443,7 @@ function FavoritesSection({ favorites, isOwner, go, onAdd, onRemove, onSwap, onU
               >
                 <span className="text-[16px] transition-colors duration-150" style={{ color: "var(--text-muted)" }}>+</span>
               </div>
+              </Tooltip>
             </div>
           );
         })}
