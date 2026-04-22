@@ -412,9 +412,11 @@ export default function BookPage({ book }) {
   const [loginModal, setLoginModal] = useState(false);
   const [showEnrichModal, setShowEnrichModal] = useState(false);
   const [enrichToast, setEnrichToast] = useState(false);
+  const [showReviewNudge, setShowReviewNudge] = useState(false);
   const dateRef = useRef(null);
   const newReviewRef = useRef(null);
   const newQuoteRef = useRef(null);
+  const reviewSectionRef = useRef(null);
 
   const KNOWN_TAGS = ["en vacances", "recommandé par Margaux", "avion CDG-JFK", "relu", "en VO", "café Oberkampf", "métro"];
   const [tagFocused, setTagFocused] = useState(false);
@@ -528,6 +530,7 @@ export default function BookPage({ book }) {
     } else {
       // Set new status
       setSt(s);
+      if (s === "Lu" && !userReview) setShowReviewNudge(true);
       const extras = {};
       if (s === "Lu") {
         const now = new Date().toISOString();
@@ -544,6 +547,7 @@ export default function BookPage({ book }) {
   const handleRating = async r => {
     if (!user) { showLoginModal(false); return; }
     setUr(r);
+    if (r > 0 && !userReview) setShowReviewNudge(true);
     await dbSetRating(r);
     // Auto-create reading_status "read" if none exists
     if (!dbStatus) {
@@ -657,46 +661,39 @@ export default function BookPage({ book }) {
               ℹ️ Métadonnées générées par IA · Incertaines
             </div>
           )}
+          {user && isUuid && (
+            <button
+              onClick={() => setShowEnrichModal(true)}
+              className="text-[11px] font-body bg-transparent border-none cursor-pointer hover:opacity-60 transition-opacity duration-150 p-0 text-center"
+              style={{ color: "var(--text-tertiary)" }}
+            >
+              Modifier la fiche
+            </button>
+          )}
         </div>
         <div className="flex-1 pt-1">
           <h1 className="m-0 text-[26px] font-normal leading-tight font-display">{book.t}</h1>
-          <div className="text-[15px] mt-1.5 font-body" style={{ color: "var(--text-tertiary)" }}>
+          <div className="text-[15px] mt-1.5 font-body">
             {(book.a || "").split(", ").map((author, i, arr) => (
               <span key={author}>
-                <a href={`/?q=${encodeURIComponent(author)}`} className="no-underline hover:underline" style={{ color: "var(--text-secondary)" }}>{author}</a>
+                <a href={`/?q=${encodeURIComponent(author)}`} className="no-underline hover:underline" style={{ color: "var(--text-primary)" }}>{author}</a>
                 {i < arr.length - 1 && ", "}
               </span>
             ))}
           </div>
           <div className="text-[13px] mt-1 font-body" style={{ color: "var(--text-tertiary)" }}>{extractYear(book.y || book.publication_date)}{(book.p || book.page_count) ? ` · ${book.p || book.page_count} pages` : ""}</div>
 
-          {/* Modifier la fiche */}
-          {user && isUuid && (
-            <button
-              onClick={() => setShowEnrichModal(true)}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-2xl text-[13px] font-body border cursor-pointer hover:opacity-80 transition-colors duration-150 mt-3"
-              style={{ color: "var(--text-body)", backgroundColor: "var(--tag-bg)", borderColor: "var(--border-default)" }}
-            >
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-              </svg>
-              Modifier la fiche
-            </button>
-          )}
-
-          {/* Rating box — masqué si aucune évaluation */}
+          {/* Rating inline */}
           {ratingCount > 0 && avgRating > 0 && (
-            <div className="flex items-center gap-3 mt-5 p-3.5 px-[18px] bg-surface rounded-lg">
-              <span className="text-[32px] font-bold font-body">{avgRating}</span>
-              <div>
-                <Stars r={avgRating} s={14} />
-                <div className="text-[11px] mt-0.5 font-body" style={{ color: "var(--text-tertiary)" }}>{ratingCount?.toLocaleString("fr-FR")} évaluation{ratingCount > 1 ? "s" : ""}</div>
-              </div>
+            <div className="flex items-center gap-2 mt-3">
+              <span className="text-[15px] font-semibold font-body leading-none" style={{ color: "var(--text-primary)" }}>{avgRating}</span>
+              <Stars r={avgRating} s={12} />
+              <span className="text-[12px] font-body" style={{ color: "var(--text-tertiary)" }}>· {ratingCount?.toLocaleString("fr-FR")} évaluation{ratingCount > 1 ? "s" : ""}</span>
             </div>
           )}
 
           {/* Status pills */}
-          <div className="flex gap-1.5 mt-[18px] flex-wrap items-center">
+          <div className="flex gap-1.5 mt-5 pt-4 border-t border-border-light flex-wrap items-center">
             {["En cours", "Lu", "À lire", "Abandonné"].map(s => (
               <Pill key={s} active={st === s} onClick={() => handleStatus(s)}>{s}</Pill>
             ))}
@@ -780,65 +777,94 @@ export default function BookPage({ book }) {
           </div>
 
           {/* Personal tags */}
-          <div className="mt-[18px]">
-            <div className="text-xs mb-1.5 font-body" style={{ color: "var(--text-tertiary)" }}>Tags personnels</div>
-            {tags.length > 0 && (
-              <div className="flex flex-wrap gap-1.5 mb-2">
-                {tags.map(t => (
-                  <span key={t} className="inline-flex items-center gap-1 pl-2.5 pr-1.5 py-[5px] rounded-2xl text-xs bg-tag-bg border font-body" style={{ color: "var(--text-primary)", borderColor: "var(--border-default)" }}>
-                    {t}
-                    <button
-                      onClick={() => setTags(tags.filter(x => x !== t))}
-                      className="bg-transparent border-none cursor-pointer text-[11px] leading-none p-0 ml-0.5 transition-colors duration-150"
-                      style={{ color: "var(--text-tertiary)" }}
-                    >
-                      ×
-                    </button>
-                  </span>
-                ))}
-              </div>
-            )}
-            {tags.length < 5 && (
-              <div className="relative">
-                <input
-                  value={tagInput}
-                  onChange={e => setTagInput(e.target.value)}
-                  onKeyDown={handleTagKey}
-                  onFocus={() => setTagFocused(true)}
-                  onBlur={() => setTimeout(() => setTagFocused(false), 150)}
-                  placeholder="en vacances, recommandé par Margaux..."
-                  className="w-full py-2 text-base md:text-[13px] bg-transparent border-b outline-none font-body focus:border-[var(--text-primary)] transition-colors duration-200"
-                  style={{ color: "var(--text-primary)", borderColor: "var(--border-default)" }}
-                />
-                {tagFocused && tagSuggestions.length > 0 && (
-                  <div className="absolute left-0 right-0 mt-1 border rounded-lg overflow-hidden z-10 shadow-[0_2px_8px_rgba(0,0,0,0.06)]" style={{ backgroundColor: "var(--bg-elevated)", borderColor: "var(--border-default)" }}>
-                    {tagSuggestions.map(s => (
-                      <div
-                        key={s}
-                        onMouseDown={e => { e.preventDefault(); addTag(s); }}
-                        className="px-3 py-2 text-[13px] font-body cursor-pointer hover:bg-surface transition-colors duration-100"
-                        style={{ color: "var(--text-primary)" }}
+          <div className="mt-4 rounded-xl border font-body" style={{ borderColor: "var(--border-default)", backgroundColor: "var(--bg-surface)" }}>
+            <div className="flex items-center gap-1.5 px-3.5 pt-3 pb-2 border-b" style={{ borderColor: "var(--border-default)" }}>
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: "var(--text-tertiary)", flexShrink: 0 }}>
+                <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+              </svg>
+              <span className="text-[11px] font-medium" style={{ color: "var(--text-tertiary)" }}>Tags personnels · visibles uniquement par toi</span>
+            </div>
+            <div className="px-3.5 py-3">
+              {tags.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 mb-2.5">
+                  {tags.map(t => (
+                    <span key={t} className="inline-flex items-center gap-1 pl-2.5 pr-1.5 py-[5px] rounded-2xl text-xs bg-tag-bg border" style={{ color: "var(--text-primary)", borderColor: "var(--border-default)" }}>
+                      {t}
+                      <button
+                        onClick={() => setTags(tags.filter(x => x !== t))}
+                        className="bg-transparent border-none cursor-pointer text-[11px] leading-none p-0 ml-0.5 transition-opacity duration-150 hover:opacity-60"
+                        style={{ color: "var(--text-tertiary)" }}
                       >
-                        {s}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-            <div className="text-[11px] mt-1.5 font-body" style={{ color: "var(--text-tertiary)" }}>Visibles uniquement par toi</div>
+                        ×
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
+              {tags.length < 5 && (
+                <div className="relative">
+                  <input
+                    value={tagInput}
+                    onChange={e => setTagInput(e.target.value)}
+                    onKeyDown={handleTagKey}
+                    onFocus={() => setTagFocused(true)}
+                    onBlur={() => setTimeout(() => setTagFocused(false), 150)}
+                    placeholder={tags.length === 0 ? "en vacances, recommandé par Margaux..." : "Ajouter un tag..."}
+                    className="w-full text-base md:text-[13px] bg-transparent border-none outline-none"
+                    style={{ color: "var(--text-primary)" }}
+                  />
+                  {tagFocused && tagSuggestions.length > 0 && (
+                    <div className="absolute left-0 right-0 mt-1 border rounded-lg overflow-hidden z-10 shadow-[0_2px_8px_rgba(0,0,0,0.06)]" style={{ backgroundColor: "var(--bg-elevated)", borderColor: "var(--border-default)" }}>
+                      {tagSuggestions.map(s => (
+                        <div
+                          key={s}
+                          onMouseDown={e => { e.preventDefault(); addTag(s); }}
+                          className="px-3 py-2 text-[13px] cursor-pointer hover:bg-surface transition-colors duration-100"
+                          style={{ color: "var(--text-primary)" }}
+                        >
+                          {s}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
+
+          {/* Nudge critique */}
+          {showReviewNudge && !userReview && (
+            <div className="mt-3 flex items-center justify-between gap-3 px-3.5 py-2.5 rounded-xl border font-body" style={{ borderColor: "var(--border-default)", backgroundColor: "var(--bg-surface)" }}>
+              <span className="text-[12px]" style={{ color: "var(--text-secondary)" }}>Tu veux écrire une critique ?</span>
+              <div className="flex items-center gap-2 shrink-0">
+                <button
+                  onClick={() => { setShowReviewNudge(false); setBt("critiques"); setShowReviewForm(true); setTimeout(() => reviewSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 50); }}
+                  className="text-[12px] font-medium bg-transparent border-none cursor-pointer hover:opacity-70 transition-opacity duration-150 p-0"
+                  style={{ color: "var(--text-primary)" }}
+                >
+                  Écrire →
+                </button>
+                <button
+                  onClick={() => setShowReviewNudge(false)}
+                  className="bg-transparent border-none cursor-pointer text-[13px] leading-none p-0 hover:opacity-60 transition-opacity duration-150"
+                  style={{ color: "var(--text-tertiary)" }}
+                >
+                  ×
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
       {/* Tags */}
       {book.tags?.length > 0 ? (
-        <div className="pb-5">
-          <Label>Thèmes</Label>
-          <div className="flex flex-wrap gap-1">{book.tags.map(t => <Link key={t} to={`/explorer/theme/${encodeURIComponent(t)}`}><Tag>{t}</Tag></Link>)}</div>
+        <div className="border-t border-border-light py-5">
+          <div className="text-[11px] font-body mb-2.5" style={{ color: "var(--text-tertiary)" }}>Thèmes</div>
+          <div className="flex flex-wrap gap-2">{book.tags.map(t => <Link key={t} to={`/explorer/theme/${encodeURIComponent(t)}`}><Tag>{t}</Tag></Link>)}</div>
         </div>
       ) : user ? (
-        <div className="pb-5">
+        <div className="border-t border-border-light py-5">
           <button
             onClick={() => setShowEnrichModal(true)}
             className="text-[12px] font-body bg-transparent border-none cursor-pointer transition-colors duration-150 p-0"
@@ -865,24 +891,6 @@ export default function BookPage({ book }) {
           )}
         </div>
       )}
-
-      {/* Où lire */}
-      <div className="border-t border-border-light py-5">
-        <Label>Où lire</Label>
-        <div className="flex gap-2 items-center">
-          {["Fnac", "Amazon"].map(s => (
-            <span key={s} className="text-[11px] py-1.5 px-3 rounded-md bg-surface cursor-pointer border font-body" style={{ color: "var(--text-secondary)", borderColor: "var(--border-default)" }}>
-              {s}
-            </span>
-          ))}
-          <div className="w-px h-5 mx-1" style={{ backgroundColor: "var(--border-default)" }} />
-          {["Bibliothèque", "Kindle", "Audible"].map(s => (
-            <span key={s} className="text-[11px] py-1.5 px-3 rounded-md bg-surface cursor-pointer border font-body" style={{ color: "var(--text-secondary)", borderColor: "var(--border-default)" }}>
-              {s}
-            </span>
-          ))}
-        </div>
-      </div>
 
       {/* Dans des sélections curées */}
       {bookCuratedSelections.length > 0 && (
@@ -984,7 +992,7 @@ export default function BookPage({ book }) {
       </div>
 
       {/* Tab content */}
-      <div className="py-4">
+      <div ref={reviewSectionRef} className="py-4">
         {bt === "critiques" && (
           <div>
             {/* Write review */}
