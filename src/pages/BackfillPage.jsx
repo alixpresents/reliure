@@ -1,7 +1,14 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { B } from "../data";
+import { useOnboardingPicks } from "../hooks/useOnboardingPicks";
 import Img from "../components/Img";
+
+const CATEGORY_LABEL = {
+  classique: "Classique",
+  best_seller: "Best-seller",
+  incontournable: "Incontournable",
+  goncourt: "Goncourt",
+};
 import Label from "../components/Label";
 import InteractiveStars from "../components/InteractiveStars";
 import CSVImport from "../components/CSVImport";
@@ -354,6 +361,7 @@ export default function BackfillPage() {
   const onBack = () => navigate(-1);
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { data: discoveryBooks = [], isLoading: picksLoading } = useOnboardingPicks();
   const [q, setQ] = useState("");
   const [picks, setPicks] = useState([]);
   const [lastAdded, setLastAdded] = useState(null);
@@ -532,25 +540,46 @@ export default function BackfillPage() {
       {/* Discovery list */}
       <div className="mb-6">
         <Label>Les plus lus</Label>
-        <div className="flex flex-col">
-          {B.map(book => {
-            const pick = pickMap.get(book.id);
-            const st = pick?.status || null;
-            return (
-              <div key={book.id} className="flex items-center gap-3 py-2.5 border-b border-border-light">
-                <Img book={book} w={44} h={66} />
-                <div className="flex-1 min-w-0">
-                  <div className="text-sm font-medium font-body truncate">{book.t}</div>
-                  <div className="text-xs font-body" style={{ color: "var(--text-tertiary)" }}>{book.a}</div>
-                </div>
-                <div className="flex gap-1.5 shrink-0">
-                  <StatusPill label="Lu" active={st === "lu"} variant="lu" onClick={() => toggleStatus(book, "lu")} />
-                  <StatusPill label="À lire" active={st === "alire"} variant="alire" onClick={() => toggleStatus(book, "alire")} />
+        {picksLoading ? (
+          <div className="flex flex-col">
+            {[1, 2, 3, 4, 5].map(i => (
+              <div key={i} className="flex items-center gap-3 py-2.5 border-b border-border-light">
+                <div className="w-11 h-[66px] rounded-[3px] sk shrink-0" />
+                <div className="flex-1 min-w-0 space-y-1.5">
+                  <div className="h-3 w-2/3 rounded sk" />
+                  <div className="h-2.5 w-1/3 rounded sk" />
                 </div>
               </div>
-            );
-          })}
-        </div>
+            ))}
+          </div>
+        ) : discoveryBooks.length === 0 ? (
+          <div className="py-6 text-center text-sm font-body" style={{ color: "var(--text-tertiary)" }}>
+            Aucune suggestion disponible.
+          </div>
+        ) : (
+          <div className="flex flex-col">
+            {discoveryBooks.map(book => {
+              const pick = pickMap.get(book.id);
+              const st = pick?.status || null;
+              return (
+                <div key={book.id} className="flex items-center gap-3 py-2.5 border-b border-border-light">
+                  <Img book={book} w={44} h={66} />
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-medium font-body truncate">{book.t}</div>
+                    <div className="text-xs font-body truncate" style={{ color: "var(--text-tertiary)" }}>
+                      {book.a}
+                      {book._category ? <span className="ml-2" style={{ color: "var(--text-muted)" }}>· {CATEGORY_LABEL[book._category]}</span> : null}
+                    </div>
+                  </div>
+                  <div className="flex gap-1.5 shrink-0">
+                    <StatusPill label="Lu" active={st === "lu"} variant="lu" onClick={() => toggleStatus(book, "lu")} />
+                    <StatusPill label="À lire" active={st === "alire"} variant="alire" onClick={() => toggleStatus(book, "alire")} />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {/* Pile */}
