@@ -870,8 +870,8 @@ export default function ProfilePage({ viewedProfile, initialTab }) {
         )}
       </div>
 
-      {/* Backfill banner — own profile only */}
-      {isOwnProfile && (
+      {/* Backfill banner — own profile only, masqué si déjà des livres */}
+      {isOwnProfile && totalBooks === 0 && (
         <div
           role="button"
           tabIndex={0}
@@ -887,6 +887,15 @@ export default function ProfilePage({ viewedProfile, initialTab }) {
             📥 Importer
           </button>
         </div>
+      )}
+      {isOwnProfile && totalBooks > 0 && (
+        <button
+          onClick={onBackfill}
+          className="self-start text-xs font-body bg-transparent border-none cursor-pointer p-0 transition-opacity duration-150 hover:opacity-100"
+          style={{ color: "var(--text-muted)", opacity: 0.5 }}
+        >
+          + Importer d'autres lectures
+        </button>
       )}
 
       {/* Quatre favoris — masqué pour les visiteurs si aucun favori */}
