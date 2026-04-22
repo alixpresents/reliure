@@ -95,37 +95,6 @@ export function usePopularLists() {
   return { lists, loading };
 }
 
-export function useAvailableGenres() {
-  const { data: genres = [], isLoading: loading } = useQuery({
-    queryKey: ["availableGenres"],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("books")
-        .select("genres")
-        .not("genres", "eq", "[]")
-        .limit(2000);
-
-      if (!data) return [];
-
-      const counts = {};
-      for (const row of data) {
-        if (!Array.isArray(row.genres)) continue;
-        for (const g of row.genres) {
-          if (typeof g === "string" && g.trim()) {
-            counts[g] = (counts[g] || 0) + 1;
-          }
-        }
-      }
-
-      return Object.entries(counts)
-        .filter(([, n]) => n >= 1)
-        .sort((a, b) => b[1] - a[1])
-        .map(([g]) => g);
-    },
-  });
-  return { genres, loading };
-}
-
 export function useBooksByGenre(genre) {
   const { data: books = [], isLoading: loading } = useQuery({
     queryKey: ["booksByGenre", genre],
