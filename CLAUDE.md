@@ -239,6 +239,9 @@ Toutes les couleurs via CSS custom properties dans `src/index.css` (`:root` ligh
 6 sections : Explorer, Citations, Fil, Défis, Profil | La Revue (serif italic).
 Onglets profil : Journal, Bibliothèque, À lire, Mes critiques, Mes citations, Mes listes, Bilan.
 
+### Profil
+**Quatre favoris** : mode édition explicite via bouton "Modifier" (desktop et mobile identiques). En mode édition, overlay persistant avec 3 actions (× retirer, ⋮⋮ déplacer, swap remplacer). Slots vides toujours cliquables pour ajouter. Bouton "Modifier" visible uniquement si ≥1 favori. Message italique serif si 0 favori vu par un visiteur.
+
 ## RLS
 
 Tables lecture publique : `users`, `books`, `reading_status`, `user_favorites`, `reviews`, `quotes`, `follows`, `book_facets`.
