@@ -754,10 +754,7 @@ export default function ProfilePage({ viewedProfile, initialTab }) {
             )}
             <div className="flex items-center gap-2 flex-wrap">
               <span className="text-xs font-body" style={{ color: "var(--text-tertiary)" }}>@{profile.username}</span>
-              {hasCreator && <CreatorBadge />}
-              {role && <RoleBadge role={role} />}
             </div>
-            {totalPoints > 0 && <LevelBadge levelName={levelName} />}
           </div>
           <div className="flex flex-col w-full sm:w-auto mt-2 sm:mt-0">
             <div className="flex gap-5 text-xs font-body" style={{ color: "var(--text-tertiary)" }}>
@@ -765,7 +762,7 @@ export default function ProfilePage({ viewedProfile, initialTab }) {
                 <span key={l}><strong className="font-semibold" style={{ color: "var(--text-primary)" }}>{n}</strong> {l}</span>
               ))}
             </div>
-            {(pinnedBadges.length > 0 || isOwnProfile) && (
+            {false && (pinnedBadges.length > 0 || isOwnProfile) && (
               <div className="flex gap-2 mt-2">
                 {[0, 1, 2].map(slot => {
                   const b = pinnedBadges[slot];
@@ -1427,7 +1424,7 @@ export default function ProfilePage({ viewedProfile, initialTab }) {
       })()}
 
       {/* Badge selection modal */}
-      {badgeModal && isOwnProfile && (
+      {false && badgeModal && isOwnProfile && (
         <>
           <div onClick={() => setBadgeModal(null)} style={{ position: "fixed", inset: 0, zIndex: 9998, backgroundColor: "rgba(0,0,0,0.4)" }} />
           <div style={{ position: "fixed", inset: 0, zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 20px" }}>
