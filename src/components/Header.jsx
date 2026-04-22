@@ -154,6 +154,29 @@ export default function Header({ onSearch, onClose, searchOpen, searchGo, search
           )}
         </button>
 
+        {/* Bouton + ajouter un livre (logged in only) */}
+        {isLoggedIn && (
+          <button
+            onClick={onSearch}
+            className="cursor-pointer shrink-0 flex items-center justify-center transition-opacity duration-150 hover:opacity-80"
+            style={{
+              width: 28,
+              height: 28,
+              borderRadius: "50%",
+              backgroundColor: "var(--text-primary)",
+              color: "var(--bg-primary)",
+              border: "none",
+            }}
+            aria-label="Ajouter un livre"
+            title="Ajouter un livre"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+              <line x1="12" y1="5" x2="12" y2="19" />
+              <line x1="5" y1="12" x2="19" y2="12" />
+            </svg>
+          </button>
+        )}
+
         {/* Notification bell (logged in only) */}
         {isLoggedIn && (
           <div className="relative">
