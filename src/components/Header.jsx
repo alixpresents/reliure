@@ -39,7 +39,6 @@ export default function Header({ onSearch, onClose, searchOpen, searchGo, search
         ["/citations", "Citations"],
         ["/fil", "Fil"],
         ["/defis", "Défis"],
-        [username ? `/${username}` : "/", "Profil"],
       ]
     : [
         ["/", "Explorer"],
@@ -256,6 +255,15 @@ export default function Header({ onSearch, onClose, searchOpen, searchGo, search
               <>
                 <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(false)} />
                 <div className="absolute right-0 top-full mt-2 rounded-lg shadow-[0_4px_16px_rgba(0,0,0,0.08)] z-50 overflow-hidden min-w-[160px]" style={{ backgroundColor: "var(--bg-elevated)", border: "1px solid var(--border-default)" }}>
+                  <Link
+                    to={username ? `/${username}` : "/"}
+                    onClick={() => setMenuOpen(false)}
+                    className="block w-full px-4 py-3 text-left text-[13px] font-body no-underline transition-colors duration-100 hover:opacity-70"
+                    style={{ color: "var(--text-primary)" }}
+                  >
+                    Mon profil
+                  </Link>
+                  <div style={{ height: 1, backgroundColor: "var(--border-default)" }} />
                   <button
                     onClick={handleLogout}
                     className="w-full px-4 py-3 text-left text-[13px] font-body bg-transparent border-none cursor-pointer transition-colors duration-100" style={{ color: "var(--text-tertiary)" }}
