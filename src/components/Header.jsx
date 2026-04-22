@@ -128,6 +128,41 @@ export default function Header({ onSearch, onClose, searchOpen, searchGo, search
           </svg>
         </button>
 
+        {/* Bouton + ajouter une lecture (logged in only) */}
+        {isLoggedIn && (
+          <div className="relative group shrink-0">
+            <button
+              onClick={onSearch}
+              className="cursor-pointer flex items-center justify-center transition-opacity duration-150 hover:opacity-80"
+              style={{
+                width: 28,
+                height: 28,
+                borderRadius: "50%",
+                backgroundColor: "var(--text-primary)",
+                color: "var(--bg-primary)",
+                border: "none",
+              }}
+              aria-label="Ajouter une lecture"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                <line x1="12" y1="5" x2="12" y2="19" />
+                <line x1="5" y1="12" x2="19" y2="12" />
+              </svg>
+            </button>
+            <div
+              className="pointer-events-none absolute left-1/2 top-full mt-2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-150 whitespace-nowrap rounded-md px-2.5 py-1.5 text-[11px] font-body font-medium z-50"
+              style={{
+                backgroundColor: "var(--bg-elevated)",
+                color: "var(--text-primary)",
+                border: "1px solid var(--border-default)",
+                boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+              }}
+            >
+              Ajouter une lecture
+            </div>
+          </div>
+        )}
+
         {/* Theme toggle */}
         <button
           onClick={toggleTheme}
@@ -153,29 +188,6 @@ export default function Header({ onSearch, onClose, searchOpen, searchGo, search
             </svg>
           )}
         </button>
-
-        {/* Bouton + ajouter un livre (logged in only) */}
-        {isLoggedIn && (
-          <button
-            onClick={onSearch}
-            className="cursor-pointer shrink-0 flex items-center justify-center transition-opacity duration-150 hover:opacity-80"
-            style={{
-              width: 28,
-              height: 28,
-              borderRadius: "50%",
-              backgroundColor: "var(--text-primary)",
-              color: "var(--bg-primary)",
-              border: "none",
-            }}
-            aria-label="Ajouter un livre"
-            title="Ajouter un livre"
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-              <line x1="12" y1="5" x2="12" y2="19" />
-              <line x1="5" y1="12" x2="19" y2="12" />
-            </svg>
-          </button>
-        )}
 
         {/* Notification bell (logged in only) */}
         {isLoggedIn && (
