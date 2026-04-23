@@ -715,8 +715,8 @@ export default function Search({ open, onClose, go, initialQuery = "" }) {
                 <>
                   {cappedResults.map(gb => {
               const isDb = gb._source === "db";
-              const isBnF = gb._source === "bnf";
-              const itemKey = gb.googleId ?? (isDb ? `db:${gb.dbId}` : `bnf:${gb.isbn13 ?? gb.title}`);
+              const isIsbnImport = gb._source === "bnf" || gb._source === "openlibrary";
+              const itemKey = gb.googleId ?? (isDb ? `db:${gb.dbId}` : `${gb._source}:${gb.isbn13 ?? gb.title}`);
               const added = addedGoogleIds.has(itemKey);
               const isImporting = importing === itemKey;
 
@@ -736,7 +736,7 @@ export default function Search({ open, onClose, go, initialQuery = "" }) {
                     setQ("");
                     setResults([]);
                   }
-                } else if (isBnF) {
+                } else if (isIsbnImport) {
                   handleBnFSelect(gb);
                 } else {
                   handleSelect(gb);

@@ -121,7 +121,9 @@ export async function searchOpenLibrary(query, maxResults = 8) {
 
 // ═══════════════════════════════════════════════
 // searchOpenLibraryByISBN(isbn)
-// Returns a single book object or null
+// Returns a single book object or null.
+// Uses the /api/books?bibkeys= endpoint which returns
+// resolved author names in a single call.
 // ═══════════════════════════════════════════════
 
 export async function searchOpenLibraryByISBN(isbn) {
@@ -130,16 +132,21 @@ export async function searchOpenLibraryByISBN(isbn) {
   const clean = String(isbn).replace(/[^0-9X]/gi, "");
   if (!clean) return null;
 
+  const key = `ISBN:${clean}`;
+  const url = `https://openlibrary.org/api/books?bibkeys=${encodeURIComponent(key)}&format=json&jscmd=data`;
+
   try {
-    const res = await fetch(`${OL_ISBN}/${clean}.json`, {
-      signal: AbortSignal.timeout(1500),
-    });
+    const res = await fetch(url, { signal: AbortSignal.timeout(2000) });
     if (!res.ok) return null;
 
-    const data = await res.json();
-    if (!data.title) return null;
+    const json = await res.json();
+    const data = json[key];
+    if (!data || !data.title) return null;
 
-    // OL ISBN endpoint has a different shape — map it to the unified format
+    const coverId = data.cover?.medium?.match(/\/b\/id\/(\d+)-/)?.[1]
+      || data.cover?.large?.match(/\/b\/id\/(\d+)-/)?.[1]
+      || null;
+
     return {
       googleId:      null,
       _source:       "openlibrary",
@@ -147,21 +154,21 @@ export async function searchOpenLibraryByISBN(isbn) {
       slug:          null,
       title:         data.title,
       subtitle:      data.subtitle || null,
-      authors:       data.authors
-        ? data.authors.map(a => a.name || a.key || "").filter(Boolean)
+      authors:       Array.isArray(data.authors)
+        ? data.authors.map(a => a.name).filter(Boolean)
         : [],
       publisher:     Array.isArray(data.publishers)
-        ? data.publishers[0] || null
+        ? data.publishers[0]?.name || null
         : null,
       publishedDate: data.publish_date || null,
-      coverUrl:      data.covers?.[0]
-        ? `https://covers.openlibrary.org/b/id/${data.covers[0]}-M.jpg`
+      coverUrl:      coverId
+        ? `https://covers.openlibrary.org/b/id/${coverId}-M.jpg`
         : null,
       pageCount:     data.number_of_pages || null,
-      isbn13:        Array.isArray(data.isbn_13) ? data.isbn_13[0] || null : null,
-      description:   typeof data.description === "string"
-        ? data.description
-        : data.description?.value || null,
+      isbn13:        data.identifiers?.isbn_13?.[0] || (clean.length === 13 ? clean : null),
+      description:   typeof data.notes === "string"
+        ? data.notes
+        : data.notes?.value || null,
     };
   } catch {
     return null;

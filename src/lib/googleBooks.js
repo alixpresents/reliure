@@ -1,5 +1,5 @@
 import { supabase } from "./supabase";
-import { searchOpenLibrary } from "./openLibrarySearch";
+import { searchOpenLibrary, searchOpenLibraryByISBN } from "./openLibrarySearch";
 
 // ═══════════════════════════════════════════════
 // Dilicom FEL Search (catalogue FR, ~1.8M refs)
@@ -300,6 +300,31 @@ export async function searchBooks(query, { onDbResults } = {}) {
       return final;
     }
 
+    // ISBN absent de Dilicom → fallback Open Library (livres anciens / épuisés)
+    const t_ol_start = performance.now();
+    const olBook = await searchOpenLibraryByISBN(digits);
+    const t_ol = Math.round(performance.now() - t_ol_start);
+
+    if (olBook) {
+      const final = [olBook];
+      setCache(query, final);
+      console.log("[search-analytics]", JSON.stringify({
+        query, ts: new Date().toISOString(),
+        db: 0, dilicomCalled: true, dilicomResults: 0,
+        olCalled: true, olResults: 1,
+        googleCalled: false, skipped: false, skipReason: null,
+        t_db, t_dilicom, t_ol, t_total: Math.round(performance.now() - t0),
+      }));
+      return final;
+    }
+
+    console.log("[search-analytics]", JSON.stringify({
+      query, ts: new Date().toISOString(),
+      db: 0, dilicomCalled: true, dilicomResults: 0,
+      olCalled: true, olResults: 0,
+      googleCalled: false, skipped: false, skipReason: "isbn_not_found",
+      t_db, t_dilicom, t_ol, t_total: Math.round(performance.now() - t0),
+    }));
     return [];
   }
 
