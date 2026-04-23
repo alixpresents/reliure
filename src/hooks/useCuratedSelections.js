@@ -10,6 +10,9 @@ export function useCuratedSelections() {
       return data || [];
     },
     staleTime: 10 * 60 * 1000,
+    // Le SSG seede le cache au build ; sans refetchOnMount, une nouvelle
+    // sélection n'apparaît qu'après redeploy. On refetch en background.
+    refetchOnMount: "always",
   });
 }
 
